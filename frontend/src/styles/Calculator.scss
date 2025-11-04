@@ -2,7 +2,7 @@
 
 // Calculator-specific SCSS (SLDS-compliant)
 .calculator-container {
-  font-family: $slds-font-family;
+  font-family: $token-font-family;
   padding: $spacing-md;
   max-width: 100%;
 }
@@ -14,9 +14,9 @@
   gap: $spacing-md;
   margin-bottom: $spacing-md;
   padding: $spacing-md;
-  background: white;
-  border: 1px solid $slds-color-gray-3;
-  border-radius: $slds-border-radius;
+  background: $token-color-surface;
+  border: 1px solid $token-color-border-subtle;
+  border-radius: $token-radius-sm;
   flex-wrap: wrap;
 
   .slds-form-element {
@@ -37,22 +37,22 @@
     
     .tier-label {
       font-size: 0.75rem;
-      color: $slds-color-text-weak;
+      color: $token-text-secondary;
       margin-bottom: 0.25rem;
     }
     
     .tier-value {
       font-size: 1rem;
-      color: $slds-color-text-default;
+      color: $token-text-primary;
     }
   }
 }
 
 // Collapsible section (accordion-like)
 .collapsible-section {
-  background: white;
-  border: 1px solid $slds-color-gray-3;
-  border-radius: $slds-border-radius;
+  background: $token-color-surface;
+  border: 1px solid $token-color-border-subtle;
+  border-radius: $token-radius-sm;
   margin-bottom: $spacing-md;
   overflow: hidden;
 }
@@ -62,19 +62,19 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem $spacing-md;
-  background: $slds-color-gray-1;
+  background: $token-color-surface;
   cursor: pointer;
   user-select: none;
   transition: background 0.15s ease;
   
   &:hover {
-    background: darken($slds-color-gray-1, 2%);
+    background: var(--token-layer-hover);
   }
   
   .header-title {
     font-size: 0.9375rem;
     font-weight: 600;
-    color: $slds-color-text-default;
+    color: $token-text-primary;
     margin: 0;
   }
   
@@ -82,7 +82,7 @@
     width: 1rem;
     height: 1rem;
     transition: transform 0.2s ease;
-    fill: $slds-color-text-weak;
+    fill: $token-text-secondary;
     
     &.expanded {
       transform: rotate(180deg);
@@ -92,7 +92,7 @@
 
 .collapsible-body {
   padding: $spacing-md;
-  background: white;
+  background: $token-color-surface;
   
   &.collapsed {
     display: none;
@@ -159,7 +159,7 @@
 
 // Fees section - full width below main grid
 .fees-section {
-  border-top: 1px solid $slds-color-gray-3;
+  border-top: 1px solid $token-color-border-subtle;
   padding-top: $spacing-md;
   margin-top: $spacing-md;
 
@@ -243,7 +243,7 @@
       width: 24px;
       height: 24px;
       border-radius: 50%;
-      background: white;
+      background: $token-color-surface;
       box-shadow: 0 1px 3px rgba(0,0,0,0.3);
       transform: translateX(0);
       transition: transform 0.15s ease;
@@ -256,7 +256,7 @@
   
   .switch-label {
     font-size: 0.875rem;
-    color: $slds-color-text-default;
+    color: $token-text-primary;
     line-height: 1.4;
   }
 }
@@ -264,9 +264,9 @@
 // Range toggle buttons (Core / Specialist)
 .range-toggle-container {
   margin-top: $spacing-md;
-  background: white;
-  border: 1px solid $slds-color-gray-3;
-  border-radius: $slds-border-radius;
+  background: $token-color-surface;
+  border: 1px solid $token-color-border-subtle;
+  border-radius: $token-radius-sm;
   overflow: hidden;
 }
 
@@ -278,22 +278,22 @@
   .range-button {
     flex: 1;
     padding: 0.875rem 1.5rem;
-    background: white;
+    background: $token-color-surface;
     border: none;
-    border-right: 1px solid $slds-color-gray-3;
-    color: $slds-color-text-default;
+    border-right: 1px solid $token-color-border-subtle;
+    color: $token-text-primary;
     font-size: 0.9375rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;
-    font-family: $slds-font-family;
+    font-family: $token-font-family;
     
     &:last-child {
       border-right: none;
     }
     
     &:hover:not(.active) {
-      background: $slds-color-gray-1;
+      background: $token-color-surface;
     }
     
     &.active {
@@ -307,17 +307,17 @@
 // Rates display
 .rates-display {
   padding: $spacing-md;
-  border-top: 1px solid $slds-color-gray-3;
+  border-top: 1px solid $token-color-border-subtle;
 
   .rates-count {
     font-size: 0.875rem;
-    color: $slds-color-text-weak;
+    color: $token-text-secondary;
     margin-bottom: $spacing-md;
   }
 
   .rate-item {
     padding: 0.5rem 0;
-    border-bottom: 1px solid $slds-color-gray-3;
+    border-bottom: 1px solid $token-color-border-subtle;
     font-size: 0.9375rem;
 
     &:last-child {
@@ -326,11 +326,11 @@
 
     strong {
       font-weight: 600;
-      color: $slds-color-text-default;
+      color: $token-text-primary;
     }
 
     .rate-fee {
-      color: $slds-color-text-weak;
+      color: $token-text-secondary;
       font-size: 0.875rem;
     }
   }
@@ -338,7 +338,7 @@
   .no-rates {
     padding: $spacing-md;
     text-align: center;
-    color: $slds-color-text-weak;
+    color: $token-text-secondary;
     font-style: italic;
   }
 }
@@ -371,10 +371,10 @@
     transform: translateY(-50%);
     min-width: 180px;
     max-width: 320px;
-    background: white;
-    color: $slds-color-text-default;
+    background: $token-color-surface;
+    color: $token-text-primary;
     border: 1px solid #0176d3;
-    border-radius: $slds-border-radius;
+    border-radius: $token-radius-sm;
     padding: 0.5rem 0.75rem;
     box-shadow: 0 4px 12px rgba(1, 118, 211, 0.1);
     z-index: 1100;

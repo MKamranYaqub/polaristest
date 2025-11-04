@@ -1,102 +1,107 @@
 .rates-container {
-  padding: 20px;
+  padding: var(--token-space-24);
   margin: 0 auto;
 }
 
 .filters {
-  margin-bottom: 20px;
+  margin-bottom: var(--token-space-24);
   display: flex;
-  gap: 15px;
+  gap: var(--token-space-16);
   flex-wrap: wrap;
-  background-color: #f8fafc;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background-color: var(--token-layer-surface);
+  padding: var(--token-space-24);
+  border-radius: var(--token-radius-md);
+  box-shadow: var(--token-shadow-soft);
+  border: 1px solid var(--token-border-subtle);
 }
 
 .filters input,
 .filters select {
-  padding: 10px 15px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: var(--token-space-12) var(--token-space-16);
+  border: 1px solid var(--token-border-subtle);
+  border-radius: var(--token-radius-sm);
+  font-size: var(--token-font-size-sm);
   min-width: 200px;
-  background-color: white;
+  background-color: var(--token-layer-background);
+  color: var(--token-text-primary);
 }
 
 .filters input:focus,
 .filters select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: 2px solid var(--token-focus);
+  outline-offset: 1px;
+  border-color: var(--token-focus);
+  box-shadow: none;
 }
 
 .table-container {
+  position: relative;
   overflow-x: auto;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-top: 20px;
+  background: var(--token-layer-surface);
+  border-radius: var(--token-radius-md);
+  box-shadow: var(--token-shadow-soft);
+  border: 1px solid var(--token-border-subtle);
+  margin-top: var(--token-space-24);
 }
 
 .rates-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 14px;
+  font-size: var(--token-font-size-sm);
   white-space: nowrap;
 }
 
 .rates-table th,
 .rates-table td {
-  padding: 12px 16px;
+  padding: var(--token-space-12) var(--token-space-16);
   text-align: left;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--token-border-subtle);
 }
 
 .rates-table th {
-  background-color: #f8fafc;
-  font-weight: 600;
-  color: #475569;
+  background-color: var(--token-layer-background);
+  font-weight: var(--token-font-weight-semibold);
+  color: var(--token-text-secondary);
   position: sticky;
   top: 0;
   z-index: 1;
 }
 
 .rates-table tbody tr:hover {
-  background-color: #f1f5f9;
+  background-color: var(--token-layer-hover);
 }
 
 .rates-table td {
   vertical-align: middle;
+  color: var(--token-text-primary);
 }
 
-/* Style specific columns */
-.rates-table td:nth-child(1) { /* Set Key */
-  font-weight: 500;
-  color: #1e40af;
+.rates-table td:nth-child(1) {
+  font-weight: var(--token-font-weight-medium);
+  color: var(--token-interactive);
 }
 
-.rates-table td:nth-child(7) { /* Rate */
-  font-weight: 500;
-  color: #047857;
+.rates-table td:nth-child(7) {
+  font-weight: var(--token-font-weight-medium);
+  color: var(--token-success);
 }
 
 .edit-button {
-  background-color: #3b82f6;
-  color: white;
+  background-color: var(--token-interactive);
+  color: #fff;
   border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
+  padding: var(--token-space-8) var(--token-space-16);
+  border-radius: var(--token-radius-sm);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease;
+  font-weight: var(--token-font-weight-medium);
 }
 
 .edit-button:hover {
-  background-color: #2563eb;
+  background-color: var(--token-interactive-hover);
 }
 
-/* Sticky first column for better navigation */
 .rates-table th:first-child,
 .rates-table td:first-child {
   position: sticky;
@@ -105,86 +110,87 @@
   z-index: 2;
 }
 
-/* Add gradients for horizontal scroll indication */
 .table-container::before,
 .table-container::after {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 20px;
+  width: var(--token-space-24);
   pointer-events: none;
   z-index: 3;
 }
 
 .table-container::before {
   left: 0;
-  background: linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0));
+  background: linear-gradient(to right, var(--token-layer-surface), rgba(255, 255, 255, 0));
 }
 
 .table-container::after {
   right: 0;
-  background: linear-gradient(to left, rgba(255,255,255,1), rgba(255,255,255,0));
+  background: linear-gradient(to left, var(--token-layer-surface), rgba(255, 255, 255, 0));
 }
 
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background-color: rgba(11, 20, 26, 0.45);
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
+  background: var(--token-layer-surface);
+  padding: var(--token-space-24);
+  border-radius: var(--token-radius-md);
   max-width: 500px;
   width: 100%;
+  box-shadow: var(--token-shadow-strong);
 }
 
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: var(--token-space-16);
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
+  margin-bottom: var(--token-space-8);
+  font-weight: var(--token-font-weight-medium);
+  color: var(--token-text-secondary);
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: var(--token-space-12);
+  border: 1px solid var(--token-border-subtle);
+  border-radius: var(--token-radius-sm);
+  background: var(--token-layer-background);
+  color: var(--token-text-primary);
 }
 
 .button-group {
   display: flex;
-  gap: 10px;
+  gap: var(--token-space-12);
   justify-content: flex-end;
-  margin-top: 20px;
+  margin-top: var(--token-space-24);
 }
 
 .button-group button {
-  padding: 8px 16px;
+  padding: var(--token-space-12) var(--token-space-16);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--token-radius-sm);
   cursor: pointer;
+  font-weight: var(--token-font-weight-medium);
 }
 
-.button-group button[type="submit"] {
-  background-color: #4CAF50;
-  color: white;
+.button-group button[type='submit'] {
+  background-color: var(--token-interactive);
+  color: #fff;
 }
 
-.button-group button[type="button"] {
-  background-color: #f44336;
-  color: white;
+.button-group button[type='button'] {
+  background-color: var(--token-critical);
+  color: #fff;
 }

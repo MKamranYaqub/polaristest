@@ -1,0 +1,33 @@
+@use './variables';
+
+.app-sidenav {
+  position: sticky;
+  top: var(--token-space-24);
+  align-self: start;
+  border-radius: var(--token-radius-md);
+  box-shadow: var(--token-shadow-soft);
+  background: var(--token-layer-surface);
+  overflow: hidden;
+
+  .cds--side-nav__items {
+    padding-block: var(--token-space-8);
+  }
+
+  .cds--side-nav__link {
+    font-family: var(--token-font-family-base);
+    font-weight: var(--token-font-weight-medium);
+    font-size: var(--token-font-size-sm);
+    color: var(--token-text-secondary);
+    border-radius: 0;
+
+    &:hover {
+      background: var(--token-layer-hover);
+      color: var(--token-text-primary);
+    }
+
+    &[aria-current='page'] {
+      background: var(--token-interactive);
+      color: #fff;
+    }
+  }
+}

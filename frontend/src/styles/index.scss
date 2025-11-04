@@ -1,0 +1,90 @@
+@use './tokens';
+
+body {
+  margin: 0;
+  font-family: var(--token-font-family-base);
+  font-size: var(--token-font-size-md);
+  line-height: var(--token-line-height-base);
+  color: var(--token-text-primary);
+  background: var(--token-layer-background);
+}
+
+#root {
+  min-height: 100vh;
+  background: var(--token-layer-background);
+}
+
+a {
+  color: var(--token-interactive);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--token-interactive-hover);
+    text-decoration: underline;
+  }
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--token-layer-background);
+}
+
+.app-header {
+  padding: var(--token-space-16) var(--token-space-24);
+  background: var(--token-layer-surface);
+  box-shadow: var(--token-shadow-soft);
+  border-bottom: 1px solid var(--token-border-subtle);
+}
+
+.app-header__title {
+  margin: 0;
+  font-size: var(--token-font-size-lg);
+  font-weight: var(--token-font-weight-semibold);
+  line-height: var(--token-line-height-tight);
+}
+
+.app-layout {
+  display: grid;
+  grid-template-columns: 16rem 1fr;
+  gap: var(--token-space-24);
+  padding: var(--token-space-24);
+  flex: 1;
+}
+
+.app-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--token-space-24);
+}
+
+.app-card {
+  background: var(--token-layer-surface);
+  border-radius: var(--token-radius-md);
+  box-shadow: var(--token-shadow-soft);
+  padding: var(--token-space-24);
+  border: 1px solid var(--token-border-subtle);
+}
+
+.app-section-title {
+  font-size: var(--token-font-size-md);
+  font-weight: var(--token-font-weight-medium);
+  margin: 0 0 var(--token-space-12);
+}
+
+.app-empty-state {
+  display: grid;
+  place-items: center;
+  padding: var(--token-space-48);
+  text-align: center;
+  color: var(--token-text-secondary);
+}
+
+@import './slds.css';
+@import './auth.css';
+@import './rates.css';
+@import './RatesTable.css';
+@import './CriteriaTable.css';
+@import './Modal.css';

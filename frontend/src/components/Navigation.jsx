@@ -1,40 +1,33 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import '../styles/slds.css';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { SideNav, SideNavItems, SideNavLink } from '@carbon/react';
+import '../styles/navigation.scss';
+
+const navItems = [
+  { label: 'BTL Calculator', path: '/calculator' },
+  { label: 'Manage Rates', path: '/rates' },
+  { label: 'Manage Criteria', path: '/criteria' },
+  { label: 'Constants', path: '/constants' }
+];
 
 function Navigation() {
   const location = useLocation();
-  
+  const navigate = useNavigate();
+
   return (
-    <nav className="slds-p-around_medium">
-      <div className="slds-grid slds-grid_vertical-align-center slds-nav-vertical">
-        <Link
-          to="/calculator"
-          className={`slds-nav-vertical__action ${location.pathname === '/calculator' ? 'active' : ''}`}
-        >
-          BTL Calculator
-        </Link>
-        <Link
-          to="/rates"
-          className={`slds-nav-vertical__action ${location.pathname === '/rates' ? 'active' : ''}`}
-        >
-          Manage Rates
-        </Link>
-        <Link
-          to="/criteria"
-          className={`slds-nav-vertical__action ${location.pathname === '/criteria' ? 'active' : ''}`}
-        >
-          Manage Criteria
-        </Link>
-        <Link
-          to="/constants"
-          className={`slds-nav-vertical__action ${location.pathname === '/constants' ? 'active' : ''}`}
-        >
-          Constants
-        </Link>
-        
-      </div>
-    </nav>
+    <SideNav aria-label="Primary navigation" expanded isChildOfHeader={false} className="app-sidenav">
+      <SideNavItems>
+        {navItems.map((item) => (
+          <SideNavLink
+            key={item.path}
+            isActive={location.pathname === item.path}
+            onClick={() => navigate(item.path)}
+          >
+            {item.label}
+          </SideNavLink>
+        ))}
+      </SideNavItems>
+    </SideNav>
   );
 }
 
