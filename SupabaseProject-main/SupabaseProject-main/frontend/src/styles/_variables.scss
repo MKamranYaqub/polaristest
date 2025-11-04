@@ -1,0 +1,16 @@
+// Centralized SCSS variables for SLDS-inspired theme
+$slds-font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+$slds-color-blue-50: rgb(1, 68, 134);
+$slds-color-blue-20: rgb(2, 126, 254);
+$slds-color-gray-1: rgb(243, 243, 243);
+$slds-color-gray-2: rgb(250, 250, 250);
+$slds-color-gray-3: rgb(224, 229, 238);
+$slds-color-gray-4: rgb(201, 199, 197);
+$slds-color-text-default: rgb(8, 7, 7);
+$slds-color-text-weak: rgb(62, 62, 60);
+$slds-border-radius: 0.25rem;
+
+// Utility spacing tokens
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;

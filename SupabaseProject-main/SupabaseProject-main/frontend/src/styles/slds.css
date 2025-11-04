@@ -1,0 +1,608 @@
+/* Import Salesforce Sans font */
+@font-face {
+  font-family: 'Salesforce Sans';
+  src: url('https://www.sfdcstatic.com/system/shared/common/assets/fonts/SalesforceSans/SalesforceSans-Regular.woff2') format('woff2'),
+       url('https://www.sfdcstatic.com/system/shared/common/assets/fonts/SalesforceSans/SalesforceSans-Regular.woff') format('woff');
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Salesforce Sans';
+  src: url('https://www.sfdcstatic.com/system/shared/common/assets/fonts/SalesforceSans/SalesforceSans-Bold.woff2') format('woff2'),
+       url('https://www.sfdcstatic.com/system/shared/common/assets/fonts/SalesforceSans/SalesforceSans-Bold.woff') format('woff');
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: 'Salesforce Sans';
+  src: url('https://www.sfdcstatic.com/system/shared/common/assets/fonts/SalesforceSans/SalesforceSans-Light.woff2') format('woff2'),
+       url('https://www.sfdcstatic.com/system/shared/common/assets/fonts/SalesforceSans/SalesforceSans-Light.woff') format('woff');
+  font-weight: 300;
+}
+
+/* Salesforce Lightning Design System inspired styles */
+:root {
+  --slds-font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --slds-color-blue-50: rgb(1, 68, 134);
+  --slds-color-blue-20: rgb(2, 126, 254);
+  --slds-color-gray-1: rgb(243, 243, 243);
+  --slds-color-gray-2: rgb(250, 250, 250);
+  --slds-color-gray-3: rgb(224, 229, 238);
+  --slds-color-gray-4: rgb(201, 199, 197);
+  --slds-color-text-default: rgb(8, 7, 7);
+  --slds-color-text-weak: rgb(62, 62, 60);
+  --slds-border-radius: 0.25rem;
+}
+
+/* Common Table Styles */
+/* Apply Salesforce Sans to all SLDS components */
+.slds-scope,
+[class*='slds-'],
+[class*='slds-'] * {
+  font-family: var(--slds-font-family);
+}
+
+/* Apply SLDS font globally for app shell and headers */
+body,
+.app-container {
+  font-family: var(--slds-font-family);
+}
+
+.slds-table {
+  background-color: white;
+  border: 1px solid var(--slds-color-gray-3);
+  border-radius: var(--slds-border-radius);
+  border-collapse: separate;
+  width: 100%;
+  font-family: var(--slds-font-family);
+}
+
+.slds-table th {
+  background: var(--slds-color-gray-2);
+  padding: 0.5rem;
+  font-weight: 600;
+  text-align: left;
+  line-height: 2;
+  color: var(--slds-color-text-weak);
+  border-bottom: 0.5px solid var(--slds-color-gray-3);
+}
+
+.slds-table td {
+  padding: 0.5rem;
+  line-height: 1.5;
+  color: var(--slds-color-text-default);
+  border-bottom: 0.5px solid var(--slds-color-gray-3);
+}
+
+.slds-table tr:hover {
+  background-color: var(--slds-color-gray-1);
+}
+
+/* Button Styles */
+.slds-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--slds-border-radius);
+  font-size: 0.8125rem;
+  line-height: 1.875rem;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.05s linear, background-color 0.05s linear;
+}
+
+.slds-button_brand {
+  padding: 0 1rem;
+  background-color: var(--slds-color-blue-50);
+  border-color: var(--slds-color-blue-50);
+  color: white;
+}
+
+.slds-button_brand:hover {
+  background-color: var(--slds-color-blue-20);
+  border-color: var(--slds-color-blue-20);
+}
+
+.slds-button_neutral {
+  padding: 0 1rem;
+  background-color: white;
+  border: 1px solid var(--slds-color-gray-4);
+  color: var(--slds-color-text-weak);
+}
+
+.slds-button_neutral:hover {
+  background-color: var(--slds-color-gray-1);
+}
+
+.slds-button_destructive {
+  padding: 0 1rem;
+  background-color: #c23934;
+  border-color: #c23934;
+  color: white;
+}
+
+.slds-button_destructive:hover {
+  background-color: #a61a14;
+  border-color: #a61a14;
+}
+
+/* Form Elements */
+.slds-form-element {
+  position: relative;
+  min-width: 0;
+  margin-bottom: 0.5rem;
+  /* Prevent form elements from shrinking and overlapping when wrapped */
+  flex: 0 0 auto;
+}
+
+/* Ensure filter controls inside wrapped SLDS grids behave predictably */
+.slds-grid.slds-wrap > .slds-form-element {
+  /* default control width; components can override inline if needed */
+  flex: 0 0 200px;
+  min-width: 160px;
+}
+
+/* Make sure inputs/selects inside filter controls take full width and don't overflow */
+.slds-grid.slds-wrap .slds-form-element__control .slds-input,
+.slds-grid.slds-wrap .slds-form-element__control .slds-select,
+.slds-grid.slds-wrap .slds-form-element__control .slds-textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Responsive: on very narrow screens let controls be full width stacked */
+@media (max-width: 680px) {
+  .slds-grid.slds-wrap > .slds-form-element {
+    flex: 0 0 100%;
+    min-width: 0;
+  }
+}
+
+.slds-form-element__label {
+  display: inline-block;
+  color: var(--slds-color-text-weak);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  margin-right: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.slds-input {
+  width: 100%;
+  padding: 0 1rem 0 0.75rem;
+  line-height: 1.875rem;
+  min-height: calc(1.875rem + (1px * 2));
+  border: 1px solid var(--slds-color-gray-4);
+  border-radius: var(--slds-border-radius);
+  background-color: white;
+  color: var(--slds-color-text-default);
+  transition: border 0.1s linear, background-color 0.1s linear;
+}
+
+.slds-input:focus {
+  outline: 0;
+  border-color: var(--slds-color-blue-20);
+  box-shadow: 0 0 3px var(--slds-color-blue-20);
+}
+
+.slds-select {
+  width: 100%;
+  padding: 0 1rem 0 0.75rem;
+  line-height: 1.875rem;
+  min-height: calc(1.875rem + (1px * 2));
+  border: 1px solid var(--slds-color-gray-4);
+  border-radius: var(--slds-border-radius);
+  background-color: white;
+  color: var(--slds-color-text-default);
+  transition: border 0.1s linear, background-color 0.1s linear;
+  font-family: var(--slds-font-family);
+}
+
+.slds-select:focus {
+  outline: 0;
+  border-color: var(--slds-color-blue-20);
+  box-shadow: 0 0 3px var(--slds-color-blue-20);
+}
+
+.slds-textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--slds-color-gray-4);
+  border-radius: var(--slds-border-radius);
+  background-color: white;
+  color: var(--slds-color-text-default);
+  transition: border 0.1s linear, background-color 0.1s linear;
+  font-family: var(--slds-font-family);
+  resize: vertical;
+}
+
+.slds-textarea:focus {
+  outline: 0;
+  border-color: var(--slds-color-blue-20);
+  box-shadow: 0 0 3px var(--slds-color-blue-20);
+}
+
+.slds-form_stacked .slds-form-element {
+  margin-bottom: 1rem;
+}
+
+/* Modal/Dialog */
+.slds-modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 9001;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.slds-modal__container {
+  position: relative;
+  background: white;
+  border-radius: 0.25rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  width: 50%;
+  max-width: 40rem;
+  min-width: 20rem;
+}
+
+.slds-modal__header {
+  position: relative;
+  border-top-right-radius: 0.25rem;
+  border-top-left-radius: 0.25rem;
+  border-bottom: 2px solid var(--slds-color-gray-3);
+  padding: 1rem;
+  text-align: center;
+}
+
+.slds-modal__content {
+  padding: 1rem;
+  overflow: auto;
+  max-height: 70vh;
+}
+
+.slds-modal__footer {
+  border-top: 2px solid var(--slds-color-gray-3);
+  padding: 0.75rem 1rem;
+  background-color: var(--slds-color-gray-1);
+  border-bottom-right-radius: 0.25rem;
+  border-bottom-left-radius: 0.25rem;
+  text-align: right;
+}
+
+.slds-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(43, 40, 38, 0.6);
+  z-index: 9000;
+}
+
+/* Navigation */
+.slds-nav-vertical {
+  width: 100%;
+  background: white;
+  border: 1px solid var(--slds-color-gray-3);
+  border-radius: var(--slds-border-radius);
+}
+
+.slds-nav-vertical__item {
+  position: relative;
+  display: flex;
+}
+
+.slds-nav-vertical__action {
+  padding: 0.5rem 1rem 0.5rem 2rem;
+  color: var(--slds-color-text-weak);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  flex: 1;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.slds-nav-vertical__action:hover {
+  background-color: var(--slds-color-gray-1);
+  color: var(--slds-color-text-default);
+}
+
+.slds-nav-vertical__action.active {
+  background-color: var(--slds-color-gray-1);
+  color: var(--slds-color-text-default);
+  font-weight: bold;
+}
+
+/* Utility Classes */
+.slds-grid {
+  display: flex;
+}
+
+.slds-wrap {
+  flex-wrap: wrap;
+}
+
+.slds-col {
+  flex: 1;
+}
+
+.slds-col_bump-left {
+  margin-left: auto;
+}
+
+.slds-grid_vertical-align-center {
+  align-items: center;
+}
+
+.slds-grid_align-center {
+  justify-content: center;
+}
+
+.slds-has-dividers_bottom > .slds-item {
+  border-bottom: 1px solid var(--slds-color-gray-3);
+}
+
+.slds-p-around_medium {
+  padding: 1rem;
+}
+
+.slds-m-bottom_small {
+  margin-bottom: 0.75rem;
+}
+
+.slds-m-bottom_medium {
+  margin-bottom: 1rem;
+}
+
+.slds-m-top_small {
+  margin-top: 0.75rem;
+}
+
+.slds-m-top_medium {
+  margin-top: 1rem;
+}
+
+.slds-m-right_small {
+  margin-right: 0.75rem;
+}
+
+.slds-m-horizontal_small {
+  margin-left: 0.75rem;
+  margin-right: 0.75rem;
+}
+
+.slds-m-around_medium {
+  margin: 1rem;
+}
+
+/* Helper / weak text: smaller and slightly grey to match design guidance */
+.slds-text-color_weak {
+  color: #6b6b6b; /* muted grey */
+  font-size: 0.8125rem; /* slightly smaller than normal label text */
+}
+
+/* Calculator grid: ensure controls match sizing with criteria controls */
+.calculator-grid .slds-form-element {
+  margin-bottom: 0.5rem;
+}
+.calculator-grid .slds-form-element__control .slds-input,
+.calculator-grid .slds-form-element__control .slds-select,
+.calculator-grid .slds-form-element__control .slds-textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+/* end calculator-grid */
+/* Table enhancements */
+.slds-table_bordered {
+  border: 0.5px solid var(--slds-color-gray-3);
+}
+
+.slds-table_cell-buffer th,
+.slds-table_cell-buffer td {
+  padding: 0.5rem 0.75rem;
+}
+
+.slds-table_cell-buffer th:first-child,
+.slds-table_cell-buffer td:first-child {
+  padding-left: 1rem;
+}
+
+.slds-table_cell-buffer th:last-child,
+.slds-table_cell-buffer td:last-child {
+  padding-right: 1rem;
+}
+
+/* Checkbox styling */
+.slds-checkbox {
+  display: inline-flex;
+  align-items: center;
+}
+
+.slds-checkbox [type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  padding: 0;
+}
+
+/* Compact card header: reduce vertical padding and heading size to make Product Setup card less tall */
+.slds-card__header {
+  padding: 0.rem 0.75rem; /* reduced from larger defaults */
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.slds-card__header .slds-text-heading_small,
+.slds-card__header h2 {
+  margin: 0;
+  font-size: 1rem; /* slightly smaller */
+  line-height: 1.25rem;
+}
+
+.slds-card__body {
+  padding: 0.75rem; /* slightly reduced body padding for a compact card */
+}
+
+/* Variant: split header with left content and right-aligned meta (e.g. Tier) */
+.slds-card__header--split {
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.slds-card__header--split .slds-card__meta {
+  text-align: right;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+/* required star for required fields */
+.slds-required {
+  color: #c23934; /* Salesforce destructive/red */
+  margin-right: 0.35rem;
+  font-weight: 600;
+}
+
+/* helper small text under section headers */
+.slds-section-help {
+  color: #6b6b6b;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Toggle switch (compact) */
+.slds-toggle {
+  display: inline-block;
+  width: 48px;
+  height: 28px;
+  position: relative;
+}
+.slds-toggle input[type="checkbox"] {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+.slds-toggle__track {
+  width: 100%;
+  height: 100%;
+  background: #e6e9ef;
+  border-radius: 999px;
+  transition: background 0.15s ease-in-out;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+.slds-toggle__handle {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.15s ease-in-out;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+}
+.slds-toggle input[type="checkbox"]:checked + .slds-toggle__track {
+  background: #1072d8 !important; /* SLDS brand blue */
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
+}
+.slds-toggle input[type="checkbox"]:checked + .slds-toggle__track .slds-toggle__handle {
+  transform: translateX(20px);
+  background: #ffffff !important;
+}
+
+/* focus state to improve accessibility and visual feedback */
+.slds-toggle input[type="checkbox"]:focus + .slds-toggle__track {
+  box-shadow: 0 0 0 4px rgba(16,114,216,0.12);
+}
+
+/* Larger, styled range input for LTV */
+.calculator-grid input[type="range"] {
+  width: 100%;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(90deg, #1072d8 0%, #1072d8 50%, #e6e9ef 50%);
+  border-radius: 999px;
+  outline: none;
+}
+.calculator-grid input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #1072d8;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  margin-top: -5px;
+}
+.calculator-grid input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #1072d8;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Compact fee inputs styling to match screenshot */
+.fee-compact .slds-form-element__label {
+  font-size: 0.85rem;
+}
+.fee-compact .slds-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  line-height: 2rem;
+  font-size: 1rem;
+}
+.fee-compact .slds-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  line-height: 2rem;
+  font-size: 1rem;
+}
+
+/* Make sure labels align and spacing matches other controls */
+.fee-compact .slds-form-element__label {
+  margin-bottom: 0.35rem;
+}
+.fee-compact .disabled-note {
+  color: #6b6b6b;
+  font-size: 0.9rem;
+  padding-left: 8px;
+}
+.fee-compact .slds-select:disabled,
+.fee-compact .slds-input:disabled {
+  background-color: #f5f6f8;
+  border-color: #e6e9ef;
+  opacity: 1;
+}
+
+/* Compact fee inputs + alignment */
+.calculator-grid.compact .slds-form-element__label {
+  font-size: 0.875rem;
+}
+.calculator-grid.compact .slds-input,
+.calculator-grid.compact .slds-select {
+  padding: 0 0.75rem;
+  line-height: 1.75rem;
+}
+
+/* Accent color for inputs and selects to match screenshot */
+.slds-input, .slds-select {
+  border: 1px solid #d8dbe0;
+}
+.slds-input:focus, .slds-select:focus {
+  border-color: #1072d8;
+  box-shadow: 0 0 0 3px rgba(16,114,216,0.08);
+}

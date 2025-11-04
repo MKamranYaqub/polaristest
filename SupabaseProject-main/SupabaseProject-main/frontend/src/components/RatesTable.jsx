@@ -1,0 +1,904 @@
+import React, { useEffect, useState } from 'react';
+import { useSupabase } from '../contexts/SupabaseContext';
+import RateEditModal from './RateEditModal';
+import BridgeFusionRates from './BridgeFusionRates';
+import '../styles/slds.css';
+
+function RatesTable() {
+  const [rates, setRates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [editingRate, setEditingRate] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedRows, setSelectedRows] = useState(new Set());
+  const [selectAll, setSelectAll] = useState(false);
+  const [activeTab, setActiveTab] = useState('BTL');
+  const [filterOptions, setFilterOptions] = useState({
+    setKeys: new Set(),
+    properties: new Set(),
+    rateTypes: new Set(),
+    tiers: new Set(),
+    products: new Set(),
+    productFees: new Set(),
+    initialTerms: new Set(),
+    fullTerms: new Set()
+  });
+  const itemsPerPage = 10;
+  const [filters, setFilters] = useState({
+    set_key: '',
+    property: '',
+    rate_type: '',
+    tier: '',
+    product: '',
+    product_fee: '',
+    initial_term: '',
+    full_term: '',
+    is_retention: ''
+  });
+  const [sortField, setSortField] = useState('set_key');
+  const [sortDir, setSortDir] = useState('asc'); // 'asc' or 'desc'
+
+  const { supabase } = useSupabase();
+
+  const fetchRates = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('Fetching rates from Supabase...');
+      
+      // First, fetch all data to populate filter options
+      const { data: allData, error: allDataError } = await supabase
+        .from('rates_flat')
+        .select('set_key, property, rate_type, tier, product, product_fee, initial_term, full_term');
+      
+      if (allDataError) throw allDataError;
+
+      // Update filter options from all data
+      setFilterOptions({
+        setKeys: new Set(allData.map(r => r.set_key).filter(Boolean)),
+        properties: new Set(allData.map(r => r.property).filter(Boolean)),
+        rateTypes: new Set(allData.map(r => r.rate_type).filter(Boolean)),
+        tiers: new Set(allData.map(r => r.tier).filter(Boolean)),
+        products: new Set(allData.map(r => r.product).filter(Boolean)),
+        productFees: new Set(allData.map(r => r.product_fee).filter(Boolean)),
+        initialTerms: new Set(allData.map(r => r.initial_term).filter(Boolean)),
+        fullTerms: new Set(allData.map(r => r.full_term).filter(Boolean))
+      });
+
+      // Then fetch filtered data
+      // Use a generic select('*') so the app stays resilient if the DB is missing
+      // recently-added columns (e.g. migrations haven't been applied yet).
+      let query = supabase
+        .from('rates_flat')
+        .select('*');
+      
+      // Apply filters
+  if (filters.set_key) query = query.eq('set_key', filters.set_key);
+      if (filters.property) query = query.eq('property', filters.property);
+
+      // Retention filter (accepts 'Yes' / 'No' / boolean-like values)
+      if (filters.is_retention !== '' && filters.is_retention !== null && filters.is_retention !== undefined) {
+        const v = String(filters.is_retention).toLowerCase();
+        if (['yes', 'true', '1'].includes(v)) {
+          query = query.eq('is_retention', true);
+        } else if (['no', 'false', '0'].includes(v)) {
+          query = query.eq('is_retention', false);
+        }
+      }
+
+  // rate_type, tier, product_fee and term-like fields may be numeric in DB. Coerce numeric strings when filtering.
+  const numericFields = ['rate_type', 'tier', 'product_fee', 'initial_term', 'full_term'];
+      const applyFilter = (field) => {
+        const val = filters[field];
+        if (val === '' || val === null || val === undefined) return;
+        if (numericFields.includes(field) && !Number.isNaN(Number(val))) {
+          query = query.eq(field, Number(val));
+        } else {
+          query = query.eq(field, val);
+        }
+      };
+
+  applyFilter('rate_type');
+  applyFilter('tier');
+  applyFilter('product_fee');
+  applyFilter('initial_term');
+  applyFilter('full_term');
+      if (filters.product) query = query.eq('product', filters.product);
+      
+      const { data, error } = await query.order('set_key', { ascending: true });
+      
+      if (error) throw error;
+
+      console.log(`Fetched ${data.length} rates from Supabase`);
+      setRates(data);
+      
+      if (error) throw error;
+      setRates(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRates();
+  }, [filters]);
+
+  const handleEdit = (rate) => {
+    setEditingRate(rate);
+  };
+
+  const handleSave = async (updatedRate) => {
+    try {
+      const { error } = await supabase
+        .from('rates_flat')
+        .update({
+          rate: updatedRate.rate,
+          product_fee: updatedRate.product_fee,
+          is_tracker: updatedRate.is_tracker,
+          initial_term: updatedRate.initial_term ?? null,
+          full_term: updatedRate.full_term ?? null,
+          // Add other fields as needed
+        })
+        .eq('id', updatedRate.id);
+
+      if (error) throw error;
+      
+      setEditingRate(null);
+      fetchRates(); // Refresh the table
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
+  };
+
+  if (loading) {
+    return (
+      <div className="slds-spinner_container">
+        <div className="slds-spinner slds-spinner_medium">
+          <div className="slds-spinner__dot-a"></div>
+          <div className="slds-spinner__dot-b"></div>
+        </div>
+        <div className="slds-text-heading_small slds-m-top_medium">Loading rates from Supabase...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="slds-box slds-theme_error slds-m-around_medium">
+        <div>
+          <h3 className="slds-text-heading_medium">Error Loading Rates</h3>
+          <p className="slds-m-top_small">{error.message || error}</p>
+          <button className="slds-button slds-button_brand slds-m-top_medium" onClick={() => fetchRates()}>
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this rate?')) {
+      try {
+        const { error } = await supabase
+          .from('rates_flat')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+        fetchRates();
+        setSelectedRows(new Set());
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const selectedIds = Array.from(selectedRows);
+    if (selectedIds.length === 0) {
+      alert('Please select at least one rate to delete');
+      return;
+    }
+
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected rates?`)) {
+      try {
+        const { error } = await supabase
+          .from('rates_flat')
+          .delete()
+          .in('id', selectedIds);
+
+        if (error) throw error;
+        fetchRates();
+        setSelectedRows(new Set());
+        setSelectAll(false);
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+  };
+
+  const toggleSelectAll = (checked) => {
+    setSelectAll(checked);
+    if (checked) {
+      const currentPageIds = getCurrentPageRates().map(rate => rate.id);
+      setSelectedRows(new Set(currentPageIds));
+    } else {
+      setSelectedRows(new Set());
+    }
+  };
+
+  const toggleSelectRow = (id) => {
+    const newSelected = new Set(selectedRows);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedRows(newSelected);
+    setSelectAll(getCurrentPageRates().every(rate => newSelected.has(rate.id)));
+  };
+
+  const getCurrentPageRates = () => {
+    // Apply sorting before paging
+    const sorted = [...rates];
+    if (sortField) {
+      const compareValues = (a, b) => {
+        if (a === undefined || a === null) return b === undefined || b === null ? 0 : 1;
+        if (b === undefined || b === null) return -1;
+        // try numeric compare
+        const na = Number(String(a).replace(/[^0-9.-]/g, ''));
+        const nb = Number(String(b).replace(/[^0-9.-]/g, ''));
+        if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+        const sa = String(a).toLowerCase();
+        const sb = String(b).toLowerCase();
+        if (sa < sb) return -1;
+        if (sa > sb) return 1;
+        return 0;
+      };
+      sorted.sort((x, y) => {
+        const res = compareValues(x[sortField], y[sortField]);
+        return sortDir === 'asc' ? res : -res;
+      });
+    }
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return sorted.slice(startIndex, endIndex);
+  };
+
+  const totalPages = Math.ceil(rates.length / itemsPerPage);
+
+  const handleAdd = () => {
+    setEditingRate({
+      id: null,
+      set_key: '',
+      rate_type: '',
+      is_retention: false,
+      property: '',
+      tier: '',
+      product: '',
+      product_fee: 0,
+      initial_term: null,
+      full_term: null,
+      rate: 0,
+      max_ltv: 0,
+      revert_index: '',
+      revert_margin: 0,
+      min_loan: 0,
+      max_loan: 0,
+      max_rolled_months: 0,
+      max_defer_int: 0,
+      min_icr: 0,
+      is_tracker: false
+    });
+  };
+
+  const changeSort = (field) => {
+    if (sortField === field) {
+      setSortDir(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDir('asc');
+    }
+  };
+
+  const handleImport = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Small CSV parser that handles quoted fields and CRLF
+    function parseCsv(text) {
+      const rows = [];
+      let cur = '';
+      let row = [];
+      let i = 0;
+      let inQuotes = false;
+
+      while (i < text.length) {
+        const ch = text[i];
+        const next = text[i + 1];
+
+        if (ch === '"') {
+          if (inQuotes && next === '"') {
+            // escaped quote
+            cur += '"';
+            i += 2;
+            continue;
+          }
+          inQuotes = !inQuotes;
+          i++;
+          continue;
+        }
+
+        if (!inQuotes && (ch === ',')) {
+          row.push(cur);
+          cur = '';
+          i++;
+          continue;
+        }
+
+        if (!inQuotes && (ch === '\n' || (ch === '\r' && text[i + 1] === '\n'))) {
+          // end of row
+          row.push(cur);
+          rows.push(row.map(c => (c === undefined ? '' : c)));
+          cur = '';
+          row = [];
+          if (ch === '\r' && text[i + 1] === '\n') i += 2; else i++;
+          continue;
+        }
+
+        cur += ch;
+        i++;
+      }
+
+      // push last field/row if any
+      if (cur !== '' || row.length > 0) {
+        row.push(cur);
+        rows.push(row.map(c => (c === undefined ? '' : c)));
+      }
+
+      return rows;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const text = e.target.result;
+        const rows = parseCsv(text);
+        if (rows.length < 1) {
+          setError('CSV appears empty');
+          return;
+        }
+
+        // Normalize headers
+        const rawHeaders = rows[0].map(h => (h || '').toString().trim());
+        const headers = rawHeaders.map(h => h.toLowerCase().replace(/\s+/g, '_'));
+
+        // Helper to map common header variants
+        const normalizeKey = (key) => {
+          if (!key) return key;
+          const k = key.replace(/-/g, '_');
+          if (k === 'scope') return 'property';
+          // add more mappings if needed
+          return k;
+        };
+
+        const dataRows = rows.slice(1).filter(r => r.some(cell => (cell || '').toString().trim() !== ''));
+        const chunkSize = 200; // upsert in batches
+
+        const toNumeric = s => {
+          if (s === null || s === undefined || s === '') return null;
+          const n = Number(String(s).replace(/[^0-9.-]/g, ''));
+          return Number.isFinite(n) ? n : null;
+        };
+
+        const toBoolean = s => {
+          if (s === null || s === undefined || s === '') return null;
+          const v = String(s).toLowerCase().trim();
+          if (['yes', 'true', '1'].includes(v)) return true;
+          if (['no', 'false', '0'].includes(v)) return false;
+          return null;
+        };
+
+        const records = dataRows.map(row => {
+          const obj = {};
+          for (let i = 0; i < headers.length; i++) {
+            const raw = row[i] === undefined ? '' : row[i];
+            const key = normalizeKey(headers[i]);
+            if (!key) continue;
+            // Convert common numeric fields
+            if (['rate', 'product_fee', 'max_ltv', 'revert_margin', 'min_loan', 'max_loan', 'max_rolled_months', 'max_defer_int', 'min_icr', 'max_top_slicing', 'admin_fee', 'erc_1', 'erc_2', 'erc_3', 'erc_4', 'erc_5', 'floor_rate', 'proc_fee', 'term', 'initial_term', 'full_term'].includes(key)) {
+              obj[key] = toNumeric(raw);
+            } else if (['is_retention', 'is_tracker', 'is_margin'].includes(key)) {
+              obj[key] = toBoolean(raw);
+            } else {
+              obj[key] = raw === undefined ? null : raw.toString().trim();
+            }
+          }
+          return obj;
+        }).filter(r => r.set_key || r.setkey || r.set_key === 0);
+
+        // Map accidental header names
+        const mappedRecords = records.map(r => {
+          if (r.scope && !r.property) {
+            r.property = r.scope;
+            delete r.scope;
+          }
+          // ensure set_key exists as string
+          if (!r.set_key && r.setkey) {
+            r.set_key = r.setkey;
+            delete r.setkey;
+          }
+          return r;
+        });
+        // Basic validation: ensure we have at least one record with required keys
+        if (!mappedRecords || mappedRecords.length === 0) {
+          setError('No valid records found in CSV. Ensure each row includes at least one of: set_key / setkey, property, tier, product.');
+          // clear file input so user can try again
+          const fileEl = document.getElementById('csv-import'); if (fileEl) fileEl.value = '';
+          return;
+        }
+
+        // Remove any DB-managed fields (id, timestamps) before upsert
+        const cleanedRecords = mappedRecords.map(r => {
+          const rec = { ...r };
+          if ('created_at' in rec) delete rec.created_at;
+          if ('updated_at' in rec) delete rec.updated_at;
+          if ('id' in rec) delete rec.id;
+
+          // Infer initial_term if missing (2yr -> 24, 3yr -> 36), fallback to term/term_months
+          if (rec.initial_term === null || rec.initial_term === undefined || rec.initial_term === '') {
+            const productName = String(rec.product || '').toLowerCase();
+            if (productName.includes('2yr')) rec.initial_term = 24;
+            else if (productName.includes('3yr')) rec.initial_term = 36;
+            else if (rec.term_months) rec.initial_term = Number(rec.term_months);
+            else if (rec.term) rec.initial_term = Number(rec.term);
+            else rec.initial_term = null;
+          } else {
+            rec.initial_term = Number(rec.initial_term);
+          }
+
+          // Default full_term to 120 months if missing
+          if (rec.full_term === null || rec.full_term === undefined || rec.full_term === '') {
+            rec.full_term = 120;
+          } else {
+            rec.full_term = Number(rec.full_term);
+          }
+
+          return rec;
+        });
+
+        // Upsert in chunks with onConflict to avoid duplicates
+        for (let i = 0; i < cleanedRecords.length; i += chunkSize) {
+          const chunk = cleanedRecords.slice(i, i + chunkSize);
+          const { data, error } = await supabase
+            .from('rates_flat')
+            .upsert(chunk, { onConflict: 'set_key,property,tier,product,term' });
+
+          if (error) {
+            console.error('Supabase upsert error:', error);
+            setError(error.message || JSON.stringify(error));
+            return;
+          }
+
+          // Optionally log progress
+          console.log(`Imported ${Math.min(i + chunkSize, cleanedRecords.length)} / ${cleanedRecords.length}`);
+        }
+
+        // Refresh table after import
+        fetchRates();
+      } catch (err) {
+        console.error('Import failed:', err);
+        setError(err.message || String(err));
+      }
+    };
+
+    reader.readAsText(file, 'utf-8');
+  };
+
+  const formatCsvValue = (value) => {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    if (typeof value === 'number') {
+      if (value === 0) return '0';
+      if (!value) return '';
+      return value.toString();
+    }
+    const stringValue = String(value);
+    // If the value contains comma, quotes, or newlines, wrap it in quotes and escape existing quotes
+    if (/[,"\n\r]/.test(stringValue)) {
+      return `"${stringValue.replace(/"/g, '""')}"`;
+    }
+    return stringValue;
+  };
+
+  const formatExportField = (header, rate) => {
+    if (!rate) return '';
+    switch (header) {
+      case 'rate':
+        return formatCsvValue(rate.rate ? `${rate.rate}%` : '');
+      case 'max_ltv':
+        return formatCsvValue(rate.max_ltv ? `${rate.max_ltv}%` : '');
+      case 'min_loan':
+      case 'max_loan':
+        {
+          const v = rate[header];
+          if (v === null || v === undefined || v === '') return '';
+          try { return formatCsvValue(`£${Number(v).toLocaleString()}`); } catch (e) { return formatCsvValue(v); }
+        }
+      case 'is_retention':
+      case 'is_tracker':
+        return formatCsvValue(rate[header] ? 'Yes' : 'No');
+      case 'product_fee':
+      case 'proc_fee':
+        return formatCsvValue(rate[header] !== null && rate[header] !== undefined && rate[header] !== '' ? `${rate[header]}%` : '');
+      case 'initial_term':
+      case 'full_term':
+        return formatCsvValue(rate[header] !== null && rate[header] !== undefined && rate[header] !== '' ? `${rate[header]}` : '');
+      case 'min_icr':
+        return formatCsvValue(rate.min_icr ? `${rate.min_icr}%` : '');
+      default:
+        return formatCsvValue(rate[header]);
+    }
+  };
+
+  const handleExport = () => {
+    const headers = [
+      'set_key', 'rate_type', 'is_retention', 'property', 'tier',
+      'product', 'product_fee', 'initial_term', 'full_term', 'rate', 'max_ltv', 'revert_index',
+      'revert_margin', 'min_loan', 'max_loan', 'max_rolled_months',
+      'max_defer_int', 'min_icr', 'is_tracker',
+      'max_top_slicing', 'admin_fee', 'erc_1', 'erc_2', 'erc_3', 'erc_4', 'erc_5', 'status', 'floor_rate', 'proc_fee'
+    ];
+    
+    // Format the header row
+    const headerRow = headers.map(header => formatCsvValue(header)).join(',');
+    
+    // Format the data rows
+    const dataRows = rates.map(rate => 
+      headers.map(header => formatExportField(header, rate)).join(',')
+    );
+    
+    // Combine headers and data with Windows-style line endings
+    const csvContent = [headerRow, ...dataRows].join('\r\n');
+
+    // Add BOM for Excel compatibility
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const date = new Date().toISOString().split('T')[0];
+    a.download = `rates_${date}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  
+  return (
+    <div className="slds-p-around_medium">
+      <div className="slds-m-bottom_medium">
+        <div className="slds-button-group" role="tablist">
+          <button className={`slds-button ${activeTab === 'BTL' ? 'slds-button_brand' : 'slds-button_neutral'}`} onClick={() => setActiveTab('BTL')}>BTL Rates</button>
+          <button className={`slds-button ${activeTab === 'BRIDGE' ? 'slds-button_brand' : 'slds-button_neutral'}`} onClick={() => setActiveTab('BRIDGE')}>Bridge & Fusion Rates</button>
+        </div>
+      </div>
+
+      {activeTab === 'BRIDGE' ? (
+        // lazy-load the bridge & fusion rates component
+        <React.Suspense fallback={<div>Loading Bridge & Fusion rates...</div>}>
+          <BridgeFusionRates />
+        </React.Suspense>
+      ) : (
+        <>
+      <div className="slds-grid slds-grid_vertical-align-center slds-m-bottom_medium">
+        <div className="slds-col">
+          <button className="slds-button slds-button_brand slds-m-right_small" onClick={handleAdd}>
+            Add New Product
+          </button>
+          <input
+            type="file"
+            accept=".csv"
+            onChange={handleImport}
+            style={{ display: 'none' }}
+            id="csv-import"
+          />
+          <button className="slds-button slds-button_neutral slds-m-right_small" onClick={() => document.getElementById('csv-import').click()}>
+            Import CSV
+          </button>
+          <button className="slds-button slds-button_neutral slds-m-right_small" onClick={handleExport}>
+            Export CSV
+          </button>
+          {selectedRows.size > 0 && (
+            <button className="slds-button slds-button_destructive" onClick={handleBulkDelete}>
+              Delete Selected ({selectedRows.size})
+            </button>
+          )}
+          <span className="slds-m-left_small slds-text-title">Total rows: {rates.length}</span>
+        </div>
+        <div className="slds-col_bump-left">
+          <div className="slds-grid slds-grid_vertical-align-center">
+            <button 
+              className="slds-button slds-button_neutral"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+            <span className="slds-m-horizontal_small">Page {currentPage} of {totalPages}</span>
+            <button 
+              className="slds-button slds-button_neutral"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="slds-grid slds-wrap slds-m-bottom_medium" style={{ gap: '0.5rem' }}>
+          <div className="slds-form-element" style={{ minWidth: '200px' }}>
+            <label className="slds-form-element__label">Set Key:</label>
+            <div className="slds-form-element__control">
+              <select
+                className="slds-select"
+                value={filters.set_key}
+                onChange={(e) => handleFilterChange('set_key', e.target.value)}
+              >
+                <option value="">All Set Keys</option>
+                {Array.from(filterOptions.setKeys).sort().map(sk => (
+                  <option key={sk} value={sk}>{sk}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+        <div className="slds-form-element" style={{ minWidth: '150px' }}>
+          <label className="slds-form-element__label">Property:</label>
+          <div className="slds-form-element__control">
+            <select 
+              className="slds-select"
+              value={filters.property}
+              onChange={(e) => handleFilterChange('property', e.target.value)}
+            >
+              <option value="">All Properties</option>
+              {Array.from(filterOptions.properties).sort().map(prop => (
+                <option key={prop} value={prop}>{prop}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="slds-form-element" style={{ minWidth: '150px' }}>
+          <label className="slds-form-element__label">Rate Type:</label>
+          <div className="slds-form-element__control">
+            <select
+              className="slds-select"
+              value={filters.rate_type}
+              onChange={(e) => handleFilterChange('rate_type', e.target.value)}
+            >
+              <option value="">All Rate Types</option>
+              {Array.from(filterOptions.rateTypes).sort().map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="slds-form-element" style={{ minWidth: '120px' }}>
+          <label className="slds-form-element__label">Retention?</label>
+          <div className="slds-form-element__control">
+            <select
+              className="slds-select"
+              value={filters.is_retention}
+              onChange={(e) => handleFilterChange('is_retention', e.target.value)}
+            >
+              <option value="">All</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="slds-form-element" style={{ minWidth: '150px' }}>
+          <label className="slds-form-element__label">Tier:</label>
+          <div className="slds-form-element__control">
+            <select
+              className="slds-select"
+              value={filters.tier}
+              onChange={(e) => handleFilterChange('tier', e.target.value)}
+            >
+              <option value="">All Tiers</option>
+              {Array.from(filterOptions.tiers).sort().map(tier => (
+                <option key={tier} value={tier}>{tier}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="slds-form-element" style={{ minWidth: '150px' }}>
+          <label className="slds-form-element__label">Product:</label>
+          <div className="slds-form-element__control">
+            <select
+              className="slds-select"
+              value={filters.product}
+              onChange={(e) => handleFilterChange('product', e.target.value)}
+            >
+              <option value="">All Products</option>
+              {Array.from(filterOptions.products).sort().map(product => (
+                <option key={product} value={product}>{product}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="slds-form-element" style={{ minWidth: '150px' }}>
+          <label className="slds-form-element__label">Product Fee:</label>
+          <div className="slds-form-element__control">
+            <select
+              className="slds-select"
+              value={filters.product_fee}
+              onChange={(e) => handleFilterChange('product_fee', e.target.value)}
+            >
+              <option value="">All Product Fees</option>
+              {Array.from(filterOptions.productFees).sort((a, b) => a - b).map(fee => (
+                <option key={fee} value={fee}>{fee}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="slds-form-element" style={{ minWidth: '150px' }}>
+          <label className="slds-form-element__label">Initial Term (months):</label>
+          <div className="slds-form-element__control">
+            <select
+              className="slds-select"
+              value={filters.initial_term}
+              onChange={(e) => handleFilterChange('initial_term', e.target.value)}
+            >
+              <option value="">All</option>
+              {Array.from(filterOptions.initialTerms).sort((a, b) => a - b).map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="slds-form-element" style={{ minWidth: '150px' }}>
+          <label className="slds-form-element__label">Full Term (months):</label>
+          <div className="slds-form-element__control">
+            <select
+              className="slds-select"
+              value={filters.full_term}
+              onChange={(e) => handleFilterChange('full_term', e.target.value)}
+            >
+              <option value="">All</option>
+              {Array.from(filterOptions.fullTerms).sort((a, b) => a - b).map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+        
+
+      <div style={{ overflowX: 'auto' }}>
+        <table className="slds-table slds-table_bordered slds-table_cell-buffer">
+          <thead>
+            <tr>
+              <th>
+                <input
+                  type="checkbox"
+                  checked={selectAll}
+                  onChange={(e) => toggleSelectAll(e.target.checked)}
+                />
+              </th>
+              <th onClick={() => changeSort('set_key')} style={{ cursor: 'pointer' }}>Set Key {sortField === 'set_key' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('rate_type')} style={{ cursor: 'pointer' }}>Rate Type {sortField === 'rate_type' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th>Retention?</th>
+              <th onClick={() => changeSort('property')} style={{ cursor: 'pointer' }}>Property {sortField === 'property' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('tier')} style={{ cursor: 'pointer' }}>Tier {sortField === 'tier' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('product')} style={{ cursor: 'pointer' }}>Product {sortField === 'product' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th>Product Fee</th>
+              <th onClick={() => changeSort('initial_term')} style={{ cursor: 'pointer' }}>Initial Term {sortField === 'initial_term' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('full_term')} style={{ cursor: 'pointer' }}>Full Term {sortField === 'full_term' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('rate')} style={{ cursor: 'pointer' }}>Rate (%) {sortField === 'rate' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('max_ltv')} style={{ cursor: 'pointer' }}>Max LTV {sortField === 'max_ltv' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th>Revert Index</th>
+              <th>Revert Margin</th>
+              <th>Min Loan</th>
+              <th>Max Loan</th>
+              <th>Max Rolled Months</th>
+              <th>Max Defer Int</th>
+              <th>Min ICR</th>
+              <th>Tracker?</th>
+              <th>Max Top Slicing</th>
+              <th>Admin Fee</th>
+              <th>ERC 1</th>
+              <th>ERC 2</th>
+              <th>ERC 3</th>
+              <th>ERC 4</th>
+              <th>ERC 5</th>
+              <th>Status</th>
+              <th>Floor Rate</th>
+              <th>Proc Fee</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {getCurrentPageRates().map(rate => (
+              <tr key={rate.id}>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={selectedRows.has(rate.id)}
+                    onChange={() => toggleSelectRow(rate.id)}
+                  />
+                </td>
+                <td>{rate.set_key}</td>
+                <td>{rate.rate_type}</td>
+                <td>{rate.is_retention ? 'Yes' : 'No'}</td>
+                <td>{rate.property}</td>
+                <td>{rate.tier}</td>
+                <td>{rate.product}</td>
+                <td>{rate.product_fee}</td>
+                <td>{rate.initial_term ?? ''}</td>
+                <td>{rate.full_term ?? ''}</td>
+                <td>{rate.rate}%</td>
+                <td>{rate.max_ltv}%</td>
+                <td>{rate.revert_index}</td>
+                <td>{rate.revert_margin}</td>
+                <td>£{rate.min_loan?.toLocaleString()}</td>
+                <td>£{rate.max_loan?.toLocaleString()}</td>
+                <td>{rate.max_rolled_months}</td>
+                <td>{rate.max_defer_int}</td>
+                <td>{rate.min_icr}%</td>
+                <td>{rate.is_tracker ? 'Yes' : 'No'}</td>
+                <td>{rate.max_top_slicing ?? ''}</td>
+                <td>{rate.admin_fee ?? ''}</td>
+                <td>{rate.erc_1 ?? ''}</td>
+                <td>{rate.erc_2 ?? ''}</td>
+                <td>{rate.erc_3 ?? ''}</td>
+                <td>{rate.erc_4 ?? ''}</td>
+                <td>{rate.erc_5 ?? ''}</td>
+                <td>{rate.status ?? ''}</td>
+                <td>{rate.floor_rate ?? ''}</td>
+                <td>{rate.proc_fee ?? ''}</td>
+                <td>
+                  <div className="slds-grid slds-grid_align-center" style={{ gap: '0.25rem' }}>
+                    <button className="slds-button slds-button_neutral" onClick={() => handleEdit(rate)}>
+                      Edit
+                    </button>
+                    <button className="slds-button slds-button_destructive" onClick={() => handleDelete(rate.id)}>
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {editingRate && (
+        <RateEditModal
+          rate={editingRate}
+          onSave={handleSave}
+          onCancel={() => setEditingRate(null)}
+          isNew={!editingRate.id}
+        />
+      )}
+      </>
+      )}
+    </div>
+  );
+}
+
+export default RatesTable;

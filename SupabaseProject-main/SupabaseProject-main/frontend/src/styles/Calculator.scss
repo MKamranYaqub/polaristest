@@ -1,0 +1,424 @@
+@import './variables';
+
+// Calculator-specific SCSS (SLDS-compliant)
+.calculator-container {
+  font-family: $slds-font-family;
+  padding: $spacing-md;
+  max-width: 100%;
+}
+
+// Top filters row (inline, no card)
+.top-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+  padding: $spacing-md;
+  background: white;
+  border: 1px solid $slds-color-gray-3;
+  border-radius: $slds-border-radius;
+  flex-wrap: wrap;
+
+  .slds-form-element {
+    flex: 0 0 auto;
+    min-width: 150px;
+
+    &:nth-child(2),
+    &:nth-child(3) {
+      min-width: 280px;
+    }
+  }
+
+  .tier-display {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-left: auto;
+    
+    .tier-label {
+      font-size: 0.75rem;
+      color: $slds-color-text-weak;
+      margin-bottom: 0.25rem;
+    }
+    
+    .tier-value {
+      font-size: 1rem;
+      color: $slds-color-text-default;
+    }
+  }
+}
+
+// Collapsible section (accordion-like)
+.collapsible-section {
+  background: white;
+  border: 1px solid $slds-color-gray-3;
+  border-radius: $slds-border-radius;
+  margin-bottom: $spacing-md;
+  overflow: hidden;
+}
+
+.collapsible-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem $spacing-md;
+  background: $slds-color-gray-1;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+  
+  &:hover {
+    background: darken($slds-color-gray-1, 2%);
+  }
+  
+  .header-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: $slds-color-text-default;
+    margin: 0;
+  }
+  
+  .chevron-icon {
+    width: 1rem;
+    height: 1rem;
+    transition: transform 0.2s ease;
+    fill: $slds-color-text-weak;
+    
+    &.expanded {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.collapsible-body {
+  padding: $spacing-md;
+  background: white;
+  
+  &.collapsed {
+    display: none;
+  }
+}
+
+// Criteria grid (responsive 4-column)
+.criteria-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $spacing-md;
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Loan details grid (responsive multi-column)
+.loan-details-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+  
+  .slds-form-element {
+    min-width: 0; // Prevent grid items from overflowing
+  }
+
+  .slds-input,
+  .slds-select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  
+  @media (max-width: 1600px) {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  
+  @media (max-width: 1400px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  
+  @media (max-width: 600px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+// Fees section - full width below main grid
+.fees-section {
+  border-top: 1px solid $slds-color-gray-3;
+  padding-top: $spacing-md;
+  margin-top: $spacing-md;
+
+  .fees-row {
+    display: grid;
+    // Three columns: [toggle] [Fee calculated as] [Additional fee amount]
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0; // Remove gap between fee fields
+    align-items: start;
+
+    .slds-form-element {
+      min-width: 0;
+      padding-right: $spacing-md; // Add padding to create controlled spacing
+    }
+
+    .slds-input,
+    .slds-select {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    // Keep the layout stable when toggle is off
+    .fees-collapsed {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .modern-switch {
+    // Toggle occupies a single column so the next field is immediately adjacent
+    grid-column: span 1;
+
+    @media (max-width: 1200px) {
+      // With 2 columns at this breakpoint, keep the toggle to 1 column as well
+      grid-column: span 1;
+    }
+
+    @media (max-width: 768px) {
+      grid-column: span 1;
+    }
+  }
+}
+
+// Modern toggle switch (SLDS-style)
+.modern-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  
+  .switch-track {
+    width: 51px;
+    height: 28px;
+    border-radius: 14px;
+    border: none;
+    padding: 0;
+    background: #c9c9c9;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    position: relative;
+    flex-shrink: 0;
+    
+    &.checked {
+      background: #0176d3;
+    }
+    
+    .switch-thumb {
+      position: absolute;
+      left: 2px;
+      display: block;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      transform: translateX(0);
+      transition: transform 0.15s ease;
+      
+      &.checked {
+        transform: translateX(23px);
+      }
+    }
+  }
+  
+  .switch-label {
+    font-size: 0.875rem;
+    color: $slds-color-text-default;
+    line-height: 1.4;
+  }
+}
+
+// Range toggle buttons (Core / Specialist)
+.range-toggle-container {
+  margin-top: $spacing-md;
+  background: white;
+  border: 1px solid $slds-color-gray-3;
+  border-radius: $slds-border-radius;
+  overflow: hidden;
+}
+
+.range-toggle-buttons {
+  display: flex;
+  gap: 0;
+  width: 100%;
+  
+  .range-button {
+    flex: 1;
+    padding: 0.875rem 1.5rem;
+    background: white;
+    border: none;
+    border-right: 1px solid $slds-color-gray-3;
+    color: $slds-color-text-default;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: $slds-font-family;
+    
+    &:last-child {
+      border-right: none;
+    }
+    
+    &:hover:not(.active) {
+      background: $slds-color-gray-1;
+    }
+    
+    &.active {
+      background: #0176d3;
+      color: white;
+      font-weight: 600;
+    }
+  }
+}
+
+// Rates display
+.rates-display {
+  padding: $spacing-md;
+  border-top: 1px solid $slds-color-gray-3;
+
+  .rates-count {
+    font-size: 0.875rem;
+    color: $slds-color-text-weak;
+    margin-bottom: $spacing-md;
+  }
+
+  .rate-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid $slds-color-gray-3;
+    font-size: 0.9375rem;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    strong {
+      font-weight: 600;
+      color: $slds-color-text-default;
+    }
+
+    .rate-fee {
+      color: $slds-color-text-weak;
+      font-size: 0.875rem;
+    }
+  }
+
+  .no-rates {
+    padding: $spacing-md;
+    text-align: center;
+    color: $slds-color-text-weak;
+    font-style: italic;
+  }
+}
+
+// Info icon + tooltip
+.info-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  
+  .info-icon-button {
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+  
+  .info-tooltip {
+    position: absolute;
+    left: 110%;
+    top: 50%;
+    transform: translateY(-50%);
+    min-width: 180px;
+    max-width: 320px;
+    background: white;
+    color: $slds-color-text-default;
+    border: 1px solid #0176d3;
+    border-radius: $slds-border-radius;
+    padding: 0.5rem 0.75rem;
+    box-shadow: 0 4px 12px rgba(1, 118, 211, 0.1);
+    z-index: 1100;
+    white-space: normal;
+    font-size: 0.8125rem;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 150ms ease, visibility 150ms ease;
+    
+    &.visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+  }
+}
+
+// Helper text below inputs
+.helper-text {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #6b6b6b;
+  line-height: 1.4;
+}
+
+// Fee inline row
+.fee-inline-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+// Compact form element for fees
+.fee-form-element {
+  min-width: 140px;
+  flex: 0 0 auto;
+}
+
+// Required asterisk
+.required-asterisk {
+  color: #c23934;
+  margin-right: 0.25rem;
+  font-weight: 600;
+}

@@ -1,0 +1,172 @@
+import React, { useState } from 'react';
+import '../styles/slds.css';
+
+function BridgeRateEditModal({ rate, onSave, onCancel }) {
+  const [formData, setFormData] = useState({ ...rate });
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // cast numeric fields
+    const out = {
+      ...formData,
+      rate: formData.rate === '' || formData.rate === null ? null : parseFloat(formData.rate),
+      product_fee: formData.product_fee === '' || formData.product_fee === null ? null : Number(formData.product_fee),
+      initial_term: formData.initial_term === '' || formData.initial_term === null ? null : Number(formData.initial_term),
+      full_term: formData.full_term === '' || formData.full_term === null ? null : Number(formData.full_term),
+      min_term: formData.min_term === '' || formData.min_term === null ? null : Number(formData.min_term),
+      max_term: formData.max_term === '' || formData.max_term === null ? null : Number(formData.max_term),
+      min_rolled_months: formData.min_rolled_months === '' || formData.min_rolled_months === null ? null : Number(formData.min_rolled_months),
+      max_rolled_months: formData.max_rolled_months === '' || formData.max_rolled_months === null ? null : Number(formData.max_rolled_months),
+      min_loan: formData.min_loan === '' || formData.min_loan === null ? null : Number(formData.min_loan),
+      max_loan: formData.max_loan === '' || formData.max_loan === null ? null : Number(formData.max_loan),
+      min_ltv: formData.min_ltv === '' || formData.min_ltv === null ? null : Number(formData.min_ltv),
+      max_ltv: formData.max_ltv === '' || formData.max_ltv === null ? null : Number(formData.max_ltv),
+      min_icr: formData.min_icr === '' || formData.min_icr === null ? null : Number(formData.min_icr),
+      max_defer_int: formData.max_defer_int === '' || formData.max_defer_int === null ? null : Number(formData.max_defer_int),
+    };
+    onSave(out);
+  };
+
+  return (
+    <>
+      <div className="slds-backdrop slds-backdrop_open" />
+      <div className="slds-modal slds-fade-in-open">
+        <div className="slds-modal__container">
+          <div className="slds-modal__header">
+            <button className="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onClick={onCancel} title="Close">
+              <span className="slds-assistive-text">Close</span>
+            </button>
+            <h2 className="slds-text-heading_medium">{rate && rate.id ? 'Edit Bridge/Fusion Rate' : 'Add Bridge/Fusion Rate'}</h2>
+          </div>
+          <div className="slds-modal__content slds-p-around_medium">
+            <form onSubmit={handleSubmit} className="slds-form slds-form_stacked">
+              <div className="slds-form-element">
+                <label className="slds-form-element__label">Set Key</label>
+                <div className="slds-form-element__control">
+                  <input name="set_key" value={formData.set_key || ''} onChange={handleChange} className="slds-input" required />
+                </div>
+              </div>
+
+              <div className="slds-form-element">
+                <label className="slds-form-element__label">Property</label>
+                <div className="slds-form-element__control">
+                  <select name="property" value={formData.property || ''} onChange={handleChange} className="slds-select">
+                    <option value="Bridge">Bridge</option>
+                    <option value="Fusion">Fusion</option>
+                    <option value="Residential">Residential</option>
+                    <option value="Commercial">Commercial</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="slds-form-element">
+                <label className="slds-form-element__label">Type</label>
+                <div className="slds-form-element__control">
+                  <select name="type" value={formData.type || 'Fixed'} onChange={handleChange} className="slds-select">
+                    <option value="Fixed">Fixed</option>
+                    <option value="Variable">Variable</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="slds-form-element">
+                <label className="slds-form-element__label">Product Fee</label>
+                <div className="slds-form-element__control">
+                  <input name="product_fee" value={formData.product_fee ?? ''} onChange={handleChange} className="slds-input" type="number" step="0.01" />
+                </div>
+              </div>
+
+              <div className="slds-form-element">
+                <label className="slds-form-element__label">Tier</label>
+                <div className="slds-form-element__control">
+                  <input name="tier" value={formData.tier || ''} onChange={handleChange} className="slds-input" />
+                </div>
+              </div>
+
+              <div className="slds-form-element">
+                <label className="slds-form-element__label">Product</label>
+                <div className="slds-form-element__control">
+                  <input name="product" value={formData.product || ''} onChange={handleChange} className="slds-input" />
+                </div>
+              </div>
+
+              <div className="slds-form-element">
+                <label className="slds-form-element__label">Rate (%)</label>
+                <div className="slds-form-element__control">
+                  <input name="rate" value={formData.rate ?? ''} onChange={handleChange} className="slds-input" type="number" step="0.01" />
+                </div>
+              </div>
+
+              <div className="slds-form-element slds-grid slds-gutters">
+                <div className="slds-col">
+                  <label className="slds-form-element__label">Min Term (months)</label>
+                  <input name="min_term" value={formData.min_term ?? ''} onChange={handleChange} className="slds-input" type="number" />
+                </div>
+                <div className="slds-col">
+                  <label className="slds-form-element__label">Max Term (months)</label>
+                  <input name="max_term" value={formData.max_term ?? ''} onChange={handleChange} className="slds-input" type="number" />
+                </div>
+              </div>
+
+              <div className="slds-form-element slds-grid slds-gutters">
+                <div className="slds-col">
+                  <label className="slds-form-element__label">Min Rolled Months</label>
+                  <input name="min_rolled_months" value={formData.min_rolled_months ?? ''} onChange={handleChange} className="slds-input" type="number" />
+                </div>
+                <div className="slds-col">
+                  <label className="slds-form-element__label">Max Rolled Months</label>
+                  <input name="max_rolled_months" value={formData.max_rolled_months ?? ''} onChange={handleChange} className="slds-input" type="number" />
+                </div>
+              </div>
+
+              <div className="slds-form-element slds-grid slds-gutters">
+                <div className="slds-col">
+                  <label className="slds-form-element__label">Min Loan (£)</label>
+                  <input name="min_loan" value={formData.min_loan ?? ''} onChange={handleChange} className="slds-input" type="number" />
+                </div>
+                <div className="slds-col">
+                  <label className="slds-form-element__label">Max Loan (£)</label>
+                  <input name="max_loan" value={formData.max_loan ?? ''} onChange={handleChange} className="slds-input" type="number" />
+                </div>
+              </div>
+
+              <div className="slds-form-element slds-grid slds-gutters">
+                <div className="slds-col">
+                  <label className="slds-form-element__label">Min LTV (%)</label>
+                  <input name="min_ltv" value={formData.min_ltv ?? ''} onChange={handleChange} className="slds-input" type="number" step="0.1" />
+                </div>
+                <div className="slds-col">
+                  <label className="slds-form-element__label">Max LTV (%)</label>
+                  <input name="max_ltv" value={formData.max_ltv ?? ''} onChange={handleChange} className="slds-input" type="number" step="0.1" />
+                </div>
+              </div>
+
+              <div className="slds-form-element slds-grid slds-gutters">
+                <div className="slds-col">
+                  <label className="slds-form-element__label">Min ICR (%)</label>
+                  <input name="min_icr" value={formData.min_icr ?? ''} onChange={handleChange} className="slds-input" type="number" step="0.1" />
+                </div>
+                <div className="slds-col">
+                  <label className="slds-form-element__label">Max Defer Int</label>
+                  <input name="max_defer_int" value={formData.max_defer_int ?? ''} onChange={handleChange} className="slds-input" type="number" />
+                </div>
+              </div>
+
+            </form>
+          </div>
+          <div className="slds-modal__footer">
+            <button className="slds-button slds-button_neutral" onClick={onCancel}>Cancel</button>
+            <button className="slds-button slds-button_brand" onClick={handleSubmit}>Save</button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default BridgeRateEditModal;
