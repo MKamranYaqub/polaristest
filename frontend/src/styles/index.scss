@@ -47,7 +47,10 @@ a {
 
 .app-layout {
   display: grid;
-  grid-template-columns: 16rem 1fr;
+  /* Use an intrinsic left column so the side nav determines its own width
+     instead of reserving a fixed 16rem column which created a large empty
+     gap to the right of the nav. */
+  grid-template-columns: auto 1fr;
   gap: var(--token-space-24);
   padding: var(--token-space-24);
   flex: 1;

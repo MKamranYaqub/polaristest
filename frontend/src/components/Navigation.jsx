@@ -4,7 +4,7 @@ import { SideNav, SideNavItems, SideNavLink } from '@carbon/react';
 import '../styles/navigation.scss';
 
 const navItems = [
-  { label: 'BTL Calculator', path: '/calculator' },
+  { label: 'Calculator', path: '/calculator' },
   { label: 'Manage Rates', path: '/rates' },
   { label: 'Manage Criteria', path: '/criteria' },
   { label: 'Constants', path: '/constants' }

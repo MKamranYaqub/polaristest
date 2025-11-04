@@ -8,6 +8,9 @@
   box-shadow: var(--token-shadow-soft);
   background: var(--token-layer-surface);
   overflow: hidden;
+  /* Ensure the side nav fills a compact, predictable width so the layout
+     doesn't leave a large blank column to its right. Adjust as needed. */
+  width: 12rem;
 
   .cds--side-nav__items {
     padding-block: var(--token-space-8);

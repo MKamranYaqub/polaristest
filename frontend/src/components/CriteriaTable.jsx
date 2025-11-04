@@ -32,6 +32,54 @@ function CriteriaTable() {
   // Exclude bookkeeping and unique identifier fields from UI and export/import
   const excluded = new Set(['created_at', 'updated_at', 'id']);
 
+  // sanitize a record before sending to Supabase:
+  // - remove id/timestamps
+  // - convert empty-string values to null (Postgres integer columns cannot accept "")
+  // - coerce numeric-looking values to Number for obvious numeric columns
+  const sanitizeRecord = (input) => {
+    const rec = { ...input };
+    if ('created_at' in rec) delete rec.created_at;
+    if ('updated_at' in rec) delete rec.updated_at;
+    if ('id' in rec) delete rec.id;
+
+    Object.keys(rec).forEach((k) => {
+      let v = rec[k];
+      if (v === undefined) { rec[k] = null; return; }
+      if (typeof v === 'string') v = v.trim();
+      // empty strings -> null
+      if (v === '') { rec[k] = null; return; }
+
+      // coerce obvious integers/numbers when the value is a numeric string
+      if (typeof v === 'string' && /^-?\d+(?:\.\d+)?$/.test(v)) {
+        const n = Number(v);
+        if (Number.isFinite(n)) { rec[k] = n; return; }
+      }
+
+      // leave other values as-is
+      rec[k] = v;
+    });
+
+    // Prefer explicit handling for display_order and tier (common integer fields)
+    if ('display_order' in rec) {
+      const dv = rec.display_order;
+      if (dv === null || dv === '') rec.display_order = null;
+      else {
+        const pn = Number(String(dv).replace(/[^0-9-]/g, ''));
+        rec.display_order = Number.isFinite(pn) ? pn : null;
+      }
+    }
+    if ('tier' in rec) {
+      const tv = rec.tier;
+      if (tv === null || tv === '') rec.tier = null;
+      else {
+        const pn = Number(String(tv).replace(/[^0-9-]/g, ''));
+        rec.tier = Number.isFinite(pn) ? pn : null;
+      }
+    }
+
+    return rec;
+  };
+
   const fetchCriteria = async () => {
     setLoading(true);
     setError(null);
@@ -99,30 +147,56 @@ function CriteriaTable() {
           else if (semicolonCount > commaCount && semicolonCount > tabCount) delim = ';';
 
           const rows = lines.map(row => row.split(delim));
-          const headers = (rows[0] || []).map(h => h.trim());
-        // Prepare records but don't upsert yet — show preview to the user for confirmation
-        const records = rows.slice(1)
-          .filter(row => row.some(cell => cell.trim()))
-          .map(row => {
-            const record = {};
-            headers.forEach((header, i) => {
-              record[header] = row[i]?.trim() || null;
+          const rawHeaders = (rows[0] || []).map(h => (h || '').toString().trim());
+
+          // helper: normalize header text to a safe column name (snake_case, alphanum + _)
+          const normalizeHeader = (h) => {
+            if (!h) return '';
+            // strip BOM if present
+            const noBOM = h.replace(/^\uFEFF/, '');
+            return noBOM.toString().trim().toLowerCase().replace(/[\s\-]+/g, '_').replace(/[^a-z0-9_]/g, '');
+          };
+
+          // Map common header variants to expected DB columns
+          const mapHeaderToColumn = (h) => {
+            const n = normalizeHeader(h);
+            if (!n) return '';
+            if (n === 'scope') return 'product_scope';
+            if (n === 'set' || n === 'set_key' || n === 'setkey') return 'criteria_set';
+            if (n === 'question' ) return 'question_label';
+            if (n === 'question_label' || n === 'questionlabel') return 'question_label';
+            if (n === 'question_key' || n === 'questionkey') return 'question_key';
+            if (n === 'option' || n === 'option_label' || n === 'optionlabel') return 'option_label';
+            if (n === 'display_order' || n === 'displayorder') return 'display_order';
+            // common DB fields keep their normalized form
+            return n;
+          };
+
+          const headers = rawHeaders.map(mapHeaderToColumn);
+
+          // Prepare records but don't upsert yet — show preview to the user for confirmation
+          const records = rows.slice(1)
+            .filter(row => row.some(cell => (cell || '').toString().trim()))
+            .map(row => {
+              const record = {};
+              headers.forEach((headerKey, i) => {
+                if (!headerKey) return; // skip blank/missing headers
+                record[headerKey] = row[i] !== undefined && row[i] !== null ? row[i].toString().trim() : null;
+              });
+              // Do not mutate timestamps here; we'll remove them before actual upsert
+              return record;
             });
-            // Do not mutate timestamps here; we'll remove them before actual upsert
-            return record;
-          });
 
-        // compute preview headers (filtered) to avoid showing id/timestamps
-        const normalizeHeader = (h) => (h || '').toString().trim().toLowerCase().replace(/\s+/g, '_');
-        const previewHeaders = headers.filter(h => !excluded.has(normalizeHeader(h)));
+          // compute preview headers (filtered) to avoid showing id/timestamps
+          const previewHeaders = headers.filter(h => h && !excluded.has(h));
 
-        // Build a small preview payload (first 5 rows)
-        const preview = {
-          headers,
-          previewHeaders,
-          sampleRows: records.slice(0, 5),
-          records
-        };
+          // Build a small preview payload (first 5 rows)
+          const preview = {
+            headers: rawHeaders,
+            previewHeaders,
+            sampleRows: records.slice(0, 5),
+            records
+          };
         setImportPreview(preview);
         setShowImportPreview(true);
       } catch (err) {
@@ -133,26 +207,16 @@ function CriteriaTable() {
     reader.readAsText(file);
   };
 
+  const [importLoading, setImportLoading] = useState(false);
+
   const confirmImport = async () => {
     if (!importPreview) return;
+    setImportLoading(true);
     try {
       const { records } = importPreview;
       // sanitize records: remove created_at/updated_at and coerce display_order
-      const prepared = records.map((r) => {
-        const rec = { ...r };
-        if ('created_at' in rec) delete rec.created_at;
-        if ('updated_at' in rec) delete rec.updated_at;
-        if ('id' in rec) delete rec.id;
-        if ('display_order' in rec) {
-          const v = rec.display_order;
-          if (v === null || v === '') rec.display_order = null;
-          else {
-            const n = Number(String(v).replace(/[^0-9-]/g, ''));
-            rec.display_order = Number.isFinite(n) ? n : null;
-          }
-        }
-        return rec;
-      });
+      // sanitize records (remove id/timestamps, convert empty strings to null, coerce numeric strings)
+      const prepared = records.map(r => sanitizeRecord(r));
 
       // Batch upsert: try a single upsert with ON CONFLICT first (fast),
       // but Postgres requires a unique constraint matching the conflict target.
@@ -203,13 +267,19 @@ function CriteriaTable() {
         }
       }
 
-      // refresh
+      // refresh - clear preview and reload criteria
       setShowImportPreview(false);
       setImportPreview(null);
-      fetchCriteria();
+      // clear the file input so user can re-select same file
+      const fileEl = document.getElementById('criteria-csv-import');
+      if (fileEl) fileEl.value = '';
+      await fetchCriteria();
     } catch (err) {
       console.error('Import error:', err);
       setError(err.message || String(err));
+      // keep preview open so user can cancel or inspect
+    } finally {
+      setImportLoading(false);
     }
   };
 
@@ -264,40 +334,41 @@ function CriteriaTable() {
   // Save handler: use insert for new records, update for edits.
   // Avoids relying on ON CONFLICT which requires a DB unique constraint.
   const handleSave = async (updatedCriteria, isNew, original) => {
-    try {
-      if (isNew) {
-        const { error } = await supabase
-          .from('criteria_config_flat')
-          .insert([updatedCriteria]);
-        if (error) throw error;
-      } else {
-        // Prefer id-based update when available
-        if (updatedCriteria.id) {
+      try {
+        const sanitized = sanitizeRecord(updatedCriteria);
+        if (isNew) {
           const { error } = await supabase
             .from('criteria_config_flat')
-            .update(updatedCriteria)
-            .eq('id', updatedCriteria.id);
+            .insert([sanitized]);
           if (error) throw error;
         } else {
-          // Fallback: update using composite key fields
-          const matchObj = original ? {
-            criteria_set: original.criteria_set,
-            product_scope: original.product_scope,
-            question_key: original.question_key,
-            option_label: original.option_label
-          } : {
-            criteria_set: updatedCriteria.criteria_set,
-            product_scope: updatedCriteria.product_scope,
-            question_key: updatedCriteria.question_key,
-            option_label: updatedCriteria.option_label
-          };
-          const { error } = await supabase
-            .from('criteria_config_flat')
-            .update(updatedCriteria)
-            .match(matchObj);
-          if (error) throw error;
+          // Prefer id-based update when available
+          if (sanitized.id) {
+            const { error } = await supabase
+              .from('criteria_config_flat')
+              .update(sanitized)
+              .eq('id', sanitized.id);
+            if (error) throw error;
+          } else {
+            // Fallback: update using composite key fields
+            const matchObj = original ? {
+              criteria_set: original.criteria_set,
+              product_scope: original.product_scope,
+              question_key: original.question_key,
+              option_label: original.option_label
+            } : {
+              criteria_set: sanitized.criteria_set,
+              product_scope: sanitized.product_scope,
+              question_key: sanitized.question_key,
+              option_label: sanitized.option_label
+            };
+            const { error } = await supabase
+              .from('criteria_config_flat')
+              .update(sanitized)
+              .match(matchObj);
+            if (error) throw error;
+          }
         }
-      }
 
       setEditingCriteria(null);
       fetchCriteria();
@@ -549,8 +620,8 @@ function CriteriaTable() {
                 </div>
               </div>
               <div className="slds-modal__footer">
-                <button className="slds-button slds-button_neutral" onClick={cancelImport}>Cancel</button>
-                <button className="slds-button slds-button_brand" onClick={confirmImport}>Import</button>
+                <button className="slds-button slds-button_neutral" onClick={cancelImport} disabled={importLoading}>Cancel</button>
+                <button className="slds-button slds-button_brand" onClick={confirmImport} disabled={importLoading}>{importLoading ? 'Importing...' : 'Import'}</button>
               </div>
             </div>
           </div>

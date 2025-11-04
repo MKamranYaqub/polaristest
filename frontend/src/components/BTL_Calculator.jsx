@@ -91,11 +91,12 @@ export default function BTLcalculator() {
 
   useEffect(() => {
     // build question map based on BTL criteriaSet and selected productScope
+    const normalizeStr = (s) => (s || '').toString().trim().toLowerCase();
     const filtered = allCriteria.filter((r) => {
       if (!r) return false;
       // Only include rows belonging to the BTL criteria set and matching the product_scope
-      const csMatch = (r.criteria_set || '').toString() === 'BTL';
-      const psMatch = (productScope ? (r.product_scope || '').toString() === productScope.toString() : true);
+      const csMatch = normalizeStr(r.criteria_set) === 'btl';
+      const psMatch = productScope ? normalizeStr(r.product_scope) === normalizeStr(productScope) : true;
       return csMatch && psMatch;
     });
 
@@ -628,7 +629,15 @@ export default function BTLcalculator() {
                   <div className="slds-form-element__control">
                     <select
                       className="slds-select"
-                      value={answers[qk] ? q.options.indexOf(answers[qk]) : 0}
+                      value={(() => {
+                        const selectedIndex = q.options.findIndex(opt => {
+                          const a = answers[qk];
+                          if (!a) return false;
+                          if (opt.id && a.id) return opt.id === a.id;
+                          return (opt.option_label || '').toString().trim() === (a.option_label || '').toString().trim();
+                        });
+                        return selectedIndex >= 0 ? selectedIndex : 0;
+                      })()}
                       onChange={(e) => handleAnswerChange(qk, Number(e.target.value))}
                     >
                       {q.options.map((opt, idx) => (

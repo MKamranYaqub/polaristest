@@ -5,6 +5,7 @@ import '@carbon/styles/css/styles.css';
 import RatesTable from './components/RatesTable';
 import CriteriaTable from './components/CriteriaTable';
 import BTLCalculator from './components/BTL_Calculator';
+import Calculator from './components/Calculator';
 import Constants from './components/Constants';
 import Navigation from './components/Navigation';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -16,7 +17,7 @@ function App() {
       <Theme theme="g10">
         <div className="app-shell">
           <header className="app-header">
-            <h1 className="app-header__title">Mortgage Configuration Management</h1>
+            <h1 className="app-header__title">Project Polaris</h1>
           </header>
           <div className="app-layout">
             <Navigation />
@@ -25,7 +26,7 @@ function App() {
                 <Routes>
                   <Route path="/rates" element={<RatesTable />} />
                   <Route path="/criteria" element={<CriteriaTable />} />
-                  <Route path="/calculator" element={<BTLCalculator />} />
+                  <Route path="/calculator" element={<Calculator />} />
                   <Route path="/constants" element={<Constants />} />
                   <Route path="/" element={<Navigate to="/rates" replace />} />
                 </Routes>
