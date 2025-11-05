@@ -236,3 +236,66 @@ input[type="checkbox"] {
 .error-message button:hover {
   background-color: #c82333;
 }
+
+/* Responsive Styles for Mobile and Tablet */
+@media (max-width: 900px) {
+  .rates-container {
+    padding: 16px;
+  }
+
+  .table-actions {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .left-actions {
+    flex-wrap: wrap;
+  }
+
+  .pagination {
+    justify-content: center;
+  }
+
+  .slds-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table.slds-table {
+    font-size: 0.9rem;
+  }
+
+  .slds-table th,
+  .slds-table td {
+    padding: 0.6rem 0.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .rates-container {
+    padding: 12px;
+  }
+
+  .table-actions button,
+  .pagination button {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+
+  table.slds-table {
+    font-size: 0.85rem;
+  }
+
+  .slds-table th,
+  .slds-table td {
+    padding: 0.5rem 0.4rem;
+    white-space: nowrap;
+  }
+
+  /* Make checkboxes slightly smaller on mobile */
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+  }
+}

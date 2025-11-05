@@ -4,7 +4,10 @@
 .calculator-container {
   font-family: $token-font-family;
   padding: $spacing-md;
-  max-width: 100%;
+  width: 100%;
+  max-width: none; /* allow the container to fill the available content column */
+  margin: 0;
+  box-sizing: border-box;
 }
 
 // Top filters row (inline, no card)
@@ -33,7 +36,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    margin-left: auto;
+    margin-left: 0px;
     
     .tier-label {
       font-size: 0.75rem;
@@ -421,4 +424,127 @@
   color: #c23934;
   margin-right: 0.25rem;
   font-weight: 600;
+}
+
+/* Responsive tweaks for tablet and mobile */
+@media (max-width: 900px) {
+  .calculator-container {
+    padding: $spacing-sm;
+    margin: 0;
+  }
+
+  /* make top filters stack nicely on small screens */
+  .top-filters {
+    padding: $spacing-sm;
+    
+    .slds-form-element {
+      flex: 1 1 100%;
+      min-width: 0 !important;
+    }
+  }
+
+  .range-toggle-buttons .range-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  .collapsible-header {
+    padding: 0.65rem $spacing-sm;
+    
+    .header-title {
+      font-size: 0.95rem;
+    }
+  }
+
+  .collapsible-body {
+    padding: $spacing-sm;
+  }
+
+  /* ensure results table becomes more compact and allows horizontal scroll */
+  .results-section {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .results-section table {
+    font-size: 0.95rem;
+  }
+
+  .rates-display .rate-item {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .calculator-container {
+    padding: $spacing-xs;
+  }
+
+  .top-filters {
+    padding: $spacing-xs;
+    gap: $spacing-xs;
+    margin-bottom: $spacing-xs;
+  }
+
+  .criteria-grid {
+    gap: $spacing-xs;
+  }
+
+  .loan-details-grid {
+    gap: $spacing-xs;
+  }
+
+  .collapsible-section {
+    margin-bottom: $spacing-xs;
+  }
+
+  .collapsible-header {
+    padding: 0.6rem $spacing-xs;
+    
+    .header-title {
+      font-size: 0.9rem;
+    }
+    
+    .chevron-icon {
+      width: 0.9rem;
+      height: 0.9rem;
+    }
+  }
+
+  .collapsible-body {
+    padding: $spacing-xs;
+  }
+
+  .slds-form-element {
+    margin-bottom: $spacing-xs;
+  }
+
+  .slds-form-element__label {
+    font-size: 0.85rem;
+  }
+
+  .slds-input, .slds-select {
+    font-size: 0.95rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .slds-table {
+    font-size: 0.9rem;
+    
+    td, th {
+      padding: 0.5rem 0.5rem;
+    }
+  }
+
+  .range-toggle-buttons .range-button {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  /* Make fee toggle more compact on mobile */
+  .modern-switch {
+    .switch-label {
+      font-size: 0.85rem;
+    }
+  }
 }

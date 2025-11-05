@@ -36,6 +36,7 @@ a {
   background: var(--token-layer-surface);
   box-shadow: var(--token-shadow-soft);
   border-bottom: 1px solid var(--token-border-subtle);
+  position: relative;
 }
 
 .app-header__title {
@@ -45,22 +46,67 @@ a {
   line-height: var(--token-line-height-tight);
 }
 
+@media (max-width: 900px) {
+  .app-header {
+    padding: var(--token-space-12) var(--token-space-16);
+  }
+
+  .app-header__title {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-header {
+    padding: var(--token-space-12);
+    padding-left: 4rem;
+  }
+
+  .app-header__title {
+    font-size: 1rem;
+  }
+}
+
 .app-layout {
-  display: grid;
-  /* Use an intrinsic left column so the side nav determines its own width
-     instead of reserving a fixed 16rem column which created a large empty
-     gap to the right of the nav. */
-  grid-template-columns: auto 1fr;
-  gap: var(--token-space-24);
-  padding: var(--token-space-24);
+  display: flex;
+  gap: 0;
+  padding: 0;
   flex: 1;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  background: var(--token-layer-background);
+}
+
+/* Mobile/Tablet: Stack navigation and make it toggleable */
+@media (max-width: 900px) {
+  .app-layout {
+    flex-direction: column;
+  }
 }
 
 .app-content {
+  flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--token-space-24);
+  padding: var(--token-space-24);
+  overflow-x: hidden;
+  background: transparent;
+  margin-inline-start: 0 !important;
+  margin-left: 0 !important;
+}
+
+@media (max-width: 900px) {
+  .app-content {
+    padding: var(--token-space-16);
+  }
+}
+
+@media (max-width: 600px) {
+  .app-content {
+    padding: var(--token-space-12);
+  }
 }
 
 .app-card {
