@@ -23,6 +23,11 @@ export default function BridgingCalculator() {
   const [useSpecificNet, setUseSpecificNet] = useState('No');
   const [specificNetLoan, setSpecificNetLoan] = useState('');
   const [bridgingTerm, setBridgingTerm] = useState('');
+  // rates
+  const [rates, setRates] = useState([]);
+  const [relevantRates, setRelevantRates] = useState([]);
+  const [subProduct, setSubProduct] = useState('');
+  const [subProductOptions, setSubProductOptions] = useState([]);
 
   useEffect(() => {
     let mounted = true;
@@ -125,6 +130,112 @@ export default function BridgingCalculator() {
   const handleAnswerChange = (key, idx) => {
     setAnswers(prev => ({ ...prev, [key]: questions[key].options[idx] }));
   };
+
+  const parseNumber = (v) => {
+    if (v === undefined || v === null || v === '') return NaN;
+    const n = Number(String(v).replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(n) ? n : NaN;
+  };
+
+  const computeLoanLtv = () => {
+    const pv = parseNumber(propertyValue);
+    if (!Number.isFinite(pv) || pv <= 0) return NaN;
+    const loanAmount = parseNumber(specificNetLoan) || parseNumber(grossLoan);
+    if (!Number.isFinite(loanAmount) || loanAmount <= 0) return NaN;
+    return (loanAmount / pv) * 100;
+  };
+
+  const computeLoanSize = () => {
+    const loanAmount = parseNumber(specificNetLoan) || parseNumber(grossLoan);
+    return Number.isFinite(loanAmount) ? loanAmount : NaN;
+  };
+
+  // Determine mode: Fusion vs Bridge. set_key (criteria_set) differentiates but is not used for filtering
+  const computeModeFromAnswers = () => {
+    // If any selected answer originates from a criteria row whose criteria_set mentions 'fusion', treat as Fusion
+    const vals = Object.values(answers || {});
+    for (const v of vals) {
+      if (v && v.raw && v.raw.criteria_set && /fusion/i.test(String(v.raw.criteria_set))) return 'Fusion';
+    }
+    return 'Bridge';
+  };
+
+  // Fetch rates for Bridging: filter depending on mode
+  useEffect(() => {
+    if (!supabase) return;
+    let mounted = true;
+    async function loadRates() {
+      try {
+        const { data, error } = await supabase.from('rates_flat').select('*');
+        if (error) throw error;
+        if (!mounted) return;
+        setRates(data || []);
+        // derive sub-product options
+        const discovered = new Set();
+        (data || []).forEach(r => {
+          const s = r.subproduct || r.sub_product || r.sub_product_type || r.property_type || r.property || r.product;
+          if (s) discovered.add(String(s));
+        });
+        setSubProductOptions(Array.from(discovered));
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Bridging: failed to load rates', err);
+      }
+    }
+    loadRates();
+    return () => { mounted = false; };
+  }, [supabase]);
+
+  useEffect(() => {
+    // filter rates whenever inputs or answers change
+    const raw = rates || [];
+    const mode = computeModeFromAnswers();
+    const loanLtv = computeLoanLtv();
+    const loanSize = computeLoanSize();
+    const parsedSub = (subProduct || '').toString().toLowerCase();
+
+    const filtered = raw.filter((r) => {
+      // product_scope matching: restrict to selected productScope when present
+      if (productScope) {
+        const ps = (r.product_scope || r.property || r.set_key || '').toString().toLowerCase();
+        if (!ps.includes(productScope.toString().toLowerCase())) return false;
+      }
+
+      if (mode === 'Bridge') {
+        // Bridge filtering: sub-product + LTV
+        // check sub-product
+        if (parsedSub) {
+          const s = (r.subproduct || r.sub_product || r.sub_product_type || r.property_type || r.product || '').toString().toLowerCase();
+          if (!s.includes(parsedSub)) return false;
+        }
+        // LTV filtering using min/max LTV fields
+        const rowMin = parseNumber(r.min_ltv ?? r.minltv ?? r.min_LTV ?? r.minLTV ?? r.min_loan_ltv);
+        const rowMax = parseNumber(r.max_ltv ?? r.maxltv ?? r.max_LTV ?? r.maxLTV ?? r.max_loan_ltv);
+        if (Number.isFinite(loanLtv)) {
+          if (Number.isFinite(rowMin) && loanLtv < rowMin) return false;
+          if (Number.isFinite(rowMax) && loanLtv > rowMax) return false;
+        }
+        return true;
+      }
+
+      // Fusion: based on loan size ranges in rates (min_loan / max_loan)
+      if (mode === 'Fusion') {
+        const rowMinLoan = parseNumber(r.min_loan ?? r.minloan ?? r.min_loan_amt ?? r.min_loan_amount);
+        const rowMaxLoan = parseNumber(r.max_loan ?? r.maxloan ?? r.max_loan_amt ?? r.max_loan_amount);
+        if (Number.isFinite(loanSize)) {
+          if (Number.isFinite(rowMinLoan) && loanSize < rowMinLoan) return false;
+          if (Number.isFinite(rowMaxLoan) && loanSize > rowMaxLoan) return false;
+        }
+        return true;
+      }
+
+      return true;
+    });
+
+    setRelevantRates(filtered);
+    // eslint-disable-next-line no-console
+    console.log('Bridging: matched rates', filtered.length, 'mode', computeModeFromAnswers());
+  }, [rates, productScope, subProduct, propertyValue, grossLoan, specificNetLoan, answers]);
 
   if (!supabase) return <div className="slds-p-around_medium">Supabase client missing</div>;
   if (loading) return (

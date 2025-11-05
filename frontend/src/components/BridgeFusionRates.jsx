@@ -22,6 +22,13 @@ function BridgeFusionRates() {
     type: ''
   });
   const [filterOptions, setFilterOptions] = useState({ properties: new Set(), products: new Set(), setKeys: new Set(), types: new Set() });
+  // Finder states for Bridge vs Fusion
+  const [bridgeFilters, setBridgeFilters] = useState({ property: '', chargeType: '', product: '', ltv: '' });
+  const [fusionFilters, setFusionFilters] = useState({ property: '', ltv: '' });
+  const [bridgeMatches, setBridgeMatches] = useState([]);
+  const [fusionMatches, setFusionMatches] = useState([]);
+  const [chargeFieldName, setChargeFieldName] = useState(null);
+  const [chargeOptions, setChargeOptions] = useState(new Set());
 
   const fetch = async () => {
     setLoading(true);
@@ -46,6 +53,12 @@ function BridgeFusionRates() {
         setKeys: new Set(rowsData.map(r => r.set_key).filter(Boolean)),
         types: new Set(rowsData.map(r => r.type).filter(Boolean))
       });
+      // detect a column that represents charge type/second charge info (fallback to 'type')
+      const candidates = ['charge_type','charge','chargeType','charge_type_label','is_second_charge','is_second','second_charge','charge_kind','type'];
+      let found = null;
+      for (const c of candidates) { if (rowsData.length > 0 && Object.prototype.hasOwnProperty.call(rowsData[0], c)) { found = c; break; } }
+      setChargeFieldName(found || 'type');
+      setChargeOptions(new Set(rowsData.map(r => r[found || 'type']).filter(v => v !== undefined && v !== null)));
     } catch (e) {
       setError(e.message || e);
     } finally {
@@ -128,6 +141,47 @@ function BridgeFusionRates() {
     } catch (e) {
       setError(e.message || e);
     }
+  };
+
+  // Helpers used by the Rate Finder
+  const num = (v) => {
+    if (v === null || v === undefined || v === '') return null;
+    const n = Number(String(v).toString().replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const matchLtv = (row, ltv) => {
+    const min = num(row.min_ltv);
+    const max = num(row.max_ltv);
+    const val = num(ltv);
+    if (val === null) return true; // no LTV filter
+    if (min !== null && val < min) return false;
+    if (max !== null && val > max) return false;
+    return true;
+  };
+
+  const findBridgeRates = () => {
+    const { property, chargeType, product, ltv } = bridgeFilters;
+    const matches = rows.filter(r => {
+      if (property && String((r.property||'')).toLowerCase() !== String(property).toLowerCase()) return false;
+      // charge type matching using detected field
+      const cf = chargeFieldName || 'type';
+      if (chargeType && String((r[cf]||'')).toLowerCase() !== String(chargeType).toLowerCase()) return false;
+      if (product && String((r.product||'')).toLowerCase() !== String(product).toLowerCase()) return false;
+      if (!matchLtv(r, ltv)) return false;
+      return true;
+    });
+    setBridgeMatches(matches);
+  };
+
+  const findFusionRates = () => {
+    const { property, ltv } = fusionFilters;
+    const matches = rows.filter(r => {
+      if (property && String((r.property||'')).toLowerCase() !== String(property).toLowerCase()) return false;
+      if (!matchLtv(r, ltv)) return false;
+      return true;
+    });
+    setFusionMatches(matches);
   };
 
   const toggleSelectAll = (checked) => {
@@ -311,6 +365,78 @@ function BridgeFusionRates() {
       </div>
 
       <div className="slds-grid slds-wrap slds-m-bottom_medium" style={{ gap: '0.5rem' }}>
+        {/* Rate Finder: Bridge (monthly) and Fusion (yearly) */}
+        <div style={{ width: '100%', marginBottom: '0.5rem' }}>
+          <h3 style={{ margin: '0 0 0.5rem 0' }}>Rate Finder</h3>
+          <div className="slds-grid" style={{ gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div style={{ minWidth: 220 }}>
+              <label className="slds-form-element__label">Bridge - Product Scope</label>
+              <div className="slds-form-element__control">
+                <select className="slds-select" value={bridgeFilters.property} onChange={(e) => setBridgeFilters(prev => ({ ...prev, property: e.target.value }))}>
+                  <option value="">Any</option>
+                  {Array.from(filterOptions.properties).sort().map(p => (<option key={p} value={p}>{p}</option>))}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ minWidth: 180 }}>
+              <label className="slds-form-element__label">Bridge - Charge Type</label>
+              <div className="slds-form-element__control">
+                <select className="slds-select" value={bridgeFilters.chargeType} onChange={(e) => setBridgeFilters(prev => ({ ...prev, chargeType: e.target.value }))}>
+                  <option value="">Any</option>
+                  {Array.from(chargeOptions).filter(Boolean).map(c => (<option key={c} value={c}>{String(c)}</option>))}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ minWidth: 200 }}>
+              <label className="slds-form-element__label">Bridge - Sub Product</label>
+              <div className="slds-form-element__control">
+                <select className="slds-select" value={bridgeFilters.product} onChange={(e) => setBridgeFilters(prev => ({ ...prev, product: e.target.value }))}>
+                  <option value="">Any</option>
+                  {Array.from(filterOptions.products).sort().map(p => (<option key={p} value={p}>{p}</option>))}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ minWidth: 160 }}>
+              <label className="slds-form-element__label">Bridge - LTV (%)</label>
+              <div className="slds-form-element__control">
+                <input className="slds-input" type="number" value={bridgeFilters.ltv} onChange={(e) => setBridgeFilters(prev => ({ ...prev, ltv: e.target.value }))} placeholder="e.g. 60" />
+              </div>
+            </div>
+
+            <div>
+              <button className="slds-button slds-button_brand" onClick={findBridgeRates}>Find Bridge Rates (monthly)</button>
+            </div>
+
+            <div style={{ minWidth: 220, marginLeft: '2rem' }}>
+              <label className="slds-form-element__label">Fusion - Product Scope</label>
+              <div className="slds-form-element__control">
+                <select className="slds-select" value={fusionFilters.property} onChange={(e) => setFusionFilters(prev => ({ ...prev, property: e.target.value }))}>
+                  <option value="">Any</option>
+                  {Array.from(filterOptions.properties).sort().map(p => (<option key={p} value={p}>{p}</option>))}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ minWidth: 160 }}>
+              <label className="slds-form-element__label">Fusion - LTV (%)</label>
+              <div className="slds-form-element__control">
+                <input className="slds-input" type="number" value={fusionFilters.ltv} onChange={(e) => setFusionFilters(prev => ({ ...prev, ltv: e.target.value }))} placeholder="e.g. 70" />
+              </div>
+            </div>
+
+            <div>
+              <button className="slds-button slds-button_neutral" onClick={findFusionRates}>Find Fusion Rates (yearly)</button>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '0.5rem' }}>
+            <div style={{ display: 'inline-block', marginRight: '1rem' }}><strong>Bridge matches:</strong> {bridgeMatches.length}</div>
+            <div style={{ display: 'inline-block' }}><strong>Fusion matches:</strong> {fusionMatches.length}</div>
+          </div>
+        </div>
         <div className="slds-form-element" style={{ minWidth: '200px' }}>
           <label className="slds-form-element__label">Set Key:</label>
           <div className="slds-form-element__control">
