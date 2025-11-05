@@ -543,9 +543,9 @@ export default function BridgingCalculator() {
               <thead>
                 <tr>
                   <th style={{ width: '20%' }}>Label</th>
-                  <th style={{ width: '26%' }}>Fusion (yearly)</th>
-                  <th style={{ width: '26%' }}>Variable Bridge (monthly)</th>
-                  <th style={{ width: '28%' }}>Fixed Bridge (monthly)</th>
+                  <th style={{ width: '26%' }}>Fusion</th>
+                  <th style={{ width: '26%' }}>Variable Bridge</th>
+                  <th style={{ width: '28%' }}>Fixed Bridge</th>
                 </tr>
               </thead>
               <tbody>
