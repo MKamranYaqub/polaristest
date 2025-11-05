@@ -16,6 +16,9 @@ export default function BridgingCalculator() {
   // Criteria-driven questions
   const [questions, setQuestions] = useState({});
   const [answers, setAnswers] = useState({});
+  // Collapsible sections like BTL
+  const [criteriaExpanded, setCriteriaExpanded] = useState(true);
+  const [loanDetailsExpanded, setLoanDetailsExpanded] = useState(true);
 
   // Loan details
   const [propertyValue, setPropertyValue] = useState('');
@@ -377,10 +380,17 @@ export default function BridgingCalculator() {
       </div>
 
       <section className="collapsible-section">
-        <header className="collapsible-header">
-          <h2 className="header-title">Criteria</h2>
-        </header>
-        <div className="collapsible-body">
+            <header className="collapsible-header" onClick={() => setCriteriaExpanded(!criteriaExpanded)}>
+              <h2 className="header-title">Criteria</h2>
+              <svg 
+                className={`chevron-icon ${criteriaExpanded ? 'expanded' : ''}`} 
+                xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 24 24"
+              >
+                <path d="M7 10l5 5 5-5z"/>
+              </svg>
+            </header>
+            <div className={`collapsible-body ${!criteriaExpanded ? 'collapsed' : ''}`}>
           <div className="criteria-grid">
             {Object.keys(questions).length === 0 && (
               <div>
@@ -459,10 +469,17 @@ export default function BridgingCalculator() {
       </section>
 
       <section className="collapsible-section">
-        <header className="collapsible-header">
+        <header className="collapsible-header" onClick={() => setLoanDetailsExpanded(!loanDetailsExpanded)}>
           <h2 className="header-title">Loan details</h2>
+          <svg 
+            className={`chevron-icon ${loanDetailsExpanded ? 'expanded' : ''}`} 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 24 24"
+          >
+            <path d="M7 10l5 5 5-5z"/>
+          </svg>
         </header>
-        <div className="collapsible-body">
+        <div className={`collapsible-body ${!loanDetailsExpanded ? 'collapsed' : ''}`}>
           <div className="loan-details-grid">
             <div className="slds-form-element">
               <label className="slds-form-element__label">Property Value</label>
