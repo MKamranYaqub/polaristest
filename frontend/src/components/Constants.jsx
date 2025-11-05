@@ -38,6 +38,7 @@ export default function Constants() {
   // per-field editing state and temporary values
   const [editingFields, setEditingFields] = useState({});
   const [tempValues, setTempValues] = useState({});
+  const disabledInputStyle = { backgroundColor: '#f4f6f8', opacity: 0.8, cursor: 'not-allowed' };
 
   useEffect(() => {
     const overrides = readOverrides();
@@ -510,6 +511,7 @@ export default function Constants() {
                   value={editingFields[key] ? (tempValues[key] ?? '') : (productLists[pt] || []).join(', ')}
                   onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
                   disabled={!editingFields[key]}
+                  style={!editingFields[key] ? disabledInputStyle : undefined}
                 />
                 {!editingFields[key] ? (
                   <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (productLists[pt] || []).join(', '))}>Edit</button>
@@ -539,6 +541,7 @@ export default function Constants() {
                   value={editingFields[key] ? (tempValues[key] ?? '') : (feeColumns[k] || []).join(', ')}
                   onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
                   disabled={!editingFields[key]}
+                  style={!editingFields[key] ? disabledInputStyle : undefined}
                 />
                 {!editingFields[key] ? (
                   <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (feeColumns[k] || []).join(', '))}>Edit</button>
@@ -566,7 +569,7 @@ export default function Constants() {
               const key = 'flatAbove:scopeMatcher';
               return (
                 <>
-                  <input className="slds-input" value={editingFields[key] ? (tempValues[key] ?? '') : (flatAboveCommercialRule.scopeMatcher || '')} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
+                  <input className="slds-input" value={editingFields[key] ? (tempValues[key] ?? '') : (flatAboveCommercialRule.scopeMatcher || '')} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} style={!editingFields[key] ? disabledInputStyle : undefined} />
                   {!editingFields[key] ? (
                     <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, flatAboveCommercialRule.scopeMatcher || '')}>Edit</button>
                   ) : (
@@ -591,7 +594,7 @@ export default function Constants() {
                 const key = 'flatAbove:tier2';
                 return (
                   <>
-                    <input className="slds-input" value={editingFields[key] ? (tempValues[key] ?? '') : (String(flatAboveCommercialRule.tierLtv?.['2'] ?? ''))} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
+                    <input className="slds-input" value={editingFields[key] ? (tempValues[key] ?? '') : (String(flatAboveCommercialRule.tierLtv?.['2'] ?? ''))} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} style={!editingFields[key] ? disabledInputStyle : undefined} />
                     {!editingFields[key] ? (
                       <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(flatAboveCommercialRule.tierLtv?.['2'] ?? ''))}>Edit</button>
                     ) : (
@@ -612,7 +615,7 @@ export default function Constants() {
                 const key = 'flatAbove:tier3';
                 return (
                   <>
-                    <input className="slds-input" value={editingFields[key] ? (tempValues[key] ?? '') : (String(flatAboveCommercialRule.tierLtv?.['3'] ?? ''))} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
+                    <input className="slds-input" value={editingFields[key] ? (tempValues[key] ?? '') : (String(flatAboveCommercialRule.tierLtv?.['3'] ?? ''))} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} style={!editingFields[key] ? disabledInputStyle : undefined} />
                     {!editingFields[key] ? (
                       <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(flatAboveCommercialRule.tierLtv?.['3'] ?? ''))}>Edit</button>
                     ) : (
@@ -649,6 +652,7 @@ export default function Constants() {
                       value={editingFields[key] ? (tempValues[key] ?? '') : ((marketRates?.STANDARD_BBR ?? 0) * 100).toFixed(2)}
                       onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
                       disabled={!editingFields[key]}
+                      style={!editingFields[key] ? disabledInputStyle : undefined}
                     />
                     <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
                     {!editingFields[key] ? (
@@ -681,6 +685,7 @@ export default function Constants() {
                       value={editingFields[key] ? (tempValues[key] ?? '') : ((marketRates?.STRESS_BBR ?? 0) * 100).toFixed(2)}
                       onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
                       disabled={!editingFields[key]}
+                      style={!editingFields[key] ? disabledInputStyle : undefined}
                     />
                     <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
                     {!editingFields[key] ? (
@@ -713,6 +718,7 @@ export default function Constants() {
                       value={editingFields[key] ? (tempValues[key] ?? '') : ((marketRates?.CURRENT_MVR ?? 0) * 100).toFixed(2)}
                       onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
                       disabled={!editingFields[key]}
+                      style={!editingFields[key] ? disabledInputStyle : undefined}
                     />
                     <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
                     {!editingFields[key] ? (
