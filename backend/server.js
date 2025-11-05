@@ -19,6 +19,10 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
 
+// Root - simple API info (helps platforms that hit /)
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'API root - use /health or /api/rates' });
+});
 // Rates endpoint - returns all rates stored in Supabase 'rates' table
 app.get('/api/rates', async (req, res) => {
   try {
