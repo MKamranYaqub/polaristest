@@ -12,7 +12,7 @@ function BridgeFusionRates() {
   const [selectedRows, setSelectedRows] = useState(new Set());
   const [selectAll, setSelectAll] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortField, setSortField] = useState('set_key');
   const [sortDir, setSortDir] = useState('asc');
   const [filters, setFilters] = useState({
@@ -310,6 +310,15 @@ function BridgeFusionRates() {
             <button className="slds-button slds-button_neutral" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</button>
             <span className="slds-m-horizontal_small">Page {currentPage} of {totalPages}</span>
             <button className="slds-button slds-button_neutral" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
+            <div className="slds-m-left_small" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.85rem' }}>Rows:</label>
+              <select className="slds-select" value={itemsPerPage} onChange={(e) => { const v = Number(e.target.value); setItemsPerPage(v); setCurrentPage(1); }}>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -394,7 +403,7 @@ function BridgeFusionRates() {
               <th>Max LTV</th>
               <th>Min ICR</th>
               <th>Max Defer</th>
-              <th>Actions</th>
+              <th className="sticky-action">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -419,7 +428,7 @@ function BridgeFusionRates() {
                 <td>{r.max_ltv}%</td>
                 <td>{r.min_icr}%</td>
                 <td>{r.max_defer_int}</td>
-                <td>
+                <td className="sticky-action">
                   <div className="slds-grid" style={{ gap: '0.25rem' }}>
                     <button className="slds-button slds-button_neutral" onClick={() => setEditing(r)}>Edit</button>
                     <button className="slds-button slds-button_destructive" onClick={() => handleDelete(r.id)}>Delete</button>

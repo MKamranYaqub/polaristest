@@ -18,7 +18,7 @@ function CriteriaTable() {
   const [editingCriteria, setEditingCriteria] = useState(null);
   const [importPreview, setImportPreview] = useState(null);
   const [showImportPreview, setShowImportPreview] = useState(false);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [filters, setFilters] = useState({
     criteria_set: '',
     product_scope: '',
@@ -571,6 +571,15 @@ function CriteriaTable() {
             >
               Next
             </button>
+            <div className="slds-m-left_small" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.85rem' }}>Rows:</label>
+              <select className="slds-select" value={itemsPerPage} onChange={(e) => { const v = Number(e.target.value); setItemsPerPage(v); setCurrentPage(1); }}>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -705,7 +714,7 @@ function CriteriaTable() {
                   {col} {sortField === col ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                 </th>
               ))}
-              <th>Actions</th>
+              <th className="sticky-action">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -736,7 +745,7 @@ function CriteriaTable() {
                   {columns.map(col => (
                     <td key={col}>{(item[col] === null || item[col] === undefined) ? '' : String(item[col])}</td>
                   ))}
-                  <td>
+                  <td className="sticky-action">
                     <div className="slds-grid slds-grid_align-center" style={{ gap: '0.25rem' }}>
                       <button
                         className="slds-button slds-button_neutral"

@@ -35,6 +35,9 @@ export default function Constants() {
   const [saving, setSaving] = useState(false);
   const [structuredSupported, setStructuredSupported] = useState(null);
   const [hasValueColumn, setHasValueColumn] = useState(null);
+  // per-field editing state and temporary values
+  const [editingFields, setEditingFields] = useState({});
+  const [tempValues, setTempValues] = useState({});
 
   useEffect(() => {
     const overrides = readOverrides();
@@ -43,8 +46,58 @@ export default function Constants() {
       setFeeColumns(overrides.feeColumns || DEFAULT_FEE_COLUMNS);
       setFlatAboveCommercialRule(overrides.flatAboveCommercialRule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE);
       setMarketRates(overrides.marketRates || DEFAULT_MARKET_RATES);
+      // initialize temp values
+      const tv = {};
+      Object.keys(overrides.productLists || DEFAULT_PRODUCT_TYPES_LIST).forEach(pt => { tv[`productLists:${pt}`] = (overrides.productLists[pt] || []).join(', '); });
+      Object.keys(overrides.feeColumns || DEFAULT_FEE_COLUMNS).forEach(k => { tv[`feeColumns:${k}`] = (overrides.feeColumns[k] || []).join(', '); });
+      Object.keys(overrides.marketRates || DEFAULT_MARKET_RATES).forEach(k => { const v = ((overrides.marketRates[k] ?? 0) * 100).toFixed(2); tv[`marketRates:${k}`] = v; });
+      tv['flatAbove:scopeMatcher'] = overrides.flatAboveCommercialRule?.scopeMatcher || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.scopeMatcher || '';
+      tv['flatAbove:tier2'] = String(overrides.flatAboveCommercialRule?.tierLtv?.['2'] ?? DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['2'] ?? '');
+      tv['flatAbove:tier3'] = String(overrides.flatAboveCommercialRule?.tierLtv?.['3'] ?? DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['3'] ?? '');
+      setTempValues(tv);
     }
   }, []);
+
+  // helpers to start/save/cancel per-field edits
+  const startEdit = (key, initial) => {
+    setEditingFields(prev => ({ ...prev, [key]: true }));
+    setTempValues(prev => ({ ...prev, [key]: initial }));
+  };
+
+  const cancelEdit = (key, refreshFromState) => {
+    setEditingFields(prev => ({ ...prev, [key]: false }));
+    // reset temp to current state values if requested
+    if (refreshFromState) {
+      setTempValues(prev => ({ ...prev, [key]: prev[key] }));
+    }
+  };
+
+  const saveEdit = async (key) => {
+    // dispatch based on key prefix
+    try {
+      if (key.startsWith('productLists:')) {
+        const pt = key.split(':')[1];
+        updateProductList(pt, tempValues[key] || '');
+      } else if (key.startsWith('feeColumns:')) {
+        const k = key.split(':')[1];
+        updateFeeColumns(k, tempValues[key] || '');
+      } else if (key.startsWith('marketRates:')) {
+        const field = key.split(':')[1];
+        const n = Number(tempValues[key]);
+        updateMarketRates({ [field]: Number.isFinite(n) ? n / 100 : 0 });
+      } else if (key === 'flatAbove:scopeMatcher') {
+        updateFlatAboveCommercial({ scopeMatcher: tempValues[key] || '' });
+      } else if (key === 'flatAbove:tier2') {
+        updateFlatAboveCommercial({ tierLtv: { ...(flatAboveCommercialRule.tierLtv || {}), '2': Number(tempValues[key] || '') } });
+      } else if (key === 'flatAbove:tier3') {
+        updateFlatAboveCommercial({ tierLtv: { ...(flatAboveCommercialRule.tierLtv || {}), '3': Number(tempValues[key] || '') } });
+      }
+    } catch (e) {
+      console.error('Failed to save field', key, e);
+    } finally {
+      setEditingFields(prev => ({ ...prev, [key]: false }));
+    }
+  };
 
   const exportJson = () => {
   const payload = { productLists, feeColumns, flatAboveCommercialRule, marketRates };
@@ -440,43 +493,66 @@ export default function Constants() {
       <h2>Constants (editable)</h2>
       <p className="helper-text">Edit product lists, fee columns and LTV thresholds. Changes persist to localStorage and affect the calculator.</p>
       <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-        <button className="slds-button slds-button_brand" onClick={saveToStorage} disabled={saving}>Save</button>
         <button className="slds-button slds-button_outline-brand" onClick={exportJson}>Export JSON</button>
         <button className="slds-button slds-button_destructive" onClick={resetToDefaults}>Reset defaults</button>
       </div>
 
       <section className="slds-box slds-m-bottom_medium">
         <h3>Product lists per property type</h3>
-        {Object.keys(productLists).map((pt) => (
-          <div key={pt} className="slds-form-element slds-m-bottom_small">
-            <label className="slds-form-element__label">{pt}</label>
-            <div className="slds-form-element__control">
-              <input
-                className="slds-input"
-                value={(productLists[pt] || []).join(', ')}
-                onChange={(e) => updateProductList(pt, e.target.value)}
-              />
+        {Object.keys(productLists).map((pt) => {
+          const key = `productLists:${pt}`;
+          return (
+            <div key={pt} className="slds-form-element slds-m-bottom_small">
+              <label className="slds-form-element__label">{pt}</label>
+              <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <input
+                  className="slds-input"
+                  value={editingFields[key] ? (tempValues[key] ?? '') : (productLists[pt] || []).join(', ')}
+                  onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                  disabled={!editingFields[key]}
+                />
+                {!editingFields[key] ? (
+                  <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (productLists[pt] || []).join(', '))}>Edit</button>
+                ) : (
+                  <>
+                    <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                    <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                  </>
+                )}
+              </div>
+              <div className="helper-text">Comma-separated list of product names shown in the calculator product select.</div>
             </div>
-            <div className="helper-text">Comma-separated list of product names shown in the calculator product select.</div>
-          </div>
-        ))}
+          );
+        })}
       </section>
 
       <section className="slds-box slds-m-bottom_medium">
         <h3>Fee columns</h3>
-        {Object.keys(feeColumns).map((k) => (
-          <div key={k} className="slds-form-element slds-m-bottom_small">
-            <label className="slds-form-element__label">{k}</label>
-            <div className="slds-form-element__control">
-              <input
-                className="slds-input"
-                value={(feeColumns[k] || []).join(', ')}
-                onChange={(e) => updateFeeColumns(k, e.target.value)}
-              />
+        {Object.keys(feeColumns).map((k) => {
+          const key = `feeColumns:${k}`;
+          return (
+            <div key={k} className="slds-form-element slds-m-bottom_small">
+              <label className="slds-form-element__label">{k}</label>
+              <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <input
+                  className="slds-input"
+                  value={editingFields[key] ? (tempValues[key] ?? '') : (feeColumns[k] || []).join(', ')}
+                  onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                  disabled={!editingFields[key]}
+                />
+                {!editingFields[key] ? (
+                  <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (feeColumns[k] || []).join(', '))}>Edit</button>
+                ) : (
+                  <>
+                    <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                    <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                  </>
+                )}
+              </div>
+              <div className="helper-text">Comma-separated numbers used to render fee columns in results for this key.</div>
             </div>
-            <div className="helper-text">Comma-separated numbers used to render fee columns in results for this key.</div>
-          </div>
-        ))}
+          );
+        })}
       </section>
 
       {/* Max LTV by Tier removed from Constants per user request; values are maintained in the rates table. */}
@@ -484,17 +560,24 @@ export default function Constants() {
       <section className="slds-box slds-m-bottom_medium">
         <h3>Flat-above-commercial override</h3>
         <div className="slds-form-element slds-m-bottom_small">
-          <label className="slds-form-element__label">Enabled</label>
-          <div className="slds-form-element__control">
-            <input type="checkbox" checked={flatAboveCommercialRule.enabled} onChange={(e) => updateFlatAboveCommercial({ enabled: e.target.checked })} />
-          </div>
-          <div className="helper-text">When enabled, this rule applies the Tier → LTV mapping below to matching scopes.</div>
-        </div>
-
-        <div className="slds-form-element slds-m-bottom_small">
           <label className="slds-form-element__label">Scope matcher</label>
-          <div className="slds-form-element__control">
-            <input className="slds-input" value={flatAboveCommercialRule.scopeMatcher} onChange={(e) => updateFlatAboveCommercial({ scopeMatcher: e.target.value })} />
+          <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {(() => {
+              const key = 'flatAbove:scopeMatcher';
+              return (
+                <>
+                  <input className="slds-input" value={editingFields[key] ? (tempValues[key] ?? '') : (flatAboveCommercialRule.scopeMatcher || '')} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
+                  {!editingFields[key] ? (
+                    <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, flatAboveCommercialRule.scopeMatcher || '')}>Edit</button>
+                  ) : (
+                    <>
+                      <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                      <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                    </>
+                  )}
+                </>
+              );
+            })()}
           </div>
           <div className="helper-text">Comma-separated tokens or phrase used to detect the product scope (case-insensitive). Example: "flat,commercial"</div>
         </div>
@@ -503,14 +586,44 @@ export default function Constants() {
           <strong>Tier → Effective max LTV</strong>
           <div className="slds-m-top_x-small">
             <label className="slds-form-element__label">Tier 2</label>
-            <div className="slds-form-element__control">
-              <input className="slds-input" value={flatAboveCommercialRule.tierLtv['2'] || ''} onChange={(e) => updateFlatAboveCommercial({ tierLtv: { ...(flatAboveCommercialRule.tierLtv || {}), '2': Number(e.target.value) } })} />
+            <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              {(() => {
+                const key = 'flatAbove:tier2';
+                return (
+                  <>
+                    <input className="slds-input" value={editingFields[key] ? (tempValues[key] ?? '') : (String(flatAboveCommercialRule.tierLtv?.['2'] ?? ''))} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
+                    {!editingFields[key] ? (
+                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(flatAboveCommercialRule.tierLtv?.['2'] ?? ''))}>Edit</button>
+                    ) : (
+                      <>
+                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
           <div className="slds-m-top_x-small">
             <label className="slds-form-element__label">Tier 3</label>
-            <div className="slds-form-element__control">
-              <input className="slds-input" value={flatAboveCommercialRule.tierLtv['3'] || ''} onChange={(e) => updateFlatAboveCommercial({ tierLtv: { ...(flatAboveCommercialRule.tierLtv || {}), '3': Number(e.target.value) } })} />
+            <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              {(() => {
+                const key = 'flatAbove:tier3';
+                return (
+                  <>
+                    <input className="slds-input" value={editingFields[key] ? (tempValues[key] ?? '') : (String(flatAboveCommercialRule.tierLtv?.['3'] ?? ''))} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
+                    {!editingFields[key] ? (
+                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(flatAboveCommercialRule.tierLtv?.['3'] ?? ''))}>Edit</button>
+                    ) : (
+                      <>
+                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -523,57 +636,96 @@ export default function Constants() {
         <div className="slds-grid slds-wrap slds-gutters_small" style={{ gap: '1rem' }}>
           <div className="slds-col" style={{ minWidth: 260 }}>
             <label className="slds-form-element__label">Standard BBR</label>
-            <div className="slds-form-element__control slds-grid">
-              <input
-                className="slds-input"
-                type="number"
-                step="0.01"
-                min="0"
-                value={((marketRates?.STANDARD_BBR ?? 0) * 100).toFixed(2)}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  updateMarketRates({ STANDARD_BBR: Number.isFinite(v) ? v / 100 : 0 });
-                }}
-              />
-              <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
+            <div className="slds-form-element__control slds-grid" style={{ alignItems: 'center', gap: '0.5rem' }}>
+              {(() => {
+                const key = 'marketRates:STANDARD_BBR';
+                return (
+                  <>
+                    <input
+                      className="slds-input"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editingFields[key] ? (tempValues[key] ?? '') : ((marketRates?.STANDARD_BBR ?? 0) * 100).toFixed(2)}
+                      onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                      disabled={!editingFields[key]}
+                    />
+                    <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
+                    {!editingFields[key] ? (
+                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, ((marketRates?.STANDARD_BBR ?? 0) * 100).toFixed(2))}>Edit</button>
+                    ) : (
+                      <>
+                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
             </div>
             <div className="helper-text">Standard Bank Base Rate used in loan calculations (showing as percent).</div>
           </div>
 
           <div className="slds-col" style={{ minWidth: 260 }}>
             <label className="slds-form-element__label">Stress BBR</label>
-            <div className="slds-form-element__control slds-grid">
-              <input
-                className="slds-input"
-                type="number"
-                step="0.01"
-                min="0"
-                value={((marketRates?.STRESS_BBR ?? 0) * 100).toFixed(2)}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  updateMarketRates({ STRESS_BBR: Number.isFinite(v) ? v / 100 : 0 });
-                }}
-              />
-              <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
+            <div className="slds-form-element__control slds-grid" style={{ alignItems: 'center', gap: '0.5rem' }}>
+              {(() => {
+                const key = 'marketRates:STRESS_BBR';
+                return (
+                  <>
+                    <input
+                      className="slds-input"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editingFields[key] ? (tempValues[key] ?? '') : ((marketRates?.STRESS_BBR ?? 0) * 100).toFixed(2)}
+                      onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                      disabled={!editingFields[key]}
+                    />
+                    <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
+                    {!editingFields[key] ? (
+                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, ((marketRates?.STRESS_BBR ?? 0) * 100).toFixed(2))}>Edit</button>
+                    ) : (
+                      <>
+                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
             </div>
             <div className="helper-text">Stress BBR value used for stress-testing assumptions.</div>
           </div>
 
           <div className="slds-col" style={{ minWidth: 260 }}>
             <label className="slds-form-element__label">Current MVR</label>
-            <div className="slds-form-element__control slds-grid">
-              <input
-                className="slds-input"
-                type="number"
-                step="0.01"
-                min="0"
-                value={((marketRates?.CURRENT_MVR ?? 0) * 100).toFixed(2)}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  updateMarketRates({ CURRENT_MVR: Number.isFinite(v) ? v / 100 : 0 });
-                }}
-              />
-              <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
+            <div className="slds-form-element__control slds-grid" style={{ alignItems: 'center', gap: '0.5rem' }}>
+              {(() => {
+                const key = 'marketRates:CURRENT_MVR';
+                return (
+                  <>
+                    <input
+                      className="slds-input"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editingFields[key] ? (tempValues[key] ?? '') : ((marketRates?.CURRENT_MVR ?? 0) * 100).toFixed(2)}
+                      onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                      disabled={!editingFields[key]}
+                    />
+                    <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
+                    {!editingFields[key] ? (
+                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, ((marketRates?.CURRENT_MVR ?? 0) * 100).toFixed(2))}>Edit</button>
+                    ) : (
+                      <>
+                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
             </div>
             <div className="helper-text">Current Mortgage Valuation Rate (shown as percent).</div>
           </div>
@@ -585,7 +737,6 @@ export default function Constants() {
       {/* Flat-above-commercial override removed — rule is now hard-coded in calculator logic per user request. */}
 
       <div className="slds-button-group">
-        <button className="slds-button slds-button_neutral" onClick={saveToStorage}>Save</button>
         <button className="slds-button slds-button_outline-brand" onClick={exportJson}>Export JSON</button>
         <button className="slds-button slds-button_destructive" onClick={resetToDefaults}>Reset defaults</button>
       </div>

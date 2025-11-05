@@ -299,3 +299,27 @@ input[type="checkbox"] {
     height: 18px;
   }
 }
+
+/* Sticky action column: keeps Actions visible when table scrolls horizontally */
+.sticky-action {
+  position: -webkit-sticky;
+  position: sticky;
+  right: 0;
+  background: var(--cds-background, #ffffff);
+  z-index: 5;
+  white-space: nowrap;
+  box-shadow: -6px 0 8px -6px rgba(0,0,0,0.08);
+}
+.sticky-action {
+  /* ensure header stands above body cells */
+  z-index: 6;
+}
+
+@media (max-width: 600px) {
+  /* On very small screens, sticky columns can interfere with layout; fall back to normal flow */
+  .sticky-action {
+    position: static;
+    box-shadow: none;
+    z-index: auto;
+  }
+}

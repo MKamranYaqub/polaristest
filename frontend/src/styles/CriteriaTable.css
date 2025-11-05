@@ -197,3 +197,25 @@
     font-size: 0.8rem;
   }
 }
+
+/* Sticky action column rules - keep actions visible during horizontal scroll */
+.sticky-action {
+  position: -webkit-sticky;
+  position: sticky;
+  right: 0;
+  background: #ffffff;
+  z-index: 5;
+  white-space: nowrap;
+  box-shadow: -6px 0 8px -6px rgba(0,0,0,0.06);
+}
+.sticky-action {
+  z-index: 6;
+}
+
+@media (max-width: 600px) {
+  .sticky-action {
+    position: static;
+    box-shadow: none;
+    z-index: auto;
+  }
+}
