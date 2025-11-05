@@ -23,7 +23,7 @@ function RatesTable() {
     initialTerms: new Set(),
     fullTerms: new Set()
   });
-  const itemsPerPage = 10;
+  const itemsPerPage = 288;
   const [filters, setFilters] = useState({
     set_key: '',
     property: '',

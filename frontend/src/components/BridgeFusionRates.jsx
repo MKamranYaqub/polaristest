@@ -19,26 +19,21 @@ function BridgeFusionRates() {
     set_key: '',
     property: '',
     product: '',
-    type: ''
+    type: '',
+    charge_type: ''
   });
-  const [filterOptions, setFilterOptions] = useState({ properties: new Set(), products: new Set(), setKeys: new Set(), types: new Set() });
-  // Finder states for Bridge vs Fusion
-  const [bridgeFilters, setBridgeFilters] = useState({ property: '', chargeType: '', product: '', ltv: '' });
-  const [fusionFilters, setFusionFilters] = useState({ property: '', ltv: '' });
-  const [bridgeMatches, setBridgeMatches] = useState([]);
-  const [fusionMatches, setFusionMatches] = useState([]);
-  const [chargeFieldName, setChargeFieldName] = useState(null);
-  const [chargeOptions, setChargeOptions] = useState(new Set());
+  const [filterOptions, setFilterOptions] = useState({ properties: new Set(), products: new Set(), setKeys: new Set(), types: new Set(), chargeTypes: new Set() });
 
   const fetch = async () => {
     setLoading(true);
     try {
       // fetch filtered data (select * — we'll derive available columns from returned rows)
-    let q = supabase.from('bridge_fusion_rates_full').select('*');
-    if (filters.set_key) q = q.eq('set_key', filters.set_key);
-    if (filters.property) q = q.eq('property', filters.property);
-    if (filters.product) q = q.eq('product', filters.product);
-    if (filters.type) q = q.eq('type', filters.type);
+  let q = supabase.from('bridge_fusion_rates_full').select('*');
+  if (filters.set_key) q = q.eq('set_key', filters.set_key);
+  if (filters.property) q = q.eq('property', filters.property);
+  if (filters.product) q = q.eq('product', filters.product);
+  if (filters.type) q = q.eq('type', filters.type);
+  if (filters.charge_type) q = q.eq('charge_type', filters.charge_type);
       // No term filters: `initial_term`/`full_term` are not present in bridge_fusion_rates_full
 
       const { data, error } = await q.order('set_key', { ascending: true });
@@ -51,14 +46,9 @@ function BridgeFusionRates() {
         properties: new Set(rowsData.map(r => r.property).filter(Boolean)),
         products: new Set(rowsData.map(r => r.product).filter(Boolean)),
         setKeys: new Set(rowsData.map(r => r.set_key).filter(Boolean)),
-        types: new Set(rowsData.map(r => r.type).filter(Boolean))
+        types: new Set(rowsData.map(r => r.type).filter(Boolean)),
+        chargeTypes: new Set(rowsData.map(r => r.charge_type).filter(Boolean))
       });
-      // detect a column that represents charge type/second charge info (fallback to 'type')
-      const candidates = ['charge_type','charge','chargeType','charge_type_label','is_second_charge','is_second','second_charge','charge_kind','type'];
-      let found = null;
-      for (const c of candidates) { if (rowsData.length > 0 && Object.prototype.hasOwnProperty.call(rowsData[0], c)) { found = c; break; } }
-      setChargeFieldName(found || 'type');
-      setChargeOptions(new Set(rowsData.map(r => r[found || 'type']).filter(v => v !== undefined && v !== null)));
     } catch (e) {
       setError(e.message || e);
     } finally {
@@ -77,6 +67,7 @@ function BridgeFusionRates() {
       property: 'Bridge',
   type: 'Fixed',
   product_fee: 2,
+  charge_type: '',
     tier: '',
       product: '',
       rate: null,
@@ -141,47 +132,6 @@ function BridgeFusionRates() {
     } catch (e) {
       setError(e.message || e);
     }
-  };
-
-  // Helpers used by the Rate Finder
-  const num = (v) => {
-    if (v === null || v === undefined || v === '') return null;
-    const n = Number(String(v).toString().replace(/[^0-9.-]/g, ''));
-    return Number.isFinite(n) ? n : null;
-  };
-
-  const matchLtv = (row, ltv) => {
-    const min = num(row.min_ltv);
-    const max = num(row.max_ltv);
-    const val = num(ltv);
-    if (val === null) return true; // no LTV filter
-    if (min !== null && val < min) return false;
-    if (max !== null && val > max) return false;
-    return true;
-  };
-
-  const findBridgeRates = () => {
-    const { property, chargeType, product, ltv } = bridgeFilters;
-    const matches = rows.filter(r => {
-      if (property && String((r.property||'')).toLowerCase() !== String(property).toLowerCase()) return false;
-      // charge type matching using detected field
-      const cf = chargeFieldName || 'type';
-      if (chargeType && String((r[cf]||'')).toLowerCase() !== String(chargeType).toLowerCase()) return false;
-      if (product && String((r.product||'')).toLowerCase() !== String(product).toLowerCase()) return false;
-      if (!matchLtv(r, ltv)) return false;
-      return true;
-    });
-    setBridgeMatches(matches);
-  };
-
-  const findFusionRates = () => {
-    const { property, ltv } = fusionFilters;
-    const matches = rows.filter(r => {
-      if (property && String((r.property||'')).toLowerCase() !== String(property).toLowerCase()) return false;
-      if (!matchLtv(r, ltv)) return false;
-      return true;
-    });
-    setFusionMatches(matches);
   };
 
   const toggleSelectAll = (checked) => {
@@ -300,7 +250,7 @@ function BridgeFusionRates() {
         for (let i = 0; i < cleaned.length; i += chunkSize) {
           const chunk = cleaned.slice(i, i + chunkSize);
           // Use the full column set for conflict so rows differing by LTV/type/etc are allowed
-          const onConflictCols = 'set_key,property,product,type,product_fee,min_ltv,max_ltv,rate,min_term,max_term,min_rolled_months,max_rolled_months,min_loan,max_loan,min_icr,max_defer_int';
+          const onConflictCols = 'set_key,property,product,type,charge_type,product_fee,min_ltv,max_ltv,rate,min_term,max_term,min_rolled_months,max_rolled_months,min_loan,max_loan,min_icr,max_defer_int';
           const { error } = await supabase.from('bridge_fusion_rates_full').upsert(chunk, { onConflict: onConflictCols });
           if (error) { setError(error.message || JSON.stringify(error)); return; }
         }
@@ -330,7 +280,7 @@ function BridgeFusionRates() {
   };
 
   const handleExport = () => {
-  const headers = ['set_key','property','product','type','product_fee','min_ltv','max_ltv','rate','min_term','max_term','min_rolled_months','max_rolled_months','min_loan','max_loan','min_icr','max_defer_int'];
+  const headers = ['set_key','property','product','type','charge_type','product_fee','min_ltv','max_ltv','rate','min_term','max_term','min_rolled_months','max_rolled_months','min_loan','max_loan','min_icr','max_defer_int'];
     const headerRow = headers.map(h => formatCsvValue(h)).join(',');
     const dataRows = rows.map(r => headers.map(h => formatExportField(h, r)).join(','));
     const csv = [headerRow, ...dataRows].join('\r\n');
@@ -365,78 +315,6 @@ function BridgeFusionRates() {
       </div>
 
       <div className="slds-grid slds-wrap slds-m-bottom_medium" style={{ gap: '0.5rem' }}>
-        {/* Rate Finder: Bridge (monthly) and Fusion (yearly) */}
-        <div style={{ width: '100%', marginBottom: '0.5rem' }}>
-          <h3 style={{ margin: '0 0 0.5rem 0' }}>Rate Finder</h3>
-          <div className="slds-grid" style={{ gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-            <div style={{ minWidth: 220 }}>
-              <label className="slds-form-element__label">Bridge - Product Scope</label>
-              <div className="slds-form-element__control">
-                <select className="slds-select" value={bridgeFilters.property} onChange={(e) => setBridgeFilters(prev => ({ ...prev, property: e.target.value }))}>
-                  <option value="">Any</option>
-                  {Array.from(filterOptions.properties).sort().map(p => (<option key={p} value={p}>{p}</option>))}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ minWidth: 180 }}>
-              <label className="slds-form-element__label">Bridge - Charge Type</label>
-              <div className="slds-form-element__control">
-                <select className="slds-select" value={bridgeFilters.chargeType} onChange={(e) => setBridgeFilters(prev => ({ ...prev, chargeType: e.target.value }))}>
-                  <option value="">Any</option>
-                  {Array.from(chargeOptions).filter(Boolean).map(c => (<option key={c} value={c}>{String(c)}</option>))}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ minWidth: 200 }}>
-              <label className="slds-form-element__label">Bridge - Sub Product</label>
-              <div className="slds-form-element__control">
-                <select className="slds-select" value={bridgeFilters.product} onChange={(e) => setBridgeFilters(prev => ({ ...prev, product: e.target.value }))}>
-                  <option value="">Any</option>
-                  {Array.from(filterOptions.products).sort().map(p => (<option key={p} value={p}>{p}</option>))}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ minWidth: 160 }}>
-              <label className="slds-form-element__label">Bridge - LTV (%)</label>
-              <div className="slds-form-element__control">
-                <input className="slds-input" type="number" value={bridgeFilters.ltv} onChange={(e) => setBridgeFilters(prev => ({ ...prev, ltv: e.target.value }))} placeholder="e.g. 60" />
-              </div>
-            </div>
-
-            <div>
-              <button className="slds-button slds-button_brand" onClick={findBridgeRates}>Find Bridge Rates (monthly)</button>
-            </div>
-
-            <div style={{ minWidth: 220, marginLeft: '2rem' }}>
-              <label className="slds-form-element__label">Fusion - Product Scope</label>
-              <div className="slds-form-element__control">
-                <select className="slds-select" value={fusionFilters.property} onChange={(e) => setFusionFilters(prev => ({ ...prev, property: e.target.value }))}>
-                  <option value="">Any</option>
-                  {Array.from(filterOptions.properties).sort().map(p => (<option key={p} value={p}>{p}</option>))}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ minWidth: 160 }}>
-              <label className="slds-form-element__label">Fusion - LTV (%)</label>
-              <div className="slds-form-element__control">
-                <input className="slds-input" type="number" value={fusionFilters.ltv} onChange={(e) => setFusionFilters(prev => ({ ...prev, ltv: e.target.value }))} placeholder="e.g. 70" />
-              </div>
-            </div>
-
-            <div>
-              <button className="slds-button slds-button_neutral" onClick={findFusionRates}>Find Fusion Rates (yearly)</button>
-            </div>
-          </div>
-
-          <div style={{ marginTop: '0.5rem' }}>
-            <div style={{ display: 'inline-block', marginRight: '1rem' }}><strong>Bridge matches:</strong> {bridgeMatches.length}</div>
-            <div style={{ display: 'inline-block' }}><strong>Fusion matches:</strong> {fusionMatches.length}</div>
-          </div>
-        </div>
         <div className="slds-form-element" style={{ minWidth: '200px' }}>
           <label className="slds-form-element__label">Set Key:</label>
           <div className="slds-form-element__control">
@@ -479,6 +357,16 @@ function BridgeFusionRates() {
           </div>
         </div>
 
+        <div className="slds-form-element" style={{ minWidth: '150px' }}>
+          <label className="slds-form-element__label">Charge Type:</label>
+          <div className="slds-form-element__control">
+            <select className="slds-select" value={filters.charge_type} onChange={(e) => setFilters(prev => ({ ...prev, charge_type: e.target.value }))}>
+              <option value="">All Charge Types</option>
+              {Array.from(filterOptions.chargeTypes || []).sort().map(ct => (<option key={ct} value={ct}>{ct}</option>))}
+            </select>
+          </div>
+        </div>
+
         {/* initial_term/full_term filters removed: not present in bridge_fusion_rates_full schema */}
       </div>
 
@@ -493,6 +381,7 @@ function BridgeFusionRates() {
               <th onClick={() => changeSort('property')} style={{ cursor: 'pointer' }}>Property {sortField === 'property' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
               <th onClick={() => changeSort('product')} style={{ cursor: 'pointer' }}>Product {sortField === 'product' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
               <th onClick={() => changeSort('type')} style={{ cursor: 'pointer' }}>Type {sortField === 'type' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('charge_type')} style={{ cursor: 'pointer' }}>Charge Type {sortField === 'charge_type' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
               <th onClick={() => changeSort('product_fee')} style={{ cursor: 'pointer' }}>Product Fee {sortField === 'product_fee' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
               <th onClick={() => changeSort('rate')} style={{ cursor: 'pointer' }}>Rate (%) {sortField === 'rate' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
               <th>Min Term</th>
@@ -517,6 +406,7 @@ function BridgeFusionRates() {
                 {/* tier column removed — not present in DB schema */}
                 <td>{r.product}</td>
                 <td>{r.type}</td>
+                <td>{r.charge_type}</td>
                 <td>{r.product_fee}</td>
                 <td>{r.rate}</td>
                 <td>{r.min_term}</td>

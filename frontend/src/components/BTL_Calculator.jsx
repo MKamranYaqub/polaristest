@@ -89,6 +89,13 @@ export default function BTLcalculator() {
     loadAll();
   }, [supabase]);
 
+  // helper to format currency inputs with thousand separators (display-only)
+  const formatCurrencyInput = (v) => {
+    if (v === undefined || v === null || v === '') return '';
+    const n = Number(String(v).replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(n) ? n.toLocaleString('en-GB') : '';
+  };
+
   useEffect(() => {
     // build question map based on BTL criteriaSet and selected productScope
     const normalizeStr = (s) => (s || '').toString().trim().toLowerCase();
@@ -255,7 +262,17 @@ export default function BTLcalculator() {
 
     // scope matching
     const scopeVal = ((r.property || r.product_scope || r.property_scope || r.set_key || '')).toString().toLowerCase();
-    const scopeMatch = productScope ? (scopeVal === productScope.toString().toLowerCase() || scopeVal.includes(productScope.toString().toLowerCase())) : true;
+    let scopeMatch = true;
+    if (productScope) {
+      const psLower = productScope.toString().toLowerCase();
+      // If user selected Commercial, do NOT include Semi-Commercial variants (treat them separately).
+      // i.e. match rows that contain 'commercial' but exclude rows that specifically indicate 'semi-commercial'.
+      if (psLower === 'commercial') {
+        scopeMatch = (scopeVal.includes('commercial') && !/semi[-_ ]?commercial/.test(scopeVal));
+      } else {
+        scopeMatch = scopeVal === psLower || scopeVal.includes(psLower);
+      }
+    }
 
     // retention matching — use explicit `is_retention` column when available
     const detectRetention = (row) => {
@@ -672,7 +689,7 @@ export default function BTLcalculator() {
                 <input 
                   className="slds-input" 
                   value={propertyValue} 
-                  onChange={(e) => setPropertyValue(e.target.value)} 
+                  onChange={(e) => setPropertyValue(formatCurrencyInput(e.target.value))} 
                   placeholder="£1,200,000" 
                 />
                 <div className="helper-text">Subject to valuation</div>
@@ -687,7 +704,7 @@ export default function BTLcalculator() {
                 <input 
                   className="slds-input" 
                   value={monthlyRent} 
-                  onChange={(e) => setMonthlyRent(e.target.value)} 
+                  onChange={(e) => setMonthlyRent(formatCurrencyInput(e.target.value))} 
                   placeholder="£3,000" 
                 />
               </div>
@@ -742,7 +759,7 @@ export default function BTLcalculator() {
                   <input 
                     className="slds-input" 
                     value={specificNetLoan} 
-                    onChange={(e) => setSpecificNetLoan(e.target.value)} 
+                    onChange={(e) => setSpecificNetLoan(formatCurrencyInput(e.target.value))} 
                     placeholder="£425,000" 
                   />
                   <div className="helper-text">Maximum GLA £9,000,000</div>
@@ -781,7 +798,7 @@ export default function BTLcalculator() {
                   <input 
                     className="slds-input" 
                     value={specificGrossLoan} 
-                    onChange={(e) => setSpecificGrossLoan(e.target.value)} 
+                    onChange={(e) => setSpecificGrossLoan(formatCurrencyInput(e.target.value))} 
                     placeholder="£550,000" 
                   />
                   <div className="helper-text">Enter desired gross loan amount</div>
@@ -849,18 +866,18 @@ export default function BTLcalculator() {
       <div className="range-toggle-container">
         <div className="range-toggle-buttons">
           <button
-            className={`range-button ${selectedRange === 'core' ? 'active' : ''}`}
-            onClick={() => setSelectedRange('core')}
-            type="button"
-          >
-            Core range
-          </button>
-          <button
             className={`range-button ${selectedRange === 'specialist' ? 'active' : ''}`}
             onClick={() => setSelectedRange('specialist')}
             type="button"
           >
             Specialist range
+          </button>
+          <button
+            className={`range-button ${selectedRange === 'core' ? 'active' : ''}`}
+            onClick={() => setSelectedRange('core')}
+            type="button"
+          >
+            Core range
           </button>
         </div>
 
@@ -877,24 +894,71 @@ export default function BTLcalculator() {
               }
             });
 
-            return (
-              <>
-                <div className="rates-count">
-                  Found {filteredRates.length} matching {selectedRange} rates for {productType}, Tier {currentTier}
-                </div>
-                {filteredRates.slice(0, 8).map(r => (
-                  <div key={(r.id || r.product) + '::' + (r.rate || '')} className="rate-item">
-                    <strong>{r.product}</strong> — {r.rate}% (Tier {r.tier}) — {r.property}
-                    {(r.product_fee !== undefined && r.product_fee !== null && r.product_fee !== '') && (
-                      <span className="rate-fee"> — Fee: {Number(r.product_fee).toFixed(2)}%</span>
-                    )}
-                  </div>
-                ))}
-                {filteredRates.length === 0 && (
-                  <div className="no-rates">No {selectedRange} range rates available for the selected criteria.</div>
-                )}
-              </>
-            );
+            // Build fee buckets (unique product_fee values). Use 'none' for rows without an explicit fee.
+            const feeBucketsSet = new Set((filteredRates || []).map((r) => {
+              if (r.product_fee === undefined || r.product_fee === null || r.product_fee === '') return 'none';
+              return String(r.product_fee);
+            }));
+            // prefer numeric sort for numeric buckets, keep 'none' last
+            const feeBuckets = Array.from(feeBucketsSet).sort((a, b) => {
+              if (a === 'none') return 1;
+              if (b === 'none') return -1;
+              const na = Number(a);
+              const nb = Number(b);
+              if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+              return a.localeCompare(b);
+            });
+
+                    return (
+                      <>
+                        <div className="rates-count">
+                          Found {filteredRates.length} matching {selectedRange} rates for {productType}, Tier {currentTier}
+                        </div>
+                        {feeBuckets.length === 0 ? (
+                          <div className="no-rates">No {selectedRange} range rates available for the selected criteria.</div>
+                        ) : (
+                          <div style={{ marginTop: '1rem', overflowX: 'auto' }}>
+                            <table className="slds-table slds-table_cell-buffer slds-table_bordered" style={{ minWidth: Math.max(600, feeBuckets.length * 220) }}>
+                              <thead>
+                                <tr>
+                                  <th style={{ width: '150px' }}>Label</th>
+                                  {feeBuckets.map((fb) => (
+                                    <th key={fb} style={{ width: `${(100 - 15) / feeBuckets.length}%` }}>
+                                      {fb === 'none' ? 'Fee: —' : `Fee: ${fb}%`}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr>
+                                  {/* Label column: show 'Rates' for the results row or the first label available */}
+                                  <td style={{ verticalAlign: 'top', fontWeight: 600 }}>Rates</td>
+                                  {feeBuckets.map((fb) => {
+                                    const rows = filteredRates.filter(r => {
+                                      const key = (r.product_fee === undefined || r.product_fee === null || r.product_fee === '') ? 'none' : String(r.product_fee);
+                                      return key === fb;
+                                    });
+                                    return (
+                                      <td key={fb} style={{ verticalAlign: 'top' }}>
+                                        {rows.length === 0 ? (
+                                          <div className="slds-text-body_small">—</div>
+                                        ) : rows.map(r => (
+                                          <div key={(r.id || r.product) + '::' + (r.rate || '')} className="slds-box slds-m-bottom_x-small">
+                                            <div style={{ fontWeight: 600 }}>{r.product}</div>
+                                            <div>{r.rate != null ? `${r.rate}%` : '—'}</div>
+                                            <div style={{ color: '#666', fontSize: '0.85rem' }}>{r.property || r.product_scope || '—'}</div>
+                                          </div>
+                                        ))}
+                                      </td>
+                                    );
+                                  })}
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </>
+                    );
           })()}
         </div>
       </div>

@@ -75,6 +75,17 @@ function BridgeRateEditModal({ rate, onSave, onCancel }) {
               </div>
 
               <div className="slds-form-element">
+                <label className="slds-form-element__label">Charge Type</label>
+                <div className="slds-form-element__control">
+                  <select name="charge_type" value={formData.charge_type || ''} onChange={handleChange} className="slds-select">
+                    <option value="">(none)</option>
+                    <option value="First Charge">First Charge</option>
+                    <option value="Second Charge">Second Charge</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="slds-form-element">
                 <label className="slds-form-element__label">Product Fee</label>
                 <div className="slds-form-element__control">
                   <input name="product_fee" value={formData.product_fee ?? ''} onChange={handleChange} className="slds-input" type="number" step="0.01" />
