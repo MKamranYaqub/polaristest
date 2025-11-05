@@ -18,7 +18,7 @@ function CriteriaTable() {
   const [editingCriteria, setEditingCriteria] = useState(null);
   const [importPreview, setImportPreview] = useState(null);
   const [showImportPreview, setShowImportPreview] = useState(false);
-  const itemsPerPage = 81;
+  const itemsPerPage = 10;
   const [filters, setFilters] = useState({
     criteria_set: '',
     product_scope: '',
