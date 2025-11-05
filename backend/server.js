@@ -10,7 +10,8 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+const corsOptions = { origin: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : true };
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Health check
@@ -47,6 +48,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  if (process.env.FRONTEND_URL) console.log(`🌐 Frontend allowed origin: ${process.env.FRONTEND_URL}`);
   console.log(`💾 Supabase connected`);
 });
