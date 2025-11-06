@@ -30,7 +30,7 @@ function App() {
                   <Route path="/calculator" element={<Calculator />} />
                   <Route path="/quotes" element={<QuotesList />} />
                   <Route path="/constants" element={<Constants />} />
-                  <Route path="/" element={<Navigate to="/rates" replace />} />
+                  <Route path="/" element={<Navigate to="/calculator" replace />} />
                 </Routes>
               </ErrorBoundary>
             </Content>
