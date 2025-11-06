@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import '../styles/Calculator.scss';
+import SaveQuoteButton from './SaveQuoteButton';
+import IssueDIPModal from './IssueDIPModal';
 
-export default function BridgingCalculator() {
+export default function BridgingCalculator({ initialQuote = null }) {
   const { supabase } = useSupabase();
   const [allCriteria, setAllCriteria] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,6 +39,13 @@ export default function BridgingCalculator() {
   const [subProductOptions, setSubProductOptions] = useState([]);
   const [subProductLimits, setSubProductLimits] = useState({});
   const [chargeType, setChargeType] = useState('All'); // All | First | Second
+
+  // DIP Modal state
+  const [dipModalOpen, setDipModalOpen] = useState(false);
+  const [currentQuoteId, setCurrentQuoteId] = useState(null);
+  const [dipData, setDipData] = useState({});
+  const [selectedFeeTypeForDip, setSelectedFeeTypeForDip] = useState('');
+  const [filteredRatesForDip, setFilteredRatesForDip] = useState([]);
 
   useEffect(() => {
     let mounted = true;
@@ -108,9 +117,12 @@ export default function BridgingCalculator() {
     });
 
     setQuestions(map);
-    const starting = {};
-    Object.keys(map).forEach(k => { starting[k] = map[k].options[0] || null; });
-    setAnswers(starting);
+    // reset answers ONLY if there's no initialQuote (i.e., new quote, not loading existing)
+    if (!initialQuote) {
+      const starting = {};
+      Object.keys(map).forEach(k => { starting[k] = map[k].options[0] || null; });
+      setAnswers(starting);
+    }
 
     // Debugging help: log counts so we can inspect why bridging criteria might be empty
     // eslint-disable-next-line no-console
@@ -118,7 +130,7 @@ export default function BridgingCalculator() {
     // also log available product_scope values for troubleshooting
     // eslint-disable-next-line no-console
     console.log('BridgingCalculator: available product_scopes ->', Array.from(new Set(allCriteria.map(r => r.product_scope).filter(Boolean))).slice(0,50));
-  }, [allCriteria, productScope]);
+  }, [allCriteria, productScope, initialQuote]);
 
   // Auto-select productScope intelligently after criteria load: prefer an explicit scope that mentions bridge/fusion
   useEffect(() => {
@@ -135,6 +147,60 @@ export default function BridgingCalculator() {
     // fallback: choose first available scope if none explicitly references bridge/fusion
     if (!productScope && scopes.length > 0) setProductScope(scopes[0]);
   }, [allCriteria]);
+
+  // If an initialQuote is provided, populate fields from the database structure
+  useEffect(() => {
+    try {
+      if (!initialQuote) return;
+      
+      // New structure: data is directly on the quote object (no nested payload)
+      const quote = initialQuote;
+      
+      // Store quote ID and DIP data for Issue DIP modal
+      if (quote.id) setCurrentQuoteId(quote.id);
+      if (quote.commercial_or_main_residence || quote.dip_date || quote.dip_expiry_date) {
+        setDipData({
+          commercial_or_main_residence: quote.commercial_or_main_residence,
+          dip_date: quote.dip_date,
+          dip_expiry_date: quote.dip_expiry_date,
+          guarantor_name: quote.guarantor_name,
+          lender_legal_fee: quote.lender_legal_fee,
+          number_of_applicants: quote.number_of_applicants,
+          overpayments_percent: quote.overpayments_percent,
+          paying_network_club: quote.paying_network_club,
+          security_properties: quote.security_properties,
+          fee_type_selection: quote.fee_type_selection,
+          dip_status: quote.dip_status
+        });
+      }
+      
+      if (quote.property_value != null) setPropertyValue(formatCurrencyInput(quote.property_value));
+      if (quote.gross_loan != null) setGrossLoan(formatCurrencyInput(quote.gross_loan));
+      if (quote.monthly_rent != null) setMonthlyRent(formatCurrencyInput(quote.monthly_rent));
+      if (quote.top_slicing != null) setTopSlicing(String(quote.top_slicing));
+      if (quote.use_specific_net_loan != null) setUseSpecificNet(quote.use_specific_net_loan ? 'Yes' : 'No');
+      if (quote.specific_net_loan != null) setSpecificNetLoan(formatCurrencyInput(quote.specific_net_loan));
+      if (quote.bridging_loan_term != null) setBridgingTerm(String(quote.bridging_loan_term));
+      if (quote.product_scope) setProductScope(quote.product_scope);
+      if (quote.charge_type) setChargeType(quote.charge_type);
+      if (quote.sub_product) setSubProduct(quote.sub_product);
+      
+      // Load criteria answers if available
+      if (quote.criteria_answers) {
+        try {
+          const answersData = typeof quote.criteria_answers === 'string' 
+            ? JSON.parse(quote.criteria_answers) 
+            : quote.criteria_answers;
+          if (answersData) setAnswers(answersData);
+        } catch (e) {
+          console.debug('Failed to parse criteria_answers', e);
+        }
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.debug('Bridging: failed to apply initial quote', e);
+    }
+  }, [initialQuote]);
 
   const handleAnswerChange = (key, idx) => {
     setAnswers(prev => ({ ...prev, [key]: questions[key].options[idx] }));
@@ -347,6 +413,80 @@ export default function BridgingCalculator() {
     console.log('Bridging: matched bridge=', bridgeOut.length, 'fusion=', fusionOut.length, 'mode', mode);
   }, [rates, productScope, subProduct, propertyValue, grossLoan, specificNetLoan, answers, chargeType]);
 
+  // DIP Modal Handlers
+  const handleSaveDipData = async (quoteId, dipData) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/quotes/${quoteId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dipData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save DIP data');
+      }
+
+      // Update local DIP data state so it persists when reopening modal
+      setDipData(dipData);
+    } catch (err) {
+      console.error('Error saving DIP data:', err);
+      throw err;
+    }
+  };
+
+  const handleCreatePDF = async (quoteId) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/quotes/${quoteId}/pdf`, {
+        method: 'POST'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      // Download the PDF
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `DIP_${quoteId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Error creating PDF:', err);
+      throw err;
+    }
+  };
+
+  // Available fee types for Bridge: Fusion, Variable Bridge, Fixed Bridge
+  const bridgeFeeTypes = ['Fusion', 'Variable Bridge', 'Fixed Bridge'];
+
+  // Handle fee type selection in DIP modal to filter rates
+  const handleFeeTypeSelection = (feeTypeLabel) => {
+    setSelectedFeeTypeForDip(feeTypeLabel);
+    
+    if (!feeTypeLabel || !relevantRates || relevantRates.length === 0) {
+      setFilteredRatesForDip([]);
+      return;
+    }
+
+    // Filter based on product type for Bridge
+    let filtered = [];
+    if (feeTypeLabel === 'Fusion') {
+      filtered = fusionMatched;
+    } else if (feeTypeLabel === 'Variable Bridge') {
+      filtered = bridgeMatched.filter(r => r.product && r.product.toLowerCase().includes('variable'));
+    } else if (feeTypeLabel === 'Fixed Bridge') {
+      filtered = bridgeMatched.filter(r => r.product && r.product.toLowerCase().includes('fixed'));
+    }
+
+    setFilteredRatesForDip(filtered);
+    console.log('Filtered rates for DIP (Bridge):', filtered.length, 'rates for:', feeTypeLabel);
+  };
+
   if (!supabase) return <div className="slds-p-around_medium">Supabase client missing</div>;
   if (loading) return (
     <div className="slds-spinner_container">
@@ -376,6 +516,65 @@ export default function BridgingCalculator() {
               ))}
             </select>
           </div>
+        </div>
+
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+          {currentQuoteId && (
+            <button 
+              className="slds-button slds-button_brand"
+              onClick={() => setDipModalOpen(true)}
+              style={{ marginRight: '0.5rem' }}
+            >
+              Issue DIP
+            </button>
+          )}
+          <SaveQuoteButton
+            calculatorType="BRIDGING"
+            calculationData={{
+              productScope,
+              propertyValue,
+              grossLoan,
+              monthlyRent,
+              topSlicing,
+              useSpecificNet,
+              specificNetLoan,
+              bridgingTerm,
+              chargeType,
+              subProduct,
+              answers,
+              results: relevantRates,
+              selectedRate: (filteredRatesForDip && filteredRatesForDip.length > 0) 
+                ? filteredRatesForDip[0] 
+                : (relevantRates && relevantRates.length > 0 ? relevantRates[0] : null),
+            }}
+            allColumnData={[]}
+            bestSummary={null}
+            existingQuote={initialQuote}
+            onSaved={(savedQuote) => {
+              // Update currentQuoteId when quote is saved for the first time
+              if (savedQuote && savedQuote.id && !currentQuoteId) {
+                setCurrentQuoteId(savedQuote.id);
+              }
+              // Update dipData if the saved quote has DIP information
+              if (savedQuote && savedQuote.id) {
+                if (savedQuote.commercial_or_main_residence || savedQuote.dip_date || savedQuote.dip_expiry_date) {
+                  setDipData({
+                    commercial_or_main_residence: savedQuote.commercial_or_main_residence,
+                    dip_date: savedQuote.dip_date,
+                    dip_expiry_date: savedQuote.dip_expiry_date,
+                    guarantor_name: savedQuote.guarantor_name,
+                    lender_legal_fee: savedQuote.lender_legal_fee,
+                    number_of_applicants: savedQuote.number_of_applicants,
+                    overpayments_percent: savedQuote.overpayments_percent,
+                    paying_network_club: savedQuote.paying_network_club,
+                    security_properties: savedQuote.security_properties,
+                    fee_type_selection: savedQuote.fee_type_selection,
+                    dip_status: savedQuote.dip_status
+                  });
+                }
+              }
+            }}
+          />
         </div>
       </div>
 
@@ -648,6 +847,24 @@ export default function BridgingCalculator() {
           </div>
         </div>
       </section>
+
+      {/* Issue DIP Modal */}
+      <IssueDIPModal
+        isOpen={dipModalOpen}
+        onClose={() => {
+          setDipModalOpen(false);
+          setSelectedFeeTypeForDip('');
+          setFilteredRatesForDip([]);
+        }}
+        quoteId={currentQuoteId}
+        calculatorType="BRIDGING"
+        existingDipData={dipData}
+        availableFeeTypes={bridgeFeeTypes}
+        allRates={relevantRates}
+        onSave={handleSaveDipData}
+        onCreatePDF={handleCreatePDF}
+        onFeeTypeSelected={handleFeeTypeSelection}
+      />
 
     </div>
   );

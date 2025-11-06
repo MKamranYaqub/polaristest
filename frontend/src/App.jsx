@@ -7,6 +7,7 @@ import CriteriaTable from './components/CriteriaTable';
 import BTLCalculator from './components/BTL_Calculator';
 import Calculator from './components/Calculator';
 import Constants from './components/Constants';
+import QuotesList from './components/QuotesList';
 import Navigation from './components/Navigation';
 import ErrorBoundary from './components/ErrorBoundary';
 import './styles/index.scss';
@@ -27,6 +28,7 @@ function App() {
                   <Route path="/rates" element={<RatesTable />} />
                   <Route path="/criteria" element={<CriteriaTable />} />
                   <Route path="/calculator" element={<Calculator />} />
+                  <Route path="/quotes" element={<QuotesList />} />
                   <Route path="/constants" element={<Constants />} />
                   <Route path="/" element={<Navigate to="/rates" replace />} />
                 </Routes>

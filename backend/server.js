@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { supabase } from './config/supabase.js';
+import quotesRouter from './routes/quotes.js';
 
 // Load environment variables
 dotenv.config();
@@ -40,6 +41,9 @@ app.get('/api/rates', async (req, res) => {
     res.status(500).json({ error: err.message ?? String(err) });
   }
 });
+
+// Quotes endpoints (CRUD)
+app.use('/api/quotes', quotesRouter);
 
 // Error handling
 app.use((err, req, res, next) => {
