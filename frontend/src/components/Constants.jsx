@@ -222,22 +222,52 @@ export default function Constants() {
         const { data, error } = await supabase.from('app_constants').select('*').order('updated_at', { ascending: false }).limit(1);
         if (!error && data && data.length) {
           const row = data[0];
+          let loadedData = null;
           // prefer structured columns when present
           if (row.product_lists || row.fee_columns || row.flat_above_commercial_rule || row.market_rates) {
-            if (mounted) {
-              setProductLists(row.product_lists || DEFAULT_PRODUCT_TYPES_LIST);
-              setFeeColumns(row.fee_columns || DEFAULT_FEE_COLUMNS);
-              setFlatAboveCommercialRule(row.flat_above_commercial_rule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE);
-              setMarketRates(row.market_rates || DEFAULT_MARKET_RATES);
-            }
+            loadedData = {
+              productLists: row.product_lists || DEFAULT_PRODUCT_TYPES_LIST,
+              feeColumns: row.fee_columns || DEFAULT_FEE_COLUMNS,
+              flatAboveCommercialRule: row.flat_above_commercial_rule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE,
+              marketRates: row.market_rates || DEFAULT_MARKET_RATES
+            };
           } else if (row.value) {
             const v = row.value;
-            if (mounted) {
-              setProductLists(v.productLists || DEFAULT_PRODUCT_TYPES_LIST);
-              setFeeColumns(v.feeColumns || DEFAULT_FEE_COLUMNS);
-              setFlatAboveCommercialRule(v.flatAboveCommercialRule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE);
-              setMarketRates(v.marketRates || DEFAULT_MARKET_RATES);
-            }
+            loadedData = {
+              productLists: v.productLists || DEFAULT_PRODUCT_TYPES_LIST,
+              feeColumns: v.feeColumns || DEFAULT_FEE_COLUMNS,
+              flatAboveCommercialRule: v.flatAboveCommercialRule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE,
+              marketRates: v.marketRates || DEFAULT_MARKET_RATES
+            };
+          }
+          
+          if (loadedData && mounted) {
+            // Update state
+            setProductLists(loadedData.productLists);
+            setFeeColumns(loadedData.feeColumns);
+            setFlatAboveCommercialRule(loadedData.flatAboveCommercialRule);
+            setMarketRates(loadedData.marketRates);
+            
+            // Update localStorage to match
+            writeOverrides(loadedData);
+            
+            // Update tempValues to reflect loaded data
+            const tv = {};
+            Object.keys(loadedData.productLists).forEach((pt) => {
+              const arr = loadedData.productLists[pt];
+              tv[`productLists:${pt}`] = Array.isArray(arr) ? arr.join(', ') : String(arr || '');
+            });
+            Object.keys(loadedData.feeColumns).forEach((k) => {
+              const arr = loadedData.feeColumns[k];
+              tv[`feeColumns:${k}`] = Array.isArray(arr) ? arr.join(', ') : String(arr || '');
+            });
+            Object.keys(loadedData.marketRates).forEach(k => {
+              tv[`marketRates:${k}`] = ((loadedData.marketRates[k] ?? 0) * 100).toFixed(2);
+            });
+            tv['flatAbove:scopeMatcher'] = loadedData.flatAboveCommercialRule?.scopeMatcher || '';
+            tv['flatAbove:tier2'] = String(loadedData.flatAboveCommercialRule?.tierLtv?.['2'] ?? '');
+            tv['flatAbove:tier3'] = String(loadedData.flatAboveCommercialRule?.tierLtv?.['3'] ?? '');
+            setTempValues(tv);
           }
         }
       } catch (e) {
@@ -398,19 +428,56 @@ export default function Constants() {
     const arr = csv.split(',').map((s) => s.trim()).filter(Boolean);
     const newProductLists = { ...(productLists || {}), [propType]: arr };
     setProductLists(newProductLists);
-    // persist this section separately
-    const payload = { productLists: newProductLists };
-    writeOverrides(Object.assign({}, readOverrides() || {}, payload));
+    // persist this section separately - use CURRENT state values for all fields
+    const currentOverrides = {
+      productLists: newProductLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates
+    };
+    writeOverrides(currentOverrides);
+    
+    // Save to Supabase using comprehensive save logic
+    setSaving(true);
     try {
-      const { error } = await saveFieldToSupabase('product_lists', newProductLists);
+      let tryStructured = structuredSupported;
+      if (tryStructured === null) {
+        tryStructured = await detectStructuredSupport();
+        setStructuredSupported(tryStructured);
+      }
+
+      if (tryStructured && supabase) {
+        const upsertRow = {
+          key: 'app.constants',
+          product_lists: currentOverrides.productLists,
+          fee_columns: currentOverrides.feeColumns,
+          flat_above_commercial_rule: currentOverrides.flatAboveCommercialRule,
+          market_rates: currentOverrides.marketRates,
+        };
+        const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
+        setSaving(false);
+        
+        if (error) {
+          console.warn('Failed to save product_lists to Supabase', error);
+          setMessage('Saved locally but failed to persist product lists to database. See console.');
+        } else {
+          setMessage('Product list saved locally and persisted to Supabase.');
+        }
+        return { error };
+      }
+
+      // Fallback
+      const { error } = await saveToSupabase(currentOverrides);
+      setSaving(false);
       if (error) {
         console.warn('Failed to save product_lists to Supabase', error);
         setMessage('Saved locally but failed to persist product lists to database. See console.');
       } else {
-        setMessage('Product list saved locally and persisted.');
+        setMessage('Product list saved locally and persisted to Supabase.');
       }
       return { error };
     } catch (e) {
+      setSaving(false);
       console.error('Unexpected error saving product_lists', e);
       setMessage('Saved locally but unexpected error persisting to database.');
       return { error: e };
@@ -421,17 +488,56 @@ export default function Constants() {
     const arr = csv.split(',').map((s) => Number(s.trim())).filter((n) => !Number.isNaN(n));
     const newFeeColumns = { ...(feeColumns || {}), [key]: arr };
     setFeeColumns(newFeeColumns);
-    writeOverrides(Object.assign({}, readOverrides() || {}, { feeColumns: newFeeColumns }));
+    // persist with CURRENT state values for all fields
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: newFeeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates
+    };
+    writeOverrides(currentOverrides);
+    
+    // Save to Supabase using comprehensive save logic
+    setSaving(true);
     try {
-      const { error } = await saveFieldToSupabase('fee_columns', newFeeColumns);
+      let tryStructured = structuredSupported;
+      if (tryStructured === null) {
+        tryStructured = await detectStructuredSupport();
+        setStructuredSupported(tryStructured);
+      }
+
+      if (tryStructured && supabase) {
+        const upsertRow = {
+          key: 'app.constants',
+          product_lists: currentOverrides.productLists,
+          fee_columns: currentOverrides.feeColumns,
+          flat_above_commercial_rule: currentOverrides.flatAboveCommercialRule,
+          market_rates: currentOverrides.marketRates,
+        };
+        const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
+        setSaving(false);
+        
+        if (error) {
+          console.warn('Failed to save fee_columns to Supabase', error);
+          setMessage('Saved locally but failed to persist fee columns to database. See console.');
+        } else {
+          setMessage('Fee columns saved locally and persisted to Supabase.');
+        }
+        return { error };
+      }
+
+      // Fallback
+      const { error } = await saveToSupabase(currentOverrides);
+      setSaving(false);
       if (error) {
         console.warn('Failed to save fee_columns to Supabase', error);
         setMessage('Saved locally but failed to persist fee columns to database. See console.');
       } else {
-        setMessage('Fee columns saved locally and persisted.');
+        setMessage('Fee columns saved locally and persisted to Supabase.');
       }
       return { error };
     } catch (e) {
+      setSaving(false);
       console.error('Unexpected error saving fee_columns', e);
       setMessage('Saved locally but unexpected error persisting to database.');
       return { error: e };
@@ -441,17 +547,56 @@ export default function Constants() {
   const updateFlatAboveCommercial = async (changes) => {
     const newRule = { ...(flatAboveCommercialRule || {}), ...changes };
     setFlatAboveCommercialRule(newRule);
-    writeOverrides(Object.assign({}, readOverrides() || {}, { flatAboveCommercialRule: newRule }));
+    // persist with CURRENT state values for all fields
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: newRule,
+      marketRates: marketRates
+    };
+    writeOverrides(currentOverrides);
+    
+    // Save to Supabase using comprehensive save logic
+    setSaving(true);
     try {
-      const { error } = await saveFieldToSupabase('flat_above_commercial_rule', newRule);
+      let tryStructured = structuredSupported;
+      if (tryStructured === null) {
+        tryStructured = await detectStructuredSupport();
+        setStructuredSupported(tryStructured);
+      }
+
+      if (tryStructured && supabase) {
+        const upsertRow = {
+          key: 'app.constants',
+          product_lists: currentOverrides.productLists,
+          fee_columns: currentOverrides.feeColumns,
+          flat_above_commercial_rule: currentOverrides.flatAboveCommercialRule,
+          market_rates: currentOverrides.marketRates,
+        };
+        const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
+        setSaving(false);
+        
+        if (error) {
+          console.warn('Failed to save flat_above_commercial_rule to Supabase', error);
+          setMessage('Saved locally but failed to persist flat-above-commercial rule to database. See console.');
+        } else {
+          setMessage('Flat-above-commercial rule saved locally and persisted to Supabase.');
+        }
+        return { error };
+      }
+
+      // Fallback
+      const { error } = await saveToSupabase(currentOverrides);
+      setSaving(false);
       if (error) {
         console.warn('Failed to save flat_above_commercial_rule to Supabase', error);
         setMessage('Saved locally but failed to persist flat-above-commercial rule to database. See console.');
       } else {
-        setMessage('Flat-above-commercial rule saved locally and persisted.');
+        setMessage('Flat-above-commercial rule saved locally and persisted to Supabase.');
       }
       return { error };
     } catch (e) {
+      setSaving(false);
       console.error('Unexpected error saving flat_above_commercial_rule', e);
       setMessage('Saved locally but unexpected error persisting to database.');
       return { error: e };
@@ -461,17 +606,56 @@ export default function Constants() {
   const updateMarketRates = async (changes) => {
     const newRates = { ...(marketRates || {}), ...changes };
     setMarketRates(newRates);
-    writeOverrides(Object.assign({}, readOverrides() || {}, { marketRates: newRates }));
+    // persist with CURRENT state values for all fields
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: newRates
+    };
+    writeOverrides(currentOverrides);
+    
+    // Save to Supabase using comprehensive save logic
+    setSaving(true);
     try {
-      const { error } = await saveFieldToSupabase('market_rates', newRates);
+      let tryStructured = structuredSupported;
+      if (tryStructured === null) {
+        tryStructured = await detectStructuredSupport();
+        setStructuredSupported(tryStructured);
+      }
+
+      if (tryStructured && supabase) {
+        const upsertRow = {
+          key: 'app.constants',
+          product_lists: currentOverrides.productLists,
+          fee_columns: currentOverrides.feeColumns,
+          flat_above_commercial_rule: currentOverrides.flatAboveCommercialRule,
+          market_rates: currentOverrides.marketRates,
+        };
+        const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
+        setSaving(false);
+        
+        if (error) {
+          console.warn('Failed to save market_rates to Supabase', error);
+          setMessage('Saved locally but failed to persist market rates to database. See console.');
+        } else {
+          setMessage('Market rates saved locally and persisted to Supabase.');
+        }
+        return { error };
+      }
+
+      // Fallback
+      const { error } = await saveToSupabase(currentOverrides);
+      setSaving(false);
       if (error) {
         console.warn('Failed to save market_rates to Supabase', error);
         setMessage('Saved locally but failed to persist market rates to database. See console.');
       } else {
-        setMessage('Market rates saved locally and persisted.');
+        setMessage('Market rates saved locally and persisted to Supabase.');
       }
       return { error };
     } catch (e) {
+      setSaving(false);
       console.error('Unexpected error saving market_rates', e);
       setMessage('Saved locally but unexpected error persisting to database.');
       return { error: e };
@@ -481,19 +665,37 @@ export default function Constants() {
   // Save a single named column to Supabase table `app_constants`.
   // Column names used: product_lists, fee_columns, flat_above_commercial_rule, market_rates
   const saveFieldToSupabase = async (column, value) => {
-    if (!supabase) return { error: 'Supabase client unavailable' };
+    if (!supabase) {
+      console.warn('Supabase client unavailable');
+      return { error: 'Supabase client unavailable' };
+    }
+    
+    console.log(`saveFieldToSupabase called: column=${column}`, value);
+    
     try {
       // If structured columns supported, try a structured-column upsert first
       let tryStructured = structuredSupported;
       if (tryStructured === null) {
+        console.log('Detecting structured support...');
         tryStructured = await detectStructuredSupport();
         setStructuredSupported(tryStructured);
       }
+      
+      console.log(`tryStructured: ${tryStructured}`);
+      
       if (tryStructured) {
         try {
           // Fetch existing structured row and merge to avoid overwriting other structured columns with NULL
+          console.log('Fetching existing row from app_constants...');
           const { data: existingStruct, error: fetchErr } = await supabase.from('app_constants').select('*').eq('key', 'app.constants').single();
+          
+          if (fetchErr && fetchErr.code !== 'PGRST116') {
+            console.warn('Error fetching existing row:', fetchErr);
+          }
+          
           const currentStruct = existingStruct || {};
+          console.log('Existing data:', currentStruct);
+          
           const mapStruct = {
             product_lists: 'product_lists',
             fee_columns: 'fee_columns',
@@ -501,19 +703,29 @@ export default function Constants() {
             market_rates: 'market_rates',
           };
           const targetCol = mapStruct[column] || column;
+          
+          // Use current state values as fallbacks if DB has nulls
           const newRow = {
             key: 'app.constants',
-            product_lists: currentStruct.product_lists || null,
-            fee_columns: currentStruct.fee_columns || null,
-            flat_above_commercial_rule: currentStruct.flat_above_commercial_rule || null,
-            market_rates: currentStruct.market_rates || null,
+            product_lists: currentStruct.product_lists || productLists || null,
+            fee_columns: currentStruct.fee_columns || feeColumns || null,
+            flat_above_commercial_rule: currentStruct.flat_above_commercial_rule || flatAboveCommercialRule || null,
+            market_rates: currentStruct.market_rates || marketRates || null,
           };
+          
           // set the changed column
           newRow[targetCol] = value;
+          
+          console.log('Upserting to app_constants:', newRow);
           const { error } = await supabase.from('app_constants').upsert([newRow], { returning: 'minimal' });
-          if (!error) return { error: null };
+          
+          if (!error) {
+            console.log('Successfully saved to Supabase (structured)');
+            return { error: null };
+          }
+          
           // if structured upsert failed, we'll attempt alternatives below
-          console.debug('Structured upsert returned error, will try fallbacks', error);
+          console.warn('Structured upsert returned error, will try fallbacks', error);
         } catch (e) {
           console.debug('Structured upsert exception, will try fallbacks', e);
         }
@@ -590,6 +802,9 @@ export default function Constants() {
       <h2>Constants</h2>
       <p className="helper-text">Edit product lists, fee columns and LTV thresholds. Changes persist to localStorage and affect the calculator.</p>
       <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+        <button className="slds-button slds-button_brand" onClick={saveToStorage} disabled={saving}>
+          {saving ? 'Saving...' : 'Save All to Database'}
+        </button>
         <button className="slds-button slds-button_outline-brand" onClick={exportJson}>Export JSON</button>
         <button className="slds-button slds-button_destructive" onClick={resetToDefaults}>Reset defaults</button>
       </div>
@@ -834,6 +1049,9 @@ export default function Constants() {
       {/* Flat-above-commercial override removed — rule is now hard-coded in calculator logic per user request. */}
 
       <div className="slds-button-group">
+        <button className="slds-button slds-button_brand" onClick={saveToStorage} disabled={saving}>
+          {saving ? 'Saving...' : 'Save All to Database'}
+        </button>
         <button className="slds-button slds-button_outline-brand" onClick={exportJson}>Export JSON</button>
         <button className="slds-button slds-button_destructive" onClick={resetToDefaults}>Reset defaults</button>
       </div>

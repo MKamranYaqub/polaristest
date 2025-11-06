@@ -577,7 +577,7 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   const handleCreatePDF = async (quoteId) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/quotes/${quoteId}/pdf`, {
+      const response = await fetch(`http://localhost:3001/api/dip/pdf/${quoteId}`, {
         method: 'POST'
       });
 
