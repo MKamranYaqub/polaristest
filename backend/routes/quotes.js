@@ -77,6 +77,7 @@ router.post('/', async (req, res) => {
 // List quotes (optional filters: user_id, calculator_type, limit, offset)
 router.get('/', async (req, res) => {
   try {
+    console.log('GET /api/quotes - Request received:', req.query);
     const { user_id, calculator_type, limit = 100, offset = 0 } = req.query;
     // If calculator_type indicates bridging, query bridge_quotes instead
     const isBridge = calculator_type && (calculator_type.toLowerCase() === 'bridging' || calculator_type.toLowerCase() === 'bridge');
@@ -86,20 +87,29 @@ router.get('/', async (req, res) => {
     
     if (isBridge) {
       // Only bridge quotes
+      console.log('Fetching bridge quotes only');
       let query = supabase.from('bridge_quotes').select('*').order('created_at', { ascending: false }).range(Number(offset), Number(offset) + Number(limit) - 1);
       if (user_id) query = query.eq('user_id', user_id);
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching bridge quotes:', error);
+        throw error;
+      }
       allQuotes = data || [];
     } else if (isBTL) {
       // Only BTL quotes
+      console.log('Fetching BTL quotes only');
       let query = supabase.from('quotes').select('*').order('created_at', { ascending: false }).range(Number(offset), Number(offset) + Number(limit) - 1);
       if (user_id) query = query.eq('user_id', user_id);
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching BTL quotes:', error);
+        throw error;
+      }
       allQuotes = data || [];
     } else {
       // No calculator_type specified: fetch from both tables
+      console.log('Fetching from both quotes tables');
       const limitNum = Number(limit);
       const offsetNum = Number(offset);
       const [btlResult, bridgeResult] = await Promise.allSettled([
@@ -112,12 +122,14 @@ router.get('/', async (req, res) => {
       
       if (btlResult.status === 'fulfilled' && !btlResult.value.error) {
         btlData = btlResult.value.data || [];
+        console.log(`Fetched ${btlData.length} BTL quotes`);
       } else {
         console.error('Error fetching BTL quotes:', btlResult.status === 'rejected' ? btlResult.reason : btlResult.value.error);
       }
       
       if (bridgeResult.status === 'fulfilled' && !bridgeResult.value.error) {
         bridgeData = bridgeResult.value.data || [];
+        console.log(`Fetched ${bridgeData.length} bridge quotes`);
       } else {
         console.error('Error fetching bridge quotes:', bridgeResult.status === 'rejected' ? bridgeResult.reason : bridgeResult.value.error);
       }
@@ -129,9 +141,11 @@ router.get('/', async (req, res) => {
       allQuotes = allQuotes.slice(0, limitNum);
     }
     
+    console.log(`Returning ${allQuotes.length} quotes`);
     return res.json({ quotes: allQuotes });
   } catch (err) {
     console.error('Error listing quotes:', err);
+    console.error('Error stack:', err.stack);
     return res.status(500).json({ error: err.message ?? String(err) });
   }
 });
