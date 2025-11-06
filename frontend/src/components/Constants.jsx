@@ -38,7 +38,11 @@ export default function Constants() {
   // per-field editing state and temporary values
   const [editingFields, setEditingFields] = useState({});
   const [tempValues, setTempValues] = useState({});
-  const disabledInputStyle = { backgroundColor: '#f4f6f8', opacity: 0.8, cursor: 'not-allowed' };
+
+  // defensive: if someone saved an invalid shape to localStorage or constants,
+  // ensure rendering doesn't throw. Treat non-object productLists/feeColumns as missing.
+  const safeProductLists = (productLists && typeof productLists === 'object' && !Array.isArray(productLists)) ? productLists : DEFAULT_PRODUCT_TYPES_LIST;
+  const safeFeeColumns = (feeColumns && typeof feeColumns === 'object' && !Array.isArray(feeColumns)) ? feeColumns : DEFAULT_FEE_COLUMNS;
 
   useEffect(() => {
     const overrides = readOverrides();
@@ -49,14 +53,62 @@ export default function Constants() {
       setMarketRates(overrides.marketRates || DEFAULT_MARKET_RATES);
       // initialize temp values
       const tv = {};
-      Object.keys(overrides.productLists || DEFAULT_PRODUCT_TYPES_LIST).forEach(pt => { tv[`productLists:${pt}`] = (overrides.productLists[pt] || []).join(', '); });
-      Object.keys(overrides.feeColumns || DEFAULT_FEE_COLUMNS).forEach(k => { tv[`feeColumns:${k}`] = (overrides.feeColumns[k] || []).join(', '); });
-      Object.keys(overrides.marketRates || DEFAULT_MARKET_RATES).forEach(k => { const v = ((overrides.marketRates[k] ?? 0) * 100).toFixed(2); tv[`marketRates:${k}`] = v; });
+      // product lists: tolerate malformed overrides (strings/arrays) and fall back to defaults per key
+      const opl = overrides.productLists;
+      const plSource = (opl && typeof opl === 'object' && !Array.isArray(opl)) ? opl : DEFAULT_PRODUCT_TYPES_LIST;
+      Object.keys(plSource).forEach((pt) => {
+        const raw = opl && opl[pt];
+        let v = '';
+        if (Array.isArray(raw)) v = raw.join(', ');
+        else if (raw == null) v = (DEFAULT_PRODUCT_TYPES_LIST[pt] || []).join(', ');
+        else v = String(raw);
+        tv[`productLists:${pt}`] = v;
+      });
+
+      // fee columns: ensure we stringify arrays of numbers or fall back
+      const ofc = overrides.feeColumns;
+      const fcSource = (ofc && typeof ofc === 'object' && !Array.isArray(ofc)) ? ofc : DEFAULT_FEE_COLUMNS;
+      Object.keys(fcSource).forEach((k) => {
+        const raw = ofc && ofc[k];
+        let v = '';
+        if (Array.isArray(raw)) v = raw.join(', ');
+        else if (raw == null) v = (DEFAULT_FEE_COLUMNS[k] || []).join(', ');
+        else v = String(raw);
+        tv[`feeColumns:${k}`] = v;
+      });
+
+      Object.keys(overrides.marketRates || DEFAULT_MARKET_RATES).forEach(k => { const v = ((overrides.marketRates?.[k] ?? 0) * 100).toFixed(2); tv[`marketRates:${k}`] = v; });
       tv['flatAbove:scopeMatcher'] = overrides.flatAboveCommercialRule?.scopeMatcher || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.scopeMatcher || '';
       tv['flatAbove:tier2'] = String(overrides.flatAboveCommercialRule?.tierLtv?.['2'] ?? DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['2'] ?? '');
       tv['flatAbove:tier3'] = String(overrides.flatAboveCommercialRule?.tierLtv?.['3'] ?? DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['3'] ?? '');
       setTempValues(tv);
     }
+
+    // listen for external localStorage changes (e.g. calculator updates overrides)
+    const onStorage = (e) => {
+      if (e.key !== LOCALSTORAGE_CONSTANTS_KEY) return;
+      try {
+        const newVal = e.newValue ? JSON.parse(e.newValue) : null;
+        if (!newVal) return;
+        setProductLists(newVal.productLists || DEFAULT_PRODUCT_TYPES_LIST);
+        setFeeColumns(newVal.feeColumns || DEFAULT_FEE_COLUMNS);
+        setFlatAboveCommercialRule(newVal.flatAboveCommercialRule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE);
+        setMarketRates(newVal.marketRates || DEFAULT_MARKET_RATES);
+        // re-seed temp values similarly to initial load
+        const tv2 = {};
+        Object.keys(newVal.productLists || DEFAULT_PRODUCT_TYPES_LIST).forEach(pt => { tv2[`productLists:${pt}`] = (newVal.productLists?.[pt] || DEFAULT_PRODUCT_TYPES_LIST[pt] || []).join(', '); });
+        Object.keys(newVal.feeColumns || DEFAULT_FEE_COLUMNS).forEach(k => { tv2[`feeColumns:${k}`] = (newVal.feeColumns?.[k] || DEFAULT_FEE_COLUMNS[k] || []).join(', '); });
+        Object.keys(newVal.marketRates || DEFAULT_MARKET_RATES).forEach(k => { const v = ((newVal.marketRates?.[k] ?? 0) * 100).toFixed(2); tv2[`marketRates:${k}`] = v; });
+        tv2['flatAbove:scopeMatcher'] = newVal.flatAboveCommercialRule?.scopeMatcher || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.scopeMatcher || '';
+        tv2['flatAbove:tier2'] = String(newVal.flatAboveCommercialRule?.tierLtv?.['2'] ?? DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['2'] ?? '');
+        tv2['flatAbove:tier3'] = String(newVal.flatAboveCommercialRule?.tierLtv?.['3'] ?? DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['3'] ?? '');
+        setTempValues(tv2);
+      } catch (err) {
+        console.debug('Ignored storage event for constants', err);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   // helpers to start/save/cancel per-field edits
@@ -78,20 +130,20 @@ export default function Constants() {
     try {
       if (key.startsWith('productLists:')) {
         const pt = key.split(':')[1];
-        updateProductList(pt, tempValues[key] || '');
+        await updateProductList(pt, tempValues[key] || '');
       } else if (key.startsWith('feeColumns:')) {
         const k = key.split(':')[1];
-        updateFeeColumns(k, tempValues[key] || '');
+        await updateFeeColumns(k, tempValues[key] || '');
       } else if (key.startsWith('marketRates:')) {
         const field = key.split(':')[1];
         const n = Number(tempValues[key]);
-        updateMarketRates({ [field]: Number.isFinite(n) ? n / 100 : 0 });
+        await updateMarketRates({ [field]: Number.isFinite(n) ? n / 100 : 0 });
       } else if (key === 'flatAbove:scopeMatcher') {
-        updateFlatAboveCommercial({ scopeMatcher: tempValues[key] || '' });
+        await updateFlatAboveCommercial({ scopeMatcher: tempValues[key] || '' });
       } else if (key === 'flatAbove:tier2') {
-        updateFlatAboveCommercial({ tierLtv: { ...(flatAboveCommercialRule.tierLtv || {}), '2': Number(tempValues[key] || '') } });
+        await updateFlatAboveCommercial({ tierLtv: { ...(flatAboveCommercialRule.tierLtv || {}), '2': Number(tempValues[key] || '') } });
       } else if (key === 'flatAbove:tier3') {
-        updateFlatAboveCommercial({ tierLtv: { ...(flatAboveCommercialRule.tierLtv || {}), '3': Number(tempValues[key] || '') } });
+        await updateFlatAboveCommercial({ tierLtv: { ...(flatAboveCommercialRule.tierLtv || {}), '3': Number(tempValues[key] || '') } });
       }
     } catch (e) {
       console.error('Failed to save field', key, e);
@@ -342,44 +394,88 @@ export default function Constants() {
   };
 
   // helpers for editing product lists and fee columns roughly (simple UI)
-  const updateProductList = (propType, csv) => {
+  const updateProductList = async (propType, csv) => {
     const arr = csv.split(',').map((s) => s.trim()).filter(Boolean);
     const newProductLists = { ...(productLists || {}), [propType]: arr };
     setProductLists(newProductLists);
     // persist this section separately
     const payload = { productLists: newProductLists };
     writeOverrides(Object.assign({}, readOverrides() || {}, payload));
-    saveFieldToSupabase('product_lists', newProductLists).then(({ error }) => {
-      if (error) console.warn('Failed to save product_lists to Supabase', error);
-    });
+    try {
+      const { error } = await saveFieldToSupabase('product_lists', newProductLists);
+      if (error) {
+        console.warn('Failed to save product_lists to Supabase', error);
+        setMessage('Saved locally but failed to persist product lists to database. See console.');
+      } else {
+        setMessage('Product list saved locally and persisted.');
+      }
+      return { error };
+    } catch (e) {
+      console.error('Unexpected error saving product_lists', e);
+      setMessage('Saved locally but unexpected error persisting to database.');
+      return { error: e };
+    }
   };
 
-  const updateFeeColumns = (key, csv) => {
+  const updateFeeColumns = async (key, csv) => {
     const arr = csv.split(',').map((s) => Number(s.trim())).filter((n) => !Number.isNaN(n));
     const newFeeColumns = { ...(feeColumns || {}), [key]: arr };
     setFeeColumns(newFeeColumns);
     writeOverrides(Object.assign({}, readOverrides() || {}, { feeColumns: newFeeColumns }));
-    saveFieldToSupabase('fee_columns', newFeeColumns).then(({ error }) => {
-      if (error) console.warn('Failed to save fee_columns to Supabase', error);
-    });
+    try {
+      const { error } = await saveFieldToSupabase('fee_columns', newFeeColumns);
+      if (error) {
+        console.warn('Failed to save fee_columns to Supabase', error);
+        setMessage('Saved locally but failed to persist fee columns to database. See console.');
+      } else {
+        setMessage('Fee columns saved locally and persisted.');
+      }
+      return { error };
+    } catch (e) {
+      console.error('Unexpected error saving fee_columns', e);
+      setMessage('Saved locally but unexpected error persisting to database.');
+      return { error: e };
+    }
   };
 
-  const updateFlatAboveCommercial = (changes) => {
+  const updateFlatAboveCommercial = async (changes) => {
     const newRule = { ...(flatAboveCommercialRule || {}), ...changes };
     setFlatAboveCommercialRule(newRule);
     writeOverrides(Object.assign({}, readOverrides() || {}, { flatAboveCommercialRule: newRule }));
-    saveFieldToSupabase('flat_above_commercial_rule', newRule).then(({ error }) => {
-      if (error) console.warn('Failed to save flat_above_commercial_rule to Supabase', error);
-    });
+    try {
+      const { error } = await saveFieldToSupabase('flat_above_commercial_rule', newRule);
+      if (error) {
+        console.warn('Failed to save flat_above_commercial_rule to Supabase', error);
+        setMessage('Saved locally but failed to persist flat-above-commercial rule to database. See console.');
+      } else {
+        setMessage('Flat-above-commercial rule saved locally and persisted.');
+      }
+      return { error };
+    } catch (e) {
+      console.error('Unexpected error saving flat_above_commercial_rule', e);
+      setMessage('Saved locally but unexpected error persisting to database.');
+      return { error: e };
+    }
   };
 
-  const updateMarketRates = (changes) => {
+  const updateMarketRates = async (changes) => {
     const newRates = { ...(marketRates || {}), ...changes };
     setMarketRates(newRates);
     writeOverrides(Object.assign({}, readOverrides() || {}, { marketRates: newRates }));
-    saveFieldToSupabase('market_rates', newRates).then(({ error }) => {
-      if (error) console.warn('Failed to save market_rates to Supabase', error);
-    });
+    try {
+      const { error } = await saveFieldToSupabase('market_rates', newRates);
+      if (error) {
+        console.warn('Failed to save market_rates to Supabase', error);
+        setMessage('Saved locally but failed to persist market rates to database. See console.');
+      } else {
+        setMessage('Market rates saved locally and persisted.');
+      }
+      return { error };
+    } catch (e) {
+      console.error('Unexpected error saving market_rates', e);
+      setMessage('Saved locally but unexpected error persisting to database.');
+      return { error: e };
+    }
   };
 
   // Save a single named column to Supabase table `app_constants`.
@@ -491,7 +587,7 @@ export default function Constants() {
 
   return (
     <div className="slds-p-around_medium">
-      <h2>Constants (editable)</h2>
+      <h2>Constants</h2>
       <p className="helper-text">Edit product lists, fee columns and LTV thresholds. Changes persist to localStorage and affect the calculator.</p>
       <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
         <button className="slds-button slds-button_outline-brand" onClick={exportJson}>Export JSON</button>
@@ -500,21 +596,20 @@ export default function Constants() {
 
       <section className="slds-box slds-m-bottom_medium">
         <h3>Product lists per property type</h3>
-        {Object.keys(productLists).map((pt) => {
+        {Object.keys(safeProductLists).map((pt) => {
           const key = `productLists:${pt}`;
           return (
             <div key={pt} className="slds-form-element slds-m-bottom_small">
               <label className="slds-form-element__label">{pt}</label>
               <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <input
-                  className="slds-input"
-                  value={editingFields[key] ? (tempValues[key] ?? '') : (productLists[pt] || []).join(', ')}
+                  className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                  value={editingFields[key] ? (tempValues[key] ?? '') : String(Array.isArray(productLists[pt]) ? productLists[pt].join(', ') : (productLists[pt] ?? ''))}
                   onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
                   disabled={!editingFields[key]}
-                  style={!editingFields[key] ? disabledInputStyle : undefined}
                 />
                 {!editingFields[key] ? (
-                  <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (productLists[pt] || []).join(', '))}>Edit</button>
+                  <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (Array.isArray(safeProductLists[pt]) ? safeProductLists[pt].join(', ') : String(safeProductLists[pt] ?? '')))}>Edit</button>
                 ) : (
                   <>
                     <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
@@ -530,21 +625,20 @@ export default function Constants() {
 
       <section className="slds-box slds-m-bottom_medium">
         <h3>Fee columns</h3>
-        {Object.keys(feeColumns).map((k) => {
+        {Object.keys(safeFeeColumns).map((k) => {
           const key = `feeColumns:${k}`;
           return (
             <div key={k} className="slds-form-element slds-m-bottom_small">
               <label className="slds-form-element__label">{k}</label>
               <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <input
-                  className="slds-input"
-                  value={editingFields[key] ? (tempValues[key] ?? '') : (feeColumns[k] || []).join(', ')}
+                  className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                  value={editingFields[key] ? (tempValues[key] ?? '') : String(Array.isArray(feeColumns[k]) ? feeColumns[k].join(', ') : (feeColumns[k] ?? ''))}
                   onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
                   disabled={!editingFields[key]}
-                  style={!editingFields[key] ? disabledInputStyle : undefined}
                 />
                 {!editingFields[key] ? (
-                  <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (feeColumns[k] || []).join(', '))}>Edit</button>
+                  <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (Array.isArray(safeFeeColumns[k]) ? safeFeeColumns[k].join(', ') : String(safeFeeColumns[k] ?? '')))}>Edit</button>
                 ) : (
                   <>
                     <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
@@ -562,14 +656,14 @@ export default function Constants() {
 
       <section className="slds-box slds-m-bottom_medium">
         <h3>Flat-above-commercial override</h3>
-        <div className="slds-form-element slds-m-bottom_small">
+          <div className="slds-form-element slds-m-bottom_small">
           <label className="slds-form-element__label">Scope matcher</label>
           <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             {(() => {
               const key = 'flatAbove:scopeMatcher';
               return (
                 <>
-                  <input className="slds-input" value={editingFields[key] ? (tempValues[key] ?? '') : (flatAboveCommercialRule.scopeMatcher || '')} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} style={!editingFields[key] ? disabledInputStyle : undefined} />
+                  <input className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`} value={editingFields[key] ? (tempValues[key] ?? '') : (flatAboveCommercialRule.scopeMatcher || '')} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
                   {!editingFields[key] ? (
                     <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, flatAboveCommercialRule.scopeMatcher || '')}>Edit</button>
                   ) : (
@@ -594,7 +688,7 @@ export default function Constants() {
                 const key = 'flatAbove:tier2';
                 return (
                   <>
-                    <input className="slds-input" value={editingFields[key] ? (tempValues[key] ?? '') : (String(flatAboveCommercialRule.tierLtv?.['2'] ?? ''))} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} style={!editingFields[key] ? disabledInputStyle : undefined} />
+                    <input className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`} value={editingFields[key] ? (tempValues[key] ?? '') : (String(flatAboveCommercialRule.tierLtv?.['2'] ?? ''))} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
                     {!editingFields[key] ? (
                       <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(flatAboveCommercialRule.tierLtv?.['2'] ?? ''))}>Edit</button>
                     ) : (
@@ -615,7 +709,7 @@ export default function Constants() {
                 const key = 'flatAbove:tier3';
                 return (
                   <>
-                    <input className="slds-input" value={editingFields[key] ? (tempValues[key] ?? '') : (String(flatAboveCommercialRule.tierLtv?.['3'] ?? ''))} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} style={!editingFields[key] ? disabledInputStyle : undefined} />
+                    <input className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`} value={editingFields[key] ? (tempValues[key] ?? '') : (String(flatAboveCommercialRule.tierLtv?.['3'] ?? ''))} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
                     {!editingFields[key] ? (
                       <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(flatAboveCommercialRule.tierLtv?.['3'] ?? ''))}>Edit</button>
                     ) : (
@@ -645,14 +739,13 @@ export default function Constants() {
                 return (
                   <>
                     <input
-                      className="slds-input"
+                      className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
                       type="number"
                       step="0.01"
                       min="0"
                       value={editingFields[key] ? (tempValues[key] ?? '') : ((marketRates?.STANDARD_BBR ?? 0) * 100).toFixed(2)}
                       onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
                       disabled={!editingFields[key]}
-                      style={!editingFields[key] ? disabledInputStyle : undefined}
                     />
                     <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
                     {!editingFields[key] ? (
@@ -678,14 +771,13 @@ export default function Constants() {
                 return (
                   <>
                     <input
-                      className="slds-input"
+                      className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
                       type="number"
                       step="0.01"
                       min="0"
                       value={editingFields[key] ? (tempValues[key] ?? '') : ((marketRates?.STRESS_BBR ?? 0) * 100).toFixed(2)}
                       onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
                       disabled={!editingFields[key]}
-                      style={!editingFields[key] ? disabledInputStyle : undefined}
                     />
                     <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
                     {!editingFields[key] ? (
@@ -711,14 +803,13 @@ export default function Constants() {
                 return (
                   <>
                     <input
-                      className="slds-input"
+                      className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
                       type="number"
                       step="0.01"
                       min="0"
                       value={editingFields[key] ? (tempValues[key] ?? '') : ((marketRates?.CURRENT_MVR ?? 0) * 100).toFixed(2)}
                       onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
                       disabled={!editingFields[key]}
-                      style={!editingFields[key] ? disabledInputStyle : undefined}
                     />
                     <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
                     {!editingFields[key] ? (

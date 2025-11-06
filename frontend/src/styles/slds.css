@@ -588,6 +588,15 @@ body,
   opacity: 1;
 }
 
+
+/* Visual style for constants inputs when disabled (editable per-field) */
+.constants-disabled {
+  background-color: #f5f6f8;
+  border-color: #e6e9ef;
+  color: #6b6b6b;
+  cursor: not-allowed;
+  opacity: 1;
+}
 /* Compact fee inputs + alignment */
 .calculator-grid.compact .slds-form-element__label {
   font-size: 0.875rem;
