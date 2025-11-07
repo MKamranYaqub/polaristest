@@ -11,15 +11,44 @@
   z-index: 1000;
 }
 
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9000;
+}
+
 .modal-content {
   background: white;
-  padding: 2rem;
-  border-radius: 8px;
+  border-radius: 4px;
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  flex-shrink: 0;
+}
+
+.modal-body {
+  flex: 1;
   overflow-y: auto;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: white;
+}
+
+.modal-footer {
+  flex-shrink: 0;
 }
 
 .modal-content h2 {

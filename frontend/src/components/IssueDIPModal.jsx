@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import '../styles/Modal.css';
+import ModalShell from './ModalShell';
 
 export default function IssueDIPModal({ 
   isOpen, 
@@ -191,53 +191,67 @@ export default function IssueDIPModal({
     }
   };
 
-  if (!isOpen) return null;
+  // Build footer buttons for ModalShell
+  const footerButtons = (
+    <>
+      <button className="slds-button slds-button_neutral" onClick={onClose} disabled={saving}>
+        Cancel
+      </button>
+      <button
+        className="slds-button slds-button_brand"
+        onClick={handleSaveData}
+        disabled={saving}
+      >
+        {saving ? 'Saving...' : 'Save Data'}
+      </button>
+      <button
+        className="slds-button slds-button_success"
+        onClick={handleCreatePDF}
+        disabled={saving}
+      >
+        {saving ? 'Creating...' : 'Create PDF'}
+      </button>
+    </>
+  );
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto' }}>
-        <div className="modal-header">
-          <h2>Issue DIP (Decision in Principle)</h2>
-          <button className="modal-close" onClick={onClose}>×</button>
+    <ModalShell isOpen={isOpen} onClose={onClose} title="Issue DIP (Decision in Principle)" footer={footerButtons}>
+      {error && <div className="slds-notify slds-notify_alert slds-theme_error" style={{ marginBottom: '1rem' }}>{error}</div>}
+
+      {/* Residence Type */}
+      <div className="slds-form-element" style={{ marginBottom: '1rem' }}>
+        <label className="slds-form-element__label">
+          <abbr className="slds-required" title="required">*</abbr> Commercial or Main Residence
+        </label>
+        <div className="slds-form-element__control">
+          <select 
+            className="slds-select" 
+            name="commercial_or_main_residence"
+            value={formData.commercial_or_main_residence}
+            onChange={handleInputChange}
+          >
+            <option value="">Select...</option>
+            <option value="Commercial">Commercial</option>
+            <option value="Main Residence">Main Residence</option>
+          </select>
         </div>
+      </div>
 
-        <div className="modal-body">
-          {error && <div className="slds-notify slds-notify_alert slds-theme_error" style={{ marginBottom: '1rem' }}>{error}</div>}
-
-          {/* Residence Type */}
-          <div className="slds-form-element" style={{ marginBottom: '1rem' }}>
-            <label className="slds-form-element__label">
-              <abbr className="slds-required" title="required">*</abbr> Commercial or Main Residence
-            </label>
-            <div className="slds-form-element__control">
-              <select 
-                className="slds-select" 
-                name="commercial_or_main_residence"
-                value={formData.commercial_or_main_residence}
-                onChange={handleInputChange}
-              >
-                <option value="">Select...</option>
-                <option value="Commercial">Commercial</option>
-                <option value="Main Residence">Main Residence</option>
-              </select>
-            </div>
+      {/* DIP Dates */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">
+            <abbr className="slds-required" title="required">*</abbr> DIP Date
+          </label>
+          <div className="slds-form-element__control">
+            <input 
+              type="date" 
+              className="slds-input" 
+              name="dip_date"
+              value={formData.dip_date}
+              onChange={handleInputChange}
+            />
           </div>
-
-          {/* DIP Dates */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">
-                <abbr className="slds-required" title="required">*</abbr> DIP Date
-              </label>
-              <div className="slds-form-element__control">
-                <input 
-                  type="date" 
-                  className="slds-input" 
-                  name="dip_date"
-                  value={formData.dip_date}
-                  onChange={handleInputChange}
-                />
-              </div>
             </div>
 
             <div className="slds-form-element">
@@ -468,30 +482,6 @@ export default function IssueDIPModal({
               + Add Another Property
             </button>
           </div>
-        </div>
-
-        <div className="modal-footer">
-          <button className="slds-button slds-button_neutral" onClick={onClose} disabled={saving}>
-            Cancel
-          </button>
-          <button 
-            className="slds-button slds-button_brand" 
-            onClick={handleSaveData}
-            disabled={saving}
-            style={{ marginLeft: '0.5rem' }}
-          >
-            {saving ? 'Saving...' : 'Save Data'}
-          </button>
-          <button 
-            className="slds-button slds-button_success" 
-            onClick={handleCreatePDF}
-            disabled={saving}
-            style={{ marginLeft: '0.5rem' }}
-          >
-            {saving ? 'Creating...' : 'Create PDF'}
-          </button>
-        </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

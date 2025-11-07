@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ModalShell from './ModalShell';
 import '../styles/slds.css';
 
 function CriteriaEditModal({ criteria, onSave, onCancel, isNew }) {
@@ -35,30 +36,26 @@ function CriteriaEditModal({ criteria, onSave, onCancel, isNew }) {
     onSave(payload, isNew, criteria);
   };
 
-  return (
+  // Build footer buttons for ModalShell
+  const footerButtons = (
     <>
-      <div className="slds-backdrop slds-backdrop_open" />
-      <div className="slds-modal slds-fade-in-open">
-        <div className="slds-modal__container">
-          <div className="slds-modal__header">
-            <button
-              className="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
-              onClick={onCancel}
-              title="Close"
-            >
-              <span className="slds-assistive-text">Close</span>
-            </button>
-            <h2 className="slds-text-heading_medium slds-hyphenate">
-              {isNew ? 'Add New Criteria' : 'Edit Criteria'}
-            </h2>
-          </div>
-          <div className="slds-modal__content slds-p-around_medium">
-            <form onSubmit={handleSubmit} className="slds-form slds-form_stacked">
-              <div className="slds-form-element">
-                <label className="slds-form-element__label">Criteria Set:</label>
-                <div className="slds-form-element__control">
-                  <input
-                    className="slds-input"
+      <button className="slds-button slds-button_neutral" onClick={onCancel}>
+        Cancel
+      </button>
+      <button className="slds-button slds-button_brand" onClick={handleSubmit}>
+        {isNew ? 'Add' : 'Save'}
+      </button>
+    </>
+  );
+
+  return (
+    <ModalShell isOpen={true} onClose={onCancel} title={isNew ? 'Add New Criteria' : 'Edit Criteria'} footer={footerButtons}>
+      <form onSubmit={handleSubmit} className="slds-form slds-form_stacked">
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">Criteria Set:</label>
+          <div className="slds-form-element__control">
+            <input
+              className="slds-input"
                     type="text"
                     name="criteria_set"
                     value={formData.criteria_set}
@@ -206,18 +203,7 @@ function CriteriaEditModal({ criteria, onSave, onCancel, isNew }) {
                 </div>
               </div>
             </form>
-          </div>
-          <div className="slds-modal__footer">
-            <button className="slds-button slds-button_neutral" onClick={onCancel}>
-              Cancel
-            </button>
-            <button className="slds-button slds-button_brand" onClick={handleSubmit}>
-              {isNew ? 'Add' : 'Save'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
+    </ModalShell>
   );
 }
 

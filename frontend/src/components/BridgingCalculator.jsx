@@ -3,6 +3,8 @@ import { useSupabase } from '../contexts/SupabaseContext';
 import '../styles/Calculator.scss';
 import SaveQuoteButton from './SaveQuoteButton';
 import IssueDIPModal from './IssueDIPModal';
+import IssueQuoteModal from './IssueQuoteModal';
+import CalculatorResultsPlaceholders from './CalculatorResultsPlaceholders';
 
 export default function BridgingCalculator({ initialQuote = null }) {
   const { supabase } = useSupabase();
@@ -46,6 +48,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
   const [dipData, setDipData] = useState({});
   const [selectedFeeTypeForDip, setSelectedFeeTypeForDip] = useState('');
   const [filteredRatesForDip, setFilteredRatesForDip] = useState([]);
+
+  // Quote Modal state
+  const [quoteModalOpen, setQuoteModalOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -487,6 +492,72 @@ export default function BridgingCalculator({ initialQuote = null }) {
     console.log('Filtered rates for DIP (Bridge):', filtered.length, 'rates for:', feeTypeLabel);
   };
 
+  // === Issue Quote handlers ===
+  const handleIssueQuote = () => {
+    if (!currentQuoteId) {
+      alert('Please save your quote first before issuing a quote.');
+      return;
+    }
+    
+    setQuoteModalOpen(true);
+  };
+
+  const handleSaveQuoteData = async (quoteId, updatedQuoteData) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/quotes/${quoteId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...updatedQuoteData
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save quote data');
+      }
+
+      alert('Quote data saved successfully!');
+    } catch (err) {
+      console.error('Error saving quote data:', err);
+      alert('Failed to save quote data: ' + err.message);
+      throw err;
+    }
+  };
+
+  const handleCreateQuotePDF = async (quoteId) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/quote/pdf/${quoteId}`, {
+        method: 'POST'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate Quote PDF');
+      }
+
+      // Download the PDF
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Quote_${quoteId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Error creating Quote PDF:', err);
+      alert('Failed to create Quote PDF: ' + err.message);
+      throw err;
+    }
+  };
+
+  const getAvailableFeeTypes = () => {
+    return bridgeFeeTypes;
+  };
+
   if (!supabase) return <div className="slds-p-around_medium">Supabase client missing</div>;
   if (loading) return (
     <div className="slds-spinner_container">
@@ -520,13 +591,22 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           {currentQuoteId && (
-            <button 
-              className="slds-button slds-button_brand"
-              onClick={() => setDipModalOpen(true)}
-              style={{ marginRight: '0.5rem' }}
-            >
-              Issue DIP
-            </button>
+            <>
+              <button 
+                className="slds-button slds-button_brand"
+                onClick={() => setDipModalOpen(true)}
+                style={{ marginRight: '0.5rem' }}
+              >
+                Issue DIP
+              </button>
+              <button 
+                className="slds-button slds-button_neutral"
+                onClick={handleIssueQuote}
+                style={{ marginRight: '0.5rem' }}
+              >
+                Issue Quote
+              </button>
+            </>
           )}
           <SaveQuoteButton
             calculatorType="BRIDGING"
@@ -748,6 +828,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
         </div>
       </section>
 
+      {/* Results section */}
       <section className="results-section">
         <header className="collapsible-header">
           <h2 className="header-title">Results</h2>
@@ -758,10 +839,11 @@ export default function BridgingCalculator({ initialQuote = null }) {
             <table className="slds-table slds-table_cell-buffer slds-table_bordered" style={{ minWidth: 900 }}>
               <thead>
                 <tr>
-                  <th style={{ width: '20%' }}>Label</th>
-                  <th style={{ width: '26%' }}>Fusion</th>
-                  <th style={{ width: '26%' }}>Variable Bridge</th>
-                  <th style={{ width: '28%' }}>Fixed Bridge</th>
+                  {/* increase label width a bit and adjust other columns */}
+                  <th style={{ width: '24%' }}>Label</th>
+                  <th style={{ width: '25%', textAlign: 'center' }}>Fusion</th>
+                  <th style={{ width: '25%', textAlign: 'center' }}>Variable Bridge</th>
+                  <th style={{ width: '26%', textAlign: 'center' }}>Fixed Bridge</th>
                 </tr>
               </thead>
               <tbody>
@@ -809,37 +891,98 @@ export default function BridgingCalculator({ initialQuote = null }) {
                     );
 
                       return (
-                      <tr>
-                        <td>
-                          {/* Label column: show explicit label if available, otherwise show a simple 'Rates' marker for the first/results row */}
-                          <div style={{ fontWeight: 600 }}>{(bestFusion && bestFusion.label) || (bestVariable && bestVariable.label) || (bestFixed && bestFixed.label) || 'Rates'}</div>
-                        </td>
-                        <td>
-                          {bestFusion ? (
-                            <div className="slds-box slds-m-vertical_x-small">
-                              <div>{bestFusion.rate != null ? `${bestFusion.rate}%` : '—'}</div>
-                              <div style={{ color: '#666', fontSize: '0.85rem' }}>Loan: {bestFusion.min_loan ? `£${Number(bestFusion.min_loan).toLocaleString()}` : '—'} – {bestFusion.max_loan ? `£${Number(bestFusion.max_loan).toLocaleString()}` : '—'}</div>
-                            </div>
-                          ) : <div className="slds-text-body_small">—</div>}
-                        </td>
-                        <td>
-                          {bestVariable ? (
-                            <div className="slds-box slds-m-vertical_x-small">
-                              <div>{bestVariable.rate != null ? `${bestVariable.rate}%` : '—'}</div>
-                              <div style={{ color: '#666', fontSize: '0.85rem' }}>LTV: {bestVariable.min_ltv ?? '—'}% – {bestVariable.max_ltv ?? '—'}%</div>
-                            </div>
-                          ) : <div className="slds-text-body_small">—</div>}
-                        </td>
-                        <td>
-                          {bestFixed ? (
-                            <div className="slds-box slds-m-vertical_x-small">
-                              <div>{bestFixed.rate != null ? `${bestFixed.rate}%` : '—'}</div>
-                              <div style={{ color: '#666', fontSize: '0.85rem' }}>LTV: {bestFixed.min_ltv ?? '—'}% – {bestFixed.max_ltv ?? '—'}%</div>
-                            </div>
-                          ) : <div className="slds-text-body_small">—</div>}
-                        </td>
-                      </tr>
-                    );
+                        <>
+                          <tr>
+                            <td>
+                              {/* Label column: show explicit label if available, otherwise show a simple 'Rates' marker for the first/results row */}
+                              <div style={{ fontWeight: 600 }}>{(bestFusion && bestFusion.label) || (bestVariable && bestVariable.label) || (bestFixed && bestFixed.label) || 'Rates'}</div>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              {bestFusion ? (
+                                <div className="slds-box slds-m-vertical_x-small">
+                                  <div>{bestFusion.rate != null ? `${bestFusion.rate}%` : '—'}</div>
+                                  <div style={{ color: '#666', fontSize: '0.85rem' }}>Loan: {bestFusion.min_loan ? `£${Number(bestFusion.min_loan).toLocaleString()}` : '—'} – {bestFusion.max_loan ? `£${Number(bestFusion.max_loan).toLocaleString()}` : '—'}</div>
+                                </div>
+                              ) : <div className="slds-text-body_small">—</div>}
+                            </td>
+                          <td style={{ textAlign: 'center' }}>
+                              {bestVariable ? (
+                                <div className="slds-box slds-m-vertical_x-small">
+                                  <div>{bestVariable.rate != null ? `${bestVariable.rate}%` : '—'}</div>
+                                  <div style={{ color: '#666', fontSize: '0.85rem' }}>LTV: {bestVariable.min_ltv ?? '—'}% – {bestVariable.max_ltv ?? '—'}%</div>
+                                </div>
+                              ) : <div className="slds-text-body_small">—</div>}
+                            </td>
+                          <td style={{ textAlign: 'center' }}>
+                              {bestFixed ? (
+                                <div className="slds-box slds-m-vertical_x-small">
+                                  <div>{bestFixed.rate != null ? `${bestFixed.rate}%` : '—'}</div>
+                                  <div style={{ color: '#666', fontSize: '0.85rem' }}>LTV: {bestFixed.min_ltv ?? '—'}% – {bestFixed.max_ltv ?? '—'}%</div>
+                                </div>
+                              ) : <div className="slds-text-body_small">—</div>}
+                            </td>
+                          </tr>
+
+                          {/* Inject placeholders as additional rows inside the same results table */}
+                          {
+                            (() => {
+                              const columnsHeaders = [ 'Fusion', 'Variable Bridge', 'Fixed Bridge' ];
+                              const placeholders = [
+                                'APRC', 'Admin Fee', 'Broker Client Fee', 'Broker Comission (Proc Fee %)',
+                                'Broker Comission (Proc Fee £)', 'Commitment Fee £', 'Deferred Interest %', 'Deferred Interest £',
+                                'Direct Debit', 'ERC', 'ERC (Fusion Only)', 'Exit Fee', 'Gross Loan', 'ICR', 'Initial Rate', 'LTV', 'Monthly Interest Cost',
+                                'NBP', 'Net Loan', 'Net LTV', 'Pay Rate', 'Product Fee %', 'Product Fee £', 'Revert Rate', 'Revert Rate DD',
+                                'Rolled Months', 'Rolled Months Interest', 'Serviced Interest', 'Total Cost to Borrower', 'Total Loan Term'
+                              ];
+
+                              const values = {};
+                              placeholders.forEach(p => { values[p] = {}; });
+
+                              const colBest = [bestFusion, bestVariable, bestFixed];
+                              // common inputs
+                              const pv = parseNumber(propertyValue);
+                              const grossInput = parseNumber(grossLoan);
+                              const specificNet = parseNumber(specificNetLoan);
+
+                              columnsHeaders.forEach((col, idx) => {
+                                const best = colBest[idx];
+                                if (best && best.rate != null) values['Initial Rate'][col] = `${Number(best.rate).toFixed(2)}%`;
+
+                                // product fee percent may be on the row
+                                const pf = best && (best.product_fee !== undefined ? Number(best.product_fee) : NaN);
+                                if (pf && !Number.isNaN(pf)) values['Product Fee %'][col] = `${pf}%`;
+
+                                // gross loan: prefer gross input, otherwise leave blank
+                                if (Number.isFinite(grossInput)) values['Gross Loan'][col] = `£${Number(grossInput).toLocaleString('en-GB')}`;
+
+                                // product fee £ and net loan
+                                if (Number.isFinite(grossInput) && pf && !Number.isNaN(pf)) {
+                                  const pfAmount = grossInput * (pf / 100);
+                                  values['Product Fee £'][col] = `£${Number(pfAmount).toLocaleString('en-GB')}`;
+                                  const net = (Number.isFinite(specificNet) ? specificNet : grossInput - pfAmount);
+                                  if (Number.isFinite(net)) values['Net Loan'][col] = `£${Number(net).toLocaleString('en-GB')}`;
+                                  if (Number.isFinite(pv)) values['LTV'][col] = `${((net / pv) * 100).toFixed(2)}%`;
+                                }
+
+                                // monthly interest
+                                if (best && best.rate != null && Number.isFinite(grossInput)) {
+                                  const monthly = grossInput * (Number(best.rate) / 100) / 12;
+                                  values['Monthly Interest Cost'][col] = `£${Number(monthly).toLocaleString('en-GB')}`;
+                                }
+                              });
+
+                              return (
+                                <CalculatorResultsPlaceholders
+                                  renderAsRows={true}
+                                  labels={placeholders}
+                                  columns={columnsHeaders}
+                                  values={values}
+                                />
+                              );
+                            })()
+                          }
+                        </>
+                      );
                   })()
                 }
               </tbody>
@@ -847,6 +990,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
           </div>
         </div>
       </section>
+
+      {/* Placeholders are injected into the results table as rows (see above) */}
 
       {/* Issue DIP Modal */}
       <IssueDIPModal
@@ -864,6 +1009,18 @@ export default function BridgingCalculator({ initialQuote = null }) {
         onSave={handleSaveDipData}
         onCreatePDF={handleCreatePDF}
         onFeeTypeSelected={handleFeeTypeSelection}
+      />
+
+      {/* Issue Quote Modal */}
+      <IssueQuoteModal
+        isOpen={quoteModalOpen}
+        onClose={() => setQuoteModalOpen(false)}
+        quoteId={currentQuoteId}
+        calculatorType="Bridging"
+        availableFeeRanges={getAvailableFeeTypes()}
+        existingQuoteData={initialQuote || {}}
+        onSave={handleSaveQuoteData}
+        onCreatePDF={handleCreateQuotePDF}
       />
 
     </div>

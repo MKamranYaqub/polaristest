@@ -50,7 +50,7 @@ function parseCsv(content) {
     const set_key = get(['set_key', 'setkey']);
     const property = get(['property', 'scope']);
     const rate_type = get(['rate_type', 'rate-type', 'ratetype']);
-    const is_retention = (get(['is_retention', 'is_retained']) || '').toLowerCase() === 'true';
+    const is_retention = (get(['is_retention', 'is_retained']) || '').toUpperCase() === 'TRUE';
     const tier = get(['tier']);
     const product = get(['product']);
     const product_fee_raw = get(['product_fee', 'product-fee', 'productfee']);

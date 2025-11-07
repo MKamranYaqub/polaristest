@@ -51,15 +51,13 @@ export const FEE_COLUMNS = {
 // and retained LTV thresholds are sourced from the rates table. This file no longer
 // exports MAX_LTV_BY_TIER per user request.
 
-// Special override rule for "Flat above commercial" style scopes. This object is
+// Special override rule for "Flat above commercial" criteria. This object is
 // editable from the Constants admin UI. It controls whether the override is
-// enabled, a matcher string used to detect matching product_scope values, and
-// the tier->LTV mapping to apply when the rule is active.
+// enabled and the tier->LTV mapping to apply when the user answers "Yes" to 
+// the "Flat Above Commercial?" criteria question.
 export const FLAT_ABOVE_COMMERCIAL_RULE = {
   enabled: true,
-  // A comma-separated list of tokens that must be present in productScope (case-insensitive)
-  // e.g. 'flat,commercial' or a full phrase 'flat above commercial'.
-  scopeMatcher: 'flat,commercial',
+  // LTV limits by tier when "Flat Above Commercial?" = Yes
   tierLtv: { '2': 65, '3': 75 },
 };
 

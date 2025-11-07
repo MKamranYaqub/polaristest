@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { supabase } from './config/supabase.js';
 import quotesRouter from './routes/quotes.js';
 import dipPdfRouter from './routes/dipPdf.js';
+import quotePdfRouter from './routes/quotePdf.js';
 
 // Load environment variables
 dotenv.config();
@@ -72,6 +73,9 @@ app.use('/api/quotes', quotesRouter);
 
 // DIP PDF generation endpoint
 app.use('/api/dip/pdf', dipPdfRouter);
+
+// Quote PDF generation endpoint
+app.use('/api/quote/pdf', quotePdfRouter);
 
 // Error handling
 app.use((err, req, res, next) => {

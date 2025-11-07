@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ModalShell from './ModalShell';
 import '../styles/slds.css';
 
 function BridgeRateEditModal({ rate, onSave, onCancel }) {
@@ -32,33 +33,31 @@ function BridgeRateEditModal({ rate, onSave, onCancel }) {
     onSave(out);
   };
 
-  return (
+  // Build footer buttons for ModalShell
+  const footerButtons = (
     <>
-      <div className="slds-backdrop slds-backdrop_open" />
-      <div className="slds-modal slds-fade-in-open">
-        <div className="slds-modal__container">
-          <div className="slds-modal__header">
-            <button className="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onClick={onCancel} title="Close">
-              <span className="slds-assistive-text">Close</span>
-            </button>
-            <h2 className="slds-text-heading_medium">{rate && rate.id ? 'Edit Bridge/Fusion Rate' : 'Add Bridge/Fusion Rate'}</h2>
-          </div>
-          <div className="slds-modal__content slds-p-around_medium">
-            <form onSubmit={handleSubmit} className="slds-form slds-form_stacked">
-              <div className="slds-form-element">
-                <label className="slds-form-element__label">Set Key</label>
-                <div className="slds-form-element__control">
-                  <input name="set_key" value={formData.set_key || ''} onChange={handleChange} className="slds-input" required />
-                </div>
-              </div>
+      <button className="slds-button slds-button_neutral" onClick={onCancel}>Cancel</button>
+      <button className="slds-button slds-button_brand" onClick={handleSubmit}>Save</button>
+    </>
+  );
 
-              <div className="slds-form-element">
-                <label className="slds-form-element__label">Property</label>
-                <div className="slds-form-element__control">
-                  <select name="property" value={formData.property || ''} onChange={handleChange} className="slds-select">
-                    <option value="Bridge">Bridge</option>
-                    <option value="Fusion">Fusion</option>
-                    <option value="Residential">Residential</option>
+  return (
+    <ModalShell isOpen={true} onClose={onCancel} title={rate && rate.id ? 'Edit Bridge/Fusion Rate' : 'Add Bridge/Fusion Rate'} footer={footerButtons}>
+      <form onSubmit={handleSubmit} className="slds-form slds-form_stacked">
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">Set Key</label>
+          <div className="slds-form-element__control">
+            <input name="set_key" value={formData.set_key || ''} onChange={handleChange} className="slds-input" required />
+          </div>
+        </div>
+
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">Property</label>
+          <div className="slds-form-element__control">
+            <select name="property" value={formData.property || ''} onChange={handleChange} className="slds-select">
+              <option value="Bridge">Bridge</option>
+              <option value="Fusion">Fusion</option>
+              <option value="Residential">Residential</option>
                     <option value="Commercial">Commercial</option>
                   </select>
                 </div>
@@ -169,14 +168,7 @@ function BridgeRateEditModal({ rate, onSave, onCancel }) {
               </div>
 
             </form>
-          </div>
-          <div className="slds-modal__footer">
-            <button className="slds-button slds-button_neutral" onClick={onCancel}>Cancel</button>
-            <button className="slds-button slds-button_brand" onClick={handleSubmit}>Save</button>
-          </div>
-        </div>
-      </div>
-    </>
+    </ModalShell>
   );
 }
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ModalShell from './ModalShell';
 import '../styles/slds.css';
 
 function RateEditModal({ rate, onSave, onCancel }) {
@@ -25,40 +26,36 @@ function RateEditModal({ rate, onSave, onCancel }) {
     });
   };
 
-  return (
+  // Build footer buttons for ModalShell
+  const footerButtons = (
     <>
-      <div className="slds-backdrop slds-backdrop_open" />
-      <div className="slds-modal slds-fade-in-open">
-        <div className="slds-modal__container">
-          <div className="slds-modal__header">
-            <button
-              className="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
-              onClick={onCancel}
-              title="Close"
-            >
-              <span className="slds-assistive-text">Close</span>
-            </button>
-            <h2 className="slds-text-heading_medium slds-hyphenate">
-              {rate.id ? 'Edit Rate' : 'Add New Rate'}
-            </h2>
-          </div>
-          <div className="slds-modal__content slds-p-around_medium">
-            <form onSubmit={handleSubmit} className="slds-form slds-form_stacked">
-              <div className="slds-form-element">
-                <label className="slds-form-element__label">Set Key:</label>
-                <div className="slds-form-element__control">
-                  <input
-                    className="slds-input"
-                    type="text"
-                    name="set_key"
-                    value={formData.set_key}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              </div>
+      <button className="slds-button slds-button_neutral" onClick={onCancel}>
+        Cancel
+      </button>
+      <button className="slds-button slds-button_brand" onClick={handleSubmit}>
+        Save
+      </button>
+    </>
+  );
 
-              <div className="slds-form-element">
+  return (
+    <ModalShell isOpen={true} onClose={onCancel} title={rate.id ? 'Edit Rate' : 'Add New Rate'} footer={footerButtons}>
+      <form onSubmit={handleSubmit} className="slds-form slds-form_stacked">
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">Set Key:</label>
+          <div className="slds-form-element__control">
+            <input
+              className="slds-input"
+              type="text"
+              name="set_key"
+              value={formData.set_key}
+              onChange={handleChange}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="slds-form-element">
                 <label className="slds-form-element__label">Property Type:</label>
                 <div className="slds-form-element__control">
                   <select
@@ -170,18 +167,7 @@ function RateEditModal({ rate, onSave, onCancel }) {
                 </div>
               </div>
             </form>
-          </div>
-          <div className="slds-modal__footer">
-            <button className="slds-button slds-button_neutral" onClick={onCancel}>
-              Cancel
-            </button>
-            <button className="slds-button slds-button_brand" onClick={handleSubmit}>
-              Save
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
+    </ModalShell>
   );
 }
 

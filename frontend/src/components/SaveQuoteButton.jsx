@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { saveQuote, updateQuote } from '../utils/quotes';
+import ModalShell from './ModalShell';
 
 // SaveQuoteButton shows a small modal to collect { name, borrowerName, applicantNames, notes }
 // If `existingQuote` prop provided (object with id), the button will perform an update instead of create.
@@ -241,76 +242,74 @@ export default function SaveQuoteButton({
   return (
     <div style={{ display: 'inline-block' }}>
       <button className="slds-button slds-button_brand" onClick={openForm} disabled={saving}>{saving ? 'Saving…' : (existingQuote ? ' Update Quote' : 'Save Quote')}</button>
-      {open && (
-        <div>
-          <div className="slds-backdrop slds-backdrop_open" />
-          <div className="slds-modal slds-fade-in-open" role="dialog" aria-modal="true">
-            <div className="slds-modal__container" style={{ maxWidth: 640 }}>
-              <header className="slds-modal__header">
-                <h2 className="slds-text-heading_medium">{existingQuote ? 'Update Quote' : 'Save Quote'}</h2>
-              </header>
-              <div className="slds-modal__content slds-p-around_medium">
-                {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
-                <form onSubmit={handleSubmit}>
-                  <div className="slds-form-element">
-                    <label className="slds-form-element__label">User Name</label>
-                    <div className="slds-form-element__control"><input className="slds-input" value={name} onChange={(e) => setName(e.target.value)} /></div>
-                  </div>
+      
+      <ModalShell
+        isOpen={open}
+        onClose={closeForm}
+        title={existingQuote ? 'Update Quote' : 'Save Quote'}
+        maxWidth="640px"
+        footer={(
+          <>
+            <button className="slds-button slds-button_neutral" onClick={closeForm} disabled={saving}>Cancel</button>
+            <button className="slds-button slds-button_brand" onClick={handleSubmit} disabled={saving}>
+              {saving ? 'Saving…' : (existingQuote ? 'Update' : 'Save')}
+            </button>
+          </>
+        )}
+      >
+        {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <div className="slds-form-element">
+            <label className="slds-form-element__label">User Name</label>
+            <div className="slds-form-element__control"><input className="slds-input" value={name} onChange={(e) => setName(e.target.value)} /></div>
+          </div>
 
-                  <div className="slds-form-element">
-                    <label className="slds-form-element__label">Borrower Type</label>
-                    <div className="slds-form-element__control">
-                      <select className="slds-select" value={borrowerType} onChange={(e) => setBorrowerType(e.target.value)}>
-                        <option value="Personal">Personal</option>
-                        <option value="Company">Company</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {borrowerType === 'Personal' && (
-                    <div className="slds-form-element">
-                      <label className="slds-form-element__label">Borrower Name</label>
-                      <div className="slds-form-element__control"><input className="slds-input" value={borrowerName} onChange={(e) => setBorrowerName(e.target.value)} /></div>
-                    </div>
-                  )}
-
-                  {borrowerType === 'Company' && (
-                    <div className="slds-form-element">
-                      <label className="slds-form-element__label">Company Name</label>
-                      <div className="slds-form-element__control"><input className="slds-input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} /></div>
-                    </div>
-                  )}
-
-                  {showProductRangeSelection && calculatorType === 'BTL' && (
-                    <div className="slds-form-element">
-                      <label className="slds-form-element__label">Product Range to Quote/Save</label>
-                      <div className="slds-form-element__control">
-                        <select className="slds-select" value={productRange} onChange={(e) => setProductRange(e.target.value)}>
-                          <option value="specialist">Specialist</option>
-                          <option value="core">Core</option>
-                        </select>
-                      </div>
-                      <div className="slds-form-element__help" style={{ fontSize: '0.875rem', color: '#706e6b', marginTop: '0.25rem' }}>
-                        Only rates from the selected product range will be saved with this quote
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="slds-form-element">
-                    <label className="slds-form-element__label">Notes</label>
-                    <div className="slds-form-element__control"><textarea className="slds-textarea" rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
-                  </div>
-
-                </form>
-              </div>
-              <footer className="slds-modal__footer">
-                <button className="slds-button slds-button_neutral" onClick={closeForm} disabled={saving}>Cancel</button>
-                <button className="slds-button slds-button_brand" onClick={handleSubmit} disabled={saving} style={{ marginLeft: 8 }}>{saving ? 'Saving…' : (existingQuote ? 'Update' : 'Save')}</button>
-              </footer>
+          <div className="slds-form-element">
+            <label className="slds-form-element__label">Borrower Type</label>
+            <div className="slds-form-element__control">
+              <select className="slds-select" value={borrowerType} onChange={(e) => setBorrowerType(e.target.value)}>
+                <option value="Personal">Personal</option>
+                <option value="Company">Company</option>
+              </select>
             </div>
           </div>
-        </div>
-      )}
+
+          {borrowerType === 'Personal' && (
+            <div className="slds-form-element">
+              <label className="slds-form-element__label">Borrower Name</label>
+              <div className="slds-form-element__control"><input className="slds-input" value={borrowerName} onChange={(e) => setBorrowerName(e.target.value)} /></div>
+            </div>
+          )}
+
+          {borrowerType === 'Company' && (
+            <div className="slds-form-element">
+              <label className="slds-form-element__label">Company Name</label>
+              <div className="slds-form-element__control"><input className="slds-input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} /></div>
+            </div>
+          )}
+
+          {showProductRangeSelection && calculatorType === 'BTL' && (
+            <div className="slds-form-element">
+              <label className="slds-form-element__label">Product Range to Quote/Save</label>
+              <div className="slds-form-element__control">
+                <select className="slds-select" value={productRange} onChange={(e) => setProductRange(e.target.value)}>
+                  <option value="specialist">Specialist</option>
+                  <option value="core">Core</option>
+                </select>
+              </div>
+              <div className="slds-form-element__help" style={{ fontSize: '0.875rem', color: '#706e6b', marginTop: '0.25rem' }}>
+                Only rates from the selected product range will be saved with this quote
+              </div>
+            </div>
+          )}
+
+          <div className="slds-form-element">
+            <label className="slds-form-element__label">Notes</label>
+            <div className="slds-form-element__control"><textarea className="slds-textarea" rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+          </div>
+
+        </form>
+      </ModalShell>
     </div>
   );
 }

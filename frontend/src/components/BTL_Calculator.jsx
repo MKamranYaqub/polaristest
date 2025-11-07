@@ -4,6 +4,8 @@ import '../styles/slds.css';
 import '../styles/Calculator.scss';
 import SaveQuoteButton from './SaveQuoteButton';
 import IssueDIPModal from './IssueDIPModal';
+import IssueQuoteModal from './IssueQuoteModal';
+import CalculatorResultsPlaceholders from './CalculatorResultsPlaceholders';
 import { PRODUCT_TYPES_LIST as DEFAULT_PRODUCT_TYPES_LIST, FEE_COLUMNS as DEFAULT_FEE_COLUMNS, LOCALSTORAGE_CONSTANTS_KEY, FLAT_ABOVE_COMMERCIAL_RULE as DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE } from '../config/constants';
 
 // Simple heuristic to compute Tier from selected options
@@ -76,6 +78,10 @@ export default function BTLcalculator({ initialQuote = null }) {
   const [selectedFeeTypeForDip, setSelectedFeeTypeForDip] = useState('');
   const [filteredRatesForDip, setFilteredRatesForDip] = useState([]);
 
+  // Quote Modal state
+  const [quoteModalOpen, setQuoteModalOpen] = useState(false);
+  const [quoteData, setQuoteData] = useState({});
+
   useEffect(() => {
     async function loadAll() {
       setLoading(true);
@@ -103,6 +109,22 @@ export default function BTLcalculator({ initialQuote = null }) {
     if (v === undefined || v === null || v === '') return '';
     const n = Number(String(v).replace(/[^0-9.-]/g, ''));
     return Number.isFinite(n) ? n.toLocaleString('en-GB') : '';
+  };
+
+  const parseNumber = (v) => {
+    if (v === undefined || v === null || v === '') return NaN;
+    const n = Number(String(v).replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(n) ? n : NaN;
+  };
+
+  const formatCurrency = (n) => {
+    if (!Number.isFinite(n)) return '—';
+    return `£${Number(n).toLocaleString('en-GB')}`;
+  };
+
+  const formatPercent = (n, decimals = 2) => {
+    if (n === undefined || n === null || Number.isNaN(Number(n))) return '—';
+    return `${Number(n).toFixed(decimals)}%`;
   };
 
   useEffect(() => {
@@ -345,15 +367,27 @@ export default function BTLcalculator({ initialQuote = null }) {
       }
     }
 
-    // retention matching — use explicit `is_retention` column when available
+    // retention matching: more robust detection
     const detectRetention = (row) => {
-      const v = row.is_retention;
-      if (v !== undefined && v !== null && v !== '') {
-        const s = String(v).toLowerCase().trim();
-        return v === true || ['true', 'yes', '1', 'y', 't'].includes(s);
+      // probe for different possible column names
+      const retentionKeys = ['is_retention', 'isRetention', 'retention', 'retained', 'is_retained'];
+      let v = null;
+      for (const k of retentionKeys) {
+        if (row[k] !== undefined && row[k] !== null && row[k] !== '') {
+          v = row[k];
+          break;
+        }
       }
-      // If explicit column not present or empty, treat as non-retention by default
-      return false;
+
+      if (v === null) {
+        // if no explicit retention column, fall back to scanning product text
+        const productText = (row.product || '').toString().toLowerCase();
+        return productText.includes('retention');
+      }
+
+      // handle boolean, numeric or string encodings
+      const s = String(v).toLowerCase().trim();
+      return v === true || ['true', 'yes', '1', 'y', 't'].includes(s);
     };
 
     const isRetentionRow = detectRetention(r);
@@ -406,19 +440,29 @@ export default function BTLcalculator({ initialQuote = null }) {
     } else {
       // Normal retention filtering behavior.
       if (retentionChoice === 'Yes') {
-        // require the row to be a retention product
-        if (!isRetentionRow) passesRetentionAndLtv = false;
-        else {
-          if (!Number.isFinite(rowMaxLtv) || rowMaxLtv <= 0) {
-            passesRetentionAndLtv = false;
+        // Per user spec: if retention is 'Yes', the row MUST be a retention row.
+        if (!isRetentionRow) {
+          passesRetentionAndLtv = false;
+        } else {
+          // If it IS a retention row, THEN we apply LTV gating.
+          const selectedLtv = Number(retentionLtv);
+          if (Number.isFinite(rowMaxLtv) && rowMaxLtv > 0) {
+            if (selectedLtv === 65) {
+              passesRetentionAndLtv = rowMaxLtv <= 65;
+            } else if (selectedLtv === 75) {
+              // For 75% LTV, the range is typically >65% and <=75%
+              passesRetentionAndLtv = rowMaxLtv > 65 && rowMaxLtv <= 75;
+            } else {
+              // Fallback for any other LTV, though UI is fixed to 65/75
+              passesRetentionAndLtv = rowMaxLtv <= selectedLtv;
+            }
           } else {
-            const selectedLtv = Number(retentionLtv);
-            if (selectedLtv === 65) passesRetentionAndLtv = rowMaxLtv <= 65;
-            else if (selectedLtv === 75) passesRetentionAndLtv = rowMaxLtv > 65 && rowMaxLtv <= 75;
-            else passesRetentionAndLtv = rowMaxLtv <= selectedLtv;
+            // If a retention row has no max_ltv, it cannot pass the LTV check.
+            passesRetentionAndLtv = false;
           }
         }
       } else if (retentionChoice === 'No') {
+        // If retention is 'No', the row must NOT be a retention row.
         passesRetentionAndLtv = !isRetentionRow;
       }
     }
@@ -457,21 +501,34 @@ export default function BTLcalculator({ initialQuote = null }) {
         });
         // Client-side fee-column filtering: hide rates whose product_fee is present but not
         // included in the active fee columns for the selected productScope.
+        // Build dynamic fee column key based on retention state and range
+        let feeColumnKey = productScope;
+        if (retentionChoice === 'Yes') {
+          // For retention products, use specialized fee columns
+          if (selectedRange === 'core') {
+            feeColumnKey = `Core_Retention_${retentionLtv}`;
+          } else {
+            feeColumnKey = `Retention${productScope}`;
+          }
+        }
+        
         let activeFeeCols = [];
         try {
           const raw = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
           if (raw) {
             const parsed = JSON.parse(raw);
-            if (parsed && parsed.feeColumns && parsed.feeColumns[productScope]) {
-              activeFeeCols = parsed.feeColumns[productScope].map((n) => Number(n));
+            if (parsed && parsed.feeColumns && parsed.feeColumns[feeColumnKey]) {
+              activeFeeCols = parsed.feeColumns[feeColumnKey].map((n) => Number(n));
             }
           }
         } catch (e) {
           // ignore
         }
         if (!activeFeeCols || activeFeeCols.length === 0) {
-          activeFeeCols = (DEFAULT_FEE_COLUMNS[productScope] || DEFAULT_FEE_COLUMNS['Residential'] || []).map((n) => Number(n));
+          activeFeeCols = (DEFAULT_FEE_COLUMNS[feeColumnKey] || DEFAULT_FEE_COLUMNS[productScope] || DEFAULT_FEE_COLUMNS['Residential'] || []).map((n) => Number(n));
         }
+        
+        console.log('Fee column filtering: key =', feeColumnKey, ', active columns =', activeFeeCols);
 
         const feeFiltered = deduped.filter((r) => {
           const pf = r.product_fee;
@@ -485,6 +542,18 @@ export default function BTLcalculator({ initialQuote = null }) {
         setRelevantRates(feeFiltered);
         // eslint-disable-next-line no-console
         console.log('Relevant rates matched (after dedupe & feeFilter):', feeFiltered.length);
+        // ENHANCED DEBUG: Show first few matching rates with their rate_type
+        if (feeFiltered.length > 0) {
+          console.log('Sample matching rates:', feeFiltered.slice(0, 5).map(r => ({
+            set_key: r.set_key,
+            product: r.product,
+            rate_type: r.rate_type,
+            is_retention: r.is_retention,
+            max_ltv: r.max_ltv,
+            tier: r.tier,
+            property: r.property
+          })));
+        }
         if (feeFiltered.length === 0) {
           // Helpful debug output when no rates matched
           // eslint-disable-next-line no-console
@@ -501,7 +570,7 @@ export default function BTLcalculator({ initialQuote = null }) {
       }
     }
     fetchRelevant();
-  }, [supabase, productScope, currentTier, productType, retentionChoice, retentionLtv]);
+  }, [supabase, productScope, currentTier, productType, retentionChoice, retentionLtv, selectedRange]);
 
   const handleAnswerChange = (questionKey, optionIndex) => {
     setAnswers((prev) => {
@@ -541,25 +610,16 @@ export default function BTLcalculator({ initialQuote = null }) {
   // DIP Modal Handlers
   const handleSaveDipData = async (quoteId, dipData) => {
     try {
-      // If product_range is specified and we have relevant rates, filter them
-      let dataToSave = { ...dipData };
-      
-      if (dipData.product_range && relevantRates && relevantRates.length > 0) {
-        const filteredRates = relevantRates.filter(rate => 
-          rate.rate_type === dipData.product_range
-        );
-        
-        // Add filtered rates to the data being saved
-        dataToSave = {
-          ...dipData,
-          filtered_rates: filteredRates
-        };
-      }
+      // Save DIP data (don't include filtered_rates - it's not a database column)
+      const dataToSave = { ...dipData };
 
       const response = await fetch(`http://localhost:3001/api/quotes/${quoteId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataToSave)
+        body: JSON.stringify({
+          calculator_type: 'BTL',
+          ...dataToSave
+        })
       });
 
       if (!response.ok) {
@@ -582,7 +642,8 @@ export default function BTLcalculator({ initialQuote = null }) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate PDF');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to generate PDF');
       }
 
       // Download the PDF
@@ -595,8 +656,11 @@ export default function BTLcalculator({ initialQuote = null }) {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      alert('DIP PDF generated successfully!');
     } catch (err) {
       console.error('Error creating PDF:', err);
+      alert(`Failed to create DIP PDF: ${err.message}`);
       throw err;
     }
   };
@@ -623,6 +687,73 @@ export default function BTLcalculator({ initialQuote = null }) {
     
     // Format as displayed in results: "Fee: 2%" or "Fee: —" for none
     return feeBuckets.map(fb => fb === 'none' ? 'Fee: —' : `Fee: ${fb}%`);
+  };
+
+  // === Issue Quote handlers ===
+  const handleIssueQuote = () => {
+    if (!currentQuoteId) {
+      alert('Please save your quote first before issuing a quote.');
+      return;
+    }
+    
+    setQuoteModalOpen(true);
+  };
+
+  const handleSaveQuoteData = async (quoteId, updatedQuoteData) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/quotes/${quoteId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          calculator_type: 'BTL',
+          ...updatedQuoteData
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save quote data');
+      }
+
+      // Don't close modal or show alert here - let the modal handle it
+    } catch (error) {
+      console.error('Error saving quote data:', error);
+      throw error; // Re-throw so modal can handle the error
+    }
+  };
+
+  const handleCreateQuotePDF = async (quoteId) => {
+    try {
+      // Trigger PDF generation
+      const response = await fetch(`http://localhost:3001/api/quote/pdf/${quoteId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to generate quote PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `quote_${quoteId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setQuoteModalOpen(false);
+    } catch (error) {
+      console.error('Error generating quote PDF:', error);
+      throw error; // Re-throw so modal can handle the error
+    }
   };
 
   // Check if both Core and Specialist ranges have rates available
@@ -688,10 +819,107 @@ export default function BTLcalculator({ initialQuote = null }) {
   // Decide how many columns to render for questions: up to 4, but don't create empty columns when fewer questions exist
   const questionColumns = Math.min(4, Math.max(1, questionCount));
 
+  // Calculate dynamic maximum LTV based on current selections
+  const calculateMaxAvailableLtv = () => {
+    // Check if flat-above-commercial rule applies based on CRITERIA ANSWER
+    let flatAboveCommercialOverrideObj = DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE;
+    try {
+      const rawOverrides = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
+      if (rawOverrides) {
+        const parsed = JSON.parse(rawOverrides);
+        if (parsed && parsed.flatAboveCommercialRule) flatAboveCommercialOverrideObj = parsed.flatAboveCommercialRule;
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    const enabled = !!flatAboveCommercialOverrideObj && flatAboveCommercialOverrideObj.enabled;
+    
+    // Check if user answered "Yes" to "Flat Above Commercial?" criteria question
+    let flatAboveCommercialAnswer = null;
+    Object.keys(answers).forEach((questionKey) => {
+      const questionLabel = (questions[questionKey]?.label || '').toLowerCase();
+      if (questionLabel.includes('flat') && questionLabel.includes('commercial')) {
+        const answer = answers[questionKey];
+        const answerLabel = (answer?.option_label || '').toLowerCase();
+        if (answerLabel === 'yes' || answerLabel === 'y') {
+          flatAboveCommercialAnswer = true;
+        }
+      }
+    });
+    
+    console.log('Flat-above-commercial check:', {
+      enabled,
+      flatAboveCommercialAnswer,
+      criteriaAnswers: Object.keys(answers).map(k => ({
+        question: questions[k]?.label,
+        answer: answers[k]?.option_label
+      }))
+    });
+
+    // If flat-above-commercial rule applies (enabled AND user answered Yes), use tier-based LTV limits
+    if (enabled && flatAboveCommercialAnswer) {
+      const ctNum = Number(currentTier);
+      const tier2Val = Number((flatAboveCommercialOverrideObj.tierLtv && flatAboveCommercialOverrideObj.tierLtv['2']) || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['2'] || 65);
+      const tier3Val = Number((flatAboveCommercialOverrideObj.tierLtv && flatAboveCommercialOverrideObj.tierLtv['3']) || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['3'] || 75);
+      
+      console.log('Flat-above-commercial ACTIVE! Tier:', ctNum, 'Tier2 LTV:', tier2Val, 'Tier3 LTV:', tier3Val);
+      
+      if (ctNum === 2) return tier2Val; // 65%
+      if (ctNum === 3) return tier3Val; // 75%
+      return 75; // default for tier 1 or other tiers
+    }
+
+    // For retention products, use retention LTV value
+    if (retentionChoice === 'Yes') {
+      const retLtv = Number(retentionLtv);
+      console.log('Retention active, using retention LTV:', retLtv);
+      return retLtv;
+    }
+
+    // Otherwise, find max LTV from available rates
+    if (relevantRates && relevantRates.length > 0) {
+      const maxFromRates = Math.max(...relevantRates.map(r => {
+        const ltv = Number(r.max_ltv ?? r.maxltv ?? r.max_LTV ?? r.maxLTV ?? 0);
+        return Number.isFinite(ltv) ? ltv : 0;
+      }));
+      if (maxFromRates > 0) {
+        console.log('Max LTV from rates:', maxFromRates);
+        return maxFromRates;
+      }
+    }
+
+    // Default fallback
+    console.log('Using default fallback LTV: 75');
+    return 75;
+  };
+
+  const dynamicMaxLtv = calculateMaxAvailableLtv();
+  
+  // Debug log for max LTV calculation
+  useEffect(() => {
+    console.log('Max LTV calculation:', {
+      productScope,
+      currentTier,
+      retentionChoice,
+      retentionLtv,
+      dynamicMaxLtv,
+      relevantRatesCount: relevantRates.length
+    });
+  }, [productScope, currentTier, retentionChoice, retentionLtv, dynamicMaxLtv, relevantRates.length]);
+  
   // LTV slider range bounds (used for percentage calculation and to keep UI consistent)
   const ltvMin = 20;
-  const ltvMax = 100;
+  const ltvMax = dynamicMaxLtv;
   const ltvPercent = Math.round(((maxLtvInput - ltvMin) / (ltvMax - ltvMin)) * 100);
+
+  // Clamp maxLtvInput when dynamicMaxLtv changes
+  useEffect(() => {
+    if (maxLtvInput > dynamicMaxLtv) {
+      setMaxLtvInput(dynamicMaxLtv);
+      console.log(`LTV clamped from ${maxLtvInput}% to ${dynamicMaxLtv}%`);
+    }
+  }, [dynamicMaxLtv, maxLtvInput]);
 
   // Determine display order for questions: prefer numeric `displayOrder` (from DB) then fall back to label
   const orderedQuestionKeys = Object.keys(questions).sort((a, b) => {
@@ -755,15 +983,29 @@ export default function BTLcalculator({ initialQuote = null }) {
           <strong className="tier-value">Tier {currentTier}</strong>
         </div>
 
+        <div className="tier-display" style={{ backgroundColor: '#e3f3ff', border: '1px solid #0176d3' }}>
+          <span className="tier-label">Max LTV available:</span>
+          <strong className="tier-value" style={{ color: '#0176d3' }}>{dynamicMaxLtv}%</strong>
+        </div>
+
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           {currentQuoteId && (
-            <button 
-              className="slds-button slds-button_brand"
-              onClick={() => setDipModalOpen(true)}
-              style={{ marginRight: '0.5rem' }}
-            >
-              Issue DIP
-            </button>
+            <>
+              <button 
+                className="slds-button slds-button_brand"
+                onClick={() => setDipModalOpen(true)}
+                style={{ marginRight: '0.5rem' }}
+              >
+                Issue DIP
+              </button>
+              <button 
+                className="slds-button slds-button_neutral"
+                onClick={handleIssueQuote}
+                style={{ marginRight: '0.5rem' }}
+              >
+                Issue Quote
+              </button>
+            </>
           )}
           <SaveQuoteButton
             calculatorType="BTL"
@@ -1052,9 +1294,12 @@ export default function BTLcalculator({ initialQuote = null }) {
                     aria-valuemin={ltvMin}
                     aria-valuemax={ltvMax}
                     aria-valuenow={maxLtvInput}
+                    className="ltv-slider"
                     style={{ background: `linear-gradient(90deg, #0176d3 ${ltvPercent}%, #e9eef5 ${ltvPercent}%)` }}
                   />
-                  <div className="helper-text">Selected LTV: <strong>{maxLtvInput}%</strong></div>
+                  <div className="helper-text">
+                    Selected: <strong>{maxLtvInput}%</strong> (Max available: <strong>{ltvMax}%</strong>)
+                  </div>
                 </div>
               </div>
             )}
@@ -1191,9 +1436,10 @@ export default function BTLcalculator({ initialQuote = null }) {
                             <table className="slds-table slds-table_cell-buffer slds-table_bordered" style={{ minWidth: Math.max(600, feeBuckets.length * 220) }}>
                               <thead>
                                 <tr>
-                                  <th style={{ width: '150px' }}>Label</th>
+                                  {/* increased label column width */}
+                                  <th style={{ width: '200px' }}>Label</th>
                                   {feeBuckets.map((fb) => (
-                                    <th key={fb} style={{ width: `${(100 - 15) / feeBuckets.length}%` }}>
+                                    <th key={fb} style={{ width: `${(100 - 15) / feeBuckets.length}%`, textAlign: 'center' }}>
                                       {fb === 'none' ? 'Fee: —' : `Fee: ${fb}%`}
                                     </th>
                                   ))}
@@ -1209,7 +1455,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                       return key === fb;
                                     });
                                     return (
-                                      <td key={fb} style={{ verticalAlign: 'top' }}>
+                                      <td key={fb} style={{ verticalAlign: 'top', textAlign: 'center' }}>
                                         {rows.length === 0 ? (
                                           <div className="slds-text-body_small">—</div>
                                         ) : rows.map(r => (
@@ -1223,8 +1469,74 @@ export default function BTLcalculator({ initialQuote = null }) {
                                     );
                                   })}
                                 </tr>
+                                {/* Render placeholders aligned with the same fee-bucket columns as additional table rows */}
+                                {
+                                  (() => {
+                                    const columnsHeaders = feeBuckets.map((fb) => (fb === 'none' ? 'Fee: —' : `Fee: ${fb}%`));
+                                    const placeholders = [
+                                      'APRC','Admin Fee','Broker Client Fee','Broker Comission (Proc Fee %)',
+                                      'Broker Comission (Proc Fee £)','Commitment Fee £','Deferred Interest %','Deferred Interest £',
+                                      'Direct Debit','ERC','Gross Loan','ICR','Initial Rate','LTV','Monthly Interest Cost',
+                                      'NBP','Net Loan','Net LTV','Pay Rate','Product Fee %','Product Fee £','Revert Rate',
+                                      'Revert Rate DD','Rolled Months','Rolled Months Interest','Serviced Interest',
+                                      'Total Cost to Borrower','Total Loan Term'
+                                    ];
+
+                                    const values = {};
+                                    placeholders.forEach(p => { values[p] = {}; });
+
+                                    // compute per-column values
+                                    feeBuckets.forEach((fb, idx) => {
+                                      const colKey = columnsHeaders[idx];
+                                      const rows = filteredRates.filter(r => {
+                                        const key = (r.product_fee === undefined || r.product_fee === null || r.product_fee === '') ? 'none' : String(r.product_fee);
+                                        return key === fb;
+                                      });
+                                      const best = (rows || []).filter(r => r.rate != null).sort((a,b) => Number(a.rate) - Number(b.rate))[0] || (rows || [])[0] || null;
+
+                                      // Initial Rate
+                                      if (best && best.rate != null) values['Initial Rate'][colKey] = formatPercent(best.rate, 2);
+
+                                      // Product Fee %
+                                      const pfPercent = fb === 'none' ? NaN : Number(fb);
+                                      if (!Number.isNaN(pfPercent)) values['Product Fee %'][colKey] = `${pfPercent}%`;
+
+                                      // Gross Loan: use specificGrossLoan if provided, otherwise estimate from propertyValue and maxLtvInput
+                                      const pv = parseNumber(propertyValue);
+                                      const specificGross = parseNumber(specificGrossLoan);
+                                      let gross = Number.isFinite(specificGross) ? specificGross : (Number.isFinite(pv) ? pv * (Number(maxLtvInput) / 100) : NaN);
+                                      if (Number.isFinite(gross)) values['Gross Loan'][colKey] = formatCurrency(gross);
+
+                                      // Product Fee £ and Net Loan
+                                      if (Number.isFinite(gross) && !Number.isNaN(pfPercent)) {
+                                        const pfAmount = gross * (pfPercent / 100);
+                                        values['Product Fee £'][colKey] = formatCurrency(pfAmount);
+                                        const net = gross - pfAmount;
+                                        values['Net Loan'][colKey] = formatCurrency(net);
+                                        if (Number.isFinite(pv)) values['LTV'][colKey] = `${(net / pv * 100).toFixed(2)}%`;
+                                      }
+
+                                      // Monthly Interest Cost (approximation)
+                                      if (best && best.rate != null && Number.isFinite(gross)) {
+                                        const monthly = gross * (Number(best.rate) / 100) / 12;
+                                        values['Monthly Interest Cost'][colKey] = formatCurrency(monthly);
+                                      }
+                                    });
+
+                                    return (
+                                      <CalculatorResultsPlaceholders
+                                        renderAsRows={true}
+                                        labels={placeholders}
+                                        columns={columnsHeaders}
+                                        values={values}
+                                      />
+                                    );
+                                  })()
+                                }
                               </tbody>
                             </table>
+                            {/* Note shown below the table */}
+                            <div style={{ marginTop: '0.5rem', color: '#666', fontSize: '0.9rem' }}>Placeholders: ERC (Fusion only) and Exit Fee are not shown in the BTL calculator.</div>
                           </div>
                         )}
                       </>
@@ -1250,6 +1562,18 @@ export default function BTLcalculator({ initialQuote = null }) {
         onSave={handleSaveDipData}
         onCreatePDF={handleCreatePDF}
         onFeeTypeSelected={handleFeeTypeSelection}
+      />
+
+      {/* Issue Quote Modal */}
+      <IssueQuoteModal
+        isOpen={quoteModalOpen}
+        onClose={() => setQuoteModalOpen(false)}
+        quoteId={currentQuoteId}
+        calculatorType="BTL"
+        availableFeeRanges={getAvailableFeeTypes()}
+        existingQuoteData={initialQuote || {}}
+        onSave={handleSaveQuoteData}
+        onCreatePDF={handleCreateQuotePDF}
       />
 
     </div>
