@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import BridgeRateEditModal from './BridgeRateEditModal';
+import NotificationModal from './NotificationModal';
 import '../styles/slds.css';
 
 function BridgeFusionRates() {
@@ -23,6 +24,9 @@ function BridgeFusionRates() {
     charge_type: ''
   });
   const [filterOptions, setFilterOptions] = useState({ properties: new Set(), products: new Set(), setKeys: new Set(), types: new Set(), chargeTypes: new Set() });
+  
+  // Notification state
+  const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
 
   const fetch = async () => {
     setLoading(true);
@@ -121,7 +125,10 @@ function BridgeFusionRates() {
 
   const handleBulkDelete = async () => {
     const ids = Array.from(selectedRows);
-    if (ids.length === 0) { alert('Please select at least one rate to delete'); return; }
+    if (ids.length === 0) { 
+      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please select at least one rate to delete' }); 
+      return; 
+    }
     if (!window.confirm(`Delete ${ids.length} selected rates?`)) return;
     try {
   const { error } = await supabase.from('bridge_fusion_rates_full').delete().in('id', ids);
@@ -441,6 +448,14 @@ function BridgeFusionRates() {
       </div>
 
       {editing && <BridgeRateEditModal rate={editing} onSave={handleSave} onCancel={() => setEditing(null)} />}
+      
+      <NotificationModal
+        isOpen={notification.show}
+        onClose={() => setNotification({ ...notification, show: false })}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+      />
     </div>
   );
 }

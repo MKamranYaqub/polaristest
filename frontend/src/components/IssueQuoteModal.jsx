@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ModalShell from './ModalShell';
+import NotificationModal from './NotificationModal';
 
 const DEFAULT_ASSUMPTIONS = [
   'The borrower has a clean credit history.',
@@ -24,6 +25,7 @@ export default function IssueQuoteModal({
   const [borrowerName, setBorrowerName] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
 
   // Load existing data when modal opens
   useEffect(() => {
@@ -91,17 +93,17 @@ export default function IssueQuoteModal({
 
   const handleSave = async () => {
     if (!quoteId) {
-      alert('Please save the quote first before issuing a quote.');
+      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please save the quote first before issuing a quote.' });
       return;
     }
 
     if (selectedFeeRanges.length === 0) {
-      alert('Please select at least one fee range.');
+      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please select at least one fee range.' });
       return;
     }
 
     if (!borrowerName.trim()) {
-      alert('Please enter the borrower name.');
+      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please enter the borrower name.' });
       return;
     }
 
@@ -117,10 +119,10 @@ export default function IssueQuoteModal({
       };
 
       await onSave(quoteId, quoteData);
-      alert('Quote data saved successfully!');
+      setNotification({ show: true, type: 'success', title: 'Success', message: 'Quote data saved successfully!' });
     } catch (err) {
       console.error('Error saving quote data:', err);
-      alert('Failed to save quote data: ' + (err.message || String(err)));
+      setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to save quote data: ' + (err.message || String(err)) });
     } finally {
       setIsSaving(false);
     }
@@ -128,12 +130,12 @@ export default function IssueQuoteModal({
 
   const handleCreatePDF = async () => {
     if (!quoteId) {
-      alert('Please save the quote first.');
+      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please save the quote first.' });
       return;
     }
 
     if (selectedFeeRanges.length === 0) {
-      alert('Please select at least one fee range.');
+      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please select at least one fee range.' });
       return;
     }
 
@@ -142,10 +144,10 @@ export default function IssueQuoteModal({
     
     try {
       await onCreatePDF(quoteId);
-      alert('Quote PDF generated successfully!');
+      setNotification({ show: true, type: 'success', title: 'Success', message: 'Quote PDF generated successfully!' });
     } catch (err) {
       console.error('Error creating quote PDF:', err);
-      alert('Failed to create quote PDF: ' + (err.message || String(err)));
+      setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to create quote PDF: ' + (err.message || String(err)) });
     }
   };
 
@@ -173,7 +175,8 @@ export default function IssueQuoteModal({
   );
 
   return (
-    <ModalShell isOpen={isOpen} onClose={onClose} title={`Issue ${calculatorType} Quote`} footer={footerButtons}>
+    <>
+      <ModalShell isOpen={isOpen} onClose={onClose} title={`Issue ${calculatorType} Quote`} footer={footerButtons}>
       {/* Borrower Name */}
       <div className="slds-form-element" style={{ marginBottom: '1.5rem' }}>
         <label className="slds-form-element__label">
@@ -265,5 +268,14 @@ export default function IssueQuoteModal({
               </div>
             </div>
     </ModalShell>
+    
+    <NotificationModal
+      isOpen={notification.show}
+      onClose={() => setNotification({ ...notification, show: false })}
+      type={notification.type}
+      title={notification.title}
+      message={notification.message}
+    />
+    </>
   );
 }

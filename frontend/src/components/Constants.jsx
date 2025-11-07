@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSupabase } from '../contexts/SupabaseContext';
+import NotificationModal from './NotificationModal';
 import {
   PRODUCT_TYPES_LIST as DEFAULT_PRODUCT_TYPES_LIST,
   FEE_COLUMNS as DEFAULT_FEE_COLUMNS,
@@ -38,6 +39,9 @@ export default function Constants() {
   // per-field editing state and temporary values
   const [editingFields, setEditingFields] = useState({});
   const [tempValues, setTempValues] = useState({});
+  
+  // Notification state
+  const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
 
   // defensive: if someone saved an invalid shape to localStorage or constants,
   // ensure rendering doesn't throw. Treat non-object productLists/feeColumns as missing.
@@ -325,11 +329,11 @@ export default function Constants() {
             setMessage('Saved locally, but failed to persist structured constants to Supabase. See console.');
             // fallback to storing as `value`
             const { error: fallbackErr } = await saveToSupabase(payload);
-            window.alert('Save failed: could not persist structured constants to Supabase. Falling back to legacy storage.');
+            setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Save failed: could not persist structured constants to Supabase. Falling back to legacy storage.' });
             if (fallbackErr) console.warn('Fallback saveToSupabase also failed', fallbackErr);
           } else {
             setMessage('Saved to localStorage and persisted structured constants to Supabase.');
-            window.alert('Save successful — structured constants persisted.');
+            setNotification({ show: true, type: 'success', title: 'Success', message: 'Save successful — structured constants persisted.' });
             // refresh latest row into UI
             try {
               const { data: latest, error: latestErr } = await supabase.from('app_constants').select('*').order('updated_at', { ascending: false }).limit(1);
@@ -356,7 +360,7 @@ export default function Constants() {
           setSaving(false);
           console.error('Exception inserting structured constants', e);
           const { error: fallbackErr } = await saveToSupabase(payload);
-          window.alert('Save failed with exception — falling back to legacy save.');
+          setNotification({ show: true, type: 'error', title: 'Error', message: 'Save failed with exception — falling back to legacy save.' });
           if (fallbackErr) console.warn('Fallback saveToSupabase also failed', fallbackErr);
         }
         return;
@@ -1064,6 +1068,14 @@ export default function Constants() {
       </div>
 
       {message && <div className="slds-text-title_caps slds-m-top_small">{message}</div>}
+      
+      <NotificationModal
+        isOpen={notification.show}
+        onClose={() => setNotification({ ...notification, show: false })}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+      />
     </div>
   );
 }

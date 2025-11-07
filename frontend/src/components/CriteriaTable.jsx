@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import CriteriaEditModal from './CriteriaEditModal';
+import NotificationModal from './NotificationModal';
 import '../styles/slds.css';
 
 function CriteriaTable() {
@@ -26,6 +27,9 @@ function CriteriaTable() {
   });
   const [sortField, setSortField] = useState('question_key');
   const [sortDir, setSortDir] = useState('asc');
+  
+  // Notification state
+  const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
 
   const { supabase } = useSupabase();
 
@@ -400,7 +404,7 @@ function CriteriaTable() {
   const handleBulkDelete = async () => {
     const selectedIds = Array.from(selectedRows);
     if (selectedIds.length === 0) {
-      alert('Please select at least one criteria to delete');
+      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please select at least one criteria to delete' });
       return;
     }
 
@@ -776,6 +780,14 @@ function CriteriaTable() {
           isNew={!editingCriteria.criteria_set}
         />
       )}
+      
+      <NotificationModal
+        isOpen={notification.show}
+        onClose={() => setNotification({ ...notification, show: false })}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+      />
     </div>
   );
 }

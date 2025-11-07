@@ -22,6 +22,10 @@ export default function SaveQuoteButton({
   const [companyName, setCompanyName] = useState('');
   const [notes, setNotes] = useState('');
   const [productRange, setProductRange] = useState('specialist'); // Core or Specialist
+  
+  // Success modal state
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({ refNumber: '', timestamp: '', date: '' });
 
   useEffect(() => {
     if (existingQuote) {
@@ -105,6 +109,9 @@ export default function SaveQuoteButton({
         }
         
         quoteData.rates_and_products = ratesToSave ? JSON.stringify(ratesToSave) : null;
+        
+        console.log('ratesToSave:', ratesToSave);
+        console.log('First rate object:', ratesToSave && ratesToSave[0]);
         
         // Prepare all rate results for saving to quote_results table (filtered by product range)
         if (ratesToSave && Array.isArray(ratesToSave)) {
@@ -215,9 +222,13 @@ export default function SaveQuoteButton({
       let res;
       if (existingQuote && existingQuote.id) {
         // Update existing quote
+        console.log('Updating quote - results count:', quoteData.results ? quoteData.results.length : 0);
+        console.log('First result:', quoteData.results && quoteData.results[0]);
         res = await updateQuote(existingQuote.id, { ...quoteData, updated_at: new Date().toISOString() });
       } else {
         // Create new quote
+        console.log('Creating quote - results count:', quoteData.results ? quoteData.results.length : 0);
+        console.log('First result:', quoteData.results && quoteData.results[0]);
         res = await saveQuote(quoteData);
       }
 
@@ -225,13 +236,14 @@ export default function SaveQuoteButton({
       setOpen(false);
       if (onSaved) onSaved(res.quote || res);
       
-      // Display reference number and timestamp
+      // Display reference number and timestamp in success modal
       const quote = res.quote || res;
       const refNumber = quote.reference_number || 'N/A';
       const timestamp = existingQuote ? 'updated' : 'created';
       const date = new Date(quote.updated_at || quote.created_at).toLocaleString();
       
-      window.alert(`Quote ${timestamp} successfully!\n\nReference: ${refNumber}\n${timestamp === 'created' ? 'Created' : 'Updated'}: ${date}`);
+      setSuccessMessage({ refNumber, timestamp, date });
+      setShowSuccess(true);
     } catch (e) {
       console.error('Save failed', e);
       setError(e.message || String(e));
@@ -309,6 +321,32 @@ export default function SaveQuoteButton({
           </div>
 
         </form>
+      </ModalShell>
+
+      {/* Success Modal */}
+      <ModalShell
+        isOpen={showSuccess}
+        onClose={() => setShowSuccess(false)}
+        title="Quote saved successfully!"
+        maxWidth="500px"
+        footer={(
+          <button className="slds-button slds-button_brand" onClick={() => setShowSuccess(false)}>
+            OK
+          </button>
+        )}
+      >
+        <div style={{ padding: '1rem 0' }}>
+          <div style={{ marginBottom: '1rem' }}>
+            <strong style={{ display: 'block', marginBottom: '0.5rem', color: '#333' }}>Reference:</strong>
+            <span style={{ fontSize: '1.1rem', color: '#0176d3' }}>{successMessage.refNumber}</span>
+          </div>
+          <div>
+            <strong style={{ display: 'block', marginBottom: '0.5rem', color: '#333' }}>
+              {successMessage.timestamp === 'created' ? 'Created:' : 'Updated:'}
+            </strong>
+            <span style={{ color: '#666' }}>{successMessage.date}</span>
+          </div>
+        </div>
       </ModalShell>
     </div>
   );

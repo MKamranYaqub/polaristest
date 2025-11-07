@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import '../styles/Calculator.scss';
 import SaveQuoteButton from './SaveQuoteButton';
 import IssueDIPModal from './IssueDIPModal';
 import IssueQuoteModal from './IssueQuoteModal';
 import CalculatorResultsPlaceholders from './CalculatorResultsPlaceholders';
+import NotificationModal from './NotificationModal';
+import { getQuote } from '../utils/quotes';
 
 export default function BridgingCalculator({ initialQuote = null }) {
   const { supabase } = useSupabase();
@@ -51,6 +53,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   // Quote Modal state
   const [quoteModalOpen, setQuoteModalOpen] = useState(false);
+  const [quoteData, setQuoteData] = useState({});
+  
+  // Notification state
+  const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
 
   useEffect(() => {
     let mounted = true;
@@ -189,6 +195,56 @@ export default function BridgingCalculator({ initialQuote = null }) {
       if (quote.product_scope) setProductScope(quote.product_scope);
       if (quote.charge_type) setChargeType(quote.charge_type);
       if (quote.sub_product) setSubProduct(quote.sub_product);
+      
+      // Load calculated results if available (from bridge_quote_results table)
+      if (quote.results && Array.isArray(quote.results) && quote.results.length > 0) {
+        // Map database results back to the format expected by the calculator
+        const loadedRates = quote.results.map(result => ({
+          product_fee: result.fee_column,
+          gross_loan: result.gross_loan,
+          net_loan: result.net_loan,
+          ltv: result.ltv_percentage,
+          ltv_percentage: result.ltv_percentage,
+          net_ltv: result.net_ltv,
+          property_value: result.property_value,
+          icr: result.icr,
+          initial_rate: result.initial_rate,
+          rate: result.initial_rate,
+          pay_rate: result.pay_rate,
+          revert_rate: result.revert_rate,
+          revert_rate_dd: result.revert_rate_dd,
+          full_rate: result.full_rate,
+          aprc: result.aprc,
+          product_fee_percent: result.product_fee_percent,
+          product_fee_pounds: result.product_fee_pounds,
+          admin_fee: result.admin_fee,
+          broker_client_fee: result.broker_client_fee,
+          broker_commission_proc_fee_percent: result.broker_commission_proc_fee_percent,
+          broker_commission_proc_fee_pounds: result.broker_commission_proc_fee_pounds,
+          commitment_fee_pounds: result.commitment_fee_pounds,
+          exit_fee: result.exit_fee,
+          monthly_interest_cost: result.monthly_interest_cost,
+          rolled_months: result.rolled_months,
+          rolled_months_interest: result.rolled_months_interest || result.rolled_interest,
+          rolled_interest: result.rolled_months_interest || result.rolled_interest,
+          deferred_interest_percent: result.deferred_interest_percent,
+          deferred_interest_pounds: result.deferred_interest_pounds || result.deferred_interest,
+          deferred_interest: result.deferred_interest_pounds || result.deferred_interest,
+          deferred_rate: result.deferred_rate,
+          serviced_interest: result.serviced_interest,
+          direct_debit: result.direct_debit,
+          erc: result.erc,
+          erc_fusion_only: result.erc_fusion_only,
+          rent: result.rent,
+          top_slicing: result.top_slicing,
+          nbp: result.nbp,
+          total_cost_to_borrower: result.total_cost_to_borrower,
+          total_loan_term: result.total_loan_term,
+          product_name: result.product_name,
+          product: result.product_name,
+        }));
+        setRelevantRates(loadedRates);
+      }
       
       // Load criteria answers if available
       if (quote.criteria_answers) {
@@ -418,6 +474,96 @@ export default function BridgingCalculator({ initialQuote = null }) {
     console.log('Bridging: matched bridge=', bridgeOut.length, 'fusion=', fusionOut.length, 'mode', mode);
   }, [rates, productScope, subProduct, propertyValue, grossLoan, specificNetLoan, answers, chargeType]);
 
+  // Compute calculated rates with all financial values for Bridging
+  const calculatedRates = useMemo(() => {
+    if (!relevantRates || relevantRates.length === 0) return [];
+
+    const pv = parseNumber(propertyValue);
+    const grossInput = parseNumber(grossLoan);
+    const specificNet = parseNumber(specificNetLoan);
+    const monthlyRentNum = parseNumber(monthlyRent);
+    const topSlicingNum = parseNumber(topSlicing);
+
+    return relevantRates.map(rate => {
+      // Gross loan - use the input value
+      const gross = grossInput;
+
+      // Product fee calculations
+      const pfPercent = Number(rate.product_fee);
+      const pfAmount = Number.isFinite(gross) && !Number.isNaN(pfPercent) ? gross * (pfPercent / 100) : NaN;
+      
+      // Admin fee
+      const adminFee = Number(rate.admin_fee) || 0;
+
+      // Net loan calculation - use specific net if provided, otherwise calculate
+      let net = NaN;
+      if (useSpecificNet === 'Yes' && Number.isFinite(specificNet)) {
+        net = specificNet;
+      } else if (Number.isFinite(gross)) {
+        net = gross;
+        if (Number.isFinite(pfAmount)) net -= pfAmount;
+        if (Number.isFinite(adminFee)) net -= adminFee;
+      }
+
+      // LTV calculations
+      const ltvPercent = Number.isFinite(pv) && pv > 0 && Number.isFinite(net) ? (net / pv * 100) : NaN;
+      const netLtv = ltvPercent; // For bridging, LTV and Net LTV are typically the same
+
+      // ICR calculation (if applicable)
+      const initialRate = Number(rate.rate);
+      const monthlyInterest = Number.isFinite(gross) && Number.isFinite(initialRate) ? gross * (initialRate / 100) / 12 : NaN;
+      const icr = Number.isFinite(monthlyRentNum) && Number.isFinite(monthlyInterest) && monthlyInterest > 0 
+        ? (monthlyRentNum / monthlyInterest * 100) 
+        : NaN;
+
+      // Broker commission (proc fee) - typically 1% of gross loan
+      const procFeePercent = Number(rate.proc_fee) || 1;
+      const brokerCommissionProcFeePounds = Number.isFinite(gross) ? gross * (procFeePercent / 100) : NaN;
+
+      return {
+        ...rate,
+        gross_loan: Number.isFinite(gross) ? gross.toFixed(2) : null,
+        net_loan: Number.isFinite(net) ? net.toFixed(2) : null,
+        ltv: Number.isFinite(ltvPercent) ? ltvPercent.toFixed(2) : null,
+        ltv_percentage: Number.isFinite(ltvPercent) ? ltvPercent.toFixed(2) : null,
+        net_ltv: Number.isFinite(netLtv) ? netLtv.toFixed(2) : null,
+        property_value: Number.isFinite(pv) ? pv.toFixed(2) : null,
+        icr: Number.isFinite(icr) ? icr.toFixed(2) : null,
+        initial_rate: initialRate,
+        pay_rate: initialRate, // Assuming pay rate same as initial rate
+        product_fee_percent: pfPercent,
+        product_fee_pounds: Number.isFinite(pfAmount) ? pfAmount.toFixed(2) : null,
+        admin_fee: adminFee,
+        broker_commission_proc_fee_percent: procFeePercent,
+        broker_commission_proc_fee_pounds: Number.isFinite(brokerCommissionProcFeePounds) ? brokerCommissionProcFeePounds.toFixed(2) : null,
+        monthly_interest_cost: Number.isFinite(monthlyInterest) ? monthlyInterest.toFixed(2) : null,
+        rent: Number.isFinite(monthlyRentNum) ? monthlyRentNum.toFixed(2) : null,
+        top_slicing: Number.isFinite(topSlicingNum) ? topSlicingNum.toFixed(2) : null,
+        product_name: rate.product || null,
+        // Bridging-specific fields (set to null if not calculated)
+        revert_rate: null,
+        revert_rate_dd: null,
+        full_rate: null,
+        aprc: null,
+        broker_client_fee: null,
+        commitment_fee_pounds: null,
+        exit_fee: null,
+        rolled_months: null,
+        rolled_months_interest: null,
+        deferred_interest_percent: null,
+        deferred_interest_pounds: null,
+        deferred_rate: null,
+        serviced_interest: null,
+        direct_debit: null,
+        erc: null,
+        erc_fusion_only: null,
+        nbp: null,
+        total_cost_to_borrower: null,
+        total_loan_term: null
+      };
+    });
+  }, [relevantRates, propertyValue, grossLoan, specificNetLoan, monthlyRent, topSlicing, useSpecificNet]);
+
   // DIP Modal Handlers
   const handleSaveDipData = async (quoteId, dipData) => {
     try {
@@ -493,10 +639,43 @@ export default function BridgingCalculator({ initialQuote = null }) {
   };
 
   // === Issue Quote handlers ===
-  const handleIssueQuote = () => {
+  const handleIssueQuote = async () => {
     if (!currentQuoteId) {
-      alert('Please save your quote first before issuing a quote.');
+      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please save your quote first before issuing a quote.' });
       return;
+    }
+    
+    // Check if there are calculation results to issue
+    if (!relevantRates || relevantRates.length === 0) {
+      setNotification({ 
+        show: true, 
+        type: 'warning', 
+        title: 'No Results', 
+        message: 'Please calculate rates first before issuing a quote. Make sure the results table shows data, then click "Save Quote" or "Update Quote" to save the calculations.' 
+      });
+      return;
+    }
+    
+    // Fetch the latest quote data from the database to get any previously saved quote info
+    try {
+      const response = await getQuote(currentQuoteId);
+      if (response && response.quote) {
+        setQuoteData(response.quote);
+        
+        // Warn if the quote has no saved results in the database
+        if (!response.quote.results || response.quote.results.length === 0) {
+          setNotification({
+            show: true,
+            type: 'warning',
+            title: 'Quote Not Fully Saved',
+            message: 'The quote exists but has no saved calculation results. Please click "Update Quote" to save your calculations before issuing the quote, otherwise the PDF will not include rate details.'
+          });
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching quote data:', error);
+      // Continue anyway - use existing data
     }
     
     setQuoteModalOpen(true);
@@ -510,6 +689,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          calculator_type: 'BRIDGING',
           ...updatedQuoteData
         })
       });
@@ -519,10 +699,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
         throw new Error(errorData.error || 'Failed to save quote data');
       }
 
-      alert('Quote data saved successfully!');
+      setNotification({ show: true, type: 'success', title: 'Success', message: 'Quote data saved successfully!' });
     } catch (err) {
       console.error('Error saving quote data:', err);
-      alert('Failed to save quote data: ' + err.message);
+      setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to save quote data: ' + err.message });
       throw err;
     }
   };
@@ -549,7 +729,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
       document.body.removeChild(a);
     } catch (err) {
       console.error('Error creating Quote PDF:', err);
-      alert('Failed to create Quote PDF: ' + err.message);
+      setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to create Quote PDF: ' + err.message });
       throw err;
     }
   };
@@ -622,10 +802,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
               chargeType,
               subProduct,
               answers,
-              results: relevantRates,
+              results: calculatedRates,
               selectedRate: (filteredRatesForDip && filteredRatesForDip.length > 0) 
                 ? filteredRatesForDip[0] 
-                : (relevantRates && relevantRates.length > 0 ? relevantRates[0] : null),
+                : (calculatedRates && calculatedRates.length > 0 ? calculatedRates[0] : null),
             }}
             allColumnData={[]}
             bestSummary={null}
@@ -1018,9 +1198,18 @@ export default function BridgingCalculator({ initialQuote = null }) {
         quoteId={currentQuoteId}
         calculatorType="Bridging"
         availableFeeRanges={getAvailableFeeTypes()}
-        existingQuoteData={initialQuote || {}}
+        existingQuoteData={quoteData}
         onSave={handleSaveQuoteData}
         onCreatePDF={handleCreateQuotePDF}
+      />
+      
+      {/* Notification Modal */}
+      <NotificationModal
+        isOpen={notification.show}
+        onClose={() => setNotification({ ...notification, show: false })}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
       />
 
     </div>

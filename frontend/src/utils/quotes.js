@@ -23,8 +23,9 @@ export async function listQuotes({ user_id = null, calculator_type = null, limit
   return res.json();
 }
 
-export async function getQuote(id) {
-  const res = await fetch(`/api/quotes/${id}`);
+export async function getQuote(id, includeResults = true) {
+  const url = includeResults ? `/api/quotes/${id}?include_results=true` : `/api/quotes/${id}`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to get quote ${id}: ${res.statusText}`);
   return res.json();
 }

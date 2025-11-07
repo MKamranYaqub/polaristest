@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { listQuotes, getQuote, deleteQuote } from '../utils/quotes';
+import NotificationModal from './NotificationModal';
 
 export default function QuotesList({ calculatorType = null, onLoad = null }) {
   const [quotes, setQuotes] = useState([]);
@@ -17,6 +18,9 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
   const [filterCreatedTo, setFilterCreatedTo] = useState('');
   const [filterUpdatedFrom, setFilterUpdatedFrom] = useState('');
   const [filterUpdatedTo, setFilterUpdatedTo] = useState('');
+  
+  // Notification state
+  const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
 
   const fetch = async () => {
     setLoading(true);
@@ -49,7 +53,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
       // Default behavior: navigate to /calculator and pass quote in state so the calculator auto-opens
       navigate('/calculator', { state: { loadQuote: q } });
     } catch (e) {
-      window.alert('Failed to load quote: ' + e.message);
+      setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to load quote: ' + e.message });
     }
   };
 
@@ -59,7 +63,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
       await deleteQuote(id);
       setQuotes(prev => prev.filter(q => q.id !== id));
     } catch (e) {
-      window.alert('Delete failed: ' + e.message);
+      setNotification({ show: true, type: 'error', title: 'Error', message: 'Delete failed: ' + e.message });
     }
   };
 
@@ -305,6 +309,14 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
           </button>
         </div>
       )}
+      
+      <NotificationModal
+        isOpen={notification.show}
+        onClose={() => setNotification({ ...notification, show: false })}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+      />
     </div>
   );
 }

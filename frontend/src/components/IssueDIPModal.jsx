@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ModalShell from './ModalShell';
+import NotificationModal from './NotificationModal';
 
 export default function IssueDIPModal({ 
   isOpen, 
@@ -47,6 +48,13 @@ export default function IssueDIPModal({
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  
+  // Notification state
+  const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
+  
+  // Postcode lookup state
+  const [addressLookup, setAddressLookup] = useState({});
+  const [loadingAddresses, setLoadingAddresses] = useState({});
 
   // Update form data when existingDipData changes (when loading a saved quote)
   useEffect(() => {
@@ -109,6 +117,78 @@ export default function IssueDIPModal({
     }
   };
 
+  // Postcode lookup using ideal-postcodes.co.uk API (free tier)
+  const handlePostcodeLookup = async (index) => {
+    const postcode = securityProperties[index].postcode.trim();
+    if (!postcode) {
+      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please enter a postcode first' });
+      return;
+    }
+
+    setLoadingAddresses({ ...loadingAddresses, [index]: true });
+    
+    try {
+      // Use ideal-postcodes.co.uk free API (no key required for lookups)
+      const response = await fetch(`https://api.ideal-postcodes.co.uk/v1/postcodes/${encodeURIComponent(postcode)}?api_key=iddqd`);
+      
+      if (!response.ok) {
+        throw new Error('Postcode not found');
+      }
+      
+      const data = await response.json();
+      
+      if (!data.result || data.result.length === 0) {
+        throw new Error('No addresses found for this postcode');
+      }
+
+      // Map the addresses to our format
+      const suggestions = data.result.map((addr, idx) => {
+        // Build the full address line for display
+        const addressParts = [
+          addr.line_1,
+          addr.line_2,
+          addr.line_3
+        ].filter(part => part && part.trim() !== '');
+        
+        // For street field, combine all address lines except post_town
+        const streetAddress = addressParts.join(', ');
+        
+        return {
+          display: addressParts.join(', '),
+          street: streetAddress,  // Full street address with all lines
+          city: addr.post_town || '',
+          postcode: addr.postcode
+        };
+      });
+
+      setAddressLookup({ ...addressLookup, [index]: suggestions });
+      
+    } catch (err) {
+      console.error('Postcode lookup error:', err);
+      setNotification({ 
+        show: true, 
+        type: 'error', 
+        title: 'Error', 
+        message: 'Could not find addresses for this postcode. Please check the postcode and try again.' 
+      });
+      setAddressLookup({ ...addressLookup, [index]: [] });
+    } finally {
+      setLoadingAddresses({ ...loadingAddresses, [index]: false });
+    }
+  };
+
+  const handleAddressSelect = (index, address) => {
+    const updatedProperties = [...securityProperties];
+    updatedProperties[index] = {
+      street: address.street,
+      city: address.city,
+      postcode: address.postcode
+    };
+    setSecurityProperties(updatedProperties);
+    // Clear the lookup results after selection
+    setAddressLookup({ ...addressLookup, [index]: [] });
+  };
+
   const validateForm = () => {
     if (!formData.commercial_or_main_residence) {
       setError('Please select residence type');
@@ -154,7 +234,7 @@ export default function IssueDIPModal({
       };
 
       await onSave(quoteId, dipData);
-      alert('DIP data saved successfully!');
+      setNotification({ show: true, type: 'success', title: 'Success', message: 'DIP data saved successfully!' });
     } catch (err) {
       console.error('Error saving DIP data:', err);
       setError(err.message || 'Failed to save DIP data');
@@ -182,7 +262,7 @@ export default function IssueDIPModal({
       // Then generate PDF
       await onCreatePDF(quoteId);
       
-      alert('DIP data saved and PDF created successfully!');
+      setNotification({ show: true, type: 'success', title: 'Success', message: 'DIP data saved and PDF created successfully!' });
     } catch (err) {
       console.error('Error creating PDF:', err);
       setError(err.message || 'Failed to create PDF');
@@ -215,7 +295,8 @@ export default function IssueDIPModal({
   );
 
   return (
-    <ModalShell isOpen={isOpen} onClose={onClose} title="Issue DIP (Decision in Principle)" footer={footerButtons}>
+    <>
+      <ModalShell isOpen={isOpen} onClose={onClose} title="Issue DIP (Decision in Principle)" footer={footerButtons}>
       {error && <div className="slds-notify slds-notify_alert slds-theme_error" style={{ marginBottom: '1rem' }}>{error}</div>}
 
       {/* Residence Type */}
@@ -436,6 +517,62 @@ export default function IssueDIPModal({
                   </button>
                 )}
                 
+                {/* Postcode field FIRST with Find Address button */}
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>
+                    <abbr className="slds-required" title="required">*</abbr> Postcode
+                  </label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input 
+                      type="text" 
+                      className="slds-input" 
+                      value={property.postcode}
+                      onChange={(e) => handlePropertyChange(index, 'postcode', e.target.value.toUpperCase())}
+                      placeholder="e.g. KT3 4NY"
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      className="slds-button"
+                      onClick={() => handlePostcodeLookup(index)}
+                      disabled={loadingAddresses[index] || !property.postcode}
+                      style={{ 
+                        whiteSpace: 'nowrap',
+                        backgroundColor: '#2e5aac',
+                        color: '#ffffff',
+                        border: 'none',
+                        fontWeight: '500'
+                      }}
+                    >
+                      {loadingAddresses[index] ? 'Loading...' : 'Find Address'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Address selection dropdown */}
+                {addressLookup[index] && addressLookup[index].length > 0 && (
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>Select Address</label>
+                    <select
+                      className="slds-select"
+                      onChange={(e) => {
+                        const selectedAddress = addressLookup[index][e.target.value];
+                        if (selectedAddress) {
+                          handleAddressSelect(index, selectedAddress);
+                        }
+                      }}
+                      defaultValue=""
+                    >
+                      <option value="">-- Choose an address --</option>
+                      {addressLookup[index].map((addr, addrIndex) => (
+                        <option key={addrIndex} value={addrIndex}>
+                          {addr.display}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                
                 <div style={{ marginBottom: '0.5rem' }}>
                   <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>Street</label>
                   <input 
@@ -447,28 +584,15 @@ export default function IssueDIPModal({
                   />
                 </div>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                  <div>
-                    <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>City</label>
-                    <input 
-                      type="text" 
-                      className="slds-input" 
-                      value={property.city}
-                      onChange={(e) => handlePropertyChange(index, 'city', e.target.value)}
-                      placeholder="Enter city"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>Postcode</label>
-                    <input 
-                      type="text" 
-                      className="slds-input" 
-                      value={property.postcode}
-                      onChange={(e) => handlePropertyChange(index, 'postcode', e.target.value)}
-                      placeholder="Enter postcode"
-                    />
-                  </div>
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>City</label>
+                  <input 
+                    type="text" 
+                    className="slds-input" 
+                    value={property.city}
+                    onChange={(e) => handlePropertyChange(index, 'city', e.target.value)}
+                    placeholder="Enter city"
+                  />
                 </div>
               </div>
             ))}
@@ -483,5 +607,14 @@ export default function IssueDIPModal({
             </button>
           </div>
     </ModalShell>
+    
+    <NotificationModal
+      isOpen={notification.show}
+      onClose={() => setNotification({ ...notification, show: false })}
+      type={notification.type}
+      title={notification.title}
+      message={notification.message}
+    />
+    </>
   );
 }

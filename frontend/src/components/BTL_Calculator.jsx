@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import '../styles/slds.css';
 import '../styles/Calculator.scss';
@@ -6,6 +6,8 @@ import SaveQuoteButton from './SaveQuoteButton';
 import IssueDIPModal from './IssueDIPModal';
 import IssueQuoteModal from './IssueQuoteModal';
 import CalculatorResultsPlaceholders from './CalculatorResultsPlaceholders';
+import NotificationModal from './NotificationModal';
+import { getQuote } from '../utils/quotes';
 import { PRODUCT_TYPES_LIST as DEFAULT_PRODUCT_TYPES_LIST, FEE_COLUMNS as DEFAULT_FEE_COLUMNS, LOCALSTORAGE_CONSTANTS_KEY, FLAT_ABOVE_COMMERCIAL_RULE as DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE } from '../config/constants';
 
 // Simple heuristic to compute Tier from selected options
@@ -81,6 +83,9 @@ export default function BTLcalculator({ initialQuote = null }) {
   // Quote Modal state
   const [quoteModalOpen, setQuoteModalOpen] = useState(false);
   const [quoteData, setQuoteData] = useState({});
+  
+  // Notification state
+  const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
 
   useEffect(() => {
     async function loadAll() {
@@ -241,6 +246,51 @@ export default function BTLcalculator({ initialQuote = null }) {
       if (quote.fee_calculation_type) setFeeCalculationType(quote.fee_calculation_type);
       if (quote.additional_fee_amount != null) setAdditionalFeeAmount(String(quote.additional_fee_amount));
       if (quote.selected_range) setSelectedRange(quote.selected_range);
+      
+      // Load calculated results if available (from quote_results table)
+      if (quote.results && Array.isArray(quote.results) && quote.results.length > 0) {
+        // Map database results back to the format expected by the calculator
+        const loadedRates = quote.results.map(result => ({
+          product_fee: result.fee_column,
+          gross_loan: result.gross_loan,
+          net_loan: result.net_loan,
+          ltv: result.ltv_percentage,
+          net_ltv: result.net_ltv,
+          property_value: result.property_value,
+          icr: result.icr,
+          initial_rate: result.initial_rate,
+          rate: result.initial_rate,
+          pay_rate: result.pay_rate,
+          revert_rate: result.revert_rate,
+          revert_rate_dd: result.revert_rate_dd,
+          full_rate: result.full_rate,
+          aprc: result.aprc,
+          product_fee_percent: result.product_fee_percent,
+          product_fee_pounds: result.product_fee_pounds,
+          admin_fee: result.admin_fee,
+          broker_client_fee: result.broker_client_fee,
+          broker_commission_proc_fee_percent: result.broker_commission_proc_fee_percent,
+          broker_commission_proc_fee_pounds: result.broker_commission_proc_fee_pounds,
+          commitment_fee_pounds: result.commitment_fee_pounds,
+          exit_fee: result.exit_fee,
+          monthly_interest_cost: result.monthly_interest_cost,
+          rolled_months: result.rolled_months,
+          rolled_months_interest: result.rolled_months_interest,
+          deferred_interest_percent: result.deferred_interest_percent,
+          deferred_interest_pounds: result.deferred_interest_pounds,
+          serviced_interest: result.serviced_interest,
+          direct_debit: result.direct_debit,
+          erc: result.erc,
+          rent: result.rent,
+          top_slicing: result.top_slicing,
+          nbp: result.nbp,
+          total_cost_to_borrower: result.total_cost_to_borrower,
+          total_loan_term: result.total_loan_term,
+          product_name: result.product_name,
+          product: result.product_name,
+        }));
+        setRelevantRates(loadedRates);
+      }
       
       // Load criteria answers if available
       if (quote.criteria_answers) {
@@ -572,6 +622,113 @@ export default function BTLcalculator({ initialQuote = null }) {
     fetchRelevant();
   }, [supabase, productScope, currentTier, productType, retentionChoice, retentionLtv, selectedRange]);
 
+  // Compute calculated rates with all financial values
+  const calculatedRates = useMemo(() => {
+    if (!relevantRates || relevantRates.length === 0) return [];
+
+    const pv = parseNumber(propertyValue);
+    const specificGross = parseNumber(specificGrossLoan);
+    const specificNet = parseNumber(specificNetLoan);
+    const monthlyRentNum = parseNumber(monthlyRent);
+    const topSlicingNum = parseNumber(topSlicing);
+    const additionalFeeNum = parseNumber(additionalFeeAmount);
+
+    return relevantRates.map(rate => {
+      // Determine gross loan based on loan calculation type
+      let gross = NaN;
+      if (loanType === 'Specific gross loan' && Number.isFinite(specificGross)) {
+        gross = specificGross;
+      } else if (loanType === 'Specific net loan' && Number.isFinite(specificNet)) {
+        // Work backwards from net loan to gross loan
+        const pfPercent = Number(rate.product_fee);
+        if (!Number.isNaN(pfPercent)) {
+          gross = specificNet / (1 - pfPercent / 100);
+        }
+      } else if (loanType === 'Max gross loan' && Number.isFinite(pv)) {
+        // Use max LTV from rate or input
+        const maxLtv = Number(rate.max_ltv || maxLtvInput);
+        gross = pv * (maxLtv / 100);
+      }
+
+      // Product fee calculations
+      const pfPercent = Number(rate.product_fee);
+      const pfAmount = Number.isFinite(gross) && !Number.isNaN(pfPercent) ? gross * (pfPercent / 100) : NaN;
+      
+      // Admin fee
+      const adminFee = Number(rate.admin_fee) || 0;
+
+      // Net loan calculation
+      let net = gross;
+      if (Number.isFinite(pfAmount)) net -= pfAmount;
+      if (Number.isFinite(adminFee)) net -= adminFee;
+      
+      // Additional fees
+      let brokerClientFee = 0;
+      if (addFeesToggle && Number.isFinite(additionalFeeNum)) {
+        if (feeCalculationType === 'percentage') {
+          brokerClientFee = gross * (additionalFeeNum / 100);
+        } else {
+          brokerClientFee = additionalFeeNum;
+        }
+        net -= brokerClientFee;
+      }
+
+      // LTV calculations
+      const ltvPercent = Number.isFinite(pv) && pv > 0 ? (gross / pv * 100) : NaN;
+      const netLtv = Number.isFinite(pv) && pv > 0 ? (net / pv * 100) : NaN;
+
+      // ICR calculation
+      const initialRate = Number(rate.rate);
+      const monthlyInterest = Number.isFinite(gross) && Number.isFinite(initialRate) ? gross * (initialRate / 100) / 12 : NaN;
+      const icr = Number.isFinite(monthlyRentNum) && Number.isFinite(monthlyInterest) && monthlyInterest > 0 
+        ? (monthlyRentNum / monthlyInterest * 100) 
+        : NaN;
+
+      // Broker commission (proc fee) - 1% of gross loan
+      const procFeePercent = Number(rate.proc_fee) || 1;
+      const brokerCommissionProcFeePounds = Number.isFinite(gross) ? gross * (procFeePercent / 100) : NaN;
+
+      return {
+        ...rate,
+        gross_loan: Number.isFinite(gross) ? gross.toFixed(2) : null,
+        net_loan: Number.isFinite(net) ? net.toFixed(2) : null,
+        ltv: Number.isFinite(ltvPercent) ? ltvPercent.toFixed(2) : null,
+        net_ltv: Number.isFinite(netLtv) ? netLtv.toFixed(2) : null,
+        property_value: Number.isFinite(pv) ? pv.toFixed(2) : null,
+        icr: Number.isFinite(icr) ? icr.toFixed(2) : null,
+        initial_rate: initialRate,
+        pay_rate: initialRate, // Assuming pay rate same as initial rate for BTL
+        product_fee_percent: pfPercent,
+        product_fee_pounds: Number.isFinite(pfAmount) ? pfAmount.toFixed(2) : null,
+        admin_fee: adminFee,
+        broker_client_fee: brokerClientFee > 0 ? brokerClientFee.toFixed(2) : null,
+        broker_commission_proc_fee_percent: procFeePercent,
+        broker_commission_proc_fee_pounds: Number.isFinite(brokerCommissionProcFeePounds) ? brokerCommissionProcFeePounds.toFixed(2) : null,
+        monthly_interest_cost: Number.isFinite(monthlyInterest) ? monthlyInterest.toFixed(2) : null,
+        rent: Number.isFinite(monthlyRentNum) ? monthlyRentNum.toFixed(2) : null,
+        top_slicing: Number.isFinite(topSlicingNum) ? topSlicingNum.toFixed(2) : null,
+        product_name: rate.product || null,
+        // Add other fields that might be needed
+        revert_rate: null, // Not calculated in BTL
+        revert_rate_dd: null,
+        full_rate: null,
+        aprc: null,
+        commitment_fee_pounds: null,
+        exit_fee: null,
+        rolled_months: null,
+        rolled_months_interest: null,
+        deferred_interest_percent: null,
+        deferred_interest_pounds: null,
+        serviced_interest: null,
+        direct_debit: null,
+        erc: null,
+        nbp: null,
+        total_cost_to_borrower: null,
+        total_loan_term: null
+      };
+    });
+  }, [relevantRates, propertyValue, specificGrossLoan, specificNetLoan, monthlyRent, topSlicing, loanType, maxLtvInput, addFeesToggle, feeCalculationType, additionalFeeAmount]);
+
   const handleAnswerChange = (questionKey, optionIndex) => {
     setAnswers((prev) => {
       const opt = questions[questionKey].options[optionIndex];
@@ -657,10 +814,10 @@ export default function BTLcalculator({ initialQuote = null }) {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      alert('DIP PDF generated successfully!');
+      setNotification({ show: true, type: 'success', title: 'Success', message: 'DIP PDF generated successfully!' });
     } catch (err) {
       console.error('Error creating PDF:', err);
-      alert(`Failed to create DIP PDF: ${err.message}`);
+      setNotification({ show: true, type: 'error', title: 'Error', message: `Failed to create DIP PDF: ${err.message}` });
       throw err;
     }
   };
@@ -690,10 +847,43 @@ export default function BTLcalculator({ initialQuote = null }) {
   };
 
   // === Issue Quote handlers ===
-  const handleIssueQuote = () => {
+  const handleIssueQuote = async () => {
     if (!currentQuoteId) {
-      alert('Please save your quote first before issuing a quote.');
+      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please save your quote first before issuing a quote.' });
       return;
+    }
+    
+    // Check if there are calculation results to issue
+    if (!relevantRates || relevantRates.length === 0) {
+      setNotification({ 
+        show: true, 
+        type: 'warning', 
+        title: 'No Results', 
+        message: 'Please calculate rates first before issuing a quote. Make sure the results table shows data, then click "Save Quote" or "Update Quote" to save the calculations.' 
+      });
+      return;
+    }
+    
+    // Fetch the latest quote data from the database to get any previously saved quote info
+    try {
+      const response = await getQuote(currentQuoteId);
+      if (response && response.quote) {
+        setQuoteData(response.quote);
+        
+        // Warn if the quote has no saved results in the database
+        if (!response.quote.results || response.quote.results.length === 0) {
+          setNotification({
+            show: true,
+            type: 'warning',
+            title: 'Quote Not Fully Saved',
+            message: 'The quote exists but has no saved calculation results. Please click "Update Quote" to save your calculations before issuing the quote, otherwise the PDF will not include rate details.'
+          });
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching quote data:', error);
+      // Continue anyway - use existing data
     }
     
     setQuoteModalOpen(true);
@@ -1027,10 +1217,10 @@ export default function BTLcalculator({ initialQuote = null }) {
               additionalFeeAmount,
               selectedRange,
               answers,
-              relevantRates,
+              relevantRates: calculatedRates,
               selectedRate: (filteredRatesForDip && filteredRatesForDip.length > 0) 
                 ? filteredRatesForDip[0] 
-                : (relevantRates && relevantRates.length > 0 ? relevantRates[0] : null),
+                : (calculatedRates && calculatedRates.length > 0 ? calculatedRates[0] : null),
             }}
             allColumnData={[]}
             bestSummary={null}
@@ -1571,9 +1761,18 @@ export default function BTLcalculator({ initialQuote = null }) {
         quoteId={currentQuoteId}
         calculatorType="BTL"
         availableFeeRanges={getAvailableFeeTypes()}
-        existingQuoteData={initialQuote || {}}
+        existingQuoteData={quoteData}
         onSave={handleSaveQuoteData}
         onCreatePDF={handleCreateQuotePDF}
+      />
+      
+      {/* Notification Modal */}
+      <NotificationModal
+        isOpen={notification.show}
+        onClose={() => setNotification({ ...notification, show: false })}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
       />
 
     </div>

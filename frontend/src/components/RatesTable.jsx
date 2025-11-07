@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import RateEditModal from './RateEditModal';
 import BridgeFusionRates from './BridgeFusionRates';
+import NotificationModal from './NotificationModal';
 import '../styles/slds.css';
 
 function RatesTable() {
@@ -37,6 +38,9 @@ function RatesTable() {
   });
   const [sortField, setSortField] = useState('set_key');
   const [sortDir, setSortDir] = useState('asc'); // 'asc' or 'desc'
+  
+  // Notification state
+  const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
 
   const { supabase } = useSupabase();
 
@@ -202,7 +206,7 @@ function RatesTable() {
   const handleBulkDelete = async () => {
     const selectedIds = Array.from(selectedRows);
     if (selectedIds.length === 0) {
-      alert('Please select at least one rate to delete');
+      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please select at least one rate to delete' });
       return;
     }
 
@@ -904,6 +908,14 @@ function RatesTable() {
           isNew={!editingRate.id}
         />
       )}
+      
+      <NotificationModal
+        isOpen={notification.show}
+        onClose={() => setNotification({ ...notification, show: false })}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+      />
       </>
       )}
     </div>
