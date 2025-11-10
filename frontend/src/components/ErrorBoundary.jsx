@@ -11,23 +11,87 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    // You can log the error to an external service here
+    // Log error to console in development
+    console.error('ErrorBoundary caught an error:', error, info);
+    
     this.setState({ error, info });
-    // eslint-disable-next-line no-console
-    console.error('ErrorBoundary caught', error, info);
+    
+    // TODO: Send to error tracking service (Sentry, LogRocket, etc.)
+    // if (process.env.NODE_ENV === 'production') {
+    //   logErrorToService(error, info);
+    // }
   }
+
+  handleReset = () => {
+    this.setState({ hasError: false, error: null, info: null });
+  };
 
   render() {
     if (this.state.hasError) {
+      // Use custom fallback if provided
+      if (this.props.fallback) {
+        return typeof this.props.fallback === 'function'
+          ? this.props.fallback({ error: this.state.error, reset: this.handleReset })
+          : this.props.fallback;
+      }
+
+      // Default fallback UI
       return (
-        <div style={{ padding: '1rem' }}>
-          <h2>Something went wrong</h2>
-          <div style={{ whiteSpace: 'pre-wrap', color: '#a94442' }}>
-            {this.state.error && this.state.error.toString()}
+        <div className="slds-scope">
+          <div className="slds-box slds-theme_error slds-m-around_medium">
+            <div className="slds-text-heading_medium slds-m-bottom_small">
+              <span className="slds-icon_container slds-icon-utility-error" title="Error">
+                <svg className="slds-icon slds-icon-text-error slds-icon_small" aria-hidden="true">
+                  <use xlinkHref="/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
+                </svg>
+              </span>
+              {this.props.title || 'Something went wrong'}
+            </div>
+            
+            <p className="slds-m-bottom_small">
+              {this.props.message || 'An unexpected error occurred. Your data is safe.'}
+            </p>
+
+            <div className="slds-button-group">
+              <button 
+                className="slds-button slds-button_neutral"
+                onClick={this.handleReset}
+              >
+                Try Again
+              </button>
+              <button 
+                className="slds-button slds-button_brand"
+                onClick={() => window.location.reload()}
+              >
+                Reload Page
+              </button>
+            </div>
+
+            {/* Show error details in development */}
+            {import.meta.env.DEV && (
+              <details className="slds-m-top_medium">
+                <summary className="slds-text-heading_small" style={{ cursor: 'pointer' }}>
+                  Error Details (Development Only)
+                </summary>
+                <div className="slds-box slds-box_small slds-m-top_small" style={{ 
+                  backgroundColor: '#f3f2f2',
+                  fontFamily: 'monospace',
+                  fontSize: '12px',
+                  whiteSpace: 'pre-wrap',
+                  overflowX: 'auto'
+                }}>
+                  <strong>Error:</strong>
+                  <div style={{ color: '#c23934', marginBottom: '1rem' }}>
+                    {this.state.error && this.state.error.toString()}
+                  </div>
+                  <strong>Component Stack:</strong>
+                  <div style={{ color: '#706e6b' }}>
+                    {this.state.info && this.state.info.componentStack}
+                  </div>
+                </div>
+              </details>
+            )}
           </div>
-          <details style={{ whiteSpace: 'pre-wrap' }}>
-            {this.state.info && this.state.info.componentStack}
-          </details>
         </div>
       );
     }

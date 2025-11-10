@@ -80,11 +80,6 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
       }
       
       const url = `${API_BASE_URL}/api/export/quotes${params.toString() ? '?' + params.toString() : ''}`;
-      console.log('=== EXPORT DEBUG ===');
-      console.log('1. API_BASE_URL:', API_BASE_URL);
-      console.log('2. Full URL:', url);
-      console.log('3. Calculator Type:', calculatorType);
-      console.log('4. Using XMLHttpRequest instead of fetch...');
       
       // Use XMLHttpRequest instead of fetch to avoid potential hooks
       const data = await new Promise((resolve, reject) => {
@@ -93,10 +88,6 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         xhr.setRequestHeader('Content-Type', 'application/json');
         
         xhr.onload = function() {
-          console.log('5. XHR completed');
-          console.log('6. Status:', xhr.status);
-          console.log('7. Response:', xhr.responseText.substring(0, 200) + '...');
-          
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const result = JSON.parse(xhr.responseText);
@@ -110,17 +101,13 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         };
         
         xhr.onerror = function() {
-          console.error('8. XHR error');
           reject(new Error('Network error. Make sure backend is running on port 3001.'));
         };
         
         xhr.send();
       });
       
-      console.log(`9. Received ${data.length} rows for export`);
-      
       if (data.length === 0) {
-        console.log('10. No data to export');
         setNotification({ 
           show: true, 
           type: 'warning', 
@@ -130,7 +117,6 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         return;
       }
       
-      console.log('11. Converting to CSV...');
       // Convert to CSV
       const headers = Object.keys(data[0]);
       const csvHeaders = headers.join(',');
@@ -148,7 +134,6 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
       });
       
       const csv = [csvHeaders, ...csvRows].join('\n');
-      console.log('12. CSV created, length:', csv.length);
       
       // Create download
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -159,7 +144,6 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
       link.href = URL.createObjectURL(blob);
       link.download = filename;
       link.click();
-      console.log('13. Download initiated:', filename);
       
       setNotification({ 
         show: true, 
@@ -167,12 +151,8 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         title: 'Success', 
         message: `Exported ${data.length} rows to ${filename}` 
       });
-      console.log('=== EXPORT COMPLETE ===');
     } catch (e) {
-      console.error('=== EXPORT ERROR ===');
-      console.error('Error object:', e);
-      console.error('Error message:', e.message);
-      console.error('Error stack:', e.stack);
+      console.error('Export failed:', e.message);
       setNotification({ 
         show: true, 
         type: 'error', 
@@ -398,11 +378,12 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         <table className="slds-table slds-table_cell-buffer slds-table_bordered" style={{ width: '100%' }}>
           <thead>
             <tr>
-              <th>Reference</th>
-              <th>Name</th>
+              <th>Ref #</th>
+              <th>Quote Name</th>
               <th>Type</th>
               <th>Borrower Type</th>
               <th>Borrower/Company</th>
+              <th>Created By</th>
               <th>Created</th>
               <th>Updated</th>
               <th style={{ position: 'sticky', right: 0, background: 'white', zIndex: 1 }}>Actions</th>
@@ -416,6 +397,11 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                 <td>{q.calculator_type}</td>
                 <td>{q.borrower_type || '—'}</td>
                 <td>{q.borrower_type === 'Company' ? q.company_name : q.borrower_name || '—'}</td>
+                <td>
+                  <span title={q.created_by_id ? `User ID: ${q.created_by_id}` : 'No user info'}>
+                    {q.created_by || '—'}
+                  </span>
+                </td>
                 <td>{new Date(q.created_at).toLocaleString()}</td>
                 <td>{q.updated_at ? new Date(q.updated_at).toLocaleString() : '—'}</td>
                 <td style={{ position: 'sticky', right: 0, background: 'white', zIndex: 1 }}>

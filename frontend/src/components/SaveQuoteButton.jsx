@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { saveQuote, updateQuote } from '../utils/quotes';
+import { useUser } from '../contexts/UserContext';
 import ModalShell from './ModalShell';
 
 // SaveQuoteButton shows a small modal to collect { name, borrowerName, applicantNames, notes }
@@ -13,6 +14,7 @@ export default function SaveQuoteButton({
   showProductRangeSelection = false,
   onSaved = null,
 }) {
+  const { user, getUserName } = useUser();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -39,8 +41,15 @@ export default function SaveQuoteButton({
     } else {
       // For new quotes, default to current selectedRange from calculationData
       setProductRange(calculationData.selectedRange || 'specialist');
+      
+      // Auto-generate a suggested quote name using only the user's name
+      if (user && !name) {
+        // Use the profile name only (no calculator type, no date)
+        const suggestedName = `${getUserName()}`;
+        setName(suggestedName);
+      }
     }
-  }, [existingQuote, calculationData.selectedRange]);
+  }, [existingQuote, calculationData.selectedRange, user, calculatorType, getUserName]);
 
   const openForm = () => setOpen(true);
   const closeForm = () => setOpen(false);
@@ -72,7 +81,16 @@ export default function SaveQuoteButton({
         borrower_name: borrowerType === 'Personal' ? borrowerName : null,
         company_name: borrowerType === 'Company' ? companyName : null,
         notes: notes || null,
+        created_by: getUserName(), // Automatically add current user name
+        created_by_id: user?.id || null, // Store user ID for tracking
       };
+
+      // Debug: Log user info being saved
+      console.log('💾 Saving quote with user info:', {
+        created_by: quoteData.created_by,
+        created_by_id: quoteData.created_by_id,
+        user: user
+      });
 
       // Add BTL-specific fields
       if (calculatorType === 'BTL') {
@@ -109,9 +127,6 @@ export default function SaveQuoteButton({
         }
         
         quoteData.rates_and_products = ratesToSave ? JSON.stringify(ratesToSave) : null;
-        
-        console.log('ratesToSave:', ratesToSave);
-        console.log('First rate object:', ratesToSave && ratesToSave[0]);
         
         // Prepare all rate results for saving to quote_results table (filtered by product range)
         if (ratesToSave && Array.isArray(ratesToSave)) {
@@ -175,11 +190,6 @@ export default function SaveQuoteButton({
         // Prepare all rate results for saving to bridge_quote_results table
         if (calculationData.results && Array.isArray(calculationData.results)) {
           console.log('SaveQuoteButton - Bridging results count:', calculationData.results.length);
-          if (calculationData.results.length > 0) {
-            console.log('SaveQuoteButton - First result product_name:', calculationData.results[0].product_name);
-            console.log('SaveQuoteButton - First result rate:', calculationData.results[0].rate);
-            console.log('SaveQuoteButton - First result set_key:', calculationData.results[0].set_key);
-          }
           
           quoteData.results = calculationData.results.map(rate => ({
             fee_column: rate.product_fee !== undefined && rate.product_fee !== null && rate.product_fee !== '' 
@@ -227,15 +237,15 @@ export default function SaveQuoteButton({
 
       // The backend will handle which table to save to based on calculator_type
       let res;
-      if (existingQuote && existingQuote.id) {
-        // Update existing quote
-        console.log('Updating quote - results count:', quoteData.results ? quoteData.results.length : 0);
-        console.log('First result:', quoteData.results && quoteData.results[0]);
-        res = await updateQuote(existingQuote.id, { ...quoteData, updated_at: new Date().toISOString() });
+      if (existingQuote) {
+        // Update existing quote - add updated_by fields
+        res = await updateQuote(existingQuote.id, { 
+          ...quoteData, 
+          updated_by: getUserName(),
+          updated_by_id: user?.id || null
+        });
       } else {
         // Create new quote
-        console.log('Creating quote - results count:', quoteData.results ? quoteData.results.length : 0);
-        console.log('First result:', quoteData.results && quoteData.results[0]);
         res = await saveQuote(quoteData);
       }
 

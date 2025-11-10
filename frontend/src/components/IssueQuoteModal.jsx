@@ -46,6 +46,8 @@ export default function IssueQuoteModal({
         
         if (existingQuoteData.quote_borrower_name) {
           setBorrowerName(existingQuoteData.quote_borrower_name);
+        } else if (existingQuoteData.borrower_name) {
+          setBorrowerName(existingQuoteData.borrower_name);
         } else {
           setBorrowerName('');
         }

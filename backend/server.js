@@ -6,6 +6,8 @@ import quotesRouter from './routes/quotes.js';
 import dipPdfRouter from './routes/dipPdf.js';
 import quotePdfRouter from './routes/quotePdf.js';
 import exportRouter from './routes/export.js';
+// Rate limiting middleware
+import { apiLimiter, exportLimiter, pdfLimiter } from './middleware/rateLimiter.js';
 
 // Load environment variables
 dotenv.config();
@@ -42,6 +44,15 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Add a global request logger to see if requests are hitting the server
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] Received ${req.method} request for ${req.originalUrl}`);
+  next();
+});
+
+// Apply rate limiting to all API routes
+app.use('/api', apiLimiter);
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
@@ -73,12 +84,15 @@ app.get('/api/rates', async (req, res) => {
 app.use('/api/quotes', quotesRouter);
 
 // DIP PDF generation endpoint
+app.use('/api/dip/pdf', pdfLimiter);
 app.use('/api/dip/pdf', dipPdfRouter);
 
 // Quote PDF generation endpoint
+app.use('/api/quote/pdf', pdfLimiter);
 app.use('/api/quote/pdf', quotePdfRouter);
 
 // Export endpoint
+app.use('/api/export', exportLimiter);
 app.use('/api/export', exportRouter);
 
 // Error handling

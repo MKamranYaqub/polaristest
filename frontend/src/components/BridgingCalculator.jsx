@@ -135,13 +135,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
       Object.keys(map).forEach(k => { starting[k] = map[k].options[0] || null; });
       setAnswers(starting);
     }
-
-    // Debugging help: log counts so we can inspect why bridging criteria might be empty
-    // eslint-disable-next-line no-console
-    console.log('BridgingCalculator: filtered criteria rows:', Object.keys(map).length, 'rawMatches:', filtered.length);
-    // also log available product_scope values for troubleshooting
-    // eslint-disable-next-line no-console
-    console.log('BridgingCalculator: available product_scopes ->', Array.from(new Set(allCriteria.map(r => r.product_scope).filter(Boolean))).slice(0,50));
   }, [allCriteria, productScope, initialQuote]);
 
   // Auto-select productScope intelligently after criteria load: prefer an explicit scope that mentions bridge/fusion
@@ -152,8 +145,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
     const explicit = scopes.find(s => needle.test(s));
     if (explicit) {
       setProductScope(explicit);
-      // eslint-disable-next-line no-console
-      console.log('BridgingCalculator: auto-selected productScope ->', explicit);
       return;
     }
     // fallback: choose first available scope if none explicitly references bridge/fusion
@@ -477,8 +468,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
     setBridgeMatched(bridgeOut);
     setFusionMatched(fusionOut);
     setRelevantRates([...bridgeOut, ...fusionOut]);
-    // eslint-disable-next-line no-console
-    console.log('Bridging: matched bridge=', bridgeOut.length, 'fusion=', fusionOut.length, 'mode', mode);
   }, [rates, productScope, subProduct, propertyValue, grossLoan, specificNetLoan, answers, chargeType]);
 
   // Compute calculated rates with all financial values for Bridging
@@ -597,9 +586,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
   // DIP Modal Handlers
   const handleSaveDipData = async (quoteId, dipData) => {
     try {
-      console.log('Saving DIP data for quote:', quoteId);
-      console.log('DIP data:', dipData);
-      
       const response = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -609,8 +595,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
         })
       });
 
-      console.log('DIP save response status:', response.status);
-
       if (!response.ok) {
         const errorData = await response.json();
         console.error('DIP save error response:', errorData);
@@ -618,7 +602,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
       }
 
       const result = await response.json();
-      console.log('DIP save successful:', result);
 
       // Update local DIP data state so it persists when reopening modal
       setDipData(dipData);
@@ -677,7 +660,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
     }
 
     setFilteredRatesForDip(filtered);
-    console.log('Filtered rates for DIP (Bridge):', filtered.length, 'rates for:', feeTypeLabel);
   };
 
   // === Issue Quote handlers ===

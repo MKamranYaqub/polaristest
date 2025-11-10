@@ -99,7 +99,6 @@ export default function BTLcalculator({ initialQuote = null }) {
         if (e) throw e;
         // Debug log rows count
         // eslint-disable-next-line no-console
-        console.log('Calculator: fetched criteria rows', (data || []).length);
         setAllCriteria(data || []);
       } catch (err) {
         setError(err.message || String(err));
@@ -342,8 +341,6 @@ export default function BTLcalculator({ initialQuote = null }) {
       // On initial page load productType can be empty which previously allowed all products through.
       if (!productType) {
         setRelevantRates([]);
-        // eslint-disable-next-line no-console
-        console.log('Rates fetch skipped: productType not set yet');
         return;
       }
       try {
@@ -578,8 +575,6 @@ export default function BTLcalculator({ initialQuote = null }) {
         if (!activeFeeCols || activeFeeCols.length === 0) {
           activeFeeCols = (DEFAULT_FEE_COLUMNS[feeColumnKey] || DEFAULT_FEE_COLUMNS[productScope] || DEFAULT_FEE_COLUMNS['Residential'] || []).map((n) => Number(n));
         }
-        
-        console.log('Fee column filtering: key =', feeColumnKey, ', active columns =', activeFeeCols);
 
         const feeFiltered = deduped.filter((r) => {
           const pf = r.product_fee;
@@ -591,30 +586,6 @@ export default function BTLcalculator({ initialQuote = null }) {
         });
 
         setRelevantRates(feeFiltered);
-        // eslint-disable-next-line no-console
-        console.log('Relevant rates matched (after dedupe & feeFilter):', feeFiltered.length);
-        // ENHANCED DEBUG: Show first few matching rates with their rate_type
-        if (feeFiltered.length > 0) {
-          console.log('Sample matching rates:', feeFiltered.slice(0, 5).map(r => ({
-            set_key: r.set_key,
-            product: r.product,
-            rate_type: r.rate_type,
-            is_retention: r.is_retention,
-            max_ltv: r.max_ltv,
-            tier: r.tier,
-            property: r.property
-          })));
-        }
-        if (feeFiltered.length === 0) {
-          // Helpful debug output when no rates matched
-          // eslint-disable-next-line no-console
-          console.groupCollapsed('Rates filter debug: no matches');
-          console.log('Filters -> productType:', productType, 'currentTier:', currentTier, 'productScope:', productScope, 'retentionChoice:', retentionChoice, 'retentionLtv:', retentionLtv, 'activeFeeCols:', activeFeeCols);
-          // eslint-disable-next-line no-console
-          console.table(debugSamples);
-          // eslint-disable-next-line no-console
-          console.groupEnd();
-        }
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error('Failed to fetch relevant rates', err);
@@ -991,7 +962,6 @@ export default function BTLcalculator({ initialQuote = null }) {
     });
 
     setFilteredRatesForDip(filtered);
-    console.log('Filtered rates for DIP:', filtered.length, 'rates with fee:', feeTypeLabel);
   };
 
   // Defensive: show helpful message if Supabase client missing
@@ -1038,23 +1008,12 @@ export default function BTLcalculator({ initialQuote = null }) {
         }
       }
     });
-    
-    console.log('Flat-above-commercial check:', {
-      enabled,
-      flatAboveCommercialAnswer,
-      criteriaAnswers: Object.keys(answers).map(k => ({
-        question: questions[k]?.label,
-        answer: answers[k]?.option_label
-      }))
-    });
 
     // If flat-above-commercial rule applies (enabled AND user answered Yes), use tier-based LTV limits
     if (enabled && flatAboveCommercialAnswer) {
       const ctNum = Number(currentTier);
       const tier2Val = Number((flatAboveCommercialOverrideObj.tierLtv && flatAboveCommercialOverrideObj.tierLtv['2']) || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['2'] || 65);
       const tier3Val = Number((flatAboveCommercialOverrideObj.tierLtv && flatAboveCommercialOverrideObj.tierLtv['3']) || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['3'] || 75);
-      
-      console.log('Flat-above-commercial ACTIVE! Tier:', ctNum, 'Tier2 LTV:', tier2Val, 'Tier3 LTV:', tier3Val);
       
       if (ctNum === 2) return tier2Val; // 65%
       if (ctNum === 3) return tier3Val; // 75%
@@ -1064,7 +1023,6 @@ export default function BTLcalculator({ initialQuote = null }) {
     // For retention products, use retention LTV value
     if (retentionChoice === 'Yes') {
       const retLtv = Number(retentionLtv);
-      console.log('Retention active, using retention LTV:', retLtv);
       return retLtv;
     }
 
@@ -1075,7 +1033,6 @@ export default function BTLcalculator({ initialQuote = null }) {
         return Number.isFinite(ltv) ? ltv : 0;
       }));
       if (maxFromRates > 0) {
-        console.log('Max LTV from rates:', maxFromRates);
         return maxFromRates;
       }
     }
@@ -1087,18 +1044,6 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   const dynamicMaxLtv = calculateMaxAvailableLtv();
   
-  // Debug log for max LTV calculation
-  useEffect(() => {
-    console.log('Max LTV calculation:', {
-      productScope,
-      currentTier,
-      retentionChoice,
-      retentionLtv,
-      dynamicMaxLtv,
-      relevantRatesCount: relevantRates.length
-    });
-  }, [productScope, currentTier, retentionChoice, retentionLtv, dynamicMaxLtv, relevantRates.length]);
-  
   // LTV slider range bounds (used for percentage calculation and to keep UI consistent)
   const ltvMin = 20;
   const ltvMax = dynamicMaxLtv;
@@ -1108,7 +1053,6 @@ export default function BTLcalculator({ initialQuote = null }) {
   useEffect(() => {
     if (maxLtvInput > dynamicMaxLtv) {
       setMaxLtvInput(dynamicMaxLtv);
-      console.log(`LTV clamped from ${maxLtvInput}% to ${dynamicMaxLtv}%`);
     }
   }, [dynamicMaxLtv, maxLtvInput]);
 

@@ -20,6 +20,7 @@ function toNullableNumber(v) {
 
 // Create a new quote
 router.post('/', async (req, res) => {
+  console.log('📝 POST /api/quotes - Received data:', req.body);
   try {
     const { calculator_type, results, ...quoteData } = req.body;
 
@@ -49,7 +50,10 @@ router.post('/', async (req, res) => {
     };
 
     const { data, error } = await supabase.from(table).insert([dataToInsert]).select('*');
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Supabase insert error:', error);
+      throw error;
+    }
     
     const savedQuote = data && data[0] ? data[0] : null;
     
