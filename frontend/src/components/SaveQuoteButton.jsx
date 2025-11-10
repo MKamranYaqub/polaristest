@@ -42,14 +42,12 @@ export default function SaveQuoteButton({
       // For new quotes, default to current selectedRange from calculationData
       setProductRange(calculationData.selectedRange || 'specialist');
       
-      // Auto-generate a suggested quote name using only the user's name
-      if (user && !name) {
-        // Use the profile name only (no calculator type, no date)
-        const suggestedName = `${getUserName()}`;
-        setName(suggestedName);
+      // For new quotes, ensure name is empty initially, rather than auto-populating
+      if (!existingQuote) {
+        setName('');
       }
     }
-  }, [existingQuote, calculationData.selectedRange, user, calculatorType, getUserName]);
+  }, [existingQuote, calculationData.selectedRange]);
 
   const openForm = () => setOpen(true);
   const closeForm = () => setOpen(false);
@@ -289,11 +287,18 @@ export default function SaveQuoteButton({
         {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="slds-form-element">
-            <label className="slds-form-element__label">User Name</label>
-            <div className="slds-form-element__control"><input className="slds-input" value={name} onChange={(e) => setName(e.target.value)} /></div>
+            <label className="slds-form-element__label" htmlFor="quote-name-input">Quote Name</label>
+            <div className="slds-form-element__control"><input id="quote-name-input" className="slds-input" value={name} onChange={(e) => setName(e.target.value)} /></div>
           </div>
 
-          <div className="slds-form-element">
+          <div className="slds-form-element" style={{ marginTop: '1rem', backgroundColor: '#f3f2f2', padding: '0.5rem 1rem', borderRadius: '0.25rem' }}>
+            <label className="slds-form-element__label">Created By</label>
+            <div className="slds-form-element__control" style={{ paddingTop: '0.25rem', fontWeight: 'bold' }}>
+              {getUserName() || 'N/A'}
+            </div>
+          </div>
+
+          <div className="slds-form-element" style={{ marginTop: '1rem' }}>
             <label className="slds-form-element__label">Borrower Type</label>
             <div className="slds-form-element__control">
               <select className="slds-select" value={borrowerType} onChange={(e) => setBorrowerType(e.target.value)}>
