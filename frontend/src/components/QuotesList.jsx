@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { listQuotes, getQuote, deleteQuote } from '../utils/quotes';
+import { API_BASE_URL } from '../config/api';
 import NotificationModal from './NotificationModal';
 
 export default function QuotesList({ calculatorType = null, onLoad = null }) {
@@ -8,6 +9,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [exporting, setExporting] = useState(false);
   const rowsPerPage = 20;
 
   // Filter states
@@ -64,6 +66,121 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
       setQuotes(prev => prev.filter(q => q.id !== id));
     } catch (e) {
       setNotification({ show: true, type: 'error', title: 'Error', message: 'Delete failed: ' + e.message });
+    }
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    setError(null);
+    
+    try {
+      const params = new URLSearchParams();
+      if (calculatorType) {
+        params.append('calculator_type', calculatorType);
+      }
+      
+      const url = `${API_BASE_URL}/api/export/quotes${params.toString() ? '?' + params.toString() : ''}`;
+      console.log('=== EXPORT DEBUG ===');
+      console.log('1. API_BASE_URL:', API_BASE_URL);
+      console.log('2. Full URL:', url);
+      console.log('3. Calculator Type:', calculatorType);
+      console.log('4. Using XMLHttpRequest instead of fetch...');
+      
+      // Use XMLHttpRequest instead of fetch to avoid potential hooks
+      const data = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', url);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        
+        xhr.onload = function() {
+          console.log('5. XHR completed');
+          console.log('6. Status:', xhr.status);
+          console.log('7. Response:', xhr.responseText.substring(0, 200) + '...');
+          
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const result = JSON.parse(xhr.responseText);
+              resolve(result.data || []);
+            } catch (e) {
+              reject(new Error('Failed to parse response: ' + e.message));
+            }
+          } else {
+            reject(new Error(`Server error: ${xhr.status} ${xhr.statusText}`));
+          }
+        };
+        
+        xhr.onerror = function() {
+          console.error('8. XHR error');
+          reject(new Error('Network error. Make sure backend is running on port 3001.'));
+        };
+        
+        xhr.send();
+      });
+      
+      console.log(`9. Received ${data.length} rows for export`);
+      
+      if (data.length === 0) {
+        console.log('10. No data to export');
+        setNotification({ 
+          show: true, 
+          type: 'warning', 
+          title: 'No Data', 
+          message: 'No quotes found to export' 
+        });
+        return;
+      }
+      
+      console.log('11. Converting to CSV...');
+      // Convert to CSV
+      const headers = Object.keys(data[0]);
+      const csvHeaders = headers.join(',');
+      const csvRows = data.map(row => {
+        return headers.map(header => {
+          const value = row[header];
+          // Handle null/undefined
+          if (value === null || value === undefined) return '';
+          // Handle strings with commas or quotes
+          if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+            return `"${value.replace(/"/g, '""')}"`;
+          }
+          return value;
+        }).join(',');
+      });
+      
+      const csv = [csvHeaders, ...csvRows].join('\n');
+      console.log('12. CSV created, length:', csv.length);
+      
+      // Create download
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      const filename = `quotes_export_${calculatorType || 'all'}_${timestamp}.csv`;
+      
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      console.log('13. Download initiated:', filename);
+      
+      setNotification({ 
+        show: true, 
+        type: 'success', 
+        title: 'Success', 
+        message: `Exported ${data.length} rows to ${filename}` 
+      });
+      console.log('=== EXPORT COMPLETE ===');
+    } catch (e) {
+      console.error('=== EXPORT ERROR ===');
+      console.error('Error object:', e);
+      console.error('Error message:', e.message);
+      console.error('Error stack:', e.stack);
+      setNotification({ 
+        show: true, 
+        type: 'error', 
+        title: 'Export Error', 
+        message: e.message || 'Failed to export quotes' 
+      });
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -137,7 +254,29 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
 
   return (
     <div>
-      <h2>Quotes {calculatorType ? `(${calculatorType})` : ''}</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h2>Quotes {calculatorType ? `(${calculatorType})` : ''}</h2>
+        <button 
+          className="slds-button slds-button_brand" 
+          onClick={handleExport}
+          disabled={exporting || loading}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+        >
+          {exporting ? (
+            <>
+              <span>Exporting...</span>
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+              </svg>
+              <span>Export to CSV</span>
+            </>
+          )}
+        </button>
+      </div>
       {loading && <div>Loading…</div>}
       {error && <div style={{ color: 'red' }}>{error}</div>}
       
