@@ -9,6 +9,7 @@ import CalculatorResultsPlaceholders from './CalculatorResultsPlaceholders';
 import NotificationModal from './NotificationModal';
 import { getQuote } from '../utils/quotes';
 import { PRODUCT_TYPES_LIST as DEFAULT_PRODUCT_TYPES_LIST, FEE_COLUMNS as DEFAULT_FEE_COLUMNS, LOCALSTORAGE_CONSTANTS_KEY, FLAT_ABOVE_COMMERCIAL_RULE as DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE } from '../config/constants';
+import { API_BASE_URL } from '../config/api';
 
 // Simple heuristic to compute Tier from selected options
 // Assumptions: each option row contains a `tier` field (number or string). We'll pick the highest numeric tier
@@ -770,7 +771,7 @@ export default function BTLcalculator({ initialQuote = null }) {
       // Save DIP data (don't include filtered_rates - it's not a database column)
       const dataToSave = { ...dipData };
 
-      const response = await fetch(`http://localhost:3001/api/quotes/${quoteId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -794,7 +795,7 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   const handleCreatePDF = async (quoteId) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/dip/pdf/${quoteId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/dip/pdf/${quoteId}`, {
         method: 'POST'
       });
 
@@ -891,7 +892,7 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   const handleSaveQuoteData = async (quoteId, updatedQuoteData) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/quotes/${quoteId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -917,7 +918,7 @@ export default function BTLcalculator({ initialQuote = null }) {
   const handleCreateQuotePDF = async (quoteId) => {
     try {
       // Trigger PDF generation
-      const response = await fetch(`http://localhost:3001/api/quote/pdf/${quoteId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/quote/pdf/${quoteId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

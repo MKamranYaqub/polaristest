@@ -7,6 +7,7 @@ import IssueQuoteModal from './IssueQuoteModal';
 import CalculatorResultsPlaceholders from './CalculatorResultsPlaceholders';
 import NotificationModal from './NotificationModal';
 import { getQuote } from '../utils/quotes';
+import { API_BASE_URL } from '../config/api';
 
 export default function BridgingCalculator({ initialQuote = null }) {
   const { supabase } = useSupabase();
@@ -567,7 +568,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
   // DIP Modal Handlers
   const handleSaveDipData = async (quoteId, dipData) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/quotes/${quoteId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dipData)
@@ -588,7 +589,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   const handleCreatePDF = async (quoteId) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/dip/pdf/${quoteId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/dip/pdf/${quoteId}`, {
         method: 'POST'
       });
 
@@ -683,7 +684,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   const handleSaveQuoteData = async (quoteId, updatedQuoteData) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/quotes/${quoteId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -709,7 +710,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   const handleCreateQuotePDF = async (quoteId) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/quote/pdf/${quoteId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/quote/pdf/${quoteId}`, {
         method: 'POST'
       });
 
