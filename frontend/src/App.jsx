@@ -2,22 +2,19 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Content, Theme } from '@carbon/react';
 import '@carbon/styles/css/styles.css';
-import RatesTable from './components/RatesTable';
-import CriteriaTable from './components/CriteriaTable';
-import BTLCalculator from './components/BTL_Calculator';
 import Calculator from './components/Calculator';
-import Constants from './components/Constants';
 import QuotesList from './components/QuotesList';
 import Navigation from './components/Navigation';
 import ErrorBoundary from './components/ErrorBoundary';
 import { 
   CalculatorErrorFallback, 
-  RatesErrorFallback, 
   QuotesErrorFallback 
 } from './components/ErrorFallbacks';
 import { UserProvider } from './contexts/UserContext';
 import UserNamePrompt from './components/UserNamePrompt';
 import UserProfileButton from './components/UserProfileButton';
+import AdminPage from './pages/AdminPage';
+import ProtectedRoute from './pages/ProtectedRoute';
 import './styles/index.scss';
 
 function App() {
@@ -41,26 +38,6 @@ function App() {
                 
                 <Content className="app-content">
                 <Routes>
-                  {/* Rates page with specialized error handling */}
-                  <Route 
-                    path="/rates" 
-                    element={
-                      <ErrorBoundary fallback={<RatesErrorFallback />}>
-                        <RatesTable />
-                      </ErrorBoundary>
-                    } 
-                  />
-                  
-                  {/* Criteria page with specialized error handling */}
-                  <Route 
-                    path="/criteria" 
-                    element={
-                      <ErrorBoundary fallback={<RatesErrorFallback />}>
-                        <CriteriaTable />
-                      </ErrorBoundary>
-                    } 
-                  />
-                  
                   {/* Calculator with specialized error handling */}
                   <Route 
                     path="/calculator" 
@@ -81,15 +58,17 @@ function App() {
                     } 
                   />
                   
-                  {/* Constants page with default error handling */}
-                  <Route 
-                    path="/constants" 
-                    element={
-                      <ErrorBoundary>
-                        <Constants />
-                      </ErrorBoundary>
-                    } 
-                  />
+                  {/* Admin section with protected route */}
+                  <Route path="/admin" element={<ProtectedRoute />}>
+                    <Route 
+                      index 
+                      element={
+                        <ErrorBoundary>
+                          <AdminPage />
+                        </ErrorBoundary>
+                      } 
+                    />
+                  </Route>
                   
                   <Route path="/" element={<Navigate to="/calculator" replace />} />
                 </Routes>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useUser } from '../contexts/UserContext';
+import ModalShell from './ModalShell';
 import '../styles/Modal.css';
 
 /**
@@ -15,6 +16,7 @@ const UserProfileButton = () => {
   const { user, getUserName, getUserInitials, updateUserProfile, clearUserProfile } = useUser();
   const [showMenu, setShowMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showClearModal, setShowClearModal] = useState(false);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [error, setError] = useState('');
@@ -51,10 +53,13 @@ const UserProfileButton = () => {
   };
 
   const handleClearProfile = () => {
-    if (confirm('Are you sure you want to clear your profile? You will be asked to enter your name again.')) {
-      clearUserProfile();
-      setShowMenu(false);
-    }
+    setShowMenu(false);
+    setShowClearModal(true);
+  };
+
+  const confirmClearProfile = () => {
+    clearUserProfile();
+    setShowClearModal(false);
   };
 
   return (
@@ -100,49 +105,65 @@ const UserProfileButton = () => {
                 top: '48px',
                 right: '0',
                 zIndex: 999,
-                minWidth: '280px'
+                minWidth: '280px',
+                backgroundColor: 'white',
+                border: '1px solid #d8dde6',
+                borderRadius: '0.25rem',
+                boxShadow: '0 2px 12px 0 rgba(255, 56, 56, 0.16)'
               }}
             >
               {/* Profile Info */}
               <div className="slds-p-around_medium slds-border_bottom">
-                <div className="slds-text-heading_small slds-m-bottom_xx-small">
+                <div className="slds-text-heading_small slds-m-bottom_xx-small" style={{ color: '#181818', fontWeight: '600' }}>
                   {user.name}
                 </div>
                 {user.email && (
-                  <div className="slds-text-body_small slds-text-color_weak">
+                  <div className="slds-text-body_small" style={{ color: '#706e6b' }}>
                     {user.email}
                   </div>
                 )}
-                <div className="slds-text-body_small slds-text-color_weak slds-m-top_x-small">
-                  ID: {user.id}
-                </div>
+                
               </div>
 
               {/* Menu Items */}
-              <ul className="slds-dropdown__list">
-                <li className="slds-dropdown__item" role="presentation">
-                  <button
-                    className="slds-dropdown__item-action"
-                    onClick={handleEditClick}
-                    style={{ width: '100%', textAlign: 'left' }}
+              <ul className="slds-dropdown__list" role="menu" style={{ padding: 0, margin: 0 }}>
+                <li className="slds-dropdown__item" role="presentation" style={{ listStyle: 'none' }}>
+                  <a
+                    href="#"
+                    className="slds-dropdown__item-link"
+                    role="menuitem"
+                    onClick={(e) => { e.preventDefault(); handleEditClick(); }}
+                    style={{ 
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '0.75rem 1rem',
+                      color: '#181818',
+                      textDecoration: 'none',
+                      cursor: 'pointer'
+                    }}
                   >
-                    <span className="slds-truncate">
-                      <span className="slds-m-right_small">✏️</span>
-                      Edit Profile
-                    </span>
-                  </button>
+                    <span style={{ marginRight: '0.5rem', fontSize: '16px' }}>✏️</span>
+                    <span>Edit Profile</span>
+                  </a>
                 </li>
-                <li className="slds-dropdown__item" role="presentation">
-                  <button
-                    className="slds-dropdown__item-action"
-                    onClick={handleClearProfile}
-                    style={{ width: '100%', textAlign: 'left' }}
+                <li className="slds-dropdown__item" role="presentation" style={{ listStyle: 'none' }}>
+                  <a
+                    href="#"
+                    className="slds-dropdown__item-link"
+                    role="menuitem"
+                    onClick={(e) => { e.preventDefault(); handleClearProfile(); }}
+                    style={{ 
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '0.75rem 1rem',
+                      color: '#181818',
+                      textDecoration: 'none',
+                      cursor: 'pointer'
+                    }}
                   >
-                    <span className="slds-truncate">
-                      <span className="slds-m-right_small">🗑️</span>
-                      Clear Profile
-                    </span>
-                  </button>
+                    <span style={{ marginRight: '0.5rem', fontSize: '16px' }}>🗑️</span>
+                    <span>Clear Profile</span>
+                  </a>
                 </li>
               </ul>
             </div>
@@ -224,6 +245,34 @@ const UserProfileButton = () => {
           </div>
         </div>
       )}
+
+      {/* Clear Profile Confirmation Modal */}
+      <ModalShell
+        isOpen={showClearModal}
+        onClose={() => setShowClearModal(false)}
+        title="Clear Profile"
+        maxWidth="500px"
+        footer={(
+          <>
+            <button
+              className="slds-button slds-button_neutral"
+              onClick={() => setShowClearModal(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="slds-button slds-button_destructive"
+              onClick={confirmClearProfile}
+            >
+              Clear Profile
+            </button>
+          </>
+        )}
+      >
+        <p style={{ fontSize: '14px', lineHeight: '1.5', color: '#3e3e3c' }}>
+          Are you sure you want to clear your profile? You will be asked to enter your name again.
+        </p>
+      </ModalShell>
     </>
   );
 };

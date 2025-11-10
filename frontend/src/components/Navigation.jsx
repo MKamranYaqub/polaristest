@@ -1,20 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SideNav, SideNavItems, SideNavLink } from '@carbon/react';
+import { useUser } from '../contexts/UserContext';
 import '../styles/navigation.scss';
-
-const navItems = [
-  { label: 'Calculator', path: '/calculator' },
-  { label: 'Manage Rates', path: '/rates' },
-  { label: 'Manage Criteria', path: '/criteria' },
-  { label: 'Constants', path: '/constants' }
-];
 
 function Navigation() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 900);
+
+  const isAdmin = user && user.name && user.name.toLowerCase() === 'admin';
+
+  const navItems = [
+    { label: 'Calculator', path: '/calculator' },
+    { label: 'Quotes', path: '/quotes' },
+  ];
+
+  if (isAdmin) {
+    navItems.push({ label: 'Admin', path: '/admin' });
+  }
 
   useEffect(() => {
     const handleResize = () => {
