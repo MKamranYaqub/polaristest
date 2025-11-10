@@ -174,6 +174,13 @@ export default function SaveQuoteButton({
         
         // Prepare all rate results for saving to bridge_quote_results table
         if (calculationData.results && Array.isArray(calculationData.results)) {
+          console.log('SaveQuoteButton - Bridging results count:', calculationData.results.length);
+          if (calculationData.results.length > 0) {
+            console.log('SaveQuoteButton - First result product_name:', calculationData.results[0].product_name);
+            console.log('SaveQuoteButton - First result rate:', calculationData.results[0].rate);
+            console.log('SaveQuoteButton - First result set_key:', calculationData.results[0].set_key);
+          }
+          
           quoteData.results = calculationData.results.map(rate => ({
             fee_column: rate.product_fee !== undefined && rate.product_fee !== null && rate.product_fee !== '' 
               ? String(rate.product_fee) 

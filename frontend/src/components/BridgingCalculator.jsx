@@ -417,9 +417,15 @@ export default function BridgingCalculator({ initialQuote = null }) {
         const ps = (r.product_scope || r.property || r.set_key || '').toString().toLowerCase();
         if (!ps.includes(productScope.toString().toLowerCase())) return false;
       }
-      // Exclude explicit Fusion sets from Bridge. In our CSV the Fusion rows have set_key === 'Fusion'.
+      // Exclude Fusion sets from Bridge. Check for set_key === 'Fusion', 'fusion', etc.
       const setKeyStr = (r.set_key || '').toString().toLowerCase();
       if (setKeyStr === 'fusion') return false;
+      
+      // Only include rates with set_key of 'Bridging_Fix', 'Bridging_Var', or similar bridge-related keys
+      // (not 'Fusion')
+      const isBridgeRate = setKeyStr.includes('bridging') || setKeyStr.includes('bridge');
+      if (!isBridgeRate) return false;
+      
       // charge type handling: allow All/First/Second. Detect second-charge deterministically by checking
       // the product/type fields (CSV uses product="Second Charge"). Fall back to legacy boolean flags.
   const isSecondFlag = (r.second_charge === true) || (r.is_second === true);
@@ -521,6 +527,29 @@ export default function BridgingCalculator({ initialQuote = null }) {
       const procFeePercent = Number(rate.proc_fee) || 1;
       const brokerCommissionProcFeePounds = Number.isFinite(gross) ? gross * (procFeePercent / 100) : NaN;
 
+      // Determine product name: "Fusion", "Variable Bridge", or "Fixed Bridge"
+      let productName = null;
+      const setKey = (rate.set_key || '').toString().toLowerCase();
+      
+      if (setKey === 'fusion') {
+        productName = 'Fusion';
+      } else if (setKey === 'bridging_fix' || setKey.includes('bridging_fix') || setKey.includes('fix')) {
+        productName = 'Fixed Bridge';
+      } else if (setKey === 'bridging_var' || setKey.includes('bridging_var') || setKey.includes('var')) {
+        productName = 'Variable Bridge';
+      } else {
+        // Fallback: check rate type field
+        const rateType = (rate.type || '').toString().toLowerCase();
+        if (rateType.includes('fixed')) {
+          productName = 'Fixed Bridge';
+        } else if (rateType.includes('variable')) {
+          productName = 'Variable Bridge';
+        } else {
+          // Final fallback: use the product field or "Bridge" as default
+          productName = rate.product || 'Bridge';
+        }
+      }
+
       return {
         ...rate,
         gross_loan: Number.isFinite(gross) ? gross.toFixed(2) : null,
@@ -540,7 +569,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
         monthly_interest_cost: Number.isFinite(monthlyInterest) ? monthlyInterest.toFixed(2) : null,
         rent: Number.isFinite(monthlyRentNum) ? monthlyRentNum.toFixed(2) : null,
         top_slicing: Number.isFinite(topSlicingNum) ? topSlicingNum.toFixed(2) : null,
-        product_name: rate.product || null,
+        product_name: productName,
         // Bridging-specific fields (set to null if not calculated)
         revert_rate: null,
         revert_rate_dd: null,
@@ -568,16 +597,28 @@ export default function BridgingCalculator({ initialQuote = null }) {
   // DIP Modal Handlers
   const handleSaveDipData = async (quoteId, dipData) => {
     try {
+      console.log('Saving DIP data for quote:', quoteId);
+      console.log('DIP data:', dipData);
+      
       const response = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dipData)
+        body: JSON.stringify({
+          calculator_type: 'BRIDGING',
+          ...dipData
+        })
       });
+
+      console.log('DIP save response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('DIP save error response:', errorData);
         throw new Error(errorData.error || 'Failed to save DIP data');
       }
+
+      const result = await response.json();
+      console.log('DIP save successful:', result);
 
       // Update local DIP data state so it persists when reopening modal
       setDipData(dipData);

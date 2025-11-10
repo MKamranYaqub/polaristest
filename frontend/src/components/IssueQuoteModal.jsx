@@ -139,15 +139,27 @@ export default function IssueQuoteModal({
       return;
     }
 
-    // Save first, then generate PDF
-    await handleSave();
-    
+    if (!borrowerName.trim()) {
+      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please enter the borrower name before creating PDF.' });
+      return;
+    }
+
+    setIsSaving(true);
+
     try {
+      // Save first
+      console.log('Saving quote data before generating PDF...');
+      await handleSave();
+      
+      // Then generate PDF
+      console.log('Generating Quote PDF...');
       await onCreatePDF(quoteId);
-      setNotification({ show: true, type: 'success', title: 'Success', message: 'Quote PDF generated successfully!' });
+      setNotification({ show: true, type: 'success', title: 'Success', message: 'Quote data saved and PDF created successfully!' });
     } catch (err) {
       console.error('Error creating quote PDF:', err);
       setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to create quote PDF: ' + (err.message || String(err)) });
+    } finally {
+      setIsSaving(false);
     }
   };
 

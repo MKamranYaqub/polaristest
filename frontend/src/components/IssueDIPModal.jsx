@@ -251,6 +251,7 @@ export default function IssueDIPModal({
 
     try {
       // First save the data
+      console.log('Saving DIP data before generating PDF...');
       const dipData = {
         ...formData,
         security_properties: securityProperties,
@@ -258,14 +259,16 @@ export default function IssueDIPModal({
       };
 
       await onSave(quoteId, dipData);
+      console.log('DIP data saved successfully, now generating PDF...');
       
       // Then generate PDF
       await onCreatePDF(quoteId);
       
       setNotification({ show: true, type: 'success', title: 'Success', message: 'DIP data saved and PDF created successfully!' });
     } catch (err) {
-      console.error('Error creating PDF:', err);
-      setError(err.message || 'Failed to create PDF');
+      console.error('Error creating DIP PDF:', err);
+      setError(err.message || 'Failed to create DIP PDF');
+      setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to create DIP PDF: ' + (err.message || 'Unknown error') });
     } finally {
       setSaving(false);
     }

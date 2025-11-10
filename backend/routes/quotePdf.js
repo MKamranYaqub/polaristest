@@ -202,26 +202,44 @@ router.post('/:id', async (req, res) => {
       doc.fontSize(16).text('Rate Details', { underline: true });
       doc.moveDown(0.5);
       
-      // For Bridging quotes, show all results (Fusion, Variable Bridge, Fixed Bridge)
-      // For BTL quotes, filter by selected fee ranges
+      // Filter results based on selected fee ranges/products
       let selectedResults = quote.results;
       
-      if (!isBridge && quote.quote_selected_fee_ranges && Array.isArray(quote.quote_selected_fee_ranges)) {
-        // BTL: Filter results to only show selected fee ranges
-        selectedResults = quote.results.filter(result => {
-          if (!result.fee_column) {
-            console.log('Skipping result with no fee_column');
-            return false;
-          }
-          const matches = quote.quote_selected_fee_ranges.some(selectedFee => {
-            // Match fee ranges like "2%", "2.00", "Fee: 2%", etc.
-            const feeValue = result.fee_column.toString();
-            const match = selectedFee.includes(feeValue) || selectedFee.includes(`${feeValue}%`);
-            console.log(`Comparing "${selectedFee}" with fee_column "${feeValue}": ${match}`);
-            return match;
+      if (quote.quote_selected_fee_ranges && Array.isArray(quote.quote_selected_fee_ranges) && quote.quote_selected_fee_ranges.length > 0) {
+        if (isBridge) {
+          // BRIDGING: Filter results to only show selected products (Fusion, Variable Bridge, Fixed Bridge)
+          selectedResults = quote.results.filter(result => {
+            if (!result.product_name) {
+              console.log('Skipping result with no product_name');
+              return false;
+            }
+            const matches = quote.quote_selected_fee_ranges.some(selectedProduct => {
+              // Match product names like "Fusion", "Variable Bridge", "Fixed Bridge"
+              const productName = result.product_name.toString().toLowerCase().trim();
+              const selected = selectedProduct.toString().toLowerCase().trim();
+              const match = productName === selected || productName.includes(selected) || selected.includes(productName);
+              console.log(`Comparing selected "${selectedProduct}" with product_name "${result.product_name}": ${match}`);
+              return match;
+            });
+            return matches;
           });
-          return matches;
-        });
+        } else {
+          // BTL: Filter results to only show selected fee ranges
+          selectedResults = quote.results.filter(result => {
+            if (!result.fee_column) {
+              console.log('Skipping result with no fee_column');
+              return false;
+            }
+            const matches = quote.quote_selected_fee_ranges.some(selectedFee => {
+              // Match fee ranges like "2%", "2.00", "Fee: 2%", etc.
+              const feeValue = result.fee_column.toString();
+              const match = selectedFee.includes(feeValue) || selectedFee.includes(`${feeValue}%`);
+              console.log(`Comparing "${selectedFee}" with fee_column "${feeValue}": ${match}`);
+              return match;
+            });
+            return matches;
+          });
+        }
       }
       
       console.log('Filtered results:', selectedResults.length);

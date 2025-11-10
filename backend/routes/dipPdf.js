@@ -29,6 +29,23 @@ router.post('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Quote not found' });
     }
 
+    // Determine which results table to use
+    const isBridge = quote.calculator_type === 'BRIDGING';
+    const resultsTable = isBridge ? 'bridge_quote_results' : 'quote_results';
+
+    // Fetch results for this quote
+    const { data: resultsData, error: resultsError } = await supabase
+      .from(resultsTable)
+      .select('*')
+      .eq('quote_id', id)
+      .order('created_at', { ascending: true });
+    
+    if (resultsError) {
+      console.error('Error fetching quote results:', resultsError);
+    }
+    
+    const results = resultsData || [];
+
     // Create PDF document
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     
@@ -126,6 +143,86 @@ router.post('/:id', async (req, res) => {
       }
     }
     
+    doc.moveDown(1.5);
+
+    // Rate Calculation Results Section
+    if (results && results.length > 0) {
+      doc.fontSize(16).text('Rate Calculation Results', { underline: true });
+      doc.moveDown(0.5);
+      
+      console.log('DIP PDF - Total results:', results.length);
+      console.log('DIP PDF - Fee type selection:', quote.fee_type_selection);
+      console.log('DIP PDF - Is Bridge:', isBridge);
+      
+      // Log all result product names for debugging
+      if (results.length > 0) {
+        console.log('DIP PDF - Result product names:', results.map(r => r.product_name));
+      }
+      
+      // Filter results by selected fee type if specified
+      let displayResults = results;
+      
+      if (quote.fee_type_selection) {
+        console.log('Filtering results by fee type selection');
+        
+        if (isBridge) {
+          // For Bridging: filter by product name (Fusion, Variable Bridge, Fixed Bridge)
+          displayResults = results.filter(result => {
+            const productName = (result.product_name || '').toString().toLowerCase().trim();
+            const selectedType = (quote.fee_type_selection || '').toString().toLowerCase().trim();
+            const match = productName === selectedType || productName.includes(selectedType) || selectedType.includes(productName);
+            console.log(`Comparing product_name "${result.product_name}" with fee_type_selection "${quote.fee_type_selection}": ${match}`);
+            return match;
+          });
+        } else {
+          // For BTL: filter by fee column
+          displayResults = results.filter(result => {
+            const feeCol = (result.fee_column || '').toString();
+            const match = quote.fee_type_selection.includes(feeCol) || quote.fee_type_selection.includes(`${feeCol}%`);
+            console.log(`Comparing fee_column "${result.fee_column}" with fee_type_selection "${quote.fee_type_selection}": ${match}`);
+            return match;
+          });
+        }
+        
+        console.log('Filtered results count:', displayResults.length);
+      } else {
+        console.log('No fee type selection - showing all results');
+      }
+      
+      if (displayResults.length > 0) {
+        displayResults.forEach((result, idx) => {
+          // For Bridging, show product name; for BTL, show fee percentage
+          const optionLabel = isBridge && result.product_name 
+            ? `${result.product_name}` 
+            : result.fee_column 
+              ? `Fee ${result.fee_column}%` 
+              : `Option ${idx + 1}`;
+          
+          doc.fontSize(13).fillColor('#0176d3').text(`${optionLabel}`, { underline: false });
+          doc.fillColor('black');
+          doc.fontSize(10);
+          doc.moveDown(0.3);
+          
+          // Display key financial details
+          if (result.gross_loan) doc.text(`  Gross Loan: £${Number(result.gross_loan).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          if (result.net_loan) doc.text(`  Net Loan: £${Number(result.net_loan).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          if (result.ltv_percentage) doc.text(`  LTV: ${Number(result.ltv_percentage).toFixed(2)}%`);
+          if (result.net_ltv) doc.text(`  Net LTV: ${Number(result.net_ltv).toFixed(2)}%`);
+          if (result.initial_rate) doc.text(`  Initial Rate: ${Number(result.initial_rate).toFixed(2)}%`);
+          if (result.pay_rate) doc.text(`  Pay Rate: ${Number(result.pay_rate).toFixed(2)}%`);
+          if (result.icr) doc.text(`  ICR: ${Number(result.icr).toFixed(2)}%`);
+          if (result.monthly_interest_cost) doc.text(`  Monthly Interest: £${Number(result.monthly_interest_cost).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          if (result.product_name) doc.text(`  Product: ${result.product_name}`);
+          
+          doc.moveDown(0.8);
+        });
+      } else {
+        doc.fontSize(11).text('No matching results found for the selected fee type.');
+      }
+      
+      doc.moveDown(1);
+    }
+
     doc.moveDown(2);
 
     // Footer
