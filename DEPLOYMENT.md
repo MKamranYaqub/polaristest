@@ -11,24 +11,22 @@ All API calls now use the `VITE_API_URL` environment variable.
 
 ## Deployment Steps for Vercel
 
-### 1. Deploy Backend (if not already deployed)
-Your Express backend needs to be deployed separately. Options:
-- Deploy to Vercel as a separate project
-- Deploy to another hosting service (Heroku, Railway, Render, etc.)
+### 1. Backend on Render
+Your Express backend is deployed on Render. Get your Render backend URL (e.g., `https://your-app.onrender.com`)
 
 ### 2. Configure Frontend Environment Variables in Vercel
 
 Go to your Vercel project settings → Environment Variables and add:
 
 ```
-VITE_API_URL=https://your-backend-url.com
+VITE_API_URL=https://your-app.onrender.com
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 **Important**: 
-- `VITE_API_URL` should be your backend URL WITHOUT a trailing slash
-- Example: `https://polaris-backend.vercel.app` or `https://api.yourapp.com`
+- `VITE_API_URL` should be your Render backend URL WITHOUT a trailing slash
+- Example: `https://polaris-backend.onrender.com`
 - For local development, leave `VITE_API_URL` empty (it will use Vite's proxy)
 
 ### 3. Redeploy Frontend
@@ -65,3 +63,35 @@ After deployment:
 4. Try generating PDFs
 
 If you see CORS errors, you may need to configure CORS on your backend to allow requests from your Vercel domain.
+
+## Backend CORS Configuration (Render)
+
+Make sure your backend (on Render) has CORS configured to accept requests from your Vercel frontend domain. 
+
+In your `backend/server.js`, ensure you have:
+
+```javascript
+const cors = require('cors');
+
+const allowedOrigins = [
+  'http://localhost:3000', // Local development
+  'https://your-app.vercel.app', // Your Vercel domain
+  // Add any other domains you need
+];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true
+}));
+```
+
+After updating CORS settings, redeploy your backend on Render.
