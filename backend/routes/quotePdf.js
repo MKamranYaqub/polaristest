@@ -193,30 +193,36 @@ router.post('/:id', async (req, res) => {
     }
 
     // Rate Calculation Details for Selected Fee Ranges
-    if (quote.results && Array.isArray(quote.results) && quote.results.length > 0 && 
-        quote.quote_selected_fee_ranges && Array.isArray(quote.quote_selected_fee_ranges)) {
+    if (quote.results && Array.isArray(quote.results) && quote.results.length > 0) {
       
       console.log('Selected fee ranges:', quote.quote_selected_fee_ranges);
       console.log('Total results available:', quote.results.length);
+      console.log('Is Bridge:', isBridge);
       
       doc.fontSize(16).text('Rate Details', { underline: true });
       doc.moveDown(0.5);
       
-      // Filter results to only show selected fee ranges
-      const selectedResults = quote.results.filter(result => {
-        if (!result.fee_column) {
-          console.log('Skipping result with no fee_column');
-          return false;
-        }
-        const matches = quote.quote_selected_fee_ranges.some(selectedFee => {
-          // Match fee ranges like "2%", "2.00", "Fee: 2%", etc.
-          const feeValue = result.fee_column.toString();
-          const match = selectedFee.includes(feeValue) || selectedFee.includes(`${feeValue}%`);
-          console.log(`Comparing "${selectedFee}" with fee_column "${feeValue}": ${match}`);
-          return match;
+      // For Bridging quotes, show all results (Fusion, Variable Bridge, Fixed Bridge)
+      // For BTL quotes, filter by selected fee ranges
+      let selectedResults = quote.results;
+      
+      if (!isBridge && quote.quote_selected_fee_ranges && Array.isArray(quote.quote_selected_fee_ranges)) {
+        // BTL: Filter results to only show selected fee ranges
+        selectedResults = quote.results.filter(result => {
+          if (!result.fee_column) {
+            console.log('Skipping result with no fee_column');
+            return false;
+          }
+          const matches = quote.quote_selected_fee_ranges.some(selectedFee => {
+            // Match fee ranges like "2%", "2.00", "Fee: 2%", etc.
+            const feeValue = result.fee_column.toString();
+            const match = selectedFee.includes(feeValue) || selectedFee.includes(`${feeValue}%`);
+            console.log(`Comparing "${selectedFee}" with fee_column "${feeValue}": ${match}`);
+            return match;
+          });
+          return matches;
         });
-        return matches;
-      });
+      }
       
       console.log('Filtered results:', selectedResults.length);
       
@@ -224,13 +230,22 @@ router.post('/:id', async (req, res) => {
         selectedResults.forEach((result, idx) => {
           console.log(`Rendering result ${idx + 1}:`, {
             fee_column: result.fee_column,
+            product_name: result.product_name,
             gross_loan: result.gross_loan,
             net_loan: result.net_loan,
             ltv_percentage: result.ltv_percentage,
             initial_rate: result.initial_rate
           });
           
-          doc.fontSize(13).fillColor('#0176d3').text(`Option ${idx + 1}: Fee ${result.fee_column}%`, { underline: false });
+          // For Bridging, show product name (Fusion, Variable Bridge, Fixed Bridge)
+          // For BTL, show fee percentage
+          const optionLabel = isBridge && result.product_name 
+            ? `${result.product_name}` 
+            : result.fee_column 
+              ? `Fee ${result.fee_column}%` 
+              : `Option ${idx + 1}`;
+          
+          doc.fontSize(13).fillColor('#0176d3').text(`${optionLabel}`, { underline: false });
           doc.fillColor('black');
           doc.fontSize(10);
           doc.moveDown(0.3);
