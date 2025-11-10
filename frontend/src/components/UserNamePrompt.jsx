@@ -144,14 +144,6 @@ const UserNamePrompt = () => {
               {/* Buttons */}
               <div className="slds-grid slds-grid_align-spread">
                 <button
-                  type="button"
-                  className="slds-button slds-button_neutral"
-                  onClick={handleSkip}
-                  disabled={isSubmitting}
-                >
-                  Skip (Stay Anonymous)
-                </button>
-                <button
                   type="submit"
                   className="slds-button slds-button_brand"
                   disabled={isSubmitting}
