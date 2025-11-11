@@ -1151,6 +1151,72 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   return (
     <div className="calculator-container">
+      {/* Quote Reference Badge */}
+      {currentQuoteRef && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'flex-start', 
+          marginBottom: '1rem',
+          paddingTop: '0.5rem'
+        }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            background: '#0176d3',
+            padding: '0.75rem 1.25rem',
+            borderRadius: '0.25rem',
+            border: '1px solid #014486',
+            fontSize: '0.875rem',
+            boxShadow: '0 2px 4px rgba(1, 118, 211, 0.2)'
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <span style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '400', fontSize: '0.75rem' }}>Quote Reference</span>
+              <span style={{ 
+                color: 'white', 
+                fontWeight: '700',
+                fontFamily: 'monospace',
+                fontSize: '1rem',
+                letterSpacing: '0.5px'
+              }}>
+                {currentQuoteRef}
+              </span>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigator.clipboard.writeText(currentQuoteRef);
+              }}
+              style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '0.25rem',
+                cursor: 'pointer',
+                padding: '0.375rem 0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                color: 'white',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+              title="Copy to clipboard"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Top filters inline - no card */}
       <div className="top-filters">
         <div className="slds-form-element">
@@ -1205,11 +1271,6 @@ export default function BTLcalculator({ initialQuote = null }) {
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-          {currentQuoteRef && (
-            <div className="slds-badge" style={{ background: 'var(--token-layer-surface)', border: '1px solid var(--token-border-subtle)', color: 'var(--token-text-primary)', padding: '0.25rem 0.5rem' }}>
-              Ref: {currentQuoteRef}
-            </div>
-          )}
           {currentQuoteId && (
             <>
               <button 

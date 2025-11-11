@@ -42,13 +42,7 @@ export default function Calculator() {
         >
           Bridging Calculator
         </button>
-        <button
-          type="button"
-          className={`slds-button ${active === 'QUOTES' ? 'slds-button_brand' : 'slds-button_neutral'}`}
-          onClick={() => handleTabChange('QUOTES')}
-        >
-          Saved Quotes
-        </button>
+        
       </div>
 
       <div style={{ marginTop: '1rem' }}>

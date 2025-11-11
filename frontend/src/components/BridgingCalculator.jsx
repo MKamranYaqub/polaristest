@@ -37,6 +37,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
   // Loan details
   const [propertyValue, setPropertyValue] = useState('');
   const [grossLoan, setGrossLoan] = useState('');
+  const [firstChargeValue, setFirstChargeValue] = useState('');
   const [monthlyRent, setMonthlyRent] = useState('');
   const [topSlicing, setTopSlicing] = useState('');
   const [useSpecificNet, setUseSpecificNet] = useState('No');
@@ -77,6 +78,12 @@ export default function BridgingCalculator({ initialQuote = null }) {
   const [addFeesToggle, setAddFeesToggle] = useState(false);
   const [feeCalculationType, setFeeCalculationType] = useState('pound');
   const [additionalFeeAmount, setAdditionalFeeAmount] = useState('');
+  
+  // Multi-property details state
+  const [multiPropertyDetailsExpanded, setMultiPropertyDetailsExpanded] = useState(true);
+  const [multiPropertyRows, setMultiPropertyRows] = useState([
+    { id: Date.now(), property_address: '', property_type: 'Residential', property_value: '', charge_type: 'First charge', first_charge_amount: '', gross_loan: 0 }
+  ]);
   
   // Get broker routes and commission defaults from constants (supports runtime updates via Constants UI)
   const getBrokerRoutesAndDefaults = () => {
@@ -126,6 +133,129 @@ export default function BridgingCalculator({ initialQuote = null }) {
     const validated = validateBrokerCommission(value);
     setBrokerCommissionPercent(validated);
   };
+
+  // Multi-property helper functions
+  const calculateMultiPropertyGrossLoan = (propertyType, propertyValue, firstChargeAmount) => {
+    const pv = Number(propertyValue) || 0;
+    const fca = Number(firstChargeAmount) || 0;
+    const maxLtv = propertyType === 'Residential' ? 0.75 : 0.70; // 75% for Residential, 70% for Commercial/Semi-Commercial
+    const grossLoan = (pv * maxLtv) - fca;
+    return grossLoan > 0 ? grossLoan : 0;
+  };
+
+  const handleMultiPropertyRowChange = (id, field, value) => {
+    setMultiPropertyRows(prev => prev.map(row => {
+      if (row.id !== id) return row;
+      
+      // Parse numeric fields to remove formatting before storing
+      let processedValue = value;
+      if (field === 'property_value' || field === 'first_charge_amount') {
+        processedValue = parseNumber(value);
+        // Keep empty string if user cleared the field
+        if (!Number.isFinite(processedValue)) {
+          processedValue = '';
+        }
+      }
+      
+      const updated = { ...row, [field]: processedValue };
+      // Recalculate gross loan when property_type, property_value, or first_charge_amount changes
+      if (['property_type', 'property_value', 'first_charge_amount'].includes(field)) {
+        updated.gross_loan = calculateMultiPropertyGrossLoan(
+          updated.property_type,
+          updated.property_value,
+          updated.first_charge_amount
+        );
+      }
+      return updated;
+    }));
+  };
+
+  const addMultiPropertyRow = () => {
+    setMultiPropertyRows(prev => [
+      ...prev,
+      { id: Date.now(), property_address: '', property_type: 'Residential', property_value: '', charge_type: 'First charge', first_charge_amount: '', gross_loan: 0 }
+    ]);
+  };
+
+  const deleteMultiPropertyRow = (id) => {
+    if (multiPropertyRows.length <= 1) return; // Keep at least one row
+    setMultiPropertyRows(prev => prev.filter(row => row.id !== id));
+  };
+
+  // Calculate totals for multi-property
+  const multiPropertyTotals = useMemo(() => {
+    return multiPropertyRows.reduce((acc, row) => {
+      acc.property_value += Number(row.property_value) || 0;
+      acc.first_charge_amount += Number(row.first_charge_amount) || 0;
+      acc.gross_loan += Number(row.gross_loan) || 0;
+      return acc;
+    }, { property_value: 0, first_charge_amount: 0, gross_loan: 0 });
+  }, [multiPropertyRows]);
+
+  // Check if Multi-property is set to "Yes"
+  const isMultiProperty = useMemo(() => {
+    const multiPropAnswer = Object.entries(answers).find(([key]) => 
+      key.toLowerCase().includes('multi') && key.toLowerCase().includes('property')
+    );
+    if (!multiPropAnswer) return false;
+    const answer = multiPropAnswer[1];
+    return answer?.option_label?.toString().toLowerCase() === 'yes';
+  }, [answers]);
+
+  // Calculate available term range from bridge rates (exclude Fusion products)
+  const termRange = useMemo(() => {
+    console.log('=== TERM RANGE CALCULATION ===');
+    console.log('Total rates loaded:', rates?.length || 0);
+    
+    if (!rates || rates.length === 0) {
+      console.log('No rates loaded, using default fallback');
+      return { min: 3, max: 18 }; // Default fallback
+    }
+    
+    // Debug: Show first few rates with their set_key values
+    console.log('Sample rates (first 3):', rates.slice(0, 3).map(r => ({
+      set_key: r.set_key,
+      property: r.property,
+      product: r.product,
+      min_term: r.min_term,
+      max_term: r.max_term
+    })));
+    
+    // Filter for Bridge products only (exclude Fusion)
+    // Check both set_key and property fields for "bridge" or "bridging"
+    const bridgeRates = rates.filter(r => {
+      const setKey = (r.set_key || '').toLowerCase();
+      const property = (r.property || '').toLowerCase();
+      const isBridge = setKey.includes('bridge') || setKey.includes('bridging') || property.includes('bridge') || property.includes('bridging');
+      const isFusion = setKey.includes('fusion') || property.includes('fusion');
+      console.log(`Rate: set_key="${r.set_key}", property="${r.property}", isBridge=${isBridge}, isFusion=${isFusion}, include=${isBridge && !isFusion}`);
+      return isBridge && !isFusion;
+    });
+    
+    console.log('Bridge rates found (filtered):', bridgeRates.length);
+    console.log('Sample bridge rate:', bridgeRates[0]);
+    
+    if (bridgeRates.length === 0) {
+      console.log('No bridge rates found after filtering, using fallback');
+      return { min: 3, max: 18 }; // Fallback if no bridge rates found
+    }
+    
+    // Find the minimum min_term and maximum max_term across bridge rates
+    const minTerms = bridgeRates.map(r => r.min_term).filter(t => t != null && !isNaN(t));
+    const maxTerms = bridgeRates.map(r => r.max_term).filter(t => t != null && !isNaN(t));
+    
+    console.log('Min terms found:', minTerms.slice(0, 5), '(showing first 5)');
+    console.log('Max terms found:', maxTerms.slice(0, 10), '(showing first 10)');
+    console.log('Unique max terms:', [...new Set(maxTerms)].sort((a, b) => a - b));
+    
+    const minTerm = minTerms.length > 0 ? Math.min(...minTerms) : 3;
+    const maxTerm = maxTerms.length > 0 ? Math.max(...maxTerms) : 18;
+    
+    console.log('Term range calculated:', { min: minTerm, max: maxTerm });
+    console.log('=== END TERM RANGE CALCULATION ===');
+    
+    return { min: minTerm, max: maxTerm };
+  }, [rates]);
 
   
   // Notification state
@@ -195,6 +325,26 @@ export default function BridgingCalculator({ initialQuote = null }) {
       const exists = map[key].options.some(o => (o.id && o.id === row.id) || ((o.option_label || '').toString().trim().toLowerCase() === optLabel));
       if (!exists) map[key].options.push({ id: row.id, option_label: row.option_label, raw: row });
     });
+    
+    // Always include Charge Type question from any product scope if it exists
+    const chargeTypeRows = raw.filter(r => {
+      const key = r.question_key || r.question_label || '';
+      return /charge[-_ ]?type|chargetype/i.test(key);
+    });
+    if (chargeTypeRows.length > 0 && !map['chargeType'] && !map['Charge Type']) {
+      chargeTypeRows.forEach((row) => {
+        const key = row.question_key || row.question_label || 'chargeType';
+        if (!map[key]) map[key] = { label: row.question_label || key, options: [], infoTip: '', displayOrder: undefined };
+        if (!map[key].infoTip && (row.info_tip || row.helper)) map[key].infoTip = row.info_tip || row.helper || '';
+        if (map[key].displayOrder === undefined && (row.display_order !== undefined && row.display_order !== null)) {
+          const parsed = Number(row.display_order);
+          map[key].displayOrder = Number.isFinite(parsed) ? parsed : undefined;
+        }
+        const optLabel = (row.option_label || '').toString().trim().toLowerCase();
+        const exists = map[key].options.some(o => (o.id && o.id === row.id) || ((o.option_label || '').toString().trim().toLowerCase() === optLabel));
+        if (!exists) map[key].options.push({ id: row.id, option_label: row.option_label, raw: row });
+      });
+    }
 
     Object.keys(map).forEach(k => {
       map[k].options.sort((a, b) => (a.option_label || '').localeCompare(b.option_label || ''));
@@ -251,6 +401,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
       
       if (quote.property_value != null) setPropertyValue(formatCurrencyInput(quote.property_value));
       if (quote.gross_loan != null) setGrossLoan(formatCurrencyInput(quote.gross_loan));
+      if (quote.first_charge_value != null) setFirstChargeValue(formatCurrencyInput(quote.first_charge_value));
       if (quote.monthly_rent != null) setMonthlyRent(formatCurrencyInput(quote.monthly_rent));
       if (quote.top_slicing != null) setTopSlicing(String(quote.top_slicing));
       if (quote.use_specific_net_loan != null) setUseSpecificNet(quote.use_specific_net_loan ? 'Yes' : 'No');
@@ -269,6 +420,29 @@ export default function BridgingCalculator({ initialQuote = null }) {
       if (quote.broker_company_name) setBrokerCompanyName(quote.broker_company_name);
       if (quote.broker_route) setBrokerRoute(quote.broker_route);
       if (quote.broker_commission_percent != null) setBrokerCommissionPercent(quote.broker_commission_percent);
+      
+      // Load multi-property details if available
+      if (quote.id) {
+        supabase
+          .from('bridge_multi_property_details')
+          .select('*')
+          .eq('bridge_quote_id', quote.id)
+          .order('row_order', { ascending: true })
+          .then(({ data, error }) => {
+            if (!error && data && data.length > 0) {
+              const loadedRows = data.map(row => ({
+                id: row.id,
+                property_address: row.property_address || '',
+                property_type: row.property_type || 'Residential',
+                property_value: row.property_value || '',
+                charge_type: row.charge_type || 'First charge',
+                first_charge_amount: row.first_charge_amount || '',
+                gross_loan: row.gross_loan || 0
+              }));
+              setMultiPropertyRows(loadedRows);
+            }
+          });
+      }
       
       // Load calculated results if available (from bridge_quote_results table)
       if (quote.results && Array.isArray(quote.results) && quote.results.length > 0) {
@@ -356,8 +530,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
     const pv = parseNumber(propertyValue);
     if (!Number.isFinite(pv) || pv <= 0) return NaN;
     const loanAmount = parseNumber(specificNetLoan) || parseNumber(grossLoan);
+    const firstCharge = parseNumber(firstChargeValue) || 0;
     if (!Number.isFinite(loanAmount) || loanAmount <= 0) return NaN;
-    return (loanAmount / pv) * 100;
+    // LTV = (Gross Loan + First Charge Value) / Property Value × 100
+    return ((loanAmount + firstCharge) / pv) * 100;
   };
 
   const computeLoanSize = () => {
@@ -857,6 +1033,72 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   return (
     <div className="calculator-container">
+      {/* Quote Reference Badge */}
+      {currentQuoteRef && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'flex-start', 
+          marginBottom: '1rem',
+          paddingTop: '0.5rem'
+        }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            background: '#0176d3',
+            padding: '0.75rem 1.25rem',
+            borderRadius: '0.25rem',
+            border: '1px solid #014486',
+            fontSize: '0.875rem',
+            boxShadow: '0 2px 4px rgba(1, 118, 211, 0.2)'
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <span style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '400', fontSize: '0.75rem' }}>Quote Reference</span>
+              <span style={{ 
+                color: 'white', 
+                fontWeight: '700',
+                fontFamily: 'monospace',
+                fontSize: '1rem',
+                letterSpacing: '0.5px'
+              }}>
+                {currentQuoteRef}
+              </span>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigator.clipboard.writeText(currentQuoteRef);
+              }}
+              style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '0.25rem',
+                cursor: 'pointer',
+                padding: '0.375rem 0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                color: 'white',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+              title="Copy to clipboard"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+      
       <div className="top-filters">
         <div className="slds-form-element">
           <label className="slds-form-element__label">Product Type</label>
@@ -876,11 +1118,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-          {currentQuoteId && currentQuoteRef && (
-            <div className="slds-badge" style={{ background: 'var(--token-layer-surface)', border: '1px solid var(--token-border-subtle)', color: 'var(--token-text-primary)', padding: '0.25rem 0.5rem' }}>
-              Ref: {currentQuoteRef}
-            </div>
-          )}
           {currentQuoteId && (
             <>
               <button 
@@ -905,6 +1142,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
               productScope,
               propertyValue,
               grossLoan,
+              firstChargeValue,
               monthlyRent,
               topSlicing,
               useSpecificNet,
@@ -922,6 +1160,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
               brokerCompanyName: clientType === 'Broker' ? brokerCompanyName : null,
               brokerRoute: clientType === 'Broker' ? brokerRoute : null,
               brokerCommissionPercent: clientType === 'Broker' ? brokerCommissionPercent : null,
+              // Multi-property details
+              multiPropertyDetails: isMultiProperty ? multiPropertyRows : null,
               results: calculatedRates,
               selectedRate: (filteredRatesForDip && filteredRatesForDip.length > 0) 
                 ? filteredRatesForDip[0] 
@@ -930,7 +1170,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
             allColumnData={[]}
             bestSummary={null}
             existingQuote={initialQuote}
-            onSaved={(savedQuote) => {
+            onSaved={async (savedQuote) => {
               // Update currentQuoteId when quote is saved for the first time
               if (savedQuote && savedQuote.id && !currentQuoteId) {
                 setCurrentQuoteId(savedQuote.id);
@@ -938,6 +1178,36 @@ export default function BridgingCalculator({ initialQuote = null }) {
               if (savedQuote && savedQuote.reference_number) {
                 setCurrentQuoteRef(savedQuote.reference_number);
               }
+              
+              // Save multi-property details if Multi-property is Yes
+              if (savedQuote && savedQuote.id && isMultiProperty) {
+                try {
+                  // Delete existing rows for this quote
+                  await supabase
+                    .from('bridge_multi_property_details')
+                    .delete()
+                    .eq('bridge_quote_id', savedQuote.id);
+                  
+                  // Insert new rows
+                  const rowsToInsert = multiPropertyRows.map((row, index) => ({
+                    bridge_quote_id: savedQuote.id,
+                    property_address: row.property_address,
+                    property_type: row.property_type,
+                    property_value: Number(row.property_value) || 0,
+                    charge_type: row.charge_type,
+                    first_charge_amount: Number(row.first_charge_amount) || 0,
+                    gross_loan: Number(row.gross_loan) || 0,
+                    row_order: index
+                  }));
+                  
+                  await supabase
+                    .from('bridge_multi_property_details')
+                    .insert(rowsToInsert);
+                } catch (error) {
+                  console.error('Error saving multi-property details:', error);
+                }
+              }
+              
               // Update dipData if the saved quote has DIP information
               if (savedQuote && savedQuote.id) {
                 if (savedQuote.commercial_or_main_residence || savedQuote.dip_date || savedQuote.dip_expiry_date) {
@@ -1118,25 +1388,65 @@ export default function BridgingCalculator({ initialQuote = null }) {
                 return (opt.option_label || '').toString().trim() === (a.option_label || '').toString().trim();
               });
               const safeIndex = selectedIndex >= 0 ? selectedIndex : 0;
-              // detect if this question is a Sub-product selector so we can disable it for Second charge
+              
+              // Detect if this question is a Sub-product selector
               const isSubQuestion = /sub[-_ ]?product|subproduct|property type|property_type|product type/i.test(q.label || qk || '');
-              const disableForSecond = isSubQuestion && ((chargeType || '').toString().toLowerCase() === 'second');
+              const hideForSecond = isSubQuestion && ((chargeType || '').toString().toLowerCase() === 'second');
+              
+              // Detect if this question is a Charge type selector
+              const isChargeTypeQuestion = /charge[-_ ]?type|chargetype/i.test(q.label || qk || '');
+              const isNonResidential = productScope && productScope.toLowerCase() !== 'residential';
+              
+              if (isChargeTypeQuestion) {
+                console.log('Charge Type Question Found:', {
+                  label: q.label,
+                  key: qk,
+                  productScope,
+                  isNonResidential,
+                  shouldDisable: isNonResidential
+                });
+              }
+              
+              // Hide sub-product field if Second charge is selected
+              if (hideForSecond) return null;
+              
+              // For Charge type question: when product scope is not Residential (Commercial/Semi-Commercial)
+              // Default to "First Charge" and disable the field
+              let effectiveIndex = safeIndex;
+              let isDisabled = false;
+              if (isChargeTypeQuestion && isNonResidential) {
+                // Find the "First Charge" or "First charge" option index
+                const firstChargeIndex = q.options.findIndex(opt => 
+                  (opt.option_label || '').toString().toLowerCase().includes('first')
+                );
+                if (firstChargeIndex >= 0) {
+                  effectiveIndex = firstChargeIndex;
+                  // Auto-select First Charge if not already selected
+                  if (safeIndex !== firstChargeIndex) {
+                    handleAnswerChange(qk, firstChargeIndex);
+                  }
+                }
+                isDisabled = true;
+              }
+              
               return (
                 <div key={qk} className="slds-form-element">
                   <label className="slds-form-element__label">{q.label}</label>
                   <div className="slds-form-element__control">
                     <select
                       className="slds-select"
-                      value={safeIndex}
+                      value={effectiveIndex}
                       onChange={(e) => handleAnswerChange(qk, Number(e.target.value))}
-                      disabled={disableForSecond}
+                      disabled={isDisabled}
                     >
                       {q.options.map((opt, idx) => (
                         <option key={opt.id ?? `${qk}-${idx}`} value={idx}>{opt.option_label}</option>
                       ))}
                     </select>
-                    {disableForSecond && (
-                      <div className="helper-text" style={{ color: '#666' }}>Selection disabled for Second charge — only Second charge products will be shown.</div>
+                    {isDisabled && (
+                      <div className="helper-text" style={{ color: '#666', marginTop: '0.25rem' }}>
+                        Only First Charge is available for {productScope} properties
+                      </div>
                     )}
                     {/* Show loan/LTV limits for the selected sub-product (if available) */}
                     {isSubQuestion && (() => {
@@ -1176,6 +1486,165 @@ export default function BridgingCalculator({ initialQuote = null }) {
         </div>
       </section>
 
+      {/* Multi Property Details Section - Only shown when Multi-property = Yes */}
+      {isMultiProperty && (
+        <section className="collapsible-section">
+          <header className="collapsible-header" onClick={() => setMultiPropertyDetailsExpanded(!multiPropertyDetailsExpanded)}>
+            <h2 className="header-title">Multi Property Details</h2>
+            <svg 
+              className={`chevron-icon ${multiPropertyDetailsExpanded ? 'expanded' : ''}`} 
+              xmlns="http://www.w3.org/2000/svg" 
+              viewBox="0 0 24 24"
+            >
+              <path d="M7 10l5 5 5-5z"/>
+            </svg>
+          </header>
+          <div className={`collapsible-body ${!multiPropertyDetailsExpanded ? 'collapsed' : ''}`}>
+            <div style={{ overflowX: 'auto' }}>
+              <table className="slds-table slds-table_bordered slds-table_cell-buffer">
+                <thead>
+                  <tr className="slds-line-height_reset">
+                    <th scope="col" style={{ width: '25%' }}>
+                      <div className="slds-truncate" title="Property Address">Property Address</div>
+                    </th>
+                    <th scope="col" style={{ width: '12%' }}>
+                      <div className="slds-truncate" title="Property Type">Property Type</div>
+                    </th>
+                    <th scope="col" style={{ width: '13%' }}>
+                      <div className="slds-truncate" title="Property Value">Property Value (£)</div>
+                    </th>
+                    <th scope="col" style={{ width: '13%' }}>
+                      <div className="slds-truncate" title="Charge Type">Charge Type</div>
+                    </th>
+                    <th scope="col" style={{ width: '15%' }}>
+                      <div className="slds-truncate" title="First Charge Amount">First Charge Amount (£)</div>
+                    </th>
+                    <th scope="col" style={{ width: '13%' }}>
+                      <div className="slds-truncate" title="Gross Loan">Gross Loan (£)</div>
+                    </th>
+                    <th scope="col" style={{ width: '9%' }}>
+                      <div className="slds-truncate" title="Actions">Actions</div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {multiPropertyRows.map((row, index) => (
+                    <tr key={row.id}>
+                      <td>
+                        <input
+                          className="slds-input"
+                          type="text"
+                          value={row.property_address}
+                          onChange={(e) => handleMultiPropertyRowChange(row.id, 'property_address', e.target.value)}
+                          placeholder="Enter address"
+                        />
+                      </td>
+                      <td>
+                        <select
+                          className="slds-select"
+                          value={row.property_type}
+                          onChange={(e) => handleMultiPropertyRowChange(row.id, 'property_type', e.target.value)}
+                        >
+                          <option value="Residential">Residential</option>
+                          <option value="Commercial">Commercial</option>
+                          <option value="Semi-Commercial">Semi-Commercial</option>
+                        </select>
+                      </td>
+                      <td>
+                        <input
+                          className="slds-input"
+                          type="text"
+                          value={formatCurrencyInput(row.property_value)}
+                          onChange={(e) => handleMultiPropertyRowChange(row.id, 'property_value', e.target.value)}
+                          placeholder="£0"
+                        />
+                      </td>
+                      <td>
+                        <select
+                          className="slds-select"
+                          value={row.charge_type}
+                          onChange={(e) => handleMultiPropertyRowChange(row.id, 'charge_type', e.target.value)}
+                        >
+                          <option value="First charge">First charge</option>
+                          <option value="Second charge">Second charge</option>
+                        </select>
+                      </td>
+                      <td>
+                        <input
+                          className="slds-input"
+                          type="text"
+                          value={formatCurrencyInput(row.first_charge_amount)}
+                          onChange={(e) => handleMultiPropertyRowChange(row.id, 'first_charge_amount', e.target.value)}
+                          placeholder="£0"
+                          disabled={row.charge_type === 'First charge'}
+                        />
+                      </td>
+                      <td>
+                        <div style={{ padding: '0.5rem', fontWeight: '600', fontFamily: 'monospace' }}>
+                          £{Number(row.gross_loan).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                      </td>
+                      <td>
+                        <button
+                          className="slds-button slds-button_icon slds-button_icon-border-filled"
+                          onClick={() => deleteMultiPropertyRow(row.id)}
+                          disabled={multiPropertyRows.length <= 1}
+                          title="Delete row"
+                        >
+                          <svg className="slds-button__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {/* Totals Row */}
+                  <tr style={{ backgroundColor: '#f3f3f3', fontWeight: '700' }}>
+                    <td colSpan="2" style={{ textAlign: 'right', padding: '0.75rem' }}>
+                      <strong>Totals:</strong>
+                    </td>
+                    <td style={{ padding: '0.75rem', fontFamily: 'monospace' }}>
+                      £{multiPropertyTotals.property_value.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td></td>
+                    <td style={{ padding: '0.75rem', fontFamily: 'monospace' }}>
+                      £{multiPropertyTotals.first_charge_amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td style={{ padding: '0.75rem', fontFamily: 'monospace' }}>
+                      £{multiPropertyTotals.gross_loan.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <button
+                className="slds-button slds-button_neutral"
+                onClick={addMultiPropertyRow}
+              >
+                <svg className="slds-button__icon slds-button__icon_left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Property
+              </button>
+              <button
+                className="slds-button slds-button_brand"
+                onClick={() => setGrossLoan(formatCurrencyInput(multiPropertyTotals.gross_loan))}
+                title="Transfer total gross loan to main Loan Details section"
+              >
+                <svg className="slds-button__icon slds-button__icon_left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+                Use Total Gross Loan
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="collapsible-section">
         <header className="collapsible-header" onClick={() => setLoanDetailsExpanded(!loanDetailsExpanded)}>
           <h2 className="header-title">Loan details</h2>
@@ -1203,6 +1672,20 @@ export default function BridgingCalculator({ initialQuote = null }) {
               </div>
             </div>
 
+            {chargeType === 'Second' && (
+              <div className="slds-form-element" style={{ backgroundColor: '#fff4e5', padding: '0.75rem', borderRadius: '4px', border: '2px solid #fe9339' }}>
+                <label className="slds-form-element__label" style={{ fontWeight: '600' }}>
+                  First charge value
+                  <span style={{ fontSize: '0.8em', color: '#706e6b', marginLeft: '0.25rem' }}>
+                    (used for LTV calculation)
+                  </span>
+                </label>
+                <div className="slds-form-element__control">
+                  <input className="slds-input" value={firstChargeValue} onChange={(e) => setFirstChargeValue(formatCurrencyInput(e.target.value))} placeholder="£0" />
+                </div>
+              </div>
+            )}
+
             <div className="slds-form-element">
               <label className="slds-form-element__label">Monthly rent</label>
               <div className="slds-form-element__control">
@@ -1216,6 +1699,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
                 <input className="slds-input" value={topSlicing} onChange={(e) => setTopSlicing(e.target.value)} placeholder="e.g. 600" />
               </div>
             </div>
+
+            {/* Force new row by adding a full-width spacer */}
+            <div style={{ gridColumn: '1 / -1', height: '0' }}></div>
 
             <div className="slds-form-element">
               <label className="slds-form-element__label">Use specific net loan?</label>
@@ -1241,7 +1727,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
               <div className="slds-form-element__control">
                 <select className="slds-select" value={bridgingTerm} onChange={(e) => setBridgingTerm(e.target.value)}>
                   <option value="">Select months</option>
-                  {Array.from({ length: 16 }, (_, i) => i + 3).map((m) => (
+                  {Array.from({ length: termRange.max - termRange.min + 1 }, (_, i) => termRange.min + i).map((m) => (
                     <option key={m} value={String(m)}>{m} months</option>
                   ))}
                 </select>

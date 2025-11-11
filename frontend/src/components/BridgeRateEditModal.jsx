@@ -17,8 +17,6 @@ function BridgeRateEditModal({ rate, onSave, onCancel }) {
       ...formData,
       rate: formData.rate === '' || formData.rate === null ? null : parseFloat(formData.rate),
       product_fee: formData.product_fee === '' || formData.product_fee === null ? null : Number(formData.product_fee),
-      initial_term: formData.initial_term === '' || formData.initial_term === null ? null : Number(formData.initial_term),
-      full_term: formData.full_term === '' || formData.full_term === null ? null : Number(formData.full_term),
       min_term: formData.min_term === '' || formData.min_term === null ? null : Number(formData.min_term),
       max_term: formData.max_term === '' || formData.max_term === null ? null : Number(formData.max_term),
       min_rolled_months: formData.min_rolled_months === '' || formData.min_rolled_months === null ? null : Number(formData.min_rolled_months),

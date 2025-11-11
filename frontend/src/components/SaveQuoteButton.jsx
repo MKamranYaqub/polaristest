@@ -184,6 +184,7 @@ export default function SaveQuoteButton({
         quoteData.product_scope = calculationData.productScope || null;
         quoteData.property_value = parseNumeric(calculationData.propertyValue);
         quoteData.gross_loan = parseNumeric(calculationData.grossLoan);
+        quoteData.first_charge_value = parseNumeric(calculationData.firstChargeValue);
         quoteData.monthly_rent = parseNumeric(calculationData.monthlyRent);
         quoteData.top_slicing = parseNumeric(calculationData.topSlicing);
         quoteData.use_specific_net_loan = calculationData.useSpecificNet === 'Yes' || calculationData.useSpecificNet === true;
