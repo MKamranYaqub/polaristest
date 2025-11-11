@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SideNav, SideNavItems, SideNavLink, SideNavMenu, SideNavMenuItem } from '@carbon/react';
-import { useUser } from '../contexts/UserContext';
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/navigation.scss';
 
 function Navigation() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user, canAccessAdmin, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 900);
 
-  const isAdmin = user && user.name && user.name.toLowerCase() === 'admin';
+  // Check if user can access admin pages
+  const showAdminMenu = user && canAccessAdmin();
 
   const calculatorItems = [
     { label: 'BTL Calculator', path: '/calculator/btl' },
@@ -94,7 +95,7 @@ function Navigation() {
             Quotes
           </SideNavLink>
           
-          {isAdmin && (
+          {showAdminMenu && (
             <SideNavMenu 
               title="Admin"
               defaultExpanded={location.pathname.startsWith('/admin')}
@@ -115,6 +116,20 @@ function Navigation() {
                 </SideNavMenuItem>
               ))}
             </SideNavMenu>
+          )}
+
+          {user && (
+            <SideNavLink
+              onClick={() => {
+                logout();
+                navigate('/login');
+                if (!isDesktop) {
+                  setMobileOpen(false);
+                }
+              }}
+            >
+              Logout
+            </SideNavLink>
           )}
         </SideNavItems>
       </SideNav>

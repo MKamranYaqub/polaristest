@@ -13,20 +13,24 @@ import {
   QuotesErrorFallback 
 } from './components/ErrorFallbacks';
 import { UserProvider } from './contexts/UserContext';
+import { AuthProvider } from './contexts/AuthContext';
 import UserNamePrompt from './components/UserNamePrompt';
 import UserProfileButton from './components/UserProfileButton';
 import AdminPage from './pages/AdminPage';
 import ProtectedRoute from './pages/ProtectedRoute';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import './styles/index.scss';
 
 function App() {
   return (
     <Router>
       <Theme theme="g10">
-        <UserProvider>
-          <ErrorBoundary title="Application Error" message="The application encountered an unexpected error.">
-            <UserNamePrompt />
-            <div className="app-shell">
+        <AuthProvider>
+          <UserProvider>
+            <ErrorBoundary title="Application Error" message="The application encountered an unexpected error.">
+              <UserNamePrompt />
+              <div className="app-shell">
               <header className="app-header">
                 <h1 className="app-header__title">Project Polaris</h1>
                 <div style={{ marginLeft: 'auto', marginRight: '1rem' }}>
@@ -40,8 +44,12 @@ function App() {
                 
                 <Content className="app-content">
                 <Routes>
-                  {/* Calculator routes with specialized error handling */}
-                  <Route path="/calculator">
+                  {/* Public routes */}
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  
+                  {/* Protected calculator routes - require authentication */}
+                  <Route path="/calculator" element={<ProtectedRoute requiredAccessLevel={5} />}>
                     <Route 
                       path="btl" 
                       element={
@@ -64,18 +72,20 @@ function App() {
                     />
                   </Route>
                   
-                  {/* Quotes list with specialized error handling */}
-                  <Route 
-                    path="/quotes" 
-                    element={
-                      <ErrorBoundary fallback={QuotesErrorFallback}>
-                        <QuotesList />
-                      </ErrorBoundary>
-                    } 
-                  />
+                  {/* Protected quotes list - require authentication */}
+                  <Route path="/quotes" element={<ProtectedRoute requiredAccessLevel={5} />}>
+                    <Route 
+                      index
+                      element={
+                        <ErrorBoundary fallback={QuotesErrorFallback}>
+                          <QuotesList />
+                        </ErrorBoundary>
+                      } 
+                    />
+                  </Route>
                   
-                  {/* Admin section with protected route */}
-                  <Route path="/admin" element={<ProtectedRoute />}>
+                  {/* Admin section with protected route - requires access level 1-5 except 4 (Underwriter) */}
+                  <Route path="/admin" element={<ProtectedRoute requiredAccessLevel={5} />}>
                     <Route 
                       path="constants" 
                       element={
@@ -118,12 +128,11 @@ function App() {
                 </Routes>
               </Content>
             </div>
-          </div>
-        </ErrorBoundary>
-      </UserProvider>
+            </div>
+          </ErrorBoundary>
+        </UserProvider>
+        </AuthProvider>
       </Theme>
     </Router>
   );
-}
-
-export default App;
+}export default App;

@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useSupabase } from '../contexts/SupabaseContext';
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/Calculator.scss';
 import SaveQuoteButton from './SaveQuoteButton';
 import IssueDIPModal from './IssueDIPModal';
@@ -17,6 +19,15 @@ import {
 
 export default function BridgingCalculator({ initialQuote = null }) {
   const { supabase } = useSupabase();
+  const { canEditCalculators } = useAuth();
+  const location = useLocation();
+  const navQuote = location && location.state ? location.state.loadQuote : null;
+  const effectiveInitialQuote = initialQuote || navQuote;
+  
+  // Check if user has permission to edit calculator fields
+  // Access levels 1-3 can edit, level 4 (Underwriter) is read-only
+  const isReadOnly = !canEditCalculators();
+  
   const [allCriteria, setAllCriteria] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -63,7 +74,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
   // Quote Modal state
   const [quoteModalOpen, setQuoteModalOpen] = useState(false);
   const [quoteData, setQuoteData] = useState({});
-  const [currentQuoteRef, setCurrentQuoteRef] = useState(initialQuote?.reference_number || null);
+  const [currentQuoteRef, setCurrentQuoteRef] = useState(effectiveInitialQuote?.reference_number || null);
   // Client details
   const [clientType, setClientType] = useState('Direct'); // 'Direct' | 'Broker'
   const [clientFirstName, setClientFirstName] = useState('');
@@ -352,12 +363,12 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
     setQuestions(map);
     // reset answers ONLY if there's no initialQuote (i.e., new quote, not loading existing)
-    if (!initialQuote) {
+    if (!effectiveInitialQuote) {
       const starting = {};
       Object.keys(map).forEach(k => { starting[k] = map[k].options[0] || null; });
       setAnswers(starting);
     }
-  }, [allCriteria, productScope, initialQuote]);
+  }, [allCriteria, productScope, effectiveInitialQuote]);
 
   // Auto-select productScope intelligently after criteria load: prefer an explicit scope that mentions bridge/fusion
   useEffect(() => {
@@ -376,10 +387,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
   // If an initialQuote is provided, populate fields from the database structure
   useEffect(() => {
     try {
-      if (!initialQuote) return;
+      if (!effectiveInitialQuote) return;
       
       // New structure: data is directly on the quote object (no nested payload)
-      const quote = initialQuote;
+      const quote = effectiveInitialQuote;
       
       // Store quote ID and DIP data for Issue DIP modal
       if (quote.id) setCurrentQuoteId(quote.id);
@@ -509,7 +520,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
       // eslint-disable-next-line no-console
       console.debug('Bridging: failed to apply initial quote', e);
     }
-  }, [initialQuote]);
+  }, [effectiveInitialQuote]);
 
   const handleAnswerChange = (key, idx) => {
     setAnswers(prev => ({ ...prev, [key]: questions[key].options[idx] }));
@@ -1169,7 +1180,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
             }}
             allColumnData={[]}
             bestSummary={null}
-            existingQuote={initialQuote}
+            existingQuote={effectiveInitialQuote}
             onSaved={async (savedQuote) => {
               // Update currentQuoteId when quote is saved for the first time
               if (savedQuote && savedQuote.id && !currentQuoteId) {
@@ -1256,24 +1267,24 @@ export default function BridgingCalculator({ initialQuote = null }) {
             {clientType === 'Broker' && (
               <div className="slds-form-element">
                 <label className="slds-form-element__label">Company name</label>
-                <div className="slds-form-element__control"><input className="slds-input" value={brokerCompanyName} onChange={(e) => setBrokerCompanyName(e.target.value)} /></div>
+                <div className="slds-form-element__control"><input className="slds-input" value={brokerCompanyName} onChange={(e) => setBrokerCompanyName(e.target.value)} disabled={isReadOnly} /></div>
               </div>
             )}
             <div className="slds-form-element">
               <label className="slds-form-element__label">First name</label>
-              <div className="slds-form-element__control"><input className="slds-input" value={clientFirstName} onChange={(e) => setClientFirstName(e.target.value)} /></div>
+              <div className="slds-form-element__control"><input className="slds-input" value={clientFirstName} onChange={(e) => setClientFirstName(e.target.value)} disabled={isReadOnly} /></div>
             </div>
             <div className="slds-form-element">
               <label className="slds-form-element__label">Last name</label>
-              <div className="slds-form-element__control"><input className="slds-input" value={clientLastName} onChange={(e) => setClientLastName(e.target.value)} /></div>
+              <div className="slds-form-element__control"><input className="slds-input" value={clientLastName} onChange={(e) => setClientLastName(e.target.value)} disabled={isReadOnly} /></div>
             </div>
             <div className="slds-form-element">
               <label className="slds-form-element__label">Email</label>
-              <div className="slds-form-element__control"><input className="slds-input" type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} /></div>
+              <div className="slds-form-element__control"><input className="slds-input" type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} disabled={isReadOnly} /></div>
             </div>
             <div className="slds-form-element">
               <label className="slds-form-element__label">Contact number</label>
-              <div className="slds-form-element__control"><input className="slds-input" value={clientContact} onChange={(e) => setClientContact(e.target.value)} /></div>
+              <div className="slds-form-element__control"><input className="slds-input" value={clientContact} onChange={(e) => setClientContact(e.target.value)} disabled={isReadOnly} /></div>
             </div>
           </div>
           {clientType === 'Broker' && (
@@ -1281,7 +1292,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
               <div className="slds-form-element">
                 <label className="slds-form-element__label">Broker route</label>
                 <div className="slds-form-element__control">
-                  <select className="slds-select" value={brokerRoute} onChange={(e) => setBrokerRoute(e.target.value)}>
+                  <select className="slds-select" value={brokerRoute} onChange={(e) => setBrokerRoute(e.target.value)} disabled={isReadOnly}>
                     {Object.values(getBrokerRoutesAndDefaults().routes).map(opt => <option key={opt} value={opt}>{opt}</option>)}
                   </select>
                 </div>
@@ -1295,6 +1306,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
                     step="0.1"
                     value={brokerCommissionPercent} 
                     onChange={handleBrokerCommissionChange}
+                    disabled={isReadOnly}
                     title={`Allowed range: ${(getBrokerRoutesAndDefaults().defaults[brokerRoute] - getBrokerRoutesAndDefaults().tolerance).toFixed(1)}% to ${(getBrokerRoutesAndDefaults().defaults[brokerRoute] + getBrokerRoutesAndDefaults().tolerance).toFixed(1)}%`}
                   />
                 </div>
@@ -1661,27 +1673,25 @@ export default function BridgingCalculator({ initialQuote = null }) {
             <div className="slds-form-element">
               <label className="slds-form-element__label">Property Value</label>
               <div className="slds-form-element__control">
-                <input className="slds-input" value={propertyValue} onChange={(e) => setPropertyValue(formatCurrencyInput(e.target.value))} placeholder="£1,200,000" />
+                <input className="slds-input" value={propertyValue} onChange={(e) => setPropertyValue(formatCurrencyInput(e.target.value))} placeholder="£1,200,000" disabled={isReadOnly} />
               </div>
             </div>
 
             <div className="slds-form-element">
               <label className="slds-form-element__label">Gross loan</label>
               <div className="slds-form-element__control">
-                <input className="slds-input" value={grossLoan} onChange={(e) => setGrossLoan(formatCurrencyInput(e.target.value))} placeholder="£550,000" />
+                <input className="slds-input" value={grossLoan} onChange={(e) => setGrossLoan(formatCurrencyInput(e.target.value))} placeholder="£550,000" disabled={isReadOnly} />
               </div>
             </div>
 
             {chargeType === 'Second' && (
-              <div className="slds-form-element" style={{ backgroundColor: '#fff4e5', padding: '0.75rem', borderRadius: '4px', border: '2px solid #fe9339' }}>
-                <label className="slds-form-element__label" style={{ fontWeight: '600' }}>
+              <div className="slds-form-element first-charge-warning">
+                <label className="slds-form-element__label first-charge-label">
                   First charge value
-                  <span style={{ fontSize: '0.8em', color: '#706e6b', marginLeft: '0.25rem' }}>
-                    (used for LTV calculation)
-                  </span>
+                  <span className="first-charge-hint"></span>
                 </label>
                 <div className="slds-form-element__control">
-                  <input className="slds-input" value={firstChargeValue} onChange={(e) => setFirstChargeValue(formatCurrencyInput(e.target.value))} placeholder="£0" />
+                  <input className="slds-input first-charge-input" value={firstChargeValue} onChange={(e) => setFirstChargeValue(formatCurrencyInput(e.target.value))} placeholder="£0" disabled={isReadOnly} />
                 </div>
               </div>
             )}
@@ -1689,14 +1699,14 @@ export default function BridgingCalculator({ initialQuote = null }) {
             <div className="slds-form-element">
               <label className="slds-form-element__label">Monthly rent</label>
               <div className="slds-form-element__control">
-                <input className="slds-input" value={monthlyRent} onChange={(e) => setMonthlyRent(formatCurrencyInput(e.target.value))} placeholder="£3,000" />
+                <input className="slds-input" value={monthlyRent} onChange={(e) => setMonthlyRent(formatCurrencyInput(e.target.value))} placeholder="£3,000" disabled={isReadOnly} />
               </div>
             </div>
 
             <div className="slds-form-element">
               <label className="slds-form-element__label">Top slicing</label>
               <div className="slds-form-element__control">
-                <input className="slds-input" value={topSlicing} onChange={(e) => setTopSlicing(e.target.value)} placeholder="e.g. 600" />
+                <input className="slds-input" value={topSlicing} onChange={(e) => setTopSlicing(e.target.value)} placeholder="e.g. 600" disabled={isReadOnly} />
               </div>
             </div>
 
@@ -1706,7 +1716,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
             <div className="slds-form-element">
               <label className="slds-form-element__label">Use specific net loan?</label>
               <div className="slds-form-element__control">
-                <select className="slds-select" value={useSpecificNet} onChange={(e) => setUseSpecificNet(e.target.value)}>
+                <select className="slds-select" value={useSpecificNet} onChange={(e) => setUseSpecificNet(e.target.value)} disabled={isReadOnly}>
                   <option value="No">No</option>
                   <option value="Yes">Yes</option>
                 </select>
@@ -1717,7 +1727,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
               <div className="slds-form-element">
                 <label className="slds-form-element__label">Specific net loan</label>
                 <div className="slds-form-element__control">
-                  <input className="slds-input" value={specificNetLoan} onChange={(e) => setSpecificNetLoan(e.target.value)} placeholder="£" />
+                  <input className="slds-input" value={specificNetLoan} onChange={(e) => setSpecificNetLoan(e.target.value)} placeholder="£" disabled={isReadOnly} />
                 </div>
               </div>
             )}
@@ -1725,7 +1735,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
             <div className="slds-form-element">
               <label className="slds-form-element__label">Bridging loan term (months)</label>
               <div className="slds-form-element__control">
-                <select className="slds-select" value={bridgingTerm} onChange={(e) => setBridgingTerm(e.target.value)}>
+                <select className="slds-select" value={bridgingTerm} onChange={(e) => setBridgingTerm(e.target.value)} disabled={isReadOnly}>
                   <option value="">Select months</option>
                   {Array.from({ length: termRange.max - termRange.min + 1 }, (_, i) => termRange.min + i).map((m) => (
                     <option key={m} value={String(m)}>{m} months</option>

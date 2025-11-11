@@ -52,8 +52,16 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         onLoad(q);
         return;
       }
-      // Default behavior: navigate to /calculator and pass quote in state so the calculator auto-opens
-      navigate('/calculator', { state: { loadQuote: q } });
+      // Default behavior: navigate to the specific calculator route (BTL or Bridging)
+      // and pass the loaded quote in location state so the calculator auto-opens.
+      const type = (q.calculator_type || '').toString().toLowerCase();
+      let target = '/calculator/btl';
+      if (type.includes('bridg') || type.includes('bridge') || type.includes('bridging')) {
+        target = '/calculator/bridging';
+      } else if (type.includes('btl')) {
+        target = '/calculator/btl';
+      }
+      navigate(target, { state: { loadQuote: q } });
     } catch (e) {
       setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to load quote: ' + e.message });
     }

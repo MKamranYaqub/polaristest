@@ -25,7 +25,7 @@ const UserNamePrompt = () => {
     }
   }, [showNamePrompt]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -40,14 +40,20 @@ const UserNamePrompt = () => {
     }
 
     setIsSubmitting(true);
-
-    const result = saveUserProfile(name, email);
-    
-    if (!result.success) {
-      setError(result.error || 'Failed to save profile');
+    try {
+      // saveUserProfile is synchronous in the context, but wrap defensively
+      const result = await Promise.resolve(saveUserProfile(name, email));
+      if (!result || !result.success) {
+        setError((result && result.error) || 'Failed to save profile');
+      }
+      // On success the context hides the modal (setShowNamePrompt(false)).
+      // Still clear submitting state so the UI doesn't get stuck if the modal stays open unexpectedly.
+    } catch (err) {
+      console.error('UserNamePrompt: saveUserProfile threw', err);
+      setError(err?.message || 'Failed to save profile');
+    } finally {
       setIsSubmitting(false);
     }
-    // Success - modal will close automatically via context
   };
 
   const handleSkip = () => {
@@ -115,9 +121,7 @@ const UserNamePrompt = () => {
                     disabled={isSubmitting}
                   />
                 </div>
-                <div className="slds-form-element__help slds-text-body_small">
-                  Optional: for future notifications or export features
-                </div>
+                
               </div>
 
               {/* Error Message */}

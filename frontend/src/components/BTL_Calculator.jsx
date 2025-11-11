@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useSupabase } from '../contexts/SupabaseContext';
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/slds.css';
 import '../styles/Calculator.scss';
 import SaveQuoteButton from './SaveQuoteButton';
@@ -34,6 +36,15 @@ function computeTierFromAnswers(answers) {
 
 export default function BTLcalculator({ initialQuote = null }) {
   const { supabase } = useSupabase();
+  const { canEditCalculators } = useAuth();
+  const location = useLocation();
+  const navQuote = location && location.state ? location.state.loadQuote : null;
+  const effectiveInitialQuote = initialQuote || navQuote;
+  
+  // Check if user has permission to edit calculator fields
+  // Access levels 1-3 can edit, level 4 (Underwriter) is read-only
+  const isReadOnly = !canEditCalculators();
+  
   const [allCriteria, setAllCriteria] = useState([]);
   const [loading, setLoading] = useState(true);
   // This Calculator is restricted to BTL criteria only per user's request
@@ -118,8 +129,8 @@ export default function BTLcalculator({ initialQuote = null }) {
   };
   
   // Quote id/ref for UI
-  const [currentQuoteId, setCurrentQuoteId] = useState(initialQuote?.id || null);
-  const [currentQuoteRef, setCurrentQuoteRef] = useState(initialQuote?.reference_number || null);
+  const [currentQuoteId, setCurrentQuoteId] = useState(effectiveInitialQuote?.id || null);
+  const [currentQuoteRef, setCurrentQuoteRef] = useState(effectiveInitialQuote?.reference_number || null);
 
 
   // clear timers on unmount
@@ -241,8 +252,8 @@ export default function BTLcalculator({ initialQuote = null }) {
     });
 
   setQuestions(map);
-    // reset answers ONLY if there's no initialQuote (i.e., new quote, not loading existing)
-    if (!initialQuote) {
+  // reset answers ONLY if there's no initialQuote (i.e., new quote, not loading existing)
+  if (!effectiveInitialQuote) {
       const starting = {};
       Object.keys(map).forEach((k) => {
         // default to first option
@@ -250,7 +261,7 @@ export default function BTLcalculator({ initialQuote = null }) {
       });
       setAnswers(starting);
     }
-  }, [allCriteria, productScope, initialQuote]);
+  }, [allCriteria, productScope, effectiveInitialQuote]);
 
   // Auto-select a product scope when data loads if none selected
   useEffect(() => {
@@ -279,10 +290,10 @@ export default function BTLcalculator({ initialQuote = null }) {
   // If an initialQuote is provided, populate fields from the database structure
   useEffect(() => {
     try {
-      if (!initialQuote) return;
+      if (!effectiveInitialQuote) return;
       
       // New structure: data is directly on the quote object (no nested payload)
-      const quote = initialQuote;
+      const quote = effectiveInitialQuote;
       
       // Store quote ID and DIP data for Issue DIP modal
       if (quote.id) setCurrentQuoteId(quote.id);
@@ -389,7 +400,7 @@ export default function BTLcalculator({ initialQuote = null }) {
       // eslint-disable-next-line no-console
       console.debug('BTL: failed to apply initial quote', e);
     }
-  }, [initialQuote]);
+  }, [effectiveInitialQuote]);
 
   // Ensure productType defaults to the first product for the selected productScope
   useEffect(() => {
@@ -1229,7 +1240,7 @@ export default function BTLcalculator({ initialQuote = null }) {
         <div className="slds-form-element">
           <label className="slds-form-element__label">Product Scope</label>
           <div className="slds-form-element__control">
-            <select className="slds-select" value={productScope} onChange={(e) => setProductScope(e.target.value)}>
+            <select className="slds-select" value={productScope} onChange={(e) => setProductScope(e.target.value)} disabled={isReadOnly}>
               {productScopes.map((ps) => (
                 <option key={ps} value={ps}>{ps}</option>
               ))}
@@ -1240,7 +1251,7 @@ export default function BTLcalculator({ initialQuote = null }) {
         <div className="slds-form-element">
           <label className="slds-form-element__label">Retention?</label>
           <div className="slds-form-element__control">
-            <select className="slds-select" value={retentionChoice} onChange={(e) => setRetentionChoice(e.target.value)}>
+            <select className="slds-select" value={retentionChoice} onChange={(e) => setRetentionChoice(e.target.value)} disabled={isReadOnly}>
              <option value="No">No</option>
               <option value="Yes">Yes</option>
               
@@ -1252,7 +1263,7 @@ export default function BTLcalculator({ initialQuote = null }) {
           <div className="slds-form-element">
             <label className="slds-form-element__label">Retention LTV</label>
             <div className="slds-form-element__control">
-              <select className="slds-select" value={retentionLtv} onChange={(e) => setRetentionLtv(e.target.value)}>
+              <select className="slds-select" value={retentionLtv} onChange={(e) => setRetentionLtv(e.target.value)} disabled={isReadOnly}>
                 <option value="65">65%</option>
                 <option value="75">75%</option>
               </select>
@@ -1265,10 +1276,7 @@ export default function BTLcalculator({ initialQuote = null }) {
           <strong className="tier-value">Tier {currentTier}</strong>
         </div>
 
-        <div className="tier-display" style={{ backgroundColor: '#e3f3ff', border: '1px solid #0176d3' }}>
-          <span className="tier-label">Max LTV available:</span>
-          <strong className="tier-value" style={{ color: '#0176d3' }}>{dynamicMaxLtv}%</strong>
-        </div>
+        
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           {currentQuoteId && (
@@ -1325,7 +1333,7 @@ export default function BTLcalculator({ initialQuote = null }) {
             }}
             allColumnData={[]}
             bestSummary={null}
-            existingQuote={initialQuote}
+            existingQuote={effectiveInitialQuote}
             showProductRangeSelection={hasBothRanges()}
             onSaved={(savedQuote) => {
               // Update currentQuoteId when quote is saved for the first time
@@ -1383,24 +1391,24 @@ export default function BTLcalculator({ initialQuote = null }) {
             {clientType === 'Broker' && (
               <div className="slds-form-element">
                 <label className="slds-form-element__label">Company name</label>
-                <div className="slds-form-element__control"><input className="slds-input" value={brokerCompanyName} onChange={(e) => setBrokerCompanyName(e.target.value)} /></div>
+                <div className="slds-form-element__control"><input className="slds-input" value={brokerCompanyName} onChange={(e) => setBrokerCompanyName(e.target.value)} disabled={isReadOnly} /></div>
               </div>
             )}
             <div className="slds-form-element">
               <label className="slds-form-element__label">First name</label>
-              <div className="slds-form-element__control"><input className="slds-input" value={clientFirstName} onChange={(e) => setClientFirstName(e.target.value)} /></div>
+              <div className="slds-form-element__control"><input className="slds-input" value={clientFirstName} onChange={(e) => setClientFirstName(e.target.value)} disabled={isReadOnly} /></div>
             </div>
             <div className="slds-form-element">
               <label className="slds-form-element__label">Last name</label>
-              <div className="slds-form-element__control"><input className="slds-input" value={clientLastName} onChange={(e) => setClientLastName(e.target.value)} /></div>
+              <div className="slds-form-element__control"><input className="slds-input" value={clientLastName} onChange={(e) => setClientLastName(e.target.value)} disabled={isReadOnly} /></div>
             </div>
             <div className="slds-form-element">
               <label className="slds-form-element__label">Email</label>
-              <div className="slds-form-element__control"><input className="slds-input" type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} /></div>
+              <div className="slds-form-element__control"><input className="slds-input" type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} disabled={isReadOnly} /></div>
             </div>
             <div className="slds-form-element">
               <label className="slds-form-element__label">Contact number</label>
-              <div className="slds-form-element__control"><input className="slds-input" value={clientContact} onChange={(e) => setClientContact(e.target.value)} /></div>
+              <div className="slds-form-element__control"><input className="slds-input" value={clientContact} onChange={(e) => setClientContact(e.target.value)} disabled={isReadOnly} /></div>
             </div>
           </div>
           {clientType === 'Broker' && (
@@ -1408,7 +1416,7 @@ export default function BTLcalculator({ initialQuote = null }) {
               <div className="slds-form-element">
                 <label className="slds-form-element__label">Broker route</label>
                 <div className="slds-form-element__control">
-                  <select className="slds-select" value={brokerRoute} onChange={(e) => setBrokerRoute(e.target.value)}>
+                  <select className="slds-select" value={brokerRoute} onChange={(e) => setBrokerRoute(e.target.value)} disabled={isReadOnly}>
                     {Object.values(getBrokerRoutesAndDefaults().routes).map(opt => <option key={opt} value={opt}>{opt}</option>)}
                   </select>
                 </div>
@@ -1422,6 +1430,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                     step="0.1"
                     value={brokerCommissionPercent} 
                     onChange={handleBrokerCommissionChange}
+                    disabled={isReadOnly}
                     title={`Allowed range: ${(getBrokerRoutesAndDefaults().defaults[brokerRoute] - getBrokerRoutesAndDefaults().tolerance).toFixed(1)}% to ${(getBrokerRoutesAndDefaults().defaults[brokerRoute] + getBrokerRoutesAndDefaults().tolerance).toFixed(1)}%`}
                   />
                 </div>
@@ -1622,7 +1631,8 @@ export default function BTLcalculator({ initialQuote = null }) {
                   className="slds-input" 
                   value={propertyValue} 
                   onChange={(e) => setPropertyValue(formatCurrencyInput(e.target.value))} 
-                  placeholder="£1,200,000" 
+                  placeholder="£1,200,000"
+                  disabled={isReadOnly}
                 />
                 <div className="helper-text">Subject to valuation</div>
               </div>
@@ -1637,7 +1647,8 @@ export default function BTLcalculator({ initialQuote = null }) {
                   className="slds-input" 
                   value={monthlyRent} 
                   onChange={(e) => setMonthlyRent(formatCurrencyInput(e.target.value))} 
-                  placeholder="£3,000" 
+                  placeholder="£3,000"
+                  disabled={isReadOnly}
                 />
               </div>
             </div>
@@ -1649,7 +1660,8 @@ export default function BTLcalculator({ initialQuote = null }) {
                   className="slds-input" 
                   value={topSlicing} 
                   onChange={(e) => setTopSlicing(e.target.value)} 
-                  placeholder="e.g. 600" 
+                  placeholder="e.g. 600"
+                  disabled={isReadOnly}
                 />
               </div>
             </div>
@@ -1663,6 +1675,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                   className="slds-select" 
                   value={loanType} 
                   onChange={(e) => setLoanType(e.target.value)}
+                  disabled={isReadOnly}
                 >
                   <option value="Max gross loan">Max Gross Loan</option>
                   <option value="Net loan required">Net loan required</option>
@@ -1692,7 +1705,8 @@ export default function BTLcalculator({ initialQuote = null }) {
                     className="slds-input" 
                     value={specificNetLoan} 
                     onChange={(e) => setSpecificNetLoan(formatCurrencyInput(e.target.value))} 
-                    placeholder="£425,000" 
+                    placeholder="£425,000"
+                    disabled={isReadOnly}
                   />
                   <div className="helper-text">Maximum GLA £9,000,000</div>
                 </div>
@@ -1711,6 +1725,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                     max={ltvMax}
                     value={maxLtvInput}
                     onChange={(e) => setMaxLtvInput(Number(e.target.value))}
+                    disabled={isReadOnly}
                     aria-valuemin={ltvMin}
                     aria-valuemax={ltvMax}
                     aria-valuenow={maxLtvInput}
@@ -1734,7 +1749,8 @@ export default function BTLcalculator({ initialQuote = null }) {
                     className="slds-input" 
                     value={specificGrossLoan} 
                     onChange={(e) => setSpecificGrossLoan(formatCurrencyInput(e.target.value))} 
-                    placeholder="£550,000" 
+                    placeholder="£550,000"
+                    disabled={isReadOnly}
                   />
                   <div className="helper-text">Enter desired gross loan amount</div>
                 </div>

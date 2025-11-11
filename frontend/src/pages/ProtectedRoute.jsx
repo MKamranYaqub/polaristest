@@ -1,20 +1,45 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useUser } from '../contexts/UserContext';
+import { useAuth } from '../contexts/AuthContext';
 
-const ProtectedRoute = () => {
-  const { user } = useUser();
+const ProtectedRoute = ({ requiredAccessLevel = 5 }) => {
+  const { user, loading, hasPermission } = useAuth();
 
-  // For this implementation, we'll consider a user an admin if their name is 'admin'
-  // In a real application, this would be a proper role check from a database.
-  const isAdmin = user && user.name && user.name.toLowerCase() === 'admin';
-
-  if (!isAdmin) {
-    // If user is not an admin, redirect to the home page
-    return <Navigate to="/" replace />;
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="slds-p-around_large" style={{ textAlign: 'center' }}>
+        <div className="slds-spinner_container">
+          <div role="status" className="slds-spinner slds-spinner_medium">
+            <span className="slds-assistive-text">Loading...</span>
+            <div className="slds-spinner__dot-a"></div>
+            <div className="slds-spinner__dot-b"></div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  // If user is an admin, render the child routes
+  // Redirect to login if not authenticated
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Check if user has required access level
+  if (!hasPermission(requiredAccessLevel)) {
+    // User is authenticated but doesn't have sufficient permissions
+    return (
+      <div className="slds-p-around_large">
+        <div className="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
+          <span className="slds-assistive-text">Error</span>
+          <h2>Access Denied</h2>
+          <p>You do not have permission to access this page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // User is authenticated and has sufficient permissions
   return <Outlet />;
 };
 

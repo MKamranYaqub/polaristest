@@ -6,6 +6,7 @@ import quotesRouter from './routes/quotes.js';
 import dipPdfRouter from './routes/dipPdf.js';
 import quotePdfRouter from './routes/quotePdf.js';
 import exportRouter from './routes/export.js';
+import authRouter from './routes/auth.js';
 // Rate limiting middleware
 import { apiLimiter, exportLimiter, pdfLimiter } from './middleware/rateLimiter.js';
 
@@ -18,6 +19,7 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 const allowedOrigins = [
   'http://localhost:3000', // Local dev
+  'http://localhost:3001', // Frontend running on alternate port
 ];
 if (process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL);
@@ -82,6 +84,9 @@ app.get('/api/rates', async (req, res) => {
 
 // Quotes endpoints (CRUD)
 app.use('/api/quotes', quotesRouter);
+
+// Auth endpoints (register, login, etc.)
+app.use('/api/auth', authRouter);
 
 // DIP PDF generation endpoint
 app.use('/api/dip/pdf', pdfLimiter);
