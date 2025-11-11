@@ -17,6 +17,9 @@ import { AuthProvider } from './contexts/AuthContext';
 import UserNamePrompt from './components/UserNamePrompt';
 import UserProfileButton from './components/UserProfileButton';
 import AdminPage from './pages/AdminPage';
+import UsersPage from './pages/UsersPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProtectedRoute from './pages/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -47,6 +50,8 @@ function App() {
                   {/* Public routes */}
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
                   
                   {/* Protected calculator routes - require authentication */}
                   <Route path="/calculator" element={<ProtectedRoute requiredAccessLevel={5} />}>
@@ -121,6 +126,18 @@ function App() {
                     <Route 
                       index 
                       element={<Navigate to="/admin/constants" replace />} 
+                    />
+                  </Route>
+                  
+                  {/* User management - Admin only (access level 1) */}
+                  <Route path="/admin/users" element={<ProtectedRoute requiredAccessLevel={1} />}>
+                    <Route 
+                      index
+                      element={
+                        <ErrorBoundary>
+                          <UsersPage />
+                        </ErrorBoundary>
+                      } 
                     />
                   </Route>
                   

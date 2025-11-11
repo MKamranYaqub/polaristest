@@ -1,65 +1,101 @@
 import React, { useState } from 'react';
-import { useUser } from '../contexts/UserContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import ModalShell from './ModalShell';
 import '../styles/Modal.css';
 
 /**
- * UserProfileButton - Shows current user and allows profile editing
+ * UserProfileButton - Shows current user from authentication
  * 
  * Features:
- * - Displays user initials/avatar
- * - Dropdown menu with profile info
- * - Edit profile modal
- * - Clear profile option
+ * - Displays user initials/avatar from logged-in user
+ * - Dropdown menu with profile info and access level
+ * - Change password option
+ * - Logout option
  */
 const UserProfileButton = () => {
-  const { user, getUserName, getUserInitials, updateUserProfile, clearUserProfile } = useUser();
+  const { user, logout, changePassword } = useAuth();
+  const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showClearModal, setShowClearModal] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editEmail, setEditEmail] = useState('');
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   if (!user) return null;
 
-  const handleEditClick = () => {
-    setEditName(user.name || '');
-    setEditEmail(user.email || '');
-    setError('');
-    setShowMenu(false);
-    setShowEditModal(true);
+  // Helper functions
+  const getUserName = () => user?.name || 'Unknown User';
+  
+  const getUserInitials = () => {
+    if (!user?.name) return 'U';
+    
+    const parts = user.name.trim().split(' ');
+    if (parts.length === 1) {
+      return parts[0].substring(0, 2).toUpperCase();
+    }
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
-  const handleSaveEdit = (e) => {
+  const getAccessLevelLabel = () => {
+    const levels = {
+      1: 'Admin',
+      2: 'UW Team Lead',
+      3: 'Head of UW',
+      4: 'Underwriter',
+      5: 'Product Team'
+    };
+    return levels[user?.access_level] || 'Unknown';
+  };
+
+  const handlePasswordClick = () => {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setError('');
+    setSuccess('');
+    setShowMenu(false);
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordChange = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
-    if (!editName.trim()) {
-      setError('Name cannot be empty');
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setError('All fields are required');
       return;
     }
 
-    const result = updateUserProfile({
-      name: editName.trim(),
-      email: editEmail.trim()
-    });
+    if (newPassword.length < 6) {
+      setError('New password must be at least 6 characters');
+      return;
+    }
 
+    if (newPassword !== confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+
+    const result = await changePassword(currentPassword, newPassword);
+    
     if (result.success) {
-      setShowEditModal(false);
+      setSuccess('Password changed successfully');
+      setTimeout(() => {
+        setShowPasswordModal(false);
+      }, 1500);
     } else {
-      setError(result.error || 'Failed to update profile');
+      setError(result.error || 'Failed to change password');
     }
   };
 
-  const handleClearProfile = () => {
+  const handleLogout = () => {
     setShowMenu(false);
-    setShowClearModal(true);
-  };
-
-  const confirmClearProfile = () => {
-    clearUserProfile();
-    setShowClearModal(false);
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -118,11 +154,13 @@ const UserProfileButton = () => {
                   {user.name}
                 </div>
                 {user.email && (
-                  <div className="slds-text-body_small" style={{ color: '#706e6b' }}>
+                  <div className="slds-text-body_small slds-m-bottom_xx-small" style={{ color: '#706e6b' }}>
                     {user.email}
                   </div>
                 )}
-                
+                <div className="slds-text-body_small" style={{ color: '#706e6b', fontSize: '12px' }}>
+                  {getAccessLevelLabel()}
+                </div>
               </div>
 
               {/* Menu Items */}
@@ -132,7 +170,7 @@ const UserProfileButton = () => {
                     href="#"
                     className="slds-dropdown__item-link"
                     role="menuitem"
-                    onClick={(e) => { e.preventDefault(); handleEditClick(); }}
+                    onClick={(e) => { e.preventDefault(); handlePasswordClick(); }}
                     style={{ 
                       display: 'flex',
                       alignItems: 'center',
@@ -142,8 +180,8 @@ const UserProfileButton = () => {
                       cursor: 'pointer'
                     }}
                   >
-                    <span style={{ marginRight: '0.5rem', fontSize: '16px' }}>✏️</span>
-                    <span>Edit Profile</span>
+                    <span style={{ marginRight: '0.5rem', fontSize: '16px' }}>🔑</span>
+                    <span>Change Password</span>
                   </a>
                 </li>
                 <li className="slds-dropdown__item" role="presentation" style={{ listStyle: 'none' }}>
@@ -151,7 +189,7 @@ const UserProfileButton = () => {
                     href="#"
                     className="slds-dropdown__item-link"
                     role="menuitem"
-                    onClick={(e) => { e.preventDefault(); handleClearProfile(); }}
+                    onClick={(e) => { e.preventDefault(); handleLogout(); }}
                     style={{ 
                       display: 'flex',
                       alignItems: 'center',
@@ -161,8 +199,8 @@ const UserProfileButton = () => {
                       cursor: 'pointer'
                     }}
                   >
-                    <span style={{ marginRight: '0.5rem', fontSize: '16px' }}>🗑️</span>
-                    <span>Clear Profile</span>
+                    <span style={{ marginRight: '0.5rem', fontSize: '16px' }}>�</span>
+                    <span>Logout</span>
                   </a>
                 </li>
               </ul>
@@ -171,52 +209,71 @@ const UserProfileButton = () => {
         )}
       </div>
 
-      {/* Edit Profile Modal */}
-      {showEditModal && (
+      {/* Change Password Modal */}
+      {showPasswordModal && (
         <div className="modal-backdrop">
           <div className="slds-modal slds-fade-in-open" role="dialog">
             <div className="slds-modal__container" style={{ maxWidth: '500px' }}>
               <header className="slds-modal__header">
                 <button
                   className="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
-                  onClick={() => setShowEditModal(false)}
+                  onClick={() => setShowPasswordModal(false)}
                 >
                   <span className="slds-assistive-text">Close</span>
                   ×
                 </button>
-                <h2 className="slds-text-heading_medium">Edit Profile</h2>
+                <h2 className="slds-text-heading_medium">Change Password</h2>
               </header>
 
               <div className="slds-modal__content slds-p-around_medium">
-                <form onSubmit={handleSaveEdit}>
+                <form onSubmit={handlePasswordChange}>
                   <div className="slds-form-element slds-m-bottom_medium">
-                    <label className="slds-form-element__label" htmlFor="editName">
+                    <label className="slds-form-element__label" htmlFor="currentPassword">
                       <abbr className="slds-required" title="required">* </abbr>
-                      Name
+                      Current Password
                     </label>
                     <div className="slds-form-element__control">
                       <input
-                        type="text"
-                        id="editName"
+                        type="password"
+                        id="currentPassword"
                         className="slds-input"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
                         required
                       />
                     </div>
                   </div>
 
                   <div className="slds-form-element slds-m-bottom_medium">
-                    <label className="slds-form-element__label" htmlFor="editEmail">
-                      Email (Optional)
+                    <label className="slds-form-element__label" htmlFor="newPassword">
+                      <abbr className="slds-required" title="required">* </abbr>
+                      New Password
                     </label>
                     <div className="slds-form-element__control">
                       <input
-                        type="email"
-                        id="editEmail"
+                        type="password"
+                        id="newPassword"
                         className="slds-input"
-                        value={editEmail}
-                        onChange={(e) => setEditEmail(e.target.value)}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="slds-form-element slds-m-bottom_medium">
+                    <label className="slds-form-element__label" htmlFor="confirmPassword">
+                      <abbr className="slds-required" title="required">* </abbr>
+                      Confirm New Password
+                    </label>
+                    <div className="slds-form-element__control">
+                      <input
+                        type="password"
+                        id="confirmPassword"
+                        className="slds-input"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
                       />
                     </div>
                   </div>
@@ -227,14 +284,20 @@ const UserProfileButton = () => {
                     </div>
                   )}
 
+                  {success && (
+                    <div className="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_success slds-m-bottom_medium">
+                      {success}
+                    </div>
+                  )}
+
                   <div className="slds-m-top_medium">
                     <button type="submit" className="slds-button slds-button_brand slds-m-right_small">
-                      Save Changes
+                      Change Password
                     </button>
                     <button
                       type="button"
                       className="slds-button slds-button_neutral"
-                      onClick={() => setShowEditModal(false)}
+                      onClick={() => setShowPasswordModal(false)}
                     >
                       Cancel
                     </button>
@@ -245,34 +308,6 @@ const UserProfileButton = () => {
           </div>
         </div>
       )}
-
-      {/* Clear Profile Confirmation Modal */}
-      <ModalShell
-        isOpen={showClearModal}
-        onClose={() => setShowClearModal(false)}
-        title="Clear Profile"
-        maxWidth="500px"
-        footer={(
-          <>
-            <button
-              className="slds-button slds-button_neutral"
-              onClick={() => setShowClearModal(false)}
-            >
-              Cancel
-            </button>
-            <button
-              className="slds-button slds-button_destructive"
-              onClick={confirmClearProfile}
-            >
-              Clear Profile
-            </button>
-          </>
-        )}
-      >
-        <p style={{ fontSize: '14px', lineHeight: '1.5', color: '#3e3e3c' }}>
-          Are you sure you want to clear your profile? You will be asked to enter your name again.
-        </p>
-      </ModalShell>
     </>
   );
 };

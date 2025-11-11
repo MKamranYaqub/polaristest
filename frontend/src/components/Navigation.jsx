@@ -7,12 +7,15 @@ import '../styles/navigation.scss';
 function Navigation() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, canAccessAdmin, logout } = useAuth();
+  const { user, canAccessAdmin, isAdmin, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 900);
 
   // Check if user can access admin pages
   const showAdminMenu = user && canAccessAdmin();
+  
+  // Only admins (level 1) can access user management
+  const showUserManagement = user && isAdmin();
 
   const calculatorItems = [
     { label: 'BTL Calculator', path: '/calculator/btl' },
@@ -23,7 +26,8 @@ function Navigation() {
     { label: 'Constants', path: '/admin/constants' },
     { label: 'BTL Criteria', path: '/admin/criteria' },
     { label: 'BTL Rates', path: '/admin/btl-rates' },
-    { label: 'Bridging Rates', path: '/admin/bridging-rates' }
+    { label: 'Bridging Rates', path: '/admin/bridging-rates' },
+    ...(showUserManagement ? [{ label: 'Users', path: '/admin/users' }] : [])
   ];
 
   useEffect(() => {

@@ -95,6 +95,16 @@ export default function LoginPage() {
               {loading ? 'Logging in...' : 'Login'}
             </button>
           </div>
+
+          <div className="slds-m-top_small" style={{ textAlign: 'center' }}>
+            <Link 
+              to="/forgot-password" 
+              className="slds-text-link"
+              style={{ fontSize: '14px' }}
+            >
+              Forgot your password?
+            </Link>
+          </div>
         </form>
 
         <div className="slds-m-top_medium" style={{ textAlign: 'center', borderTop: '1px solid #dddbda', paddingTop: '1rem' }}>
