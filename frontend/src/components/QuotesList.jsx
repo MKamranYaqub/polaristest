@@ -10,7 +10,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [exporting, setExporting] = useState(false);
-  const rowsPerPage = 20;
+  const rowsPerPage = 10;
 
   // Filter states
   const [filterName, setFilterName] = useState('');
