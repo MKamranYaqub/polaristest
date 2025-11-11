@@ -22,14 +22,14 @@
 
 .pagination button {
   padding: 8px 16px;
-  border: 1px solid #ddd;
-  background-color: white;
+  border: 1px solid var(--token-border-subtle, #ddd);
+  background-color: var(--token-layer-surface, white);
   cursor: pointer;
   border-radius: 4px;
 }
 
 .pagination button:disabled {
-  background-color: #f5f5f5;
+  background-color: var(--token-layer-background, #f5f5f5);
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -49,21 +49,21 @@ input[type="checkbox"] {
   border-radius: 4px;
   border: none;
   cursor: pointer;
-  background-color: #007bff;
-  color: white;
+  background-color: var(--token-interactive, #007bff);
+  color: var(--token-layer-surface, white);
   font-weight: 500;
 }
 
 .table-actions button:hover {
-  background-color: #0056b3;
+  background-color: var(--token-interactive-hover, #0056b3);
 }
 
 .add-button {
-  background-color: #28a745 !important;
+  background-color: var(--token-success, #28a745) !important;
 }
 
 .add-button:hover {
-  background-color: #218838 !important;
+  background-color: color-mix(in srgb, var(--token-success, #28a745) 85%, black) !important;
 }
 
 .filters {
@@ -71,7 +71,7 @@ input[type="checkbox"] {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
-  background-color: #f8f9fa;
+  background-color: var(--token-layer-background, #f8f9fa);
   padding: 15px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -87,16 +87,16 @@ input[type="checkbox"] {
 .filter-group label {
   font-size: 12px;
   font-weight: 600;
-  color: #666;
+  color: var(--token-text-secondary, #666);
 }
 
 .filters input,
 .filters select {
   padding: 8px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--token-border-subtle, #ddd);
   border-radius: 4px;
   font-size: 14px;
-  background-color: white;
+  background-color: var(--token-layer-surface, white);
 }
 
 .filters select {
@@ -106,12 +106,12 @@ input[type="checkbox"] {
 .filters input:focus,
 .filters select:focus {
   outline: none;
-  border-color: #007bff;
+  border-color: var(--token-interactive, #007bff);
   box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
 }
 
 .filters select:hover {
-  border-color: #007bff;
+  border-color: var(--token-interactive, #007bff);
 }
 
 .table-container {
@@ -128,16 +128,16 @@ input[type="checkbox"] {
 .rates-table td {
   padding: 12px;
   text-align: left;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--token-border-subtle, #ddd);
 }
 
 .rates-table th {
-  background-color: #f8f9fa;
+  background-color: var(--token-layer-background, #f8f9fa);
   font-weight: 600;
 }
 
 .rates-table tr:hover {
-  background-color: #f5f5f5;
+  background-color: var(--token-layer-background, #f5f5f5);
 }
 
 .action-buttons {
@@ -155,21 +155,21 @@ input[type="checkbox"] {
 }
 
 .edit-button {
-  background-color: #17a2b8;
-  color: white;
+  background-color: var(--token-interactive, #17a2b8);
+  color: var(--token-layer-surface, white);
 }
 
 .delete-button {
-  background-color: #dc3545;
-  color: white;
+  background-color: var(--token-critical, #dc3545);
+  color: var(--token-layer-surface, white);
 }
 
 .edit-button:hover {
-  background-color: #138496;
+  background-color: color-mix(in srgb, var(--token-interactive, #17a2b8) 85%, black);
 }
 
 .delete-button:hover {
-  background-color: #c82333;
+  background-color: color-mix(in srgb, var(--token-critical, #dc3545) 90%, black);
 }
 
 /* Loading State */
@@ -180,12 +180,12 @@ input[type="checkbox"] {
   justify-content: center;
   padding: 40px;
   text-align: center;
-  color: #666;
+  color: var(--token-text-secondary, #666);
 }
 
 .loading-spinner {
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #007bff;
+  border-top: 4px solid var(--token-interactive, #007bff);
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -206,8 +206,8 @@ input[type="checkbox"] {
 }
 
 .error-message {
-  background-color: #fff3f3;
-  border: 1px solid #dc3545;
+  background-color: color-mix(in srgb, var(--token-critical, #dc3545) 10%, white);
+  border: 1px solid var(--token-critical, #dc3545);
   border-radius: 8px;
   padding: 20px;
   text-align: center;
@@ -215,18 +215,18 @@ input[type="checkbox"] {
 }
 
 .error-message h3 {
-  color: #dc3545;
+  color: var(--token-critical, #dc3545);
   margin: 0 0 10px 0;
 }
 
 .error-message p {
   margin: 0 0 20px 0;
-  color: #666;
+  color: var(--token-text-secondary, #666);
 }
 
 .error-message button {
-  background-color: #dc3545;
-  color: white;
+  background-color: var(--token-critical, #dc3545);
+  color: var(--token-layer-surface, white);
   border: none;
   padding: 8px 16px;
   border-radius: 4px;
@@ -234,7 +234,7 @@ input[type="checkbox"] {
 }
 
 .error-message button:hover {
-  background-color: #c82333;
+  background-color: color-mix(in srgb, var(--token-critical, #dc3545) 90%, black);
 }
 
 /* Responsive Styles for Mobile and Tablet */

@@ -155,9 +155,9 @@
       width: 20px;
       height: 20px;
       border-radius: 50%;
-      background: #0176d3;
+      background: $token-color-interactive;
       cursor: pointer;
-      border: 2px solid #ffffff;
+      border: 2px solid $token-color-surface;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
@@ -165,9 +165,9 @@
       width: 20px;
       height: 20px;
       border-radius: 50%;
-      background: #0176d3;
+      background: $token-color-interactive;
       cursor: pointer;
-      border: 2px solid #ffffff;
+      border: 2px solid $token-color-surface;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
   }
@@ -260,7 +260,7 @@
     border-radius: 14px;
     border: none;
     padding: 0;
-    background: #c9c9c9;
+    background: $token-color-border-subtle;
     display: inline-flex;
     align-items: center;
     cursor: pointer;
@@ -269,7 +269,7 @@
     flex-shrink: 0;
     
     &.checked {
-      background: #0176d3;
+      background: $token-color-interactive;
     }
     
     .switch-thumb {
@@ -333,7 +333,7 @@
     }
     
     &.active {
-      background: #0176d3;
+      background: $token-color-interactive;
       color: white;
       font-weight: 600;
     }
@@ -409,7 +409,7 @@
     max-width: 320px;
     background: $token-color-surface;
     color: $token-text-primary;
-    border: 1px solid #0176d3;
+    border: 1px solid $token-color-interactive;
     border-radius: $token-radius-sm;
     padding: 0.5rem 0.75rem;
     box-shadow: 0 4px 12px rgba(1, 118, 211, 0.1);
@@ -433,7 +433,7 @@
 .helper-text {
   margin-top: 0.25rem;
   font-size: 0.75rem;
-  color: #6b6b6b;
+  color: $token-text-secondary;
   line-height: 1.4;
 }
 
@@ -454,7 +454,7 @@
 
 // Required asterisk
 .required-asterisk {
-  color: #c23934;
+  color: $token-color-critical;
   margin-right: 0.25rem;
   font-weight: 600;
 }

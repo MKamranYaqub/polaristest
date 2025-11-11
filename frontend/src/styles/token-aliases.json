@@ -1,0 +1,12 @@
+{
+  "--token-layer-surface": "/surface-container\\/?(\\b|$)/i",
+  "--token-layer-background": "/surface-container\\/?(\\b|$)/i",
+  "--token-text-primary": "/on-surface\\/2$/i",
+  "--token-text-secondary": "/on-surface\\/1$/i",
+  "--token-border-subtle": "/border(\\b|[-_/]disabled[-_/]?1)?$/i",
+  "--token-interactive": "/(brand|interactive)(\\b|[-_/])?/i",
+  "--token-interactive-hover": "/(brand|interactive).*hover/i",
+  "--token-critical": "/(on-)?error[-_/]1$/i",
+  "--token-success": "/support[-_/]success$/i"
+}
+

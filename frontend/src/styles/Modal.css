@@ -25,7 +25,7 @@
 }
 
 .modal-content {
-  background: white;
+  background: var(--token-layer-surface, white);
   border-radius: 4px;
   width: 90%;
   max-width: 600px;
@@ -44,7 +44,7 @@
 .modal-body {
   flex: 1;
   overflow-y: auto;
-  background: white;
+  background: var(--token-layer-surface, white);
 }
 
 .modal-footer {
@@ -54,7 +54,7 @@
 .modal-content h2 {
   margin-top: 0;
   margin-bottom: 1.5rem;
-  color: #333;
+  color: var(--token-text-primary, #333);
 }
 
 .form-group {
@@ -65,14 +65,14 @@
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #666;
+  color: var(--token-text-secondary, #666);
 }
 
 .form-group input,
 .form-group textarea {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--token-border-subtle, #ddd);
   border-radius: 4px;
   font-size: 1rem;
 }
@@ -100,21 +100,21 @@
 }
 
 .save-button {
-  background: #1a73e8;
-  color: white;
+  background: var(--token-interactive, #1a73e8);
+  color: var(--token-layer-surface, white);
 }
 
 .save-button:hover {
-  background: #1557b0;
+  background: var(--token-interactive-hover, #1557b0);
 }
 
 .cancel-button {
-  background: #f5f5f5;
-  color: #666;
+  background: var(--token-layer-background, #f5f5f5);
+  color: var(--token-text-secondary, #666);
 }
 
 .cancel-button:hover {
-  background: #e0e0e0;
+  background: var(--token-border-subtle, #e0e0e0);
 }
 
 /* Responsive Styles for Mobile and Tablet */

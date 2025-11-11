@@ -4,12 +4,12 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: var(--token-layer-background, #f5f5f5);
   padding: 20px;
 }
 
 .auth-box {
-  background: white;
+  background: var(--token-layer-surface, white);
   padding: 40px;
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -20,7 +20,7 @@
 .auth-box h2 {
   margin: 0 0 30px;
   text-align: center;
-  color: #333;
+  color: var(--token-text-primary, #333);
   font-size: 24px;
 }
 
@@ -38,25 +38,25 @@
 
 .form-group label {
   font-weight: 500;
-  color: #555;
+  color: var(--token-text-secondary, #555);
 }
 
 .form-group input {
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--token-border-subtle, #ddd);
   border-radius: 6px;
   font-size: 16px;
   transition: border-color 0.3s;
 }
 
 .form-group input:focus {
-  border-color: #2563eb;
+  border-color: var(--token-interactive, #2563eb);
   outline: none;
 }
 
 .auth-button {
-  background-color: #2563eb;
-  color: white;
+  background-color: var(--token-interactive, #2563eb);
+  color: var(--token-layer-surface, white);
   padding: 12px;
   border: none;
   border-radius: 6px;
@@ -66,11 +66,11 @@
 }
 
 .auth-button:hover {
-  background-color: #1d4ed8;
+  background-color: var(--token-interactive-hover, #1d4ed8);
 }
 
 .auth-button:disabled {
-  background-color: #93c5fd;
+  background-color: color-mix(in srgb, var(--token-interactive, #2563eb) 35%, white);
   cursor: not-allowed;
 }
 
@@ -80,13 +80,13 @@
 }
 
 .auth-switch p {
-  color: #666;
+  color: var(--token-text-secondary, #666);
 }
 
 .auth-switch button {
   background: none;
   border: none;
-  color: #2563eb;
+  color: var(--token-interactive, #2563eb);
   font-weight: 500;
   cursor: pointer;
   padding: 0;
@@ -98,8 +98,8 @@
 }
 
 .error-message {
-  background-color: #fee2e2;
-  color: #dc2626;
+  background-color: color-mix(in srgb, var(--token-critical, #dc2626) 15%, white);
+  color: var(--token-critical, #dc2626);
   padding: 12px;
   border-radius: 6px;
   margin-bottom: 20px;
@@ -114,8 +114,8 @@
 }
 
 header {
-  background-color: #1e40af;
-  color: white;
+  background-color: var(--token-interactive, #1e40af);
+  color: var(--token-layer-surface, white);
   padding: 16px 24px;
   display: flex;
   justify-content: space-between;
@@ -134,8 +134,8 @@ header h1 {
 }
 
 .user-info button {
-  background-color: #dc2626;
-  color: white;
+  background-color: var(--token-critical, #dc2626);
+  color: var(--token-layer-surface, white);
   border: none;
   padding: 8px 16px;
   border-radius: 4px;
@@ -144,7 +144,7 @@ header h1 {
 }
 
 .user-info button:hover {
-  background-color: #b91c1c;
+  background-color: color-mix(in srgb, var(--token-critical, #dc2626) 90%, black);
 }
 
 main {
