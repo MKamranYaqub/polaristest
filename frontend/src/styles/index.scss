@@ -44,6 +44,8 @@ a {
   font-size: var(--token-font-size-lg);
   font-weight: var(--token-font-weight-semibold);
   line-height: var(--token-line-height-tight);
+  /* ensure header text is high-contrast against the header background */
+  color: var(--token-text-primary);
 }
 
 @media (max-width: 900px) {
@@ -53,6 +55,7 @@ a {
 
   .app-header__title {
     font-size: 1.1rem;
+    color: var(--token-text-primary);
   }
 }
 
@@ -64,6 +67,7 @@ a {
 
   .app-header__title {
     font-size: 1rem;
+    color: var(--token-text-primary);
   }
 }
 

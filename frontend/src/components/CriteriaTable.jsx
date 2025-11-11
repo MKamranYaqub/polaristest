@@ -504,6 +504,26 @@ function CriteriaTable() {
     ...Array.from(allKeysSet).filter(k => !preferred.includes(k) && !excluded.has(k)).sort()
   ];
 
+  // Friendly labels for columns (display only). Keep keys unchanged for sorting/upsert logic.
+  const columnLabels = {
+    display_order: 'Display Order',
+    criteria_set: 'Criteria Set',
+    product_scope: 'Product Scope',
+    question_group: 'Question Group',
+    question_key: 'Question Key',
+    question_label: 'Question Label',
+    option_label: 'Option Label',
+    tier: 'Tier',
+    property_type: 'Property Type',
+    helper: 'Helper',
+    info_tip: 'Info Tip'
+  };
+
+  const humanize = (s) => {
+    if (!s) return '';
+    return s.toString().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  };
+
   if (loading) {
     return (
       <div className="slds-spinner_container">
@@ -715,7 +735,7 @@ function CriteriaTable() {
               </th>
               {columns.map((col) => (
                 <th key={col} onClick={() => changeSort(col)} style={{ cursor: 'pointer' }}>
-                  {col} {sortField === col ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                  { (columnLabels[col] || humanize(col)) } {sortField === col ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                 </th>
               ))}
               <th className="sticky-action">Actions</th>

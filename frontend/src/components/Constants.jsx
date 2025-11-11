@@ -1043,8 +1043,8 @@ export default function Constants() {
 
   return (
     <div className="slds-p-around_medium">
-      <h2>Constants</h2>
-      <p className="helper-text">Edit product lists, fee columns and LTV thresholds. Changes persist to localStorage and affect the calculator.</p>
+
+      <p className="helper-text">Edit product lists, fee columns and LTV thresholds.</p>
       <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
         <button className="slds-button slds-button_brand" onClick={saveToStorage} disabled={saving}>
           {saving ? 'Saving...' : 'Save All to Database'}
@@ -1053,95 +1053,98 @@ export default function Constants() {
         <button className="slds-button slds-button_destructive" onClick={resetToDefaults}>Reset defaults</button>
       </div>
 
-      <section className="slds-box slds-m-bottom_medium">
-        <h3>Product lists per property type</h3>
-        {Object.keys(safeProductLists).map((pt) => {
-          const key = `productLists:${pt}`;
-          return (
-            <div key={pt} className="slds-form-element slds-m-bottom_small">
-              <label className="slds-form-element__label">{pt}</label>
-              <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <input
-                  className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
-                  value={editingFields[key] ? (tempValues[key] ?? '') : String(Array.isArray(productLists[pt]) ? productLists[pt].join(', ') : (productLists[pt] ?? ''))}
-                  onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
-                  disabled={!editingFields[key]}
-                />
-                {!editingFields[key] ? (
-                  <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (Array.isArray(safeProductLists[pt]) ? safeProductLists[pt].join(', ') : String(safeProductLists[pt] ?? '')))}>Edit</button>
-                ) : (
-                  <>
-                    <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
-                    <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
-                  </>
-                )}
-              </div>
-              <div className="helper-text">Comma-separated list of product names shown in the calculator product select.</div>
-            </div>
-          );
-        })}
-      </section>
-
-      <section className="slds-box slds-m-bottom_medium">
-        <h3>Fee columns</h3>
-        {Object.keys(safeFeeColumns).map((k) => {
-          const key = `feeColumns:${k}`;
-          return (
-            <div key={k} className="slds-form-element slds-m-bottom_small">
-              <label className="slds-form-element__label">{k}</label>
-              <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <input
-                  className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
-                  value={editingFields[key] ? (tempValues[key] ?? '') : String(Array.isArray(feeColumns[k]) ? feeColumns[k].join(', ') : (feeColumns[k] ?? ''))}
-                  onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
-                  disabled={!editingFields[key]}
-                />
-                {!editingFields[key] ? (
-                  <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (Array.isArray(safeFeeColumns[k]) ? safeFeeColumns[k].join(', ') : String(safeFeeColumns[k] ?? '')))}>Edit</button>
-                ) : (
-                  <>
-                    <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
-                    <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
-                  </>
-                )}
-              </div>
-              <div className="helper-text">Comma-separated numbers used to render fee columns in results for this key.</div>
-            </div>
-          );
-        })}
-      </section>
-
-      {/* Max LTV by Tier removed from Constants per user request; values are maintained in the rates table. */}
-
-      <section className="slds-box slds-m-bottom_medium">
-        <h3>Flat-above-commercial override</h3>
-          <div className="slds-form-element slds-m-bottom_small">
-          <label className="slds-form-element__label">Scope matcher</label>
-          <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            {(() => {
-              const key = 'flatAbove:scopeMatcher';
-              return (
-                <>
-                  <input className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`} value={editingFields[key] ? (tempValues[key] ?? '') : (flatAboveCommercialRule.scopeMatcher || '')} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
+      <section className="slds-box slds-m-bottom_medium" style={{ borderTop: '1px solid var(--token-border-subtle)', paddingTop: '1rem', marginTop: '1rem' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Product lists per property type</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+          {Object.keys(safeProductLists).map((pt) => {
+            const key = `productLists:${pt}`;
+            return (
+              <div key={pt} className="slds-form-element">
+                <label className="slds-form-element__label">{pt}</label>
+                <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input
+                    className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                    value={editingFields[key] ? (tempValues[key] ?? '') : String(Array.isArray(productLists[pt]) ? productLists[pt].join(', ') : (productLists[pt] ?? ''))}
+                    onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                    disabled={!editingFields[key]}
+                  />
                   {!editingFields[key] ? (
-                    <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, flatAboveCommercialRule.scopeMatcher || '')}>Edit</button>
+                    <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (Array.isArray(safeProductLists[pt]) ? safeProductLists[pt].join(', ') : String(safeProductLists[pt] ?? '')))}>Edit</button>
                   ) : (
                     <>
                       <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
                       <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
                     </>
                   )}
-                </>
-              );
-            })()}
-          </div>
-          <div className="helper-text">Comma-separated tokens or phrase used to detect the product scope (case-insensitive). Example: "flat,commercial"</div>
+                </div>
+                {/*<div className="helper-text">Comma-separated list of product names shown in the calculator product select.</div>*/}
+              </div>
+            );
+          })}
         </div>
+      </section>
 
-        <div>
-          <strong>Tier → Effective max LTV</strong>
-          <div className="slds-m-top_x-small">
-            <label className="slds-form-element__label">Tier 2</label>
+      <section className="slds-box slds-m-bottom_medium" style={{ borderTop: '1px solid var(--token-border-subtle)', paddingTop: '1rem', marginTop: '1rem' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Fee columns</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+          {Object.keys(safeFeeColumns).map((k) => {
+            const key = `feeColumns:${k}`;
+            return (
+              <div key={k} className="slds-form-element">
+                <label className="slds-form-element__label">{k}</label>
+                <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input
+                    className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                    value={editingFields[key] ? (tempValues[key] ?? '') : String(Array.isArray(feeColumns[k]) ? feeColumns[k].join(', ') : (feeColumns[k] ?? ''))}
+                    onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                    disabled={!editingFields[key]}
+                  />
+                  {!editingFields[key] ? (
+                    <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (Array.isArray(safeFeeColumns[k]) ? safeFeeColumns[k].join(', ') : String(safeFeeColumns[k] ?? '')))}>Edit</button>
+                  ) : (
+                    <>
+                      <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                      <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                    </>
+                  )}
+                </div>
+                {/*<div className="helper-text">Comma-separated numbers used to render fee columns in results for this key.</div>*/}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Max LTV by Tier removed from Constants per user request; values are maintained in the rates table. */}
+
+      <section className="slds-box slds-m-bottom_medium" style={{ borderTop: '1px solid var(--token-border-subtle)', paddingTop: '1rem', marginTop: '1rem' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Flat-above-commercial override</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', alignItems: 'start' }}>
+          <div className="slds-form-element">
+            <label className="slds-form-element__label">Scope matcher</label>
+            <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              {(() => {
+                const key = 'flatAbove:scopeMatcher';
+                return (
+                  <>
+                    <input className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`} value={editingFields[key] ? (tempValues[key] ?? '') : (flatAboveCommercialRule.scopeMatcher || '')} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
+                    {!editingFields[key] ? (
+                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, flatAboveCommercialRule.scopeMatcher || '')}>Edit</button>
+                    ) : (
+                      <>
+                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+            <div className="helper-text">Comma-separated tokens or phrase used to detect the product scope (case-insensitive). Example: "flat,commercial"</div>
+          </div>
+
+          <div>
+            <label className="slds-form-element__label">Tier 2 (Effective max LTV)</label>
             <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               {(() => {
                 const key = 'flatAbove:tier2';
@@ -1161,8 +1164,9 @@ export default function Constants() {
               })()}
             </div>
           </div>
-          <div className="slds-m-top_x-small">
-            <label className="slds-form-element__label">Tier 3</label>
+
+          <div>
+            <label className="slds-form-element__label">Tier 3 (Effective max LTV)</label>
             <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               {(() => {
                 const key = 'flatAbove:tier3';
@@ -1185,8 +1189,8 @@ export default function Constants() {
         </div>
       </section>
 
-      <section className="slds-box slds-m-bottom_medium">
-        <h3>Market / Base Rates</h3>
+      <section className="slds-box slds-m-bottom_medium" style={{ borderTop: '1px solid var(--token-border-subtle)', paddingTop: '1rem', marginTop: '1rem' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Market / Base Rates</h3>
   <p className="helper-text"></p>
 
         <div className="slds-grid slds-wrap slds-gutters_small" style={{ gap: '1rem' }}>
@@ -1290,13 +1294,14 @@ export default function Constants() {
         {/* Preview removed as requested */}
       </section>
 
-      <section className="slds-box slds-m-bottom_medium">
-        <h3>Broker Settings</h3>
+      <section className="slds-box slds-m-bottom_medium" style={{ borderTop: '1px solid var(--token-border-subtle)', paddingTop: '1rem', marginTop: '1rem' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Broker Settings</h3>
         <p className="helper-text">Configure broker routes, commission defaults, and tolerance settings.</p>
-
+<br></br>
         <div className="slds-m-bottom_medium">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h4>Broker Routes</h4>
+            
+            <h5>Broker Routes</h5>
             <button 
               className="slds-button slds-button_brand" 
               onClick={() => setShowAddRouteForm(!showAddRouteForm)}
@@ -1388,7 +1393,7 @@ export default function Constants() {
                       </>
                     )}
                   </div>
-                  <div className="helper-text">Display name for {routeKey} broker route.</div>
+                  {/*<div className="helper-text">Display name for {routeKey} broker route.</div>*/}
                 </div>
               );
             })}
@@ -1396,7 +1401,8 @@ export default function Constants() {
         </div>
 
         <div className="slds-m-bottom_medium">
-          <h4>Broker Commission Defaults (%)</h4>
+          <br/>
+          <h5>Broker Commission Defaults (%)</h5>
           <div className="slds-grid slds-wrap slds-gutters_small" style={{ gap: '1rem' }}>
             {Object.keys(brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS).map(route => {
               const key = `brokerCommission:${route}`;
@@ -1424,7 +1430,7 @@ export default function Constants() {
                       </>
                     )}
                   </div>
-                  <div className="helper-text">Default commission percentage for {route}.</div>
+                  {/*<div className="helper-text">Default commission percentage for {route}.</div>*/}
                 </div>
               );
             })}
@@ -1432,7 +1438,7 @@ export default function Constants() {
         </div>
 
         <div>
-          <h4>Commission Tolerance</h4>
+          <h5>Commission Tolerance</h5>
           <div className="slds-col" style={{ minWidth: 260, maxWidth: 400 }}>
             <label className="slds-form-element__label">Tolerance (±%)</label>
             <div className="slds-form-element__control slds-grid" style={{ alignItems: 'center', gap: '0.5rem' }}>

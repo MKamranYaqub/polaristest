@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { SideNav, SideNavItems, SideNavLink } from '@carbon/react';
+import { SideNav, SideNavItems, SideNavLink, SideNavMenu, SideNavMenuItem } from '@carbon/react';
 import { useUser } from '../contexts/UserContext';
 import '../styles/navigation.scss';
 
@@ -13,14 +13,17 @@ function Navigation() {
 
   const isAdmin = user && user.name && user.name.toLowerCase() === 'admin';
 
-  const navItems = [
-    { label: 'Calculator', path: '/calculator' },
-    { label: 'Quotes', path: '/quotes' },
+  const calculatorItems = [
+    { label: 'BTL Calculator', path: '/calculator/btl' },
+    { label: 'Bridging Calculator', path: '/calculator/bridging' }
   ];
 
-  if (isAdmin) {
-    navItems.push({ label: 'Admin', path: '/admin' });
-  }
+  const adminItems = [
+    { label: 'Constants', path: '/admin/constants' },
+    { label: 'BTL Criteria', path: '/admin/criteria' },
+    { label: 'BTL Rates', path: '/admin/btl-rates' },
+    { label: 'Bridging Rates', path: '/admin/bridging-rates' }
+  ];
 
   useEffect(() => {
     const handleResize = () => {
@@ -57,21 +60,62 @@ function Navigation() {
         className={`app-sidenav ${mobileOpen ? 'mobile-open' : 'mobile-closed'}`}
       >
         <SideNavItems>
-          {navItems.map((item) => (
-            <SideNavLink
-              key={item.path}
-              isActive={location.pathname === item.path}
-              onClick={() => {
-                navigate(item.path);
-                // close on mobile after navigation
-                if (!isDesktop) {
-                  setMobileOpen(false);
-                }
-              }}
+          <SideNavMenu 
+            title="Calculator"
+            defaultExpanded={location.pathname.startsWith('/calculator')}
+          >
+            {calculatorItems.map((item) => (
+              <SideNavMenuItem
+                key={item.path}
+                isActive={location.pathname === item.path}
+                onClick={() => {
+                  navigate(item.path);
+                  // close on mobile after navigation
+                  if (!isDesktop) {
+                    setMobileOpen(false);
+                  }
+                }}
+              >
+                {item.label}
+              </SideNavMenuItem>
+            ))}
+          </SideNavMenu>
+
+          <SideNavLink
+            isActive={location.pathname === '/quotes'}
+            onClick={() => {
+              navigate('/quotes');
+              // close on mobile after navigation
+              if (!isDesktop) {
+                setMobileOpen(false);
+              }
+            }}
+          >
+            Quotes
+          </SideNavLink>
+          
+          {isAdmin && (
+            <SideNavMenu 
+              title="Admin"
+              defaultExpanded={location.pathname.startsWith('/admin')}
             >
-              {item.label}
-            </SideNavLink>
-          ))}
+              {adminItems.map((item) => (
+                <SideNavMenuItem
+                  key={item.path}
+                  isActive={location.pathname === item.path}
+                  onClick={() => {
+                    navigate(item.path);
+                    // close on mobile after navigation
+                    if (!isDesktop) {
+                      setMobileOpen(false);
+                    }
+                  }}
+                >
+                  {item.label}
+                </SideNavMenuItem>
+              ))}
+            </SideNavMenu>
+          )}
         </SideNavItems>
       </SideNav>
     </>

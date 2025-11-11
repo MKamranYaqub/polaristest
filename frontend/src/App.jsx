@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Content, Theme } from '@carbon/react';
 import '@carbon/styles/css/styles.css';
 import Calculator from './components/Calculator';
+import BTLCalculator from './components/BTL_Calculator';
+import BridgingCalculator from './components/BridgingCalculator';
 import QuotesList from './components/QuotesList';
 import Navigation from './components/Navigation';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -38,15 +40,29 @@ function App() {
                 
                 <Content className="app-content">
                 <Routes>
-                  {/* Calculator with specialized error handling */}
-                  <Route 
-                    path="/calculator" 
-                    element={
-                      <ErrorBoundary fallback={CalculatorErrorFallback}>
-                        <Calculator />
-                      </ErrorBoundary>
-                    } 
-                  />
+                  {/* Calculator routes with specialized error handling */}
+                  <Route path="/calculator">
+                    <Route 
+                      path="btl" 
+                      element={
+                        <ErrorBoundary fallback={CalculatorErrorFallback}>
+                          <BTLCalculator />
+                        </ErrorBoundary>
+                      } 
+                    />
+                    <Route 
+                      path="bridging" 
+                      element={
+                        <ErrorBoundary fallback={CalculatorErrorFallback}>
+                          <BridgingCalculator />
+                        </ErrorBoundary>
+                      } 
+                    />
+                    <Route 
+                      index 
+                      element={<Navigate to="/calculator/btl" replace />} 
+                    />
+                  </Route>
                   
                   {/* Quotes list with specialized error handling */}
                   <Route 
@@ -61,16 +77,44 @@ function App() {
                   {/* Admin section with protected route */}
                   <Route path="/admin" element={<ProtectedRoute />}>
                     <Route 
-                      index 
+                      path="constants" 
                       element={
                         <ErrorBoundary>
-                          <AdminPage />
+                          <AdminPage tab="constants" />
                         </ErrorBoundary>
                       } 
                     />
+                    <Route 
+                      path="criteria" 
+                      element={
+                        <ErrorBoundary>
+                          <AdminPage tab="criteria" />
+                        </ErrorBoundary>
+                      } 
+                    />
+                    <Route 
+                      path="btl-rates" 
+                      element={
+                        <ErrorBoundary>
+                          <AdminPage tab="btlRates" />
+                        </ErrorBoundary>
+                      } 
+                    />
+                    <Route 
+                      path="bridging-rates" 
+                      element={
+                        <ErrorBoundary>
+                          <AdminPage tab="bridgingRates" />
+                        </ErrorBoundary>
+                      } 
+                    />
+                    <Route 
+                      index 
+                      element={<Navigate to="/admin/constants" replace />} 
+                    />
                   </Route>
                   
-                  <Route path="/" element={<Navigate to="/calculator" replace />} />
+                  <Route path="/" element={<Navigate to="/calculator/btl" replace />} />
                 </Routes>
               </Content>
             </div>
