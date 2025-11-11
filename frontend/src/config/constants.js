@@ -74,3 +74,24 @@ export const MARKET_RATES = {
   // Mortgage Valuation Rate (MVR) or similar margin applied to valuations
   CURRENT_MVR: 0.0859,
 };
+
+// Broker routes and default commission percentages
+// These are editable via the Constants admin UI
+export const BROKER_ROUTES = {
+  DIRECT_BROKER: 'Direct Broker',
+  MORTGAGE_CLUB: 'Mortgage club',
+  NETWORK: 'Network',
+  PACKAGER: 'Packager',
+};
+
+// Default broker commission percentages by route (as decimal, e.g. 0.007 = 0.7%)
+export const BROKER_COMMISSION_DEFAULTS = {
+  'Direct Broker': 0.7,
+  'Mortgage club': 0.9,
+  'Network': 0.9,
+  'Packager': 0.9,
+};
+
+// Broker commission tolerance (±0.2% from default value)
+// Users can only adjust commission within this range
+export const BROKER_COMMISSION_TOLERANCE = 0.2;

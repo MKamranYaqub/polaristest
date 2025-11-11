@@ -6,6 +6,9 @@ import {
   FEE_COLUMNS as DEFAULT_FEE_COLUMNS,
   FLAT_ABOVE_COMMERCIAL_RULE as DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE,
   MARKET_RATES as DEFAULT_MARKET_RATES,
+  BROKER_ROUTES as DEFAULT_BROKER_ROUTES,
+  BROKER_COMMISSION_DEFAULTS as DEFAULT_BROKER_COMMISSION_DEFAULTS,
+  BROKER_COMMISSION_TOLERANCE as DEFAULT_BROKER_COMMISSION_TOLERANCE,
   LOCALSTORAGE_CONSTANTS_KEY,
 } from '../config/constants';
 import '../styles/slds.css';
@@ -30,6 +33,9 @@ export default function Constants() {
   const [feeColumns, setFeeColumns] = useState(DEFAULT_FEE_COLUMNS);
   const [flatAboveCommercialRule, setFlatAboveCommercialRule] = useState(DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE);
   const [marketRates, setMarketRates] = useState(DEFAULT_MARKET_RATES);
+  const [brokerRoutes, setBrokerRoutes] = useState(DEFAULT_BROKER_ROUTES);
+  const [brokerCommissionDefaults, setBrokerCommissionDefaults] = useState(DEFAULT_BROKER_COMMISSION_DEFAULTS);
+  const [brokerCommissionTolerance, setBrokerCommissionTolerance] = useState(DEFAULT_BROKER_COMMISSION_TOLERANCE);
   const [jsonInput, setJsonInput] = useState('');
   const [message, setMessage] = useState('');
   const { supabase } = useSupabase();
@@ -39,6 +45,13 @@ export default function Constants() {
   // per-field editing state and temporary values
   const [editingFields, setEditingFields] = useState({});
   const [tempValues, setTempValues] = useState({});
+  
+  // Broker route add/delete state
+  const [showAddRouteForm, setShowAddRouteForm] = useState(false);
+  const [newRouteKey, setNewRouteKey] = useState('');
+  const [newRouteDisplayName, setNewRouteDisplayName] = useState('');
+  const [newRouteCommission, setNewRouteCommission] = useState('0.9');
+  const [deleteConfirmation, setDeleteConfirmation] = useState({ show: false, routeKey: '', displayName: '' });
   
   // Notification state
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
@@ -55,6 +68,9 @@ export default function Constants() {
       setFeeColumns(overrides.feeColumns || DEFAULT_FEE_COLUMNS);
       setFlatAboveCommercialRule(overrides.flatAboveCommercialRule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE);
       setMarketRates(overrides.marketRates || DEFAULT_MARKET_RATES);
+      setBrokerRoutes(overrides.brokerRoutes || DEFAULT_BROKER_ROUTES);
+      setBrokerCommissionDefaults(overrides.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS);
+      setBrokerCommissionTolerance(overrides.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE);
       // initialize temp values
       const tv = {};
       // product lists: tolerate malformed overrides (strings/arrays) and fall back to defaults per key
@@ -85,6 +101,12 @@ export default function Constants() {
       tv['flatAbove:scopeMatcher'] = overrides.flatAboveCommercialRule?.scopeMatcher || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.scopeMatcher || '';
       tv['flatAbove:tier2'] = String(overrides.flatAboveCommercialRule?.tierLtv?.['2'] ?? DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['2'] ?? '');
       tv['flatAbove:tier3'] = String(overrides.flatAboveCommercialRule?.tierLtv?.['3'] ?? DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['3'] ?? '');
+      
+      // broker settings
+      Object.keys(overrides.brokerRoutes || DEFAULT_BROKER_ROUTES).forEach(k => { tv[`brokerRoutes:${k}`] = (overrides.brokerRoutes?.[k] ?? DEFAULT_BROKER_ROUTES[k]); });
+      Object.keys(overrides.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS).forEach(k => { tv[`brokerCommission:${k}`] = String((overrides.brokerCommissionDefaults?.[k] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[k])); });
+      tv['brokerTolerance'] = String(overrides.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE);
+      
       setTempValues(tv);
     }
 
@@ -98,6 +120,9 @@ export default function Constants() {
         setFeeColumns(newVal.feeColumns || DEFAULT_FEE_COLUMNS);
         setFlatAboveCommercialRule(newVal.flatAboveCommercialRule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE);
         setMarketRates(newVal.marketRates || DEFAULT_MARKET_RATES);
+        setBrokerRoutes(newVal.brokerRoutes || DEFAULT_BROKER_ROUTES);
+        setBrokerCommissionDefaults(newVal.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS);
+        setBrokerCommissionTolerance(newVal.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE);
         // re-seed temp values similarly to initial load
         const tv2 = {};
         Object.keys(newVal.productLists || DEFAULT_PRODUCT_TYPES_LIST).forEach(pt => { tv2[`productLists:${pt}`] = (newVal.productLists?.[pt] || DEFAULT_PRODUCT_TYPES_LIST[pt] || []).join(', '); });
@@ -106,6 +131,9 @@ export default function Constants() {
         tv2['flatAbove:scopeMatcher'] = newVal.flatAboveCommercialRule?.scopeMatcher || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.scopeMatcher || '';
         tv2['flatAbove:tier2'] = String(newVal.flatAboveCommercialRule?.tierLtv?.['2'] ?? DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['2'] ?? '');
         tv2['flatAbove:tier3'] = String(newVal.flatAboveCommercialRule?.tierLtv?.['3'] ?? DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['3'] ?? '');
+        Object.keys(newVal.brokerRoutes || DEFAULT_BROKER_ROUTES).forEach(k => { tv2[`brokerRoutes:${k}`] = (newVal.brokerRoutes?.[k] ?? DEFAULT_BROKER_ROUTES[k]); });
+        Object.keys(newVal.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS).forEach(k => { tv2[`brokerCommission:${k}`] = String((newVal.brokerCommissionDefaults?.[k] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[k])); });
+        tv2['brokerTolerance'] = String(newVal.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE);
         setTempValues(tv2);
       } catch (err) {
         console.debug('Ignored storage event for constants', err);
@@ -148,6 +176,16 @@ export default function Constants() {
         await updateFlatAboveCommercial({ tierLtv: { ...(flatAboveCommercialRule.tierLtv || {}), '2': Number(tempValues[key] || '') } });
       } else if (key === 'flatAbove:tier3') {
         await updateFlatAboveCommercial({ tierLtv: { ...(flatAboveCommercialRule.tierLtv || {}), '3': Number(tempValues[key] || '') } });
+      } else if (key.startsWith('brokerRoutes:')) {
+        const routeKey = key.split(':')[1];
+        await updateBrokerRoutes({ [routeKey]: tempValues[key] || '' });
+      } else if (key.startsWith('brokerCommission:')) {
+        const route = key.split(':')[1];
+        const n = Number(tempValues[key]);
+        await updateBrokerCommissionDefaults({ [route]: Number.isFinite(n) ? n : 0.9 });
+      } else if (key === 'brokerTolerance') {
+        const n = Number(tempValues[key]);
+        await updateBrokerCommissionTolerance(Number.isFinite(n) ? n : 0.2);
       }
     } catch (e) {
       console.error('Failed to save field', key, e);
@@ -157,7 +195,15 @@ export default function Constants() {
   };
 
   const exportJson = () => {
-  const payload = { productLists, feeColumns, flatAboveCommercialRule, marketRates };
+    const payload = { 
+      productLists, 
+      feeColumns, 
+      flatAboveCommercialRule, 
+      marketRates, 
+      brokerRoutes, 
+      brokerCommissionDefaults, 
+      brokerCommissionTolerance 
+    };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -228,12 +274,15 @@ export default function Constants() {
           const row = data[0];
           let loadedData = null;
           // prefer structured columns when present
-          if (row.product_lists || row.fee_columns || row.flat_above_commercial_rule || row.market_rates) {
+          if (row.product_lists || row.fee_columns || row.flat_above_commercial_rule || row.market_rates || row.broker_routes) {
             loadedData = {
               productLists: row.product_lists || DEFAULT_PRODUCT_TYPES_LIST,
               feeColumns: row.fee_columns || DEFAULT_FEE_COLUMNS,
               flatAboveCommercialRule: row.flat_above_commercial_rule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE,
-              marketRates: row.market_rates || DEFAULT_MARKET_RATES
+              marketRates: row.market_rates || DEFAULT_MARKET_RATES,
+              brokerRoutes: row.broker_routes || DEFAULT_BROKER_ROUTES,
+              brokerCommissionDefaults: row.broker_commission_defaults || DEFAULT_BROKER_COMMISSION_DEFAULTS,
+              brokerCommissionTolerance: row.broker_commission_tolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE
             };
           } else if (row.value) {
             const v = row.value;
@@ -241,7 +290,10 @@ export default function Constants() {
               productLists: v.productLists || DEFAULT_PRODUCT_TYPES_LIST,
               feeColumns: v.feeColumns || DEFAULT_FEE_COLUMNS,
               flatAboveCommercialRule: v.flatAboveCommercialRule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE,
-              marketRates: v.marketRates || DEFAULT_MARKET_RATES
+              marketRates: v.marketRates || DEFAULT_MARKET_RATES,
+              brokerRoutes: v.brokerRoutes || DEFAULT_BROKER_ROUTES,
+              brokerCommissionDefaults: v.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS,
+              brokerCommissionTolerance: v.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE
             };
           }
           
@@ -251,6 +303,9 @@ export default function Constants() {
             setFeeColumns(loadedData.feeColumns);
             setFlatAboveCommercialRule(loadedData.flatAboveCommercialRule);
             setMarketRates(loadedData.marketRates);
+            setBrokerRoutes(loadedData.brokerRoutes);
+            setBrokerCommissionDefaults(loadedData.brokerCommissionDefaults);
+            setBrokerCommissionTolerance(loadedData.brokerCommissionTolerance);
             
             // Update localStorage to match
             writeOverrides(loadedData);
@@ -271,6 +326,13 @@ export default function Constants() {
             tv['flatAbove:scopeMatcher'] = loadedData.flatAboveCommercialRule?.scopeMatcher || '';
             tv['flatAbove:tier2'] = String(loadedData.flatAboveCommercialRule?.tierLtv?.['2'] ?? '');
             tv['flatAbove:tier3'] = String(loadedData.flatAboveCommercialRule?.tierLtv?.['3'] ?? '');
+            Object.keys(loadedData.brokerRoutes).forEach(k => {
+              tv[`brokerRoutes:${k}`] = loadedData.brokerRoutes[k];
+            });
+            Object.keys(loadedData.brokerCommissionDefaults).forEach(k => {
+              tv[`brokerCommission:${k}`] = String(loadedData.brokerCommissionDefaults[k]);
+            });
+            tv['brokerTolerance'] = String(loadedData.brokerCommissionTolerance);
             setTempValues(tv);
           }
         }
@@ -284,11 +346,22 @@ export default function Constants() {
   const importJson = () => {
     try {
       const parsed = JSON.parse(jsonInput);
-    setProductLists(parsed.productLists || DEFAULT_PRODUCT_TYPES_LIST);
-    setFeeColumns(parsed.feeColumns || DEFAULT_FEE_COLUMNS);
-    setFlatAboveCommercialRule(parsed.flatAboveCommercialRule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE);
-    setMarketRates(parsed.marketRates || DEFAULT_MARKET_RATES);
-  writeOverrides({ productLists: parsed.productLists, feeColumns: parsed.feeColumns, flatAboveCommercialRule: parsed.flatAboveCommercialRule, marketRates: parsed.marketRates });
+      setProductLists(parsed.productLists || DEFAULT_PRODUCT_TYPES_LIST);
+      setFeeColumns(parsed.feeColumns || DEFAULT_FEE_COLUMNS);
+      setFlatAboveCommercialRule(parsed.flatAboveCommercialRule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE);
+      setMarketRates(parsed.marketRates || DEFAULT_MARKET_RATES);
+      setBrokerRoutes(parsed.brokerRoutes || DEFAULT_BROKER_ROUTES);
+      setBrokerCommissionDefaults(parsed.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS);
+      setBrokerCommissionTolerance(parsed.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE);
+      writeOverrides({ 
+        productLists: parsed.productLists, 
+        feeColumns: parsed.feeColumns, 
+        flatAboveCommercialRule: parsed.flatAboveCommercialRule, 
+        marketRates: parsed.marketRates,
+        brokerRoutes: parsed.brokerRoutes,
+        brokerCommissionDefaults: parsed.brokerCommissionDefaults,
+        brokerCommissionTolerance: parsed.brokerCommissionTolerance
+      });
       setMessage('Imported and saved to localStorage.');
     } catch (e) {
       setMessage('Invalid JSON: ' + (e.message || e));
@@ -296,7 +369,15 @@ export default function Constants() {
   };
 
   const saveToStorage = async () => {
-    const payload = { productLists, feeColumns, flatAboveCommercialRule, marketRates };
+    const payload = { 
+      productLists, 
+      feeColumns, 
+      flatAboveCommercialRule, 
+      marketRates, 
+      brokerRoutes, 
+      brokerCommissionDefaults, 
+      brokerCommissionTolerance 
+    };
     writeOverrides(payload);
     setMessage('Saved to localStorage. This will take effect for open calculator tabs.');
     setSaving(true);
@@ -320,6 +401,9 @@ export default function Constants() {
           fee_columns: payload.feeColumns || null,
           flat_above_commercial_rule: payload.flatAboveCommercialRule || null,
           market_rates: payload.marketRates || null,
+          broker_routes: payload.brokerRoutes || null,
+          broker_commission_defaults: payload.brokerCommissionDefaults || null,
+          broker_commission_tolerance: payload.brokerCommissionTolerance ?? null,
         };
         try {
           const { data: inserted, error: insertErr } = await supabase.from('app_constants').insert([insertRow]).select('*');
@@ -387,7 +471,18 @@ export default function Constants() {
     setFeeColumns(DEFAULT_FEE_COLUMNS);
     setFlatAboveCommercialRule(DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE);
     setMarketRates(DEFAULT_MARKET_RATES);
-    const payload = { productLists: DEFAULT_PRODUCT_TYPES_LIST, feeColumns: DEFAULT_FEE_COLUMNS, flatAboveCommercialRule: DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE, marketRates: DEFAULT_MARKET_RATES };
+    setBrokerRoutes(DEFAULT_BROKER_ROUTES);
+    setBrokerCommissionDefaults(DEFAULT_BROKER_COMMISSION_DEFAULTS);
+    setBrokerCommissionTolerance(DEFAULT_BROKER_COMMISSION_TOLERANCE);
+    const payload = { 
+      productLists: DEFAULT_PRODUCT_TYPES_LIST, 
+      feeColumns: DEFAULT_FEE_COLUMNS, 
+      flatAboveCommercialRule: DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE, 
+      marketRates: DEFAULT_MARKET_RATES,
+      brokerRoutes: DEFAULT_BROKER_ROUTES,
+      brokerCommissionDefaults: DEFAULT_BROKER_COMMISSION_DEFAULTS,
+      brokerCommissionTolerance: DEFAULT_BROKER_COMMISSION_TOLERANCE
+    };
     setMessage('Reset to defaults and removed overrides from localStorage.');
     localStorage.removeItem(LOCALSTORAGE_CONSTANTS_KEY);
     setSaving(true);
@@ -406,6 +501,9 @@ export default function Constants() {
           fee_columns: payload.feeColumns,
           flat_above_commercial_rule: payload.flatAboveCommercialRule,
           market_rates: payload.marketRates,
+          broker_routes: payload.brokerRoutes,
+          broker_commission_defaults: payload.brokerCommissionDefaults,
+          broker_commission_tolerance: payload.brokerCommissionTolerance,
         };
         const { error: upsertErr } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
         setSaving(false);
@@ -615,7 +713,10 @@ export default function Constants() {
       productLists: productLists,
       feeColumns: feeColumns,
       flatAboveCommercialRule: flatAboveCommercialRule,
-      marketRates: newRates
+      marketRates: newRates,
+      brokerRoutes: brokerRoutes,
+      brokerCommissionDefaults: brokerCommissionDefaults,
+      brokerCommissionTolerance: brokerCommissionTolerance
     };
     writeOverrides(currentOverrides);
     
@@ -664,6 +765,145 @@ export default function Constants() {
       setMessage('Saved locally but unexpected error persisting to database.');
       return { error: e };
     }
+  };
+
+  const updateBrokerRoutes = async (changes) => {
+    const newRoutes = { ...(brokerRoutes || {}), ...changes };
+    setBrokerRoutes(newRoutes);
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates,
+      brokerRoutes: newRoutes,
+      brokerCommissionDefaults: brokerCommissionDefaults,
+      brokerCommissionTolerance: brokerCommissionTolerance
+    };
+    writeOverrides(currentOverrides);
+    setMessage('Broker routes saved to localStorage.');
+  };
+
+  const updateBrokerCommissionDefaults = async (changes) => {
+    const newDefaults = { ...(brokerCommissionDefaults || {}), ...changes };
+    setBrokerCommissionDefaults(newDefaults);
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates,
+      brokerRoutes: brokerRoutes,
+      brokerCommissionDefaults: newDefaults,
+      brokerCommissionTolerance: brokerCommissionTolerance
+    };
+    writeOverrides(currentOverrides);
+    setMessage('Broker commission defaults saved to localStorage.');
+  };
+
+  const updateBrokerCommissionTolerance = async (newTolerance) => {
+    setBrokerCommissionTolerance(newTolerance);
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates,
+      brokerRoutes: brokerRoutes,
+      brokerCommissionDefaults: brokerCommissionDefaults,
+      brokerCommissionTolerance: newTolerance
+    };
+    writeOverrides(currentOverrides);
+    setMessage('Broker commission tolerance saved to localStorage.');
+  };
+
+  // Add new broker route
+  const addBrokerRoute = async () => {
+    // Validate inputs
+    if (!newRouteKey.trim()) {
+      setMessage('Error: Route key cannot be empty');
+      return;
+    }
+    if (!newRouteDisplayName.trim()) {
+      setMessage('Error: Display name cannot be empty');
+      return;
+    }
+    
+    // Convert key to uppercase and replace spaces with underscores
+    const formattedKey = newRouteKey.trim().toUpperCase().replace(/\s+/g, '_');
+    
+    // Check if key already exists
+    if (brokerRoutes[formattedKey]) {
+      setMessage(`Error: Route key "${formattedKey}" already exists`);
+      return;
+    }
+    
+    // Add to broker routes
+    const newRoutes = { ...brokerRoutes, [formattedKey]: newRouteDisplayName.trim() };
+    setBrokerRoutes(newRoutes);
+    
+    // Add to commission defaults
+    const commission = parseFloat(newRouteCommission) || 0.9;
+    const newDefaults = { ...brokerCommissionDefaults, [newRouteDisplayName.trim()]: commission };
+    setBrokerCommissionDefaults(newDefaults);
+    
+    // Save to localStorage
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates,
+      brokerRoutes: newRoutes,
+      brokerCommissionDefaults: newDefaults,
+      brokerCommissionTolerance: brokerCommissionTolerance
+    };
+    writeOverrides(currentOverrides);
+    
+    // Reset form and close
+    setNewRouteKey('');
+    setNewRouteDisplayName('');
+    setNewRouteCommission('0.9');
+    setShowAddRouteForm(false);
+    setMessage(`Added new broker route: ${formattedKey} (${newRouteDisplayName.trim()})`);
+  };
+
+  // Delete broker route
+  const deleteBrokerRoute = async (routeKey) => {
+    // Show modal instead of confirm dialog
+    const displayName = brokerRoutes[routeKey];
+    setDeleteConfirmation({ show: true, routeKey, displayName });
+  };
+
+  // Confirm deletion from modal
+  const confirmDeleteBrokerRoute = async () => {
+    const { routeKey, displayName } = deleteConfirmation;
+    
+    // Remove from broker routes
+    const newRoutes = { ...brokerRoutes };
+    delete newRoutes[routeKey];
+    setBrokerRoutes(newRoutes);
+    
+    // Remove from commission defaults
+    const newDefaults = { ...brokerCommissionDefaults };
+    delete newDefaults[displayName];
+    setBrokerCommissionDefaults(newDefaults);
+    
+    // Save to localStorage
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates,
+      brokerRoutes: newRoutes,
+      brokerCommissionDefaults: newDefaults,
+      brokerCommissionTolerance: brokerCommissionTolerance
+    };
+    writeOverrides(currentOverrides);
+    
+    setMessage(`Deleted broker route: ${routeKey}`);
+    setDeleteConfirmation({ show: false, routeKey: '', displayName: '' });
+  };
+
+  // Cancel deletion from modal
+  const cancelDeleteBrokerRoute = () => {
+    setDeleteConfirmation({ show: false, routeKey: '', displayName: '' });
   };
 
   // Save a single named column to Supabase table `app_constants`.
@@ -1050,6 +1290,184 @@ export default function Constants() {
         {/* Preview removed as requested */}
       </section>
 
+      <section className="slds-box slds-m-bottom_medium">
+        <h3>Broker Settings</h3>
+        <p className="helper-text">Configure broker routes, commission defaults, and tolerance settings.</p>
+
+        <div className="slds-m-bottom_medium">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h4>Broker Routes</h4>
+            <button 
+              className="slds-button slds-button_brand" 
+              onClick={() => setShowAddRouteForm(!showAddRouteForm)}
+            >
+              {showAddRouteForm ? 'Cancel' : 'Add New Route'}
+            </button>
+          </div>
+
+          {showAddRouteForm && (
+            <div className="slds-box slds-box_small slds-m-bottom_small" style={{ backgroundColor: '#f3f2f2', padding: '1rem' }}>
+              <h5 style={{ marginBottom: '1rem' }}>Add New Broker Route</h5>
+              <div className="slds-grid slds-wrap slds-gutters_small" style={{ gap: '1rem', marginBottom: '1rem' }}>
+                <div className="slds-col" style={{ minWidth: 200 }}>
+                  <label className="slds-form-element__label">Route Key (e.g., SOLICITOR)</label>
+                  <input
+                    className="slds-input"
+                    type="text"
+                    placeholder="SOLICITOR"
+                    value={newRouteKey}
+                    onChange={(e) => setNewRouteKey(e.target.value)}
+                  />
+                  <div className="helper-text">Uppercase, underscores for spaces</div>
+                </div>
+                <div className="slds-col" style={{ minWidth: 200 }}>
+                  <label className="slds-form-element__label">Display Name</label>
+                  <input
+                    className="slds-input"
+                    type="text"
+                    placeholder="Solicitor"
+                    value={newRouteDisplayName}
+                    onChange={(e) => setNewRouteDisplayName(e.target.value)}
+                  />
+                  <div className="helper-text">Name shown in dropdown</div>
+                </div>
+                <div className="slds-col" style={{ minWidth: 150 }}>
+                  <label className="slds-form-element__label">Default Commission (%)</label>
+                  <input
+                    className="slds-input"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    placeholder="0.9"
+                    value={newRouteCommission}
+                    onChange={(e) => setNewRouteCommission(e.target.value)}
+                  />
+                  <div className="helper-text">Default percentage</div>
+                </div>
+              </div>
+              <div className="slds-button-group">
+                <button className="slds-button slds-button_brand" onClick={addBrokerRoute}>
+                  Add Route
+                </button>
+                <button className="slds-button slds-button_neutral" onClick={() => {
+                  setShowAddRouteForm(false);
+                  setNewRouteKey('');
+                  setNewRouteDisplayName('');
+                  setNewRouteCommission('0.9');
+                }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="slds-grid slds-wrap slds-gutters_small" style={{ gap: '1rem' }}>
+            {Object.keys(brokerRoutes || DEFAULT_BROKER_ROUTES).map(routeKey => {
+              const key = `brokerRoutes:${routeKey}`;
+              return (
+                <div key={routeKey} className="slds-col" style={{ minWidth: 260 }}>
+                  <label className="slds-form-element__label">{routeKey}</label>
+                  <div className="slds-form-element__control slds-grid" style={{ alignItems: 'center', gap: '0.5rem' }}>
+                    <input
+                      className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                      type="text"
+                      value={editingFields[key] ? (tempValues[key] ?? '') : (brokerRoutes[routeKey] ?? DEFAULT_BROKER_ROUTES[routeKey])}
+                      onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                      disabled={!editingFields[key]}
+                    />
+                    {!editingFields[key] ? (
+                      <>
+                        <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, brokerRoutes[routeKey] ?? DEFAULT_BROKER_ROUTES[routeKey])}>Edit</button>
+                        <button className="slds-button slds-button_destructive" onClick={() => deleteBrokerRoute(routeKey)}>Delete</button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                      </>
+                    )}
+                  </div>
+                  <div className="helper-text">Display name for {routeKey} broker route.</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="slds-m-bottom_medium">
+          <h4>Broker Commission Defaults (%)</h4>
+          <div className="slds-grid slds-wrap slds-gutters_small" style={{ gap: '1rem' }}>
+            {Object.keys(brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS).map(route => {
+              const key = `brokerCommission:${route}`;
+              return (
+                <div key={route} className="slds-col" style={{ minWidth: 260 }}>
+                  <label className="slds-form-element__label">{route}</label>
+                  <div className="slds-form-element__control slds-grid" style={{ alignItems: 'center', gap: '0.5rem' }}>
+                    <input
+                      className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      value={editingFields[key] ? (tempValues[key] ?? '') : (brokerCommissionDefaults[route] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[route] ?? 0.9)}
+                      onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                      disabled={!editingFields[key]}
+                    />
+                    <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
+                    {!editingFields[key] ? (
+                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(brokerCommissionDefaults[route] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[route] ?? 0.9))}>Edit</button>
+                    ) : (
+                      <>
+                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                      </>
+                    )}
+                  </div>
+                  <div className="helper-text">Default commission percentage for {route}.</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          <h4>Commission Tolerance</h4>
+          <div className="slds-col" style={{ minWidth: 260, maxWidth: 400 }}>
+            <label className="slds-form-element__label">Tolerance (±%)</label>
+            <div className="slds-form-element__control slds-grid" style={{ alignItems: 'center', gap: '0.5rem' }}>
+              {(() => {
+                const key = 'brokerTolerance';
+                return (
+                  <>
+                    <input
+                      className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="10"
+                      value={editingFields[key] ? (tempValues[key] ?? '') : (brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE)}
+                      onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                      disabled={!editingFields[key]}
+                    />
+                    <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
+                    {!editingFields[key] ? (
+                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE))}>Edit</button>
+                    ) : (
+                      <>
+                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+            <div className="helper-text">Allowable deviation from default commission (e.g., 0.2 means ±0.2%).</div>
+          </div>
+        </div>
+      </section>
+
       {/* Flat-above-commercial override removed — rule is now hard-coded in calculator logic per user request. */}
 
       <div className="slds-button-group">
@@ -1069,6 +1487,40 @@ export default function Constants() {
 
       {message && <div className="slds-text-title_caps slds-m-top_small">{message}</div>}
       
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation.show && (
+        <div className="slds-modal slds-fade-in-open" role="dialog" aria-modal="true">
+          <div className="slds-modal__container">
+            <header className="slds-modal__header">
+              <h2 className="slds-text-heading_medium">Confirm Deletion</h2>
+            </header>
+            <div className="slds-modal__content slds-p-around_medium">
+              <p style={{ marginBottom: '1rem' }}>
+                Are you sure you want to delete the route <strong>"{deleteConfirmation.routeKey}"</strong>?
+              </p>
+              <div className="slds-notify slds-notify_alert slds-alert_warning" role="alert" style={{ marginTop: '1rem' }}>
+                <span className="slds-assistive-text">warning</span>
+                <h2 style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                  Warning
+                </h2>
+                <div className="slds-notify__content">
+                  <p>Existing quotes using this route will still reference it in the database. The route will simply not appear in the dropdown for new quotes.</p>
+                </div>
+              </div>
+            </div>
+            <footer className="slds-modal__footer">
+              <button className="slds-button slds-button_neutral" onClick={cancelDeleteBrokerRoute}>
+                Cancel
+              </button>
+              <button className="slds-button slds-button_destructive" onClick={confirmDeleteBrokerRoute}>
+                Delete Route
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
+      {deleteConfirmation.show && <div className="slds-backdrop slds-backdrop_open"></div>}
+
       <NotificationModal
         isOpen={notification.show}
         onClose={() => setNotification({ ...notification, show: false })}

@@ -75,6 +75,15 @@ export default function SaveQuoteButton({
         name,
         calculator_type: calculatorType,
         status: 'draft',
+        // Client details (from calculators)
+        client_type: calculationData.clientType || null, // 'Direct' or 'Broker'
+        client_first_name: calculationData.clientFirstName || null,
+        client_last_name: calculationData.clientLastName || null,
+        client_email: calculationData.clientEmail || null,
+        client_contact_number: calculationData.clientContact || null,
+        broker_company_name: calculationData.brokerCompanyName || null,
+        broker_route: calculationData.brokerRoute || null, // Direct Broker | Mortgage club | Network | Packager
+        broker_commission_percent: calculationData.brokerCommissionPercent != null ? Number(calculationData.brokerCommissionPercent) : null,
         borrower_type: borrowerType,
         borrower_name: borrowerType === 'Personal' ? borrowerName : null,
         company_name: borrowerType === 'Company' ? companyName : null,
