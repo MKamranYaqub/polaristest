@@ -170,6 +170,25 @@ const UserProfileButton = () => {
                     href="#"
                     className="slds-dropdown__item-link"
                     role="menuitem"
+                    onClick={(e) => { e.preventDefault(); setShowMenu(false); navigate('/settings'); }}
+                    style={{ 
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '0.75rem 1rem',
+                      color: '#181818',
+                      textDecoration: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <span style={{ marginRight: '0.5rem', fontSize: '16px' }}>⚙️</span>
+                    <span>Settings</span>
+                  </a>
+                </li>
+                <li className="slds-dropdown__item" role="presentation" style={{ listStyle: 'none' }}>
+                  <a
+                    href="#"
+                    className="slds-dropdown__item-link"
+                    role="menuitem"
                     onClick={(e) => { e.preventDefault(); handlePasswordClick(); }}
                     style={{ 
                       display: 'flex',

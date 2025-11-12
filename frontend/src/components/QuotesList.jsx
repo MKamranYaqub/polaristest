@@ -269,7 +269,9 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
       {error && <div style={{ color: 'red' }}>{error}</div>}
       
       {/* Filters Section */}
-      <div style={{ 
+      <div 
+        className="quotes-filter-section"
+        style={{ 
         background: '#f3f3f3', 
         padding: '1rem', 
         marginBottom: '1rem', 
@@ -378,7 +380,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         </div>
       </div>
 
-      <div style={{ marginBottom: '0.5rem', color: '#666' }}>
+      <div className="quotes-showing-count" style={{ marginBottom: '0.5rem', color: '#666' }}>
         Showing {paginatedQuotes.length} of {filteredQuotes.length} quotes
       </div>
       
@@ -394,7 +396,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
               <th>Created By</th>
               <th>Created</th>
               <th>Updated</th>
-              <th style={{ position: 'sticky', right: 0, background: 'white', zIndex: 1 }}>Actions</th>
+              <th className="sticky-actions-header" style={{ position: 'sticky', right: 0, background: 'white', zIndex: 1 }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -412,7 +414,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                 </td>
                 <td>{new Date(q.created_at).toLocaleString()}</td>
                 <td>{q.updated_at ? new Date(q.updated_at).toLocaleString() : '—'}</td>
-                <td style={{ position: 'sticky', right: 0, background: 'white', zIndex: 1 }}>
+                <td className="sticky-actions-cell" style={{ position: 'sticky', right: 0, background: 'white', zIndex: 1 }}>
                   <button className="slds-button slds-button_neutral" onClick={() => handleLoad(q.id)}>Load</button>
                   <button style={{ marginLeft: 8 }} className="slds-button slds-button_destructive" onClick={() => handleDelete(q.id)}>Delete</button>
                 </td>
