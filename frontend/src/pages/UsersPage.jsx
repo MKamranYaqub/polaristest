@@ -221,7 +221,7 @@ const UsersPage = () => {
       <div className="slds-page-header" style={{ marginBottom: '1.5rem' }}>
         <div className="slds-grid slds-grid_vertical-align-center">
           <div className="slds-col slds-has-flexi-truncate">
-            <h1 className="slds-text-heading_large">User Management</h1>
+            <h3 className="slds-text-heading_large">User Management</h3>
             <p className="slds-text-body_small slds-m-top_xx-small" style={{ color: '#706e6b' }}>
               Manage user accounts, access levels, and permissions
             </p>

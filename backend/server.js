@@ -2,6 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { supabase } from './config/supabase.js';
+import { validateEnvironment } from './config/validateEnv.js';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import logger, { httpLogger } from './utils/logger.js';
 import quotesRouter from './routes/quotes.js';
 import dipPdfRouter from './routes/dipPdf.js';
 import quotePdfRouter from './routes/quotePdf.js';
@@ -12,6 +15,9 @@ import { apiLimiter, exportLimiter, pdfLimiter } from './middleware/rateLimiter.
 
 // Load environment variables
 dotenv.config();
+
+// Validate required environment variables before starting server
+validateEnvironment();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -46,11 +52,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Add a global request logger to see if requests are hitting the server
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] Received ${req.method} request for ${req.originalUrl}`);
-  next();
-});
+// HTTP request logging (replaces console.log middleware)
+app.use(httpLogger);
 
 // Apply rate limiting to all API routes
 app.use('/api', apiLimiter);
@@ -100,18 +103,17 @@ app.use('/api/quote/pdf', quotePdfRouter);
 app.use('/api/export', exportLimiter);
 app.use('/api/export', exportRouter);
 
-// Error handling
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({
-    success: false,
-    message: 'Internal server error',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
-  });
-});
+// 404 handler - must be after all routes
+app.use(notFoundHandler);
+
+// Error handling - must be last
+app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  if (process.env.FRONTEND_URL) console.log(`🌐 Frontend allowed origin: ${process.env.FRONTEND_URL}`);
-  console.log(`💾 Supabase connected`);
+  logger.info(`🚀 Server running on port ${PORT}`);
+  if (process.env.FRONTEND_URL) {
+    logger.info(`🌐 Frontend allowed origin: ${process.env.FRONTEND_URL}`);
+  }
+  logger.info(`💾 Supabase connected`);
+  logger.info(`📝 Logging to: logs/combined.log`);
 });

@@ -12,13 +12,22 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "express-rate-limit": "^8.2.1",
+    "joi": "^18.0.1",
     "jsonwebtoken": "^9.0.2",
-    "pdfkit": "^0.17.2"
+    "pdfkit": "^0.17.2",
+    "winston": "^3.18.3"
   },
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
     "seed:rates": "node scripts/seedRates.js",
-    "import:rates": "node scripts/importRatesCsv.js"
+    "import:rates": "node scripts/importRatesCsv.js",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage"
+  },
+  "devDependencies": {
+    "supertest": "^7.1.4",
+    "vitest": "^4.0.8"
   }
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { saveQuote, updateQuote } from '../utils/quotes';
 import { useAuth } from '../contexts/AuthContext';
 import ModalShell from './ModalShell';
@@ -383,3 +384,78 @@ export default function SaveQuoteButton({
     </div>
   );
 }
+
+SaveQuoteButton.propTypes = {
+  calculatorType: PropTypes.oneOf(['bridging', 'btl', 'BTL', 'BRIDGING', 'BRIDGE']).isRequired,
+  calculationData: PropTypes.shape({
+    // Common fields
+    propertyValue: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    monthlyRent: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    topSlicing: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    productScope: PropTypes.string,
+    selectedRange: PropTypes.string,
+    answers: PropTypes.object,
+    // Client details
+    clientType: PropTypes.string,
+    clientFirstName: PropTypes.string,
+    clientLastName: PropTypes.string,
+    clientEmail: PropTypes.string,
+    clientContact: PropTypes.string,
+    brokerCompanyName: PropTypes.string,
+    brokerRoute: PropTypes.string,
+    brokerCommissionPercent: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    // BTL-specific
+    retentionChoice: PropTypes.string,
+    retentionLtv: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    tier: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    loanType: PropTypes.string,
+    specificGrossLoan: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    specificNetLoan: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    targetLtv: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    productType: PropTypes.string,
+    addFeesToggle: PropTypes.bool,
+    feeCalculationType: PropTypes.string,
+    additionalFeeAmount: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    relevantRates: PropTypes.arrayOf(PropTypes.object),
+    // Bridging-specific
+    grossLoan: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    firstChargeValue: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    useSpecificNet: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+    bridgingTerm: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    chargeType: PropTypes.string,
+    subProduct: PropTypes.string,
+    results: PropTypes.arrayOf(PropTypes.object),
+  }).isRequired,
+  allColumnData: PropTypes.arrayOf(PropTypes.object).isRequired,
+  bestSummary: PropTypes.shape({
+    lender: PropTypes.string,
+    monthlyRate: PropTypes.number,
+    annualRate: PropTypes.number,
+    product: PropTypes.string,
+    criteria: PropTypes.string,
+  }),
+  existingQuote: PropTypes.shape({
+    id: PropTypes.string,
+    reference_number: PropTypes.string,
+    calculator_type: PropTypes.string,
+    calculation_data: PropTypes.object,
+    name: PropTypes.string,
+    borrower_type: PropTypes.string,
+    borrower_name: PropTypes.string,
+    company_name: PropTypes.string,
+    notes: PropTypes.string,
+    selected_range: PropTypes.string,
+    status: PropTypes.string,
+    created_at: PropTypes.string,
+    updated_at: PropTypes.string,
+  }),
+  showProductRangeSelection: PropTypes.bool,
+  onSaved: PropTypes.func,
+};
+
+SaveQuoteButton.defaultProps = {
+  bestSummary: null,
+  existingQuote: null,
+  showProductRangeSelection: false,
+  onSaved: null,
+};
