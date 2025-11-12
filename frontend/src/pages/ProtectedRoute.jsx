@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const ProtectedRoute = ({ requiredAccessLevel = 5 }) => {
+const ProtectedRoute = ({ requiredAccessLevel = 5, allowedAccessLevels = null }) => {
   const { user, loading, hasPermission } = useAuth();
 
   // Show loading state while checking authentication
@@ -26,7 +26,11 @@ const ProtectedRoute = ({ requiredAccessLevel = 5 }) => {
   }
 
   // Check if user has required access level
-  if (!hasPermission(requiredAccessLevel)) {
+  const isAllowedByList = Array.isArray(allowedAccessLevels)
+    ? allowedAccessLevels.includes(user.access_level)
+    : true;
+
+  if (!isAllowedByList || !hasPermission(requiredAccessLevel)) {
     // User is authenticated but doesn't have sufficient permissions
     return (
       <div className="slds-p-around_large">

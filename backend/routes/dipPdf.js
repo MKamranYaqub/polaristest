@@ -1,8 +1,11 @@
 import express from 'express';
 import PDFDocument from 'pdfkit';
 import { supabase } from '../config/supabase.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
+
+router.use(authenticateToken);
 
 // Generate PDF for a quote with DIP data
 router.post('/:id', async (req, res) => {

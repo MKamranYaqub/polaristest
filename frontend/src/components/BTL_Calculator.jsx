@@ -36,7 +36,7 @@ function computeTierFromAnswers(answers) {
 
 export default function BTLcalculator({ initialQuote = null }) {
   const { supabase } = useSupabase();
-  const { canEditCalculators } = useAuth();
+  const { canEditCalculators, token } = useAuth();
   const location = useLocation();
   const navQuote = location && location.state ? location.state.loadQuote : null;
   const effectiveInitialQuote = initialQuote || navQuote;
@@ -836,7 +836,10 @@ export default function BTLcalculator({ initialQuote = null }) {
 
       const response = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           calculator_type: 'BTL',
           ...dataToSave
@@ -859,7 +862,8 @@ export default function BTLcalculator({ initialQuote = null }) {
   const handleCreatePDF = async (quoteId) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/dip/pdf/${quoteId}`, {
-        method: 'POST'
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       if (!response.ok) {
@@ -959,6 +963,7 @@ export default function BTLcalculator({ initialQuote = null }) {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           calculator_type: 'BTL',
@@ -985,6 +990,7 @@ export default function BTLcalculator({ initialQuote = null }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         }
       });
 

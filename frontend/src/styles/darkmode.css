@@ -512,15 +512,56 @@ body.dark-mode #root {
 }
 
 /* Toggle Switches */
+.dark-mode .modern-switch .switch-track {
+  background: var(--token-border-strong) !important;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.dark-mode .modern-switch .switch-track .switch-thumb {
+  background: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+}
+
 .dark-mode .modern-switch .switch-track.checked {
-  background: var(--token-interactive-brand) !important;
+  background: linear-gradient(90deg, var(--token-interactive-brand), var(--token-interactive-hover)) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.dark-mode .modern-switch .switch-track.checked .switch-thumb {
+  background: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 /* Range Toggle Buttons */
-.dark-mode .range-button.active {
+.dark-mode .range-toggle-buttons .range-button,
+:root[data-carbon-theme="g100"] .range-toggle-buttons .range-button {
+  background: var(--token-layer-background) !important;
+  color: var(--token-text-secondary) !important;
+  border-right: 1px solid var(--token-border-strong) !important;
+}
+
+.dark-mode .range-toggle-buttons .range-button:last-child,
+:root[data-carbon-theme="g100"] .range-toggle-buttons .range-button:last-child {
+  border-right: none !important;
+}
+
+.dark-mode .range-toggle-buttons .range-button:not(.active):hover,
+:root[data-carbon-theme="g100"] .range-toggle-buttons .range-button:not(.active):hover {
+  background: var(--token-layer-active) !important;
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .range-toggle-buttons .range-button.active,
+:root[data-carbon-theme="g100"] .range-toggle-buttons .range-button.active {
   background: var(--token-interactive-brand) !important;
   border-color: var(--token-interactive-brand) !important;
   color: #ffffff !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .range-toggle-buttons .range-button.active:hover,
+:root[data-carbon-theme="g100"] .range-toggle-buttons .range-button.active:hover {
+  background: var(--token-interactive-brand-hover) !important;
 }
 
 /* First Charge Warning */
@@ -707,6 +748,14 @@ body.dark-mode #root {
 .dark-mode *:focus-visible {
   outline: 2px solid var(--token-interactive) !important;
   outline-offset: 2px;
+}
+
+.dark-mode .slds-button:focus-visible,
+.dark-mode .range-toggle-buttons .range-button:focus-visible,
+.dark-mode .modern-switch .switch-track:focus-visible {
+  outline: 1px solid var(--token-interactive-hover) !important;
+  outline-offset: 1px !important;
+  box-shadow: none !important;
 }
 
 /* ============================================

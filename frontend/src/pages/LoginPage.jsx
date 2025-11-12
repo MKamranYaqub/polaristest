@@ -107,15 +107,6 @@ export default function LoginPage() {
           </div>
         </form>
 
-        <div className="slds-m-top_medium" style={{ textAlign: 'center', borderTop: '1px solid #dddbda', paddingTop: '1rem' }}>
-          <p className="slds-text-body_small">
-            Don't have an account?{' '}
-            <Link to="/register" className="slds-text-link">
-              Register here
-            </Link>
-          </p>
-        </div>
-
         <div className="slds-m-top_medium slds-p-around_small" style={{ backgroundColor: '#f3f3f3', borderRadius: '4px' }}>
           <p className="slds-text-body_small" style={{ margin: 0, color: '#706e6b' }}>
             <strong>Demo Credentials:</strong><br />

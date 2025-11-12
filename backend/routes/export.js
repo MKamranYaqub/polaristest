@@ -1,7 +1,10 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
+
+router.use(authenticateToken);
 
 // Export all quotes with their results
 router.get('/quotes', async (req, res) => {

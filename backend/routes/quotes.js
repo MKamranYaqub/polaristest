@@ -2,9 +2,12 @@ import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { validate, createQuoteSchema, updateQuoteSchema } from '../middleware/validation.js';
 import { asyncHandler, ErrorTypes } from '../middleware/errorHandler.js';
+import { authenticateToken } from '../middleware/auth.js';
 import log from '../utils/logger.js';
 
 const router = express.Router();
+
+router.use(authenticateToken);
 
 // Helper: parse numeric or return null (avoid inserting empty strings into numeric columns)
 function toNullableNumber(v) {

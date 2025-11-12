@@ -1,10 +1,15 @@
 // Lightweight helper to call backend /api/quotes endpoints
 import { API_BASE_URL } from '../config/api.js';
 
+const authHeaders = () => {
+  const token = localStorage.getItem('auth_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 export async function saveQuote(quoteData) {
   const res = await fetch(`${API_BASE_URL}/api/quotes`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(quoteData),
   });
   if (!res.ok) {
@@ -20,14 +25,18 @@ export async function listQuotes({ user_id = null, calculator_type = null, limit
   if (calculator_type) params.append('calculator_type', calculator_type);
   params.append('limit', String(limit));
   params.append('offset', String(offset));
-  const res = await fetch(`${API_BASE_URL}/api/quotes?${params.toString()}`);
+  const res = await fetch(`${API_BASE_URL}/api/quotes?${params.toString()}`, {
+    headers: authHeaders(),
+  });
   if (!res.ok) throw new Error(`Failed to list quotes: ${res.statusText}`);
   return res.json();
 }
 
 export async function getQuote(id, includeResults = true) {
   const url = includeResults ? `${API_BASE_URL}/api/quotes/${id}?include_results=true` : `${API_BASE_URL}/api/quotes/${id}`;
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: authHeaders(),
+  });
   if (!res.ok) throw new Error(`Failed to get quote ${id}: ${res.statusText}`);
   return res.json();
 }
@@ -35,7 +44,7 @@ export async function getQuote(id, includeResults = true) {
 export async function updateQuote(id, updates) {
   const res = await fetch(`${API_BASE_URL}/api/quotes/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(updates),
   });
   if (!res.ok) throw new Error(`Failed to update quote ${id}: ${res.statusText}`);
@@ -43,7 +52,10 @@ export async function updateQuote(id, updates) {
 }
 
 export async function deleteQuote(id) {
-  const res = await fetch(`${API_BASE_URL}/api/quotes/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${API_BASE_URL}/api/quotes/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
   if (!res.ok) throw new Error(`Failed to delete quote ${id}: ${res.statusText}`);
   return res.json();
 }

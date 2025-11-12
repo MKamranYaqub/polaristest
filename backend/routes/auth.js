@@ -5,7 +5,6 @@ import crypto from 'crypto';
 import { supabase } from '../config/supabase.js';
 import { 
   loginSchema, 
-  registerSchema, 
   changePasswordSchema,
   resetPasswordRequestSchema,
   resetPasswordSchema,
@@ -14,118 +13,18 @@ import {
   validate 
 } from '../middleware/validation.js';
 import { AppError, ErrorTypes, asyncHandler } from '../middleware/errorHandler.js';
+import { authenticateToken, requireAccessLevel } from '../middleware/auth.js';
+import { authLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
-// Validate JWT_SECRET is set - fail fast if missing
 const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  console.error('FATAL ERROR: JWT_SECRET environment variable is not set!');
-  console.error('Server cannot start without a secure JWT secret.');
-  process.exit(1);
-}
 
 const SALT_ROUNDS = 10;
 
-// Middleware to verify JWT token
-export const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-
-  if (!token) {
-    throw ErrorTypes.unauthorized('Access token required');
-  }
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      throw ErrorTypes.unauthorized('Invalid or expired token');
-    }
-    req.user = user;
-    next();
-  });
-};
-
-// Middleware to check required access level
-export const requireAccessLevel = (minLevel) => {
-  return (req, res, next) => {
-    if (!req.user) {
-      throw ErrorTypes.unauthorized('Authentication required');
-    }
-    
-    // Lower access_level number = higher permission (1=Admin is highest)
-    if (req.user.access_level > minLevel) {
-      throw ErrorTypes.forbidden('Insufficient permissions');
-    }
-    
-    next();
-  };
-};
-
 // POST /api/auth/register - Create new user account
-router.post('/register', validate(registerSchema), asyncHandler(async (req, res) => {
-  const { email, password, name, access_level } = req.body;
-
-  // Check if user already exists
-  const { data: existingUser } = await supabase
-    .from('users')
-    .select('id')
-    .eq('email', email.toLowerCase())
-    .single();
-
-  if (existingUser) {
-    throw ErrorTypes.conflict('User with this email');
-  }
-
-  // Hash password
-  const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
-
-  // Default access level: 4 (Underwriter) - most restricted
-  const userAccessLevel = access_level || 4;
-
-  // Create user
-  const { data: newUser, error } = await supabase
-    .from('users')
-    .insert({
-      email: email.toLowerCase(),
-      password_hash,
-      name: name || email.split('@')[0],
-      access_level: userAccessLevel,
-    })
-    .select('id, email, name, access_level, created_at')
-    .single();
-
-  if (error) throw ErrorTypes.database('Failed to create user');
-
-  // Log audit trail
-  await supabase.from('audit_logs').insert({
-    user_id: newUser.id,
-    action: 'USER_REGISTERED',
-    table_name: 'users',
-    record_id: newUser.id,
-    new_values: { email: newUser.email, access_level: newUser.access_level }
-  });
-
-  // Generate JWT token
-  const token = jwt.sign(
-    {
-      id: newUser.id,
-      email: newUser.email,
-      access_level: newUser.access_level,
-    },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-
-  res.status(201).json({
-    success: true,
-    message: 'User registered successfully',
-    user: newUser,
-    token,
-  });
-}));
-
 // POST /api/auth/login - Authenticate user
-router.post('/login', validate(loginSchema), asyncHandler(async (req, res) => {
+router.post('/login', authLimiter, validate(loginSchema), asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   // Find user
@@ -462,7 +361,7 @@ router.post('/users/:id/reset-password', authenticateToken, requireAccessLevel(1
 // ============= FORGOT PASSWORD FLOW =============
 
 // POST /api/auth/request-password-reset - Request password reset token
-router.post('/request-password-reset', validate(resetPasswordRequestSchema), asyncHandler(async (req, res) => {
+router.post('/request-password-reset', authLimiter, validate(resetPasswordRequestSchema), asyncHandler(async (req, res) => {
   const { email } = req.body;
 
   // Find user by email
@@ -533,7 +432,7 @@ router.post('/request-password-reset', validate(resetPasswordRequestSchema), asy
 }));
 
 // POST /api/auth/reset-password - Reset password using token
-router.post('/reset-password', validate(resetPasswordSchema), asyncHandler(async (req, res) => {
+router.post('/reset-password', authLimiter, validate(resetPasswordSchema), asyncHandler(async (req, res) => {
   const { token, new_password } = req.body;
 
   // Find user by reset token

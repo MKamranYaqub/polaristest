@@ -111,36 +111,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register
-  const register = async (email, password, name, access_level) => {
-    try {
-      setError(null);
-      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, name, access_level }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
-
-      localStorage.setItem('auth_token', data.token);
-      setToken(data.token);
-      setUser(data.user);
-      setError(null);
-      return { success: true, user: data.user };
-    } catch (err) {
-      console.error('Register error:', err);
-      setError(err.message);
-      return { success: false, error: err.message };
-    }
-  };
-
   // Logout
   const logout = () => {
     localStorage.removeItem('auth_token');
@@ -197,7 +167,6 @@ export const AuthProvider = ({ children }) => {
     loading,
     error,
     login,
-    register,
     logout,
     changePassword,
     fetchUser,

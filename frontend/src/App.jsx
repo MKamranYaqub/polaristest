@@ -25,7 +25,6 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProtectedRoute from './pages/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
 import './styles/index.scss';
 import './styles/accessibility.css';
 
@@ -54,7 +53,6 @@ const AppContent = () => {
             <Routes>
               {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               
@@ -107,7 +105,7 @@ const AppContent = () => {
               </Route>
               
               {/* Admin section with protected route - requires access level 1-5 except 4 (Underwriter) */}
-              <Route path="/admin" element={<ProtectedRoute requiredAccessLevel={5} />}>
+              <Route path="/admin" element={<ProtectedRoute requiredAccessLevel={5} allowedAccessLevels={[1, 2, 3, 5]} />}>
                 <Route 
                   path="constants" 
                   element={
@@ -147,7 +145,7 @@ const AppContent = () => {
               </Route>
               
               {/* User management - Admin only (access level 1) */}
-              <Route path="/admin/users" element={<ProtectedRoute requiredAccessLevel={1} />}>
+              <Route path="/admin/users" element={<ProtectedRoute requiredAccessLevel={1} allowedAccessLevels={[1]} />}>
                 <Route 
                   index
                   element={
