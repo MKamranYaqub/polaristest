@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { saveQuote, updateQuote } from '../utils/quotes';
-import { useUser } from '../contexts/UserContext';
+import { useAuth } from '../contexts/AuthContext';
 import ModalShell from './ModalShell';
 
 // SaveQuoteButton shows a small modal to collect { name, borrowerName, applicantNames, notes }
@@ -14,7 +14,7 @@ export default function SaveQuoteButton({
   showProductRangeSelection = false,
   onSaved = null,
 }) {
-  const { user, getUserName } = useUser();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -88,7 +88,7 @@ export default function SaveQuoteButton({
         borrower_name: borrowerType === 'Personal' ? borrowerName : null,
         company_name: borrowerType === 'Company' ? companyName : null,
         notes: notes || null,
-        created_by: getUserName(), // Automatically add current user name
+        created_by: user?.name || 'Unknown User', // Get name from authenticated user
         created_by_id: user?.id || null, // Store user ID for tracking
       };
 
@@ -304,7 +304,7 @@ export default function SaveQuoteButton({
           <div className="slds-form-element" style={{ marginTop: '1rem', backgroundColor: '#f3f2f2', padding: '0.5rem 1rem', borderRadius: '0.25rem' }}>
             <label className="slds-form-element__label">Created By</label>
             <div className="slds-form-element__control" style={{ paddingTop: '0.25rem', fontWeight: 'bold' }}>
-              {getUserName() || 'N/A'}
+              {user?.name || 'N/A'}
             </div>
           </div>
 

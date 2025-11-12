@@ -719,3 +719,168 @@ body.dark-mode #root {
   padding: 1rem;
 }
 
+/* Calculator toggles - match Issue DIP button color */
+.dark-mode .modern-switch .switch-track.checked {
+  background: #0f62fe !important;
+}
+
+.dark-mode .range-button.active {
+  background: #0f62fe !important;
+  border-color: #0f62fe !important;
+  color: #ffffff !important;
+}
+
+/* Direct Client / Broker toggle buttons */
+.dark-mode .slds-button-group .slds-button_brand {
+  background: #0f62fe !important;
+  border-color: #0f62fe !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .slds-button-group .slds-button_brand:hover {
+  background: #0353e9 !important;
+  border-color: #0353e9 !important;
+}
+
+/* Remove outline on all buttons when clicking */
+.slds-button:focus,
+.slds-button:active,
+.slds-button_brand:focus,
+.slds-button_brand:active,
+.slds-button_neutral:focus,
+.slds-button_neutral:active,
+.range-button:focus,
+.range-button:active,
+.switch-track:focus,
+.switch-track:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Collapsible header hover color in dark mode */
+.dark-mode .collapsible-header:hover {
+  background: #4b4b4b !important;
+}
+
+/* Modal footer dark mode */
+.dark-mode .slds-modal__footer {
+  background-color: #262626 !important;
+  border-top-color: #393939 !important;
+}
+
+/* Modal footer with inline RGB styles */
+.dark-mode .slds-modal__footer[style*="rgb(244, 246, 249)"],
+.dark-mode .slds-modal__footer[style*="background: rgb(244, 246, 249)"],
+.dark-mode div[style*="background: rgb(244, 246, 249)"] {
+  background: #262626 !important;
+}
+
+.dark-mode .slds-modal__footer[style*="rgb(224, 230, 237)"],
+.dark-mode .slds-modal__footer[style*="border-top: 1px solid rgb(224, 230, 237)"],
+.dark-mode div[style*="border-top: 1px solid rgb(224, 230, 237)"] {
+  border-top-color: #393939 !important;
+}
+
+/* Modal footer buttons container */
+.dark-mode .slds-modal__footer > *,
+.dark-mode .slds-modal__footer button {
+  background-color: transparent !important;
+}
+
+/* First charge warning/helper text in dark mode */
+.dark-mode .first-charge-warning {
+  background: #3d2e00 !important;
+  color: #f4f4f4 !important;
+}
+
+.dark-mode .first-charge-label {
+  color: #f4f4f4 !important;
+}
+
+.dark-mode .first-charge-hint,
+.dark-mode .helper-text {
+  color: #c6c6c6 !important;
+}
+
+.dark-mode .helper-text[style*="color: #666"] {
+  color: #c6c6c6 !important;
+}
+
+.dark-mode div[style*="color: #666"],
+.dark-mode div[style*="color:#666"] {
+  color: #c6c6c6 !important;
+}
+
+/* Demo credentials box in login page - more specific selectors */
+.dark-mode .slds-m-top_medium[style*="backgroundColor"],
+.dark-mode .slds-m-top_medium[style*="background-color"] {
+  background-color: #262626 !important;
+  border: 1px solid #393939 !important;
+}
+
+.dark-mode div[style*="backgroundColor: #f3f3f3"],
+.dark-mode div[style*="backgroundColor:#f3f3f3"],
+.dark-mode div[style*="background-color: #f3f3f3"],
+.dark-mode div[style*="background-color:#f3f3f3"],
+.dark-mode div[style*="backgroundColor: #f3f2f2"],
+.dark-mode div[style*="backgroundColor:#f3f2f2"],
+.dark-mode div[style*="background-color: #f3f2f2"],
+.dark-mode div[style*="background-color:#f3f2f2"] {
+  background-color: #262626 !important;
+}
+
+/* Created By section in SaveQuote modal */
+.dark-mode .slds-form-element[style*="backgroundColor: #f3f2f2"],
+.dark-mode .slds-form-element[style*="background-color: #f3f2f2"],
+.dark-mode .slds-form-element[style*="backgroundColor:#f3f2f2"],
+.dark-mode .slds-form-element[style*="background-color:#f3f2f2"],
+.dark-mode div[style*="backgroundColor: rgb(243, 242, 242)"],
+.dark-mode div[style*="background-color: rgb(243, 242, 242)"] {
+  background-color: #262626 !important;
+  border: 1px solid #393939 !important;
+}
+
+.dark-mode .slds-form-element[style*="backgroundColor: #f3f2f2"] .slds-form-element__label,
+.dark-mode .slds-form-element[style*="background-color: #f3f2f2"] .slds-form-element__label {
+  color: #f4f4f4 !important;
+}
+
+.dark-mode .slds-form-element[style*="backgroundColor: #f3f2f2"] .slds-form-element__control,
+.dark-mode .slds-form-element[style*="background-color: #f3f2f2"] .slds-form-element__control {
+  color: #f4f4f4 !important;
+  background-color: transparent !important;
+}
+
+.dark-mode .slds-form-element[style*="backgroundColor: #f3f2f2"] .slds-form-element__control[style*="fontWeight"],
+.dark-mode .slds-form-element[style*="background-color: #f3f2f2"] .slds-form-element__control[style*="font-weight"] {
+  color: #f4f4f4 !important;
+}
+
+.dark-mode p[style*="color: #706e6b"],
+.dark-mode p[style*="color:#706e6b"],
+.dark-mode .slds-text-body_small[style*="color: #706e6b"],
+.dark-mode .slds-text-body_small[style*="color:#706e6b"] {
+  color: #c6c6c6 !important;
+}
+
+.dark-mode .slds-text-body_small strong {
+  color: #f4f4f4 !important;
+}
+
+/* Created by column and other table headers */
+.dark-mode .slds-table th {
+  color: #f4f4f4 !important;
+}
+
+.dark-mode .slds-table td {
+  color: #f4f4f4 !important;
+}
+
+/* Border colors for sections */
+.dark-mode div[style*="borderTop: 1px solid #dddbda"],
+.dark-mode div[style*="borderTop:1px solid #dddbda"],
+.dark-mode div[style*="border-top: 1px solid #dddbda"],
+.dark-mode div[style*="border-top:1px solid #dddbda"] {
+  border-top-color: #393939 !important;
+}
+

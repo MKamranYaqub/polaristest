@@ -16,7 +16,6 @@ import { UserProvider } from './contexts/UserContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
-import UserNamePrompt from './components/UserNamePrompt';
 import UserProfileButton from './components/UserProfileButton';
 import ThemeToggle from './components/ThemeToggle';
 import AdminPage from './pages/AdminPage';
@@ -38,7 +37,6 @@ const AppContent = () => {
     <Theme theme={resolvedTheme}>
       <UserProvider>
         <ErrorBoundary title="Application Error" message="The application encountered an unexpected error.">
-          <UserNamePrompt />
           <div className="app-shell">
           <header className="app-header">
             <h1 className="app-header__title">Project Polaris</h1>

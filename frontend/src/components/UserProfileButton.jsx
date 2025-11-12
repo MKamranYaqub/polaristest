@@ -218,7 +218,7 @@ const UserProfileButton = () => {
                       cursor: 'pointer'
                     }}
                   >
-                    <span style={{ marginRight: '0.5rem', fontSize: '16px' }}>�</span>
+                    <span style={{ marginRight: '0.5rem', fontSize: '16px' }}>🚪</span>
                     <span>Logout</span>
                   </a>
                 </li>
