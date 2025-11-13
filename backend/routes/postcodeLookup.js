@@ -3,10 +3,10 @@ const router = express.Router();
 
 /**
  * @route   GET /api/postcode-lookup/:postcode
- * @desc    Lookup addresses for a UK postcode using getAddress.io API
+ * @desc    Lookup addresses for a UK postcode using Postcoder API
  * @access  Public
- * @note    Requires GETADDRESS_API_KEY environment variable
- *          Get free API key (20 lookups/day): https://getaddress.io/
+ * @note    Requires POSTCODER_API_KEY environment variable
+ *          Get API key from: https://postcoder.com/
  */
 router.get('/:postcode', async (req, res) => {
   try {
@@ -19,20 +19,24 @@ router.get('/:postcode', async (req, res) => {
       });
     }
 
-    // Use getAddress.io API (free tier: 20 lookups/day, returns actual street addresses)
-    // Get your free API key from: https://getaddress.io/
-    const apiKey = process.env.GETADDRESS_API_KEY || 'YOUR_API_KEY_HERE';
-    const apiUrl = `https://api.getaddress.io/find/${encodeURIComponent(postcode.trim())}?api-key=${apiKey}&expand=true`;
+    // Use Postcoder API (https://postcoder.com/)
+    const apiKey = process.env.POSTCODER_API_KEY;
     
-    console.log('📍 Calling getAddress.io API');
+    if (!apiKey) {
+      throw new Error('POSTCODER_API_KEY not configured. Add it to your environment variables.');
+    }
+    
+    const apiUrl = `https://ws.postcoder.com/pcw/${apiKey}/address/uk/${encodeURIComponent(postcode.trim())}`;
+    
+    console.log('📍 Calling Postcoder API');
     
     const response = await fetch(apiUrl);
     
-    console.log('📡 getAddress.io response status:', response.status);
+    console.log('📡 Postcoder response status:', response.status);
     
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error('❌ getAddress.io error body:', errorBody);
+      console.error('❌ Postcoder error body:', errorBody);
       
       if (response.status === 404) {
         return res.status(404).json({ 
@@ -40,39 +44,46 @@ router.get('/:postcode', async (req, res) => {
           message: 'Postcode not found' 
         });
       }
-      if (response.status === 401) {
-        throw new Error('Invalid API key - get your free key from https://getaddress.io/');
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Invalid Postcoder API key');
       }
       throw new Error(`API returned status ${response.status}: ${errorBody}`);
     }
     
     const data = await response.json();
-    console.log('✅ getAddress.io found', data.addresses?.length || 0, 'addresses');
+    console.log('✅ Postcoder found', data.length || 0, 'addresses');
     
-    if (!data.addresses || data.addresses.length === 0) {
+    if (!Array.isArray(data) || data.length === 0) {
       return res.status(404).json({ 
         success: false, 
         message: 'No addresses found for this postcode' 
       });
     }
 
-    // Map getAddress.io format to our format
-    // getAddress.io returns addresses as arrays: [line1, line2, line3, line4, locality, town/city, county]
-    const addresses = data.addresses.map((addr) => {
-      // addr is an array of address components
-      const [line1, line2, line3, line4, locality, townCity, county] = addr.split(',').map(s => s.trim());
+    // Map Postcoder format to our format
+    // Postcoder returns array of address objects with properties:
+    // summaryline, organisation, buildingname, premise, street, posttown, county, postcode
+    const addresses = data.map((addr) => {
+      // Build display address from available components
+      const displayParts = [
+        addr.buildingname,
+        addr.premise,
+        addr.street,
+        addr.posttown
+      ].filter(part => part);
       
-      // Build display address (skip empty parts)
-      const displayParts = [line1, line2, line3, line4, locality, townCity].filter(part => part);
-      
-      // Street is typically line1 + line2
-      const streetParts = [line1, line2, line3].filter(part => part);
+      // Street address (building + premise + street)
+      const streetParts = [
+        addr.buildingname,
+        addr.premise,
+        addr.street
+      ].filter(part => part);
       
       return {
-        display: displayParts.join(', '),
+        display: addr.summaryline || displayParts.join(', '),
         street: streetParts.join(', '),
-        city: townCity || locality || '',
-        postcode: data.postcode || postcode.trim().toUpperCase()
+        city: addr.posttown || '',
+        postcode: addr.postcode || postcode.trim().toUpperCase()
       };
     });
 
