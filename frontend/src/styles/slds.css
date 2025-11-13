@@ -97,14 +97,15 @@ body,
 
 .slds-button_brand {
   padding: 0 1rem;
-  background-color: var(--slds-color-blue-50);
-  border-color: var(--slds-color-blue-50);
+  /* Use the app interactive token so brand buttons match range-toggle active color */
+  background-color: var(--token-interactive, #0250d9);
+  border-color: var(--token-interactive, #0250d9);
   color: white;
 }
 
 .slds-button_brand:hover {
-  background-color: var(--slds-color-blue-20);
-  border-color: var(--slds-color-blue-20);
+  background-color: var(--token-interactive-hover, #022ac0);
+  border-color: var(--token-interactive-hover, #022ac0);
 }
 
 .slds-button_neutral {
