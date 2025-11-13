@@ -17,55 +17,63 @@ router.get('/:postcode', async (req, res) => {
       });
     }
 
-    // Use ideal-postcodes.co.uk API
-    // Note: Replace 'iddqd' with your actual API key from environment variable
-    const apiKey = process.env.IDEAL_POSTCODES_API_KEY || 'iddqd';
-    const apiUrl = `https://api.ideal-postcodes.co.uk/v1/postcodes/${encodeURIComponent(postcode.trim())}?api_key=${apiKey}`;
+    // Use postcodes.io API (free, no API key required)
+    // Alternative to ideal-postcodes which requires paid API key and whitelist
+    const apiUrl = `https://api.postcodes.io/postcodes/${encodeURIComponent(postcode.trim())}`;
+    
+    console.log('📍 Calling postcodes.io API:', apiUrl);
     
     const response = await fetch(apiUrl);
     
+    console.log('📡 postcodes.io response status:', response.status);
+    
     if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('❌ postcodes.io error body:', errorBody);
+      
       if (response.status === 404) {
         return res.status(404).json({ 
           success: false, 
           message: 'Postcode not found' 
         });
       }
-      throw new Error(`API returned status ${response.status}`);
+      throw new Error(`API returned status ${response.status}: ${errorBody}`);
     }
     
     const data = await response.json();
+    console.log('✅ postcodes.io response:', JSON.stringify(data, null, 2));
     
-    if (!data.result || data.result.length === 0) {
+    if (!data.result || data.status !== 200) {
       return res.status(404).json({ 
         success: false, 
-        message: 'No addresses found for this postcode' 
+        message: 'No data found for this postcode' 
       });
     }
 
-    // Map the addresses to our format
-    const addresses = data.result.map((addr) => {
-      // Build the full address line for display
-      const addressParts = [
-        addr.line_1,
-        addr.line_2,
-        addr.line_3
-      ].filter(part => part && part.trim() !== '');
-      
-      // For street field, combine all address lines except post_town
-      const streetAddress = addressParts.join(', ');
-      
-      return {
-        display: addressParts.join(', '),
-        street: streetAddress,
-        city: addr.post_town || '',
-        postcode: addr.postcode
-      };
-    });
+    // postcodes.io returns a single result object with location data, not individual addresses
+    // We'll return the postcode with location details in a consistent format
+    const result = data.result;
+    
+    // Format: Just return the postcode information
+    // For actual property addresses, you'd need a different API (like ideal-postcodes with paid plan)
+    // or use UK Land Registry / Royal Mail PAF database
+    const addresses = [{
+      display: `${result.postcode} - ${result.admin_district}, ${result.region}`,
+      street: result.admin_ward || '',
+      city: result.admin_district || '',
+      postcode: result.postcode
+    }];
 
     res.json({ 
       success: true, 
-      addresses 
+      addresses,
+      // Include additional location data that might be useful
+      location: {
+        latitude: result.latitude,
+        longitude: result.longitude,
+        region: result.region,
+        country: result.country
+      }
     });
     
   } catch (error) {
