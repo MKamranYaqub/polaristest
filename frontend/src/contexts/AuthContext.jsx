@@ -34,8 +34,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const canEditCalculators = () => {
-    // Levels 1, 2, 3 can edit calculators
-    return user && user.access_level >= 1 && user.access_level <= 3;
+    // Allow Admin (1), UW Team Lead (2), Head of UW (3) and Underwriter (4)
+    // to edit calculator fields. Product Team (5) remains excluded.
+    return user && user.access_level >= 1 && user.access_level <= 4;
   };
 
   const canAccessAdmin = () => {
