@@ -69,7 +69,20 @@ router.get('/:postcode', async (req, res) => {
     });
     
   } catch (error) {
+    // Log full error for diagnostics
     console.error('Postcode lookup error:', error);
+
+    // In non-production or when debug=1 is provided, return the error details
+    if (process.env.NODE_ENV !== 'production' || req.query.debug === '1') {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to lookup postcode. See error details.',
+        error: error.message,
+        stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+      });
+    }
+
+    // Generic response for production
     res.status(500).json({ 
       success: false, 
       message: 'Failed to lookup postcode. Please try again.' 
