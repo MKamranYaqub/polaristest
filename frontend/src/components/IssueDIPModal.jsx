@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ModalShell from './ModalShell';
 import NotificationModal from './NotificationModal';
+import { FUNDING_LINES_BTL, FUNDING_LINES_BRIDGE, LOCALSTORAGE_CONSTANTS_KEY } from '../config/constants';
 
 export default function IssueDIPModal({ 
   isOpen, 
@@ -31,6 +32,8 @@ export default function IssueDIPModal({
 
   const [formData, setFormData] = useState({
     commercial_or_main_residence: existingDipData.commercial_or_main_residence || '',
+    // New funding_line field (string) - do not rename
+    funding_line: existingDipData.funding_line || '',
     dip_date: existingDipData.dip_date || defaults.dipDate,
     dip_expiry_date: existingDipData.dip_expiry_date || defaults.dipExpiryDate,
     guarantor_name: existingDipData.guarantor_name || '',
@@ -47,10 +50,12 @@ export default function IssueDIPModal({
   );
 
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
   
   // Notification state
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
+  
+  // Field-level validation errors
+  const [fieldErrors, setFieldErrors] = useState({});
   
   // Postcode lookup state
   const [addressLookup, setAddressLookup] = useState({});
@@ -61,6 +66,7 @@ export default function IssueDIPModal({
     if (existingDipData && Object.keys(existingDipData).length > 0) {
       setFormData({
         commercial_or_main_residence: existingDipData.commercial_or_main_residence || '',
+        funding_line: existingDipData.funding_line || '',
         dip_date: existingDipData.dip_date || defaults.dipDate,
         dip_expiry_date: existingDipData.dip_expiry_date || defaults.dipExpiryDate,
         guarantor_name: existingDipData.guarantor_name || '',
@@ -190,41 +196,123 @@ export default function IssueDIPModal({
   };
 
   const validateForm = () => {
+    const errors = {};
+    
+    // Check all mandatory fields and collect errors
     if (!formData.commercial_or_main_residence) {
-      setError('Please select residence type');
-      return false;
+      errors.commercial_or_main_residence = 'Please select residence type';
+    }
+    if (!formData.funding_line) {
+      errors.funding_line = 'Please select funding line';
     }
     if (!formData.dip_date) {
-      setError('Please enter DIP date');
-      return false;
+      errors.dip_date = 'Please enter DIP date';
     }
     if (!formData.dip_expiry_date) {
-      setError('Please enter DIP expiry date');
-      return false;
+      errors.dip_expiry_date = 'Please enter DIP expiry date';
+    }
+    if (!formData.guarantor_name || !formData.guarantor_name.trim()) {
+      errors.guarantor_name = 'Please enter guarantor name';
+    }
+    if (!formData.lender_legal_fee || !formData.lender_legal_fee.trim()) {
+      errors.lender_legal_fee = 'Please enter lender legal fee';
     }
     if (!formData.number_of_applicants) {
-      setError('Please select number of applicants');
-      return false;
+      errors.number_of_applicants = 'Please select number of applicants';
+    }
+    if (!formData.overpayments_percent || !formData.overpayments_percent.trim()) {
+      errors.overpayments_percent = 'Please enter overpayments percentage';
+    }
+    if (!formData.paying_network_club || !formData.paying_network_club.trim()) {
+      errors.paying_network_club = 'Please select paying network/club';
+    }
+    if (!formData.fee_type_selection) {
+      errors.fee_type_selection = 'Please select fee type';
+    }
+    if (showProductRangeSelection && !formData.product_range) {
+      errors.product_range = 'Please select product range';
     }
     
-    // Check if at least one security property is filled
+    // Check if at least one security property is fully filled
     const hasValidProperty = securityProperties.some(
-      prop => prop.street.trim() || prop.city.trim() || prop.postcode.trim()
+      prop => prop.street.trim() && prop.city.trim() && prop.postcode.trim()
     );
     if (!hasValidProperty) {
-      setError('Please enter at least one security property');
+      errors.security_properties = 'Please complete at least one security property (all fields required)';
+    }
+
+    setFieldErrors(errors);
+    
+    // If there are errors, show notification with count
+    if (Object.keys(errors).length > 0) {
+      const errorCount = Object.keys(errors).length;
+      setNotification({ 
+        show: true, 
+        type: 'warning', 
+        title: 'Validation Error', 
+        message: `Please fix ${errorCount} error${errorCount > 1 ? 's' : ''} in the form` 
+      });
       return false;
     }
 
-    setError('');
     return true;
+  };
+
+  // Validate individual field on blur
+  const validateField = (fieldName, value) => {
+    let error = '';
+    
+    switch(fieldName) {
+      case 'commercial_or_main_residence':
+        if (!value) error = 'Please select residence type';
+        break;
+      case 'funding_line':
+        if (!value) error = 'Please select funding line';
+        break;
+      case 'dip_date':
+        if (!value) error = 'Please enter DIP date';
+        break;
+      case 'dip_expiry_date':
+        if (!value) error = 'Please enter DIP expiry date';
+        break;
+      case 'guarantor_name':
+        if (!value || !value.trim()) error = 'Please enter guarantor name';
+        break;
+      case 'lender_legal_fee':
+        if (!value || !value.trim()) error = 'Please enter lender legal fee';
+        break;
+      case 'number_of_applicants':
+        if (!value) error = 'Please select number of applicants';
+        break;
+      case 'overpayments_percent':
+        if (!value || !value.trim()) error = 'Please enter overpayments percentage';
+        break;
+      case 'paying_network_club':
+        if (!value || !value.trim()) error = 'Please select paying network/club';
+        break;
+      case 'fee_type_selection':
+        if (!value) error = 'Please select fee type';
+        break;
+      case 'product_range':
+        if (showProductRangeSelection && !value) error = 'Please select product range';
+        break;
+    }
+    
+    setFieldErrors(prev => ({
+      ...prev,
+      [fieldName]: error
+    }));
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    validateField(name, value);
   };
 
   const handleSaveData = async () => {
     if (!validateForm()) return;
 
     setSaving(true);
-    setError('');
 
     try {
       const dipData = {
@@ -237,7 +325,7 @@ export default function IssueDIPModal({
       setNotification({ show: true, type: 'success', title: 'Success', message: 'DIP data saved successfully!' });
     } catch (err) {
       console.error('Error saving DIP data:', err);
-      setError(err.message || 'Failed to save DIP data');
+      setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to save DIP data: ' + (err.message || 'Unknown error') });
     } finally {
       setSaving(false);
     }
@@ -247,7 +335,6 @@ export default function IssueDIPModal({
     if (!validateForm()) return;
 
     setSaving(true);
-    setError('');
 
     try {
       // First save the data
@@ -267,7 +354,6 @@ export default function IssueDIPModal({
       setNotification({ show: true, type: 'success', title: 'Success', message: 'DIP data saved and PDF created successfully!' });
     } catch (err) {
       console.error('Error creating DIP PDF:', err);
-      setError(err.message || 'Failed to create DIP PDF');
       setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to create DIP PDF: ' + (err.message || 'Unknown error') });
     } finally {
       setSaving(false);
@@ -300,25 +386,138 @@ export default function IssueDIPModal({
   return (
     <>
       <ModalShell isOpen={isOpen} onClose={onClose} title="Issue DIP (Decision in Principle)" footer={footerButtons}>
-      {error && <div className="slds-notify slds-notify_alert slds-theme_error margin-bottom-1">{error}</div>}
+      {/* Product Range (BTL only), Fee Type and Funding Line moved to top per request */}
+      {showProductRangeSelection && calculatorType === 'BTL' && (
+        <div className="slds-form-element margin-bottom-1">
+          <label className="slds-form-element__label">
+            <abbr className="slds-required" title="required">*</abbr> Product Range for DIP
+          </label>
+          <div className="slds-form-element__control">
+            <select 
+              className={`slds-select ${fieldErrors.product_range ? 'error-border' : ''}`}
+              name="product_range"
+              value={formData.product_range}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              required
+              aria-invalid={fieldErrors.product_range ? 'true' : 'false'}
+              aria-describedby={fieldErrors.product_range ? 'error-product_range' : undefined}
+            >
+              <option value="specialist">Specialist</option>
+              <option value="core">Core</option>
+            </select>
+          </div>
+          {fieldErrors.product_range && (
+            <div id="error-product_range" className="field-error-message" role="alert">
+              ⚠️ {fieldErrors.product_range}
+            </div>
+          )}
+          <div className="slds-form-element__help slds-text-body_small helper-text margin-top-025">
+            Select which product range to use for this DIP
+          </div>
+        </div>
+      )}
 
-      {/* Residence Type */}
+      {/* Fee Type Selection */}
+      <div className="slds-form-element margin-bottom-1">
+        <label className="slds-form-element__label">
+          <abbr className="slds-required" title="required">*</abbr> {calculatorType === 'BTL' ? 'Choose Fee Type' : 'Choose Product Type'}
+        </label>
+        <div className="slds-form-element__control">
+          <select 
+            className={`slds-select ${fieldErrors.fee_type_selection ? 'error-border' : ''}`}
+            name="fee_type_selection"
+            value={formData.fee_type_selection}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            required
+            aria-invalid={fieldErrors.fee_type_selection ? 'true' : 'false'}
+            aria-describedby={fieldErrors.fee_type_selection ? 'error-fee_type_selection' : undefined}
+          >
+            <option value="">Select...</option>
+            {availableFeeTypes.map((feeType, idx) => (
+              <option key={idx} value={feeType}>{feeType}</option>
+            ))}
+          </select>
+        </div>
+        {fieldErrors.fee_type_selection && (
+          <div id="error-fee_type_selection" className="field-error-message" role="alert">
+            ⚠️ {fieldErrors.fee_type_selection}
+          </div>
+        )}
+      </div>
+
+      {/* Funding Line (new dropdown) - options come from constants/localStorage overrides */}
+      <div className="slds-form-element margin-bottom-1">
+        <label className="slds-form-element__label">
+          <abbr className="slds-required" title="required">*</abbr> Funding Line
+        </label>
+        <div className="slds-form-element__control">
+          <select
+            className={`slds-select ${fieldErrors.funding_line ? 'error-border' : ''}`}
+            name="funding_line"
+            value={formData.funding_line}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            required
+            aria-invalid={fieldErrors.funding_line ? 'true' : 'false'}
+            aria-describedby={fieldErrors.funding_line ? 'error-funding_line' : undefined}
+          >
+            <option value="">Select...</option>
+            {(() => {
+              try {
+                const raw = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
+                if (raw) {
+                  const parsed = JSON.parse(raw);
+                  // Choose the correct funding lines based on calculator type
+                  const isBridge = calculatorType && (calculatorType.toLowerCase() === 'bridge' || calculatorType.toLowerCase() === 'bridging');
+                  const fundingLinesKey = isBridge ? 'fundingLinesBridge' : 'fundingLinesBTL';
+                  if (parsed && parsed[fundingLinesKey] && Array.isArray(parsed[fundingLinesKey]) && parsed[fundingLinesKey].length > 0) {
+                    return parsed[fundingLinesKey].map((f, i) => <option key={i} value={f}>{f}</option>);
+                  }
+                }
+              } catch (e) {
+                // ignore parse errors, fall back to default
+              }
+              // Fall back to appropriate default based on calculator type
+              const isBridge = calculatorType && (calculatorType.toLowerCase() === 'bridge' || calculatorType.toLowerCase() === 'bridging');
+              const defaultLines = isBridge ? FUNDING_LINES_BRIDGE : FUNDING_LINES_BTL;
+              return defaultLines.map((f, i) => <option key={i} value={f}>{f}</option>);
+            })()}
+          </select>
+        </div>
+        {fieldErrors.funding_line && (
+          <div id="error-funding_line" className="field-error-message" role="alert">
+            ⚠️ {fieldErrors.funding_line}
+          </div>
+        )}
+      </div>
+
+      {/* Residence Type (kept after top selections) */}
       <div className="slds-form-element margin-bottom-1">
         <label className="slds-form-element__label">
           <abbr className="slds-required" title="required">*</abbr> Commercial or Main Residence
         </label>
         <div className="slds-form-element__control">
           <select 
-            className="slds-select" 
+            className={`slds-select ${fieldErrors.commercial_or_main_residence ? 'error-border' : ''}`}
             name="commercial_or_main_residence"
             value={formData.commercial_or_main_residence}
             onChange={handleInputChange}
+            onBlur={handleBlur}
+            aria-invalid={fieldErrors.commercial_or_main_residence ? 'true' : 'false'}
+            aria-describedby={fieldErrors.commercial_or_main_residence ? 'error-commercial_or_main_residence' : undefined}
           >
             <option value="">Select...</option>
             <option value="Commercial">Commercial</option>
             <option value="Main Residence">Main Residence</option>
           </select>
         </div>
+        {fieldErrors.commercial_or_main_residence && (
+          <div id="error-commercial_or_main_residence" className="field-error-message" role="alert">
+            ⚠️ {fieldErrors.commercial_or_main_residence}
+          </div>
+        )}
       </div>
 
       {/* DIP Dates */}
@@ -330,160 +529,187 @@ export default function IssueDIPModal({
           <div className="slds-form-element__control">
             <input 
               type="date" 
-              className="slds-input" 
+              className={`slds-input ${fieldErrors.dip_date ? 'error-border' : ''}`}
               name="dip_date"
               value={formData.dip_date}
               onChange={handleInputChange}
+              onBlur={handleBlur}
+              required
+              aria-invalid={fieldErrors.dip_date ? 'true' : 'false'}
+              aria-describedby={fieldErrors.dip_date ? 'error-dip_date' : undefined}
             />
           </div>
-            </div>
-
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">
-                <abbr className="slds-required" title="required">*</abbr> DIP Expiry Date
-              </label>
-              <div className="slds-form-element__control">
-                <input 
-                  type="date" 
-                  className="slds-input" 
-                  name="dip_expiry_date"
-                  value={formData.dip_expiry_date}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Guarantor Name */}
-          <div className="slds-form-element margin-bottom-1">
-            <label className="slds-form-element__label">Guarantor Name</label>
-            <div className="slds-form-element__control">
-              <input 
-                type="text" 
-                className="slds-input" 
-                name="guarantor_name"
-                value={formData.guarantor_name}
-                onChange={handleInputChange}
-                placeholder="Enter guarantor name"
-              />
-            </div>
-          </div>
-
-          {/* Lender Legal Fee and Number of Applicants */}
-          <div className="grid-2-col-gap-margin">
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Lender Legal Fee (£)</label>
-              <div className="slds-form-element__control">
-                <input 
-                  type="number" 
-                  className="slds-input" 
-                  name="lender_legal_fee"
-                  value={formData.lender_legal_fee}
-                  onChange={handleInputChange}
-                  placeholder="0.00"
-                  step="0.01"
-                />
-              </div>
-            </div>
-
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">
-                <abbr className="slds-required" title="required">*</abbr> Number of Applicants
-              </label>
-              <div className="slds-form-element__control">
-                <select 
-                  className="slds-select" 
-                  name="number_of_applicants"
-                  value={formData.number_of_applicants}
-                  onChange={handleInputChange}
-                >
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Overpayments % and Paying Network/Club */}
-          <div className="grid-2-col-gap-margin">
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Overpayments %</label>
-              <div className="slds-form-element__control">
-                <input 
-                  type="number" 
-                  className="slds-input" 
-                  name="overpayments_percent"
-                  value={formData.overpayments_percent}
-                  onChange={handleInputChange}
-                  placeholder="10"
-                  step="0.1"
-                  min="0"
-                  max="100"
-                />
-              </div>
-            </div>
-
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Paying Network / Club?</label>
-              <div className="slds-form-element__control">
-                <select 
-                  className="slds-select" 
-                  name="paying_network_club"
-                  value={formData.paying_network_club}
-                  onChange={handleInputChange}
-                >
-                  <option value="">Select...</option>
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Product Range Selection - Only for BTL when both ranges available */}
-          {showProductRangeSelection && calculatorType === 'BTL' && (
-            <div className="slds-form-element margin-bottom-1">
-              <label className="slds-form-element__label">
-                Product Range for DIP
-              </label>
-              <div className="slds-form-element__control">
-                <select 
-                  className="slds-select" 
-                  name="product_range"
-                  value={formData.product_range}
-                  onChange={handleInputChange}
-                >
-                  <option value="specialist">Specialist</option>
-                  <option value="core">Core</option>
-                </select>
-              </div>
-              <div className="slds-form-element__help slds-text-body_small helper-text margin-top-025">
-                Select which product range to use for this DIP
-              </div>
+          {fieldErrors.dip_date && (
+            <div id="error-dip_date" className="field-error-message" role="alert">
+              ⚠️ {fieldErrors.dip_date}
             </div>
           )}
+        </div>
 
-          {/* Fee Type Selection */}
-          <div className="slds-form-element margin-bottom-1">
-            <label className="slds-form-element__label">
-              {calculatorType === 'BTL' ? 'Choose Fee Type' : 'Choose Product Type'}
-            </label>
-            <div className="slds-form-element__control">
-              <select 
-                className="slds-select" 
-                name="fee_type_selection"
-                value={formData.fee_type_selection}
-                onChange={handleInputChange}
-              >
-                <option value="">Select...</option>
-                {availableFeeTypes.map((feeType, idx) => (
-                  <option key={idx} value={feeType}>{feeType}</option>
-                ))}
-              </select>
-            </div>
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">
+            <abbr className="slds-required" title="required">*</abbr> DIP Expiry Date
+          </label>
+          <div className="slds-form-element__control">
+            <input 
+              type="date" 
+              className={`slds-input ${fieldErrors.dip_expiry_date ? 'error-border' : ''}`}
+              name="dip_expiry_date"
+              value={formData.dip_expiry_date}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              required
+              aria-invalid={fieldErrors.dip_expiry_date ? 'true' : 'false'}
+              aria-describedby={fieldErrors.dip_expiry_date ? 'error-dip_expiry_date' : undefined}
+            />
           </div>
+          {fieldErrors.dip_expiry_date && (
+            <div id="error-dip_expiry_date" className="field-error-message" role="alert">
+              ⚠️ {fieldErrors.dip_expiry_date}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Guarantor Name */}
+      <div className="slds-form-element margin-bottom-1">
+        <label className="slds-form-element__label">
+          <abbr className="slds-required" title="required">*</abbr> Guarantor Name
+        </label>
+        <div className="slds-form-element__control">
+          <input 
+            type="text" 
+            className={`slds-input ${fieldErrors.guarantor_name ? 'error-border' : ''}`}
+            name="guarantor_name"
+            value={formData.guarantor_name}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            placeholder="Enter guarantor name"
+            required
+            aria-invalid={fieldErrors.guarantor_name ? 'true' : 'false'}
+            aria-describedby={fieldErrors.guarantor_name ? 'error-guarantor_name' : undefined}
+          />
+        </div>
+        {fieldErrors.guarantor_name && (
+          <div id="error-guarantor_name" className="field-error-message" role="alert">
+            ⚠️ {fieldErrors.guarantor_name}
+          </div>
+        )}
+      </div>
+
+      {/* Lender Legal Fee and Number of Applicants */}
+      <div className="grid-2-col-gap-margin">
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">
+            <abbr className="slds-required" title="required">*</abbr> Lender Legal Fee (£)
+          </label>
+          <div className="slds-form-element__control">
+            <input 
+              type="number" 
+              className={`slds-input ${fieldErrors.lender_legal_fee ? 'error-border' : ''}`}
+              name="lender_legal_fee"
+              value={formData.lender_legal_fee}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              placeholder="0.00"
+              step="0.01"
+              required
+              aria-invalid={fieldErrors.lender_legal_fee ? 'true' : 'false'}
+              aria-describedby={fieldErrors.lender_legal_fee ? 'error-lender_legal_fee' : undefined}
+            />
+          </div>
+          {fieldErrors.lender_legal_fee && (
+            <div id="error-lender_legal_fee" className="field-error-message" role="alert">
+              ⚠️ {fieldErrors.lender_legal_fee}
+            </div>
+          )}
+        </div>
+
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">
+            <abbr className="slds-required" title="required">*</abbr> Number of Applicants
+          </label>
+          <div className="slds-form-element__control">
+            <select 
+              className={`slds-select ${fieldErrors.number_of_applicants ? 'error-border' : ''}`}
+              name="number_of_applicants"
+              value={formData.number_of_applicants}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              aria-invalid={fieldErrors.number_of_applicants ? 'true' : 'false'}
+              aria-describedby={fieldErrors.number_of_applicants ? 'error-number_of_applicants' : undefined}
+            >
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+            </select>
+          </div>
+          {fieldErrors.number_of_applicants && (
+            <div id="error-number_of_applicants" className="field-error-message" role="alert">
+              ⚠️ {fieldErrors.number_of_applicants}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Overpayments % and Paying Network/Club */}
+      <div className="grid-2-col-gap-margin">
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">
+            <abbr className="slds-required" title="required">*</abbr> Overpayments %
+          </label>
+          <div className="slds-form-element__control">
+            <input 
+              type="number" 
+              className={`slds-input ${fieldErrors.overpayments_percent ? 'error-border' : ''}`}
+              name="overpayments_percent"
+              value={formData.overpayments_percent}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              placeholder="10"
+              step="0.1"
+              min="0"
+              max="100"
+              required
+              aria-invalid={fieldErrors.overpayments_percent ? 'true' : 'false'}
+              aria-describedby={fieldErrors.overpayments_percent ? 'error-overpayments_percent' : undefined}
+            />
+          </div>
+          {fieldErrors.overpayments_percent && (
+            <div id="error-overpayments_percent" className="field-error-message" role="alert">
+              ⚠️ {fieldErrors.overpayments_percent}
+            </div>
+          )}
+        </div>
+
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">
+            <abbr className="slds-required" title="required">*</abbr> Paying Network / Club?
+          </label>
+          <div className="slds-form-element__control">
+            <select 
+              className={`slds-select ${fieldErrors.paying_network_club ? 'error-border' : ''}`}
+              name="paying_network_club"
+              value={formData.paying_network_club}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              required
+              aria-invalid={fieldErrors.paying_network_club ? 'true' : 'false'}
+              aria-describedby={fieldErrors.paying_network_club ? 'error-paying_network_club' : undefined}
+            >
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          {fieldErrors.paying_network_club && (
+            <div id="error-paying_network_club" className="field-error-message" role="alert">
+              ⚠️ {fieldErrors.paying_network_club}
+            </div>
+          )}
+        </div>
+      </div>          
 
           {/* Security Properties */}
           <div className="margin-bottom-1">

@@ -440,3 +440,19 @@ table.slds-table.max-width-1200 {
   margin-right: 0.5rem;
   font-size: 16px;
 }
+
+/* Field Validation Error Styles */
+.error-border {
+  border: 2px solid #d32f2f !important;
+  background-color: #fff5f5 !important;
+}
+
+.field-error-message {
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

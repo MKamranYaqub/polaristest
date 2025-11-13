@@ -95,3 +95,19 @@ export const BROKER_COMMISSION_DEFAULTS = {
 // Broker commission tolerance (±0.2% from default value)
 // Users can only adjust commission within this range
 export const BROKER_COMMISSION_TOLERANCE = 0.2;
+
+// Default funding lines for DIP selection. Editable via the Constants UI
+// Separate lists for BTL and Bridge calculators
+export const FUNDING_LINES_BTL = [
+  'Main Lending Line',
+  'Bridge Facility',
+  'Development Line',
+  'Specialist Line'
+];
+
+export const FUNDING_LINES_BRIDGE = [
+  'Main Lending Line',
+  'Bridge Facility',
+  'Development Line',
+  'Specialist Line'
+];

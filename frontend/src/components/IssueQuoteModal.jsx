@@ -26,6 +26,9 @@ export default function IssueQuoteModal({
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
+  
+  // Field-level validation errors
+  const [fieldErrors, setFieldErrors] = useState({});
 
   // Load existing data when modal opens
   useEffect(() => {
@@ -93,19 +96,60 @@ export default function IssueQuoteModal({
     setAssumptions(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Validate all fields
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!borrowerName.trim()) {
+      errors.borrowerName = 'Borrower name is required';
+    }
+    
+    if (selectedFeeRanges.length === 0) {
+      errors.selectedFeeRanges = 'Please select at least one fee range';
+    }
+    
+    setFieldErrors(errors);
+    
+    if (Object.keys(errors).length > 0) {
+      const errorCount = Object.keys(errors).length;
+      setNotification({ 
+        show: true, 
+        type: 'warning', 
+        title: 'Validation Error', 
+        message: `Please fix ${errorCount} error${errorCount > 1 ? 's' : ''} in the form` 
+      });
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Validate individual field on blur
+  const validateField = (fieldName, value) => {
+    let error = '';
+    
+    switch(fieldName) {
+      case 'borrowerName':
+        if (!value.trim()) error = 'Borrower name is required';
+        break;
+      case 'selectedFeeRanges':
+        if (!value || value.length === 0) error = 'Please select at least one fee range';
+        break;
+    }
+    
+    setFieldErrors(prev => ({
+      ...prev,
+      [fieldName]: error
+    }));
+  };
+
   const handleSave = async () => {
     if (!quoteId) {
       setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please save the quote first before issuing a quote.' });
       return;
     }
 
-    if (selectedFeeRanges.length === 0) {
-      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please select at least one fee range.' });
-      return;
-    }
-
-    if (!borrowerName.trim()) {
-      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please enter the borrower name.' });
+    if (!validateForm()) {
       return;
     }
 
@@ -136,13 +180,7 @@ export default function IssueQuoteModal({
       return;
     }
 
-    if (selectedFeeRanges.length === 0) {
-      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please select at least one fee range.' });
-      return;
-    }
-
-    if (!borrowerName.trim()) {
-      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please enter the borrower name before creating PDF.' });
+    if (!validateForm()) {
       return;
     }
 
@@ -198,13 +236,21 @@ export default function IssueQuoteModal({
         </label>
         <div className="slds-form-element__control">
           <input
-            className="slds-input"
+            className={`slds-input ${fieldErrors.borrowerName ? 'error-border' : ''}`}
             type="text"
             value={borrowerName}
             onChange={(e) => setBorrowerName(e.target.value)}
+            onBlur={(e) => validateField('borrowerName', e.target.value)}
             placeholder="Enter borrower name"
+            aria-invalid={fieldErrors.borrowerName ? 'true' : 'false'}
+            aria-describedby={fieldErrors.borrowerName ? 'error-borrowerName' : undefined}
           />
         </div>
+        {fieldErrors.borrowerName && (
+          <div id="error-borrowerName" className="field-error-message" role="alert">
+            ⚠️ {fieldErrors.borrowerName}
+          </div>
+        )}
       </div>
 
       {/* Fee Range Selection */}
@@ -216,22 +262,33 @@ export default function IssueQuoteModal({
           {availableFeeRanges.length === 0 ? (
             <p className="text-color-muted text-italic">No fee ranges available</p>
           ) : (
-            <div className="grid-auto-fill-150">
+            <div className={`grid-auto-fill-150 ${fieldErrors.selectedFeeRanges ? 'error-border' : ''}`} style={{padding: '0.5rem', borderRadius: '4px'}}>
               {availableFeeRanges.map((feeRange) => (
                 <label key={feeRange} className="display-flex align-items-center cursor-pointer">
                   <input
-                          type="checkbox"
-                          checked={selectedFeeRanges.includes(feeRange)}
-                          onChange={() => handleFeeRangeToggle(feeRange)}
-                          className="margin-right-05"
-                        />
-                        <span>{feeRange}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
+                    type="checkbox"
+                    checked={selectedFeeRanges.includes(feeRange)}
+                    onChange={() => {
+                      handleFeeRangeToggle(feeRange);
+                      // Clear error when user selects at least one
+                      if (selectedFeeRanges.length === 0) {
+                        validateField('selectedFeeRanges', [feeRange]);
+                      }
+                    }}
+                    className="margin-right-05"
+                  />
+                  <span>{feeRange}</span>
+                </label>
+              ))}
             </div>
+          )}
+        </div>
+        {fieldErrors.selectedFeeRanges && (
+          <div id="error-selectedFeeRanges" className="field-error-message" role="alert">
+            ⚠️ {fieldErrors.selectedFeeRanges}
+          </div>
+        )}
+      </div>
 
             {/* Assumptions */}
             <div className="slds-form-element margin-bottom-15">

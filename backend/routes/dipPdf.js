@@ -93,6 +93,8 @@ router.post('/:id', async (req, res) => {
     doc.text(`Overpayments: ${quote.overpayments_percent || '10'}%`);
     doc.text(`Paying Network/Club: ${quote.paying_network_club || 'N/A'}`);
     doc.text(`Fee Type Selection: ${quote.fee_type_selection || 'N/A'}`);
+  // Funding Line (new field)
+  doc.text(`Funding Line: ${quote.funding_line || 'N/A'}`);
     
     // Add Product Range if available (BTL only)
     if (quote.calculator_type === 'BTL' && quote.product_range) {

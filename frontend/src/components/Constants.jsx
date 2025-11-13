@@ -9,6 +9,8 @@ import {
   BROKER_ROUTES as DEFAULT_BROKER_ROUTES,
   BROKER_COMMISSION_DEFAULTS as DEFAULT_BROKER_COMMISSION_DEFAULTS,
   BROKER_COMMISSION_TOLERANCE as DEFAULT_BROKER_COMMISSION_TOLERANCE,
+  FUNDING_LINES_BTL,
+  FUNDING_LINES_BRIDGE,
   LOCALSTORAGE_CONSTANTS_KEY,
 } from '../config/constants';
 import '../styles/slds.css';
@@ -36,6 +38,8 @@ export default function Constants() {
   const [brokerRoutes, setBrokerRoutes] = useState(DEFAULT_BROKER_ROUTES);
   const [brokerCommissionDefaults, setBrokerCommissionDefaults] = useState(DEFAULT_BROKER_COMMISSION_DEFAULTS);
   const [brokerCommissionTolerance, setBrokerCommissionTolerance] = useState(DEFAULT_BROKER_COMMISSION_TOLERANCE);
+  const [fundingLinesBTL, setFundingLinesBTL] = useState([]);
+  const [fundingLinesBridge, setFundingLinesBridge] = useState([]);
   const [jsonInput, setJsonInput] = useState('');
   const [message, setMessage] = useState('');
   const { supabase } = useSupabase();
@@ -60,6 +64,8 @@ export default function Constants() {
   // ensure rendering doesn't throw. Treat non-object productLists/feeColumns as missing.
   const safeProductLists = (productLists && typeof productLists === 'object' && !Array.isArray(productLists)) ? productLists : DEFAULT_PRODUCT_TYPES_LIST;
   const safeFeeColumns = (feeColumns && typeof feeColumns === 'object' && !Array.isArray(feeColumns)) ? feeColumns : DEFAULT_FEE_COLUMNS;
+  const safeFundingLinesBTL = Array.isArray(fundingLinesBTL) && fundingLinesBTL.length ? fundingLinesBTL : FUNDING_LINES_BTL;
+  const safeFundingLinesBridge = Array.isArray(fundingLinesBridge) && fundingLinesBridge.length ? fundingLinesBridge : FUNDING_LINES_BRIDGE;
 
   useEffect(() => {
     const overrides = readOverrides();
@@ -71,6 +77,8 @@ export default function Constants() {
       setBrokerRoutes(overrides.brokerRoutes || DEFAULT_BROKER_ROUTES);
       setBrokerCommissionDefaults(overrides.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS);
       setBrokerCommissionTolerance(overrides.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE);
+      setFundingLinesBTL(overrides.fundingLinesBTL || FUNDING_LINES_BTL);
+      setFundingLinesBridge(overrides.fundingLinesBridge || FUNDING_LINES_BRIDGE);
       // initialize temp values
       const tv = {};
       // product lists: tolerate malformed overrides (strings/arrays) and fall back to defaults per key
@@ -106,6 +114,8 @@ export default function Constants() {
       Object.keys(overrides.brokerRoutes || DEFAULT_BROKER_ROUTES).forEach(k => { tv[`brokerRoutes:${k}`] = (overrides.brokerRoutes?.[k] ?? DEFAULT_BROKER_ROUTES[k]); });
       Object.keys(overrides.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS).forEach(k => { tv[`brokerCommission:${k}`] = String((overrides.brokerCommissionDefaults?.[k] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[k])); });
       tv['brokerTolerance'] = String(overrides.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE);
+      tv['fundingLinesBTL'] = (overrides.fundingLinesBTL || FUNDING_LINES_BTL).join(', ');
+      tv['fundingLinesBridge'] = (overrides.fundingLinesBridge || FUNDING_LINES_BRIDGE).join(', ');
       
       setTempValues(tv);
     }
@@ -123,6 +133,8 @@ export default function Constants() {
         setBrokerRoutes(newVal.brokerRoutes || DEFAULT_BROKER_ROUTES);
         setBrokerCommissionDefaults(newVal.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS);
         setBrokerCommissionTolerance(newVal.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE);
+        setFundingLinesBTL(newVal.fundingLinesBTL || FUNDING_LINES_BTL);
+        setFundingLinesBridge(newVal.fundingLinesBridge || FUNDING_LINES_BRIDGE);
         // re-seed temp values similarly to initial load
         const tv2 = {};
         Object.keys(newVal.productLists || DEFAULT_PRODUCT_TYPES_LIST).forEach(pt => { tv2[`productLists:${pt}`] = (newVal.productLists?.[pt] || DEFAULT_PRODUCT_TYPES_LIST[pt] || []).join(', '); });
@@ -134,6 +146,8 @@ export default function Constants() {
         Object.keys(newVal.brokerRoutes || DEFAULT_BROKER_ROUTES).forEach(k => { tv2[`brokerRoutes:${k}`] = (newVal.brokerRoutes?.[k] ?? DEFAULT_BROKER_ROUTES[k]); });
         Object.keys(newVal.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS).forEach(k => { tv2[`brokerCommission:${k}`] = String((newVal.brokerCommissionDefaults?.[k] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[k])); });
         tv2['brokerTolerance'] = String(newVal.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE);
+        tv2['fundingLinesBTL'] = (newVal.fundingLinesBTL || FUNDING_LINES_BTL).join(', ');
+        tv2['fundingLinesBridge'] = (newVal.fundingLinesBridge || FUNDING_LINES_BRIDGE).join(', ');
         setTempValues(tv2);
       } catch (err) {
         console.debug('Ignored storage event for constants', err);
@@ -186,6 +200,10 @@ export default function Constants() {
       } else if (key === 'brokerTolerance') {
         const n = Number(tempValues[key]);
         await updateBrokerCommissionTolerance(Number.isFinite(n) ? n : 0.2);
+      } else if (key === 'fundingLinesBTL') {
+        await updateFundingLinesBTL(tempValues[key] || '');
+      } else if (key === 'fundingLinesBridge') {
+        await updateFundingLinesBridge(tempValues[key] || '');
       }
     } catch (e) {
       console.error('Failed to save field', key, e);
@@ -202,7 +220,9 @@ export default function Constants() {
       marketRates, 
       brokerRoutes, 
       brokerCommissionDefaults, 
-      brokerCommissionTolerance 
+      brokerCommissionTolerance,
+      fundingLinesBTL,
+      fundingLinesBridge
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -282,7 +302,9 @@ export default function Constants() {
               marketRates: row.market_rates || DEFAULT_MARKET_RATES,
               brokerRoutes: row.broker_routes || DEFAULT_BROKER_ROUTES,
               brokerCommissionDefaults: row.broker_commission_defaults || DEFAULT_BROKER_COMMISSION_DEFAULTS,
-              brokerCommissionTolerance: row.broker_commission_tolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE
+              brokerCommissionTolerance: row.broker_commission_tolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE,
+              fundingLinesBTL: row.funding_lines_btl || FUNDING_LINES_BTL,
+              fundingLinesBridge: row.funding_lines_bridge || FUNDING_LINES_BRIDGE
             };
           } else if (row.value) {
             const v = row.value;
@@ -293,7 +315,9 @@ export default function Constants() {
               marketRates: v.marketRates || DEFAULT_MARKET_RATES,
               brokerRoutes: v.brokerRoutes || DEFAULT_BROKER_ROUTES,
               brokerCommissionDefaults: v.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS,
-              brokerCommissionTolerance: v.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE
+              brokerCommissionTolerance: v.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE,
+              fundingLinesBTL: v.fundingLinesBTL || FUNDING_LINES_BTL,
+              fundingLinesBridge: v.fundingLinesBridge || FUNDING_LINES_BRIDGE
             };
           }
           
@@ -306,6 +330,8 @@ export default function Constants() {
             setBrokerRoutes(loadedData.brokerRoutes);
             setBrokerCommissionDefaults(loadedData.brokerCommissionDefaults);
             setBrokerCommissionTolerance(loadedData.brokerCommissionTolerance);
+            setFundingLinesBTL(loadedData.fundingLinesBTL || FUNDING_LINES_BTL);
+            setFundingLinesBridge(loadedData.fundingLinesBridge || FUNDING_LINES_BRIDGE);
             
             // Update localStorage to match
             writeOverrides(loadedData);
@@ -333,6 +359,7 @@ export default function Constants() {
               tv[`brokerCommission:${k}`] = String(loadedData.brokerCommissionDefaults[k]);
             });
             tv['brokerTolerance'] = String(loadedData.brokerCommissionTolerance);
+            tv['fundingLines'] = (loadedData.fundingLines || FUNDING_LINES).join(', ');
             setTempValues(tv);
           }
         }
@@ -376,7 +403,9 @@ export default function Constants() {
       marketRates, 
       brokerRoutes, 
       brokerCommissionDefaults, 
-      brokerCommissionTolerance 
+      brokerCommissionTolerance,
+      fundingLinesBTL,
+      fundingLinesBridge
     };
     writeOverrides(payload);
     setMessage('Saved to localStorage. This will take effect for open calculator tabs.');
@@ -404,6 +433,8 @@ export default function Constants() {
           broker_routes: payload.brokerRoutes || null,
           broker_commission_defaults: payload.brokerCommissionDefaults || null,
           broker_commission_tolerance: payload.brokerCommissionTolerance ?? null,
+          funding_lines_btl: payload.fundingLinesBTL || null,
+          funding_lines_bridge: payload.fundingLinesBridge || null,
         };
         try {
           const { data: inserted, error: insertErr } = await supabase.from('app_constants').insert([insertRow]).select('*');
@@ -474,6 +505,8 @@ export default function Constants() {
     setBrokerRoutes(DEFAULT_BROKER_ROUTES);
     setBrokerCommissionDefaults(DEFAULT_BROKER_COMMISSION_DEFAULTS);
     setBrokerCommissionTolerance(DEFAULT_BROKER_COMMISSION_TOLERANCE);
+    setFundingLinesBTL(FUNDING_LINES_BTL);
+    setFundingLinesBridge(FUNDING_LINES_BRIDGE);
     const payload = { 
       productLists: DEFAULT_PRODUCT_TYPES_LIST, 
       feeColumns: DEFAULT_FEE_COLUMNS, 
@@ -481,7 +514,9 @@ export default function Constants() {
       marketRates: DEFAULT_MARKET_RATES,
       brokerRoutes: DEFAULT_BROKER_ROUTES,
       brokerCommissionDefaults: DEFAULT_BROKER_COMMISSION_DEFAULTS,
-      brokerCommissionTolerance: DEFAULT_BROKER_COMMISSION_TOLERANCE
+      brokerCommissionTolerance: DEFAULT_BROKER_COMMISSION_TOLERANCE,
+      fundingLinesBTL: FUNDING_LINES_BTL,
+      fundingLinesBridge: FUNDING_LINES_BRIDGE
     };
     setMessage('Reset to defaults and removed overrides from localStorage.');
     localStorage.removeItem(LOCALSTORAGE_CONSTANTS_KEY);
@@ -504,6 +539,8 @@ export default function Constants() {
           broker_routes: payload.brokerRoutes,
           broker_commission_defaults: payload.brokerCommissionDefaults,
           broker_commission_tolerance: payload.brokerCommissionTolerance,
+          funding_lines_btl: payload.fundingLinesBTL,
+          funding_lines_bridge: payload.fundingLinesBridge,
         };
         const { error: upsertErr } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
         setSaving(false);
@@ -555,6 +592,8 @@ export default function Constants() {
           fee_columns: currentOverrides.feeColumns,
           flat_above_commercial_rule: currentOverrides.flatAboveCommercialRule,
           market_rates: currentOverrides.marketRates,
+          funding_lines_btl: fundingLinesBTL,
+          funding_lines_bridge: fundingLinesBridge,
         };
         const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
         setSaving(false);
@@ -615,6 +654,8 @@ export default function Constants() {
           fee_columns: currentOverrides.feeColumns,
           flat_above_commercial_rule: currentOverrides.flatAboveCommercialRule,
           market_rates: currentOverrides.marketRates,
+           funding_lines_btl: fundingLinesBTL,
+           funding_lines_bridge: fundingLinesBridge,
         };
         const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
         setSaving(false);
@@ -674,6 +715,8 @@ export default function Constants() {
           fee_columns: currentOverrides.feeColumns,
           flat_above_commercial_rule: currentOverrides.flatAboveCommercialRule,
           market_rates: currentOverrides.marketRates,
+           funding_lines_btl: fundingLinesBTL,
+           funding_lines_bridge: fundingLinesBridge,
         };
         const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
         setSaving(false);
@@ -736,6 +779,8 @@ export default function Constants() {
           fee_columns: currentOverrides.feeColumns,
           flat_above_commercial_rule: currentOverrides.flatAboveCommercialRule,
           market_rates: currentOverrides.marketRates,
+           funding_lines_btl: fundingLinesBTL,
+           funding_lines_bridge: fundingLinesBridge,
         };
         const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
         setSaving(false);
@@ -812,6 +857,139 @@ export default function Constants() {
     };
     writeOverrides(currentOverrides);
     setMessage('Broker commission tolerance saved to localStorage.');
+  };
+
+  // Update funding lines (comma-separated string)
+  // Update funding lines for BTL (comma-separated string)
+  const updateFundingLinesBTL = async (csv) => {
+    const arr = csv.split(',').map((s) => s.trim()).filter(Boolean);
+    setFundingLinesBTL(arr);
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates,
+      brokerRoutes: brokerRoutes,
+      brokerCommissionDefaults: brokerCommissionDefaults,
+      brokerCommissionTolerance: brokerCommissionTolerance,
+      fundingLinesBTL: arr,
+      fundingLinesBridge: fundingLinesBridge
+    };
+    writeOverrides(currentOverrides);
+    setMessage('BTL funding lines saved to localStorage.');
+
+    // Persist using same strategy as other fields
+    setSaving(true);
+    try {
+      let tryStructured = structuredSupported;
+      if (tryStructured === null) {
+        tryStructured = await detectStructuredSupport();
+        setStructuredSupported(tryStructured);
+      }
+
+      if (tryStructured && supabase) {
+        const upsertRow = {
+          key: 'app.constants',
+          product_lists: productLists,
+          fee_columns: feeColumns,
+          flat_above_commercial_rule: flatAboveCommercialRule,
+          market_rates: marketRates,
+          funding_lines_btl: arr,
+          funding_lines_bridge: fundingLinesBridge,
+        };
+        const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
+        setSaving(false);
+        if (error) {
+          console.warn('Failed to save funding_lines_btl to Supabase', error);
+          setMessage('Saved locally but failed to persist BTL funding lines to database. See console.');
+        } else {
+          setMessage('BTL funding lines saved locally and persisted to Supabase.');
+        }
+        return { error };
+      }
+
+      // Fallback
+      const { error } = await saveToSupabase(currentOverrides);
+      setSaving(false);
+      if (error) {
+        console.warn('Failed to save funding_lines_btl to Supabase (fallback)', error);
+        setMessage('Saved locally but failed to persist BTL funding lines to database.');
+      } else {
+        setMessage('BTL funding lines saved locally and persisted to Supabase.');
+      }
+      return { error };
+    } catch (e) {
+      setSaving(false);
+      console.error('Unexpected error saving funding_lines_btl', e);
+      setMessage('Saved locally but unexpected error persisting to database.');
+      return { error: e };
+    }
+  };
+
+  // Update funding lines for Bridge (comma-separated string)
+  const updateFundingLinesBridge = async (csv) => {
+    const arr = csv.split(',').map((s) => s.trim()).filter(Boolean);
+    setFundingLinesBridge(arr);
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates,
+      brokerRoutes: brokerRoutes,
+      brokerCommissionDefaults: brokerCommissionDefaults,
+      brokerCommissionTolerance: brokerCommissionTolerance,
+      fundingLinesBTL: fundingLinesBTL,
+      fundingLinesBridge: arr
+    };
+    writeOverrides(currentOverrides);
+    setMessage('Bridge funding lines saved to localStorage.');
+
+    // Persist using same strategy as other fields
+    setSaving(true);
+    try {
+      let tryStructured = structuredSupported;
+      if (tryStructured === null) {
+        tryStructured = await detectStructuredSupport();
+        setStructuredSupported(tryStructured);
+      }
+
+      if (tryStructured && supabase) {
+        const upsertRow = {
+          key: 'app.constants',
+          product_lists: productLists,
+          fee_columns: feeColumns,
+          flat_above_commercial_rule: flatAboveCommercialRule,
+          market_rates: marketRates,
+          funding_lines_btl: fundingLinesBTL,
+          funding_lines_bridge: arr,
+        };
+        const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
+        setSaving(false);
+        if (error) {
+          console.warn('Failed to save funding_lines_bridge to Supabase', error);
+          setMessage('Saved locally but failed to persist Bridge funding lines to database. See console.');
+        } else {
+          setMessage('Bridge funding lines saved locally and persisted to Supabase.');
+        }
+        return { error };
+      }
+
+      // Fallback
+      const { error } = await saveToSupabase(currentOverrides);
+      setSaving(false);
+      if (error) {
+        console.warn('Failed to save funding_lines_bridge to Supabase (fallback)', error);
+        setMessage('Saved locally but failed to persist Bridge funding lines to database.');
+      } else {
+        setMessage('Bridge funding lines saved locally and persisted to Supabase.');
+      }
+      return { error };
+    } catch (e) {
+      setSaving(false);
+      console.error('Unexpected error saving funding_lines_bridge', e);
+      setMessage('Saved locally but unexpected error persisting to database.');
+      return { error: e };
+    }
   };
 
   // Add new broker route
@@ -945,6 +1123,8 @@ export default function Constants() {
             fee_columns: 'fee_columns',
             flat_above_commercial_rule: 'flat_above_commercial_rule',
             market_rates: 'market_rates',
+            funding_lines_btl: 'funding_lines_btl',
+            funding_lines_bridge: 'funding_lines_bridge',
           };
           const targetCol = mapStruct[column] || column;
           
@@ -985,6 +1165,7 @@ export default function Constants() {
               fee_columns: 'fee_columns',
               flat_above_commercial_rule: 'flat_above_commercial_rule',
               market_rates: 'market_rates',
+              funding_lines: 'funding_lines',
             };
             const targetCol = mapStruct[column] || column;
             const newRow = {
@@ -1018,6 +1199,8 @@ export default function Constants() {
           fee_columns: 'feeColumns',
           flat_above_commercial_rule: 'flatAboveCommercialRule',
           market_rates: 'marketRates',
+          funding_lines_btl: 'fundingLinesBTL',
+          funding_lines_bridge: 'fundingLinesBridge',
         };
         const jsonKey = map[column] || column;
         const newValue = { ...current, [jsonKey]: value };
@@ -1472,6 +1655,66 @@ export default function Constants() {
             <div className="helper-text">Allowable deviation from default commission (e.g., 0.2 means ±0.2%).</div>
           </div>
         </div>
+        
+          <div className="slds-m-top_small">
+            <h5>Funding Lines</h5>
+            
+            <div className="slds-form-element slds-m-bottom_small">
+              <label className="slds-form-element__label">BTL Funding Lines (comma-separated)</label>
+              <div className="slds-form-element__control form-control-inline">
+                {(() => {
+                  const key = 'fundingLinesBTL';
+                  return (
+                    <>
+                      <input
+                        className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                        value={editingFields[key] ? (tempValues[key] ?? '') : (Array.isArray(fundingLinesBTL) ? fundingLinesBTL.join(', ') : '')}
+                        onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                        disabled={!editingFields[key]}
+                      />
+                      {!editingFields[key] ? (
+                        <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, Array.isArray(fundingLinesBTL) ? fundingLinesBTL.join(', ') : '')}>Edit</button>
+                      ) : (
+                        <>
+                          <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                          <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+              <div className="helper-text">Update options used in the BTL DIP "Funding Line" dropdown.</div>
+            </div>
+
+            <div className="slds-form-element">
+              <label className="slds-form-element__label">Bridge Funding Lines (comma-separated)</label>
+              <div className="slds-form-element__control form-control-inline">
+                {(() => {
+                  const key = 'fundingLinesBridge';
+                  return (
+                    <>
+                      <input
+                        className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                        value={editingFields[key] ? (tempValues[key] ?? '') : (Array.isArray(fundingLinesBridge) ? fundingLinesBridge.join(', ') : '')}
+                        onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                        disabled={!editingFields[key]}
+                      />
+                      {!editingFields[key] ? (
+                        <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, Array.isArray(fundingLinesBridge) ? fundingLinesBridge.join(', ') : '')}>Edit</button>
+                      ) : (
+                        <>
+                          <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                          <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+              <div className="helper-text">Update options used in the Bridge DIP "Funding Line" dropdown.</div>
+            </div>
+          </div>
       </section>
 
       {/* Flat-above-commercial override removed — rule is now hard-coded in calculator logic per user request. */}
