@@ -3,8 +3,10 @@ const router = express.Router();
 
 /**
  * @route   GET /api/postcode-lookup/:postcode
- * @desc    Lookup addresses for a UK postcode using ideal-postcodes API
- * @access  Private (requires auth)
+ * @desc    Lookup addresses for a UK postcode using getAddress.io API
+ * @access  Public
+ * @note    Requires GETADDRESS_API_KEY environment variable
+ *          Get free API key (20 lookups/day): https://getaddress.io/
  */
 router.get('/:postcode', async (req, res) => {
   try {
@@ -17,19 +19,20 @@ router.get('/:postcode', async (req, res) => {
       });
     }
 
-    // Use postcodes.io API (free, no API key required)
-    // Alternative to ideal-postcodes which requires paid API key and whitelist
-    const apiUrl = `https://api.postcodes.io/postcodes/${encodeURIComponent(postcode.trim())}`;
+    // Use getAddress.io API (free tier: 20 lookups/day, returns actual street addresses)
+    // Get your free API key from: https://getaddress.io/
+    const apiKey = process.env.GETADDRESS_API_KEY || 'YOUR_API_KEY_HERE';
+    const apiUrl = `https://api.getaddress.io/find/${encodeURIComponent(postcode.trim())}?api-key=${apiKey}&expand=true`;
     
-    console.log('📍 Calling postcodes.io API:', apiUrl);
+    console.log('📍 Calling getAddress.io API');
     
     const response = await fetch(apiUrl);
     
-    console.log('📡 postcodes.io response status:', response.status);
+    console.log('📡 getAddress.io response status:', response.status);
     
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error('❌ postcodes.io error body:', errorBody);
+      console.error('❌ getAddress.io error body:', errorBody);
       
       if (response.status === 404) {
         return res.status(404).json({ 
@@ -37,43 +40,45 @@ router.get('/:postcode', async (req, res) => {
           message: 'Postcode not found' 
         });
       }
+      if (response.status === 401) {
+        throw new Error('Invalid API key - get your free key from https://getaddress.io/');
+      }
       throw new Error(`API returned status ${response.status}: ${errorBody}`);
     }
     
     const data = await response.json();
-    console.log('✅ postcodes.io response:', JSON.stringify(data, null, 2));
+    console.log('✅ getAddress.io found', data.addresses?.length || 0, 'addresses');
     
-    if (!data.result || data.status !== 200) {
+    if (!data.addresses || data.addresses.length === 0) {
       return res.status(404).json({ 
         success: false, 
-        message: 'No data found for this postcode' 
+        message: 'No addresses found for this postcode' 
       });
     }
 
-    // postcodes.io returns a single result object with location data, not individual addresses
-    // We'll return the postcode with location details in a consistent format
-    const result = data.result;
-    
-    // Format: Just return the postcode information
-    // For actual property addresses, you'd need a different API (like ideal-postcodes with paid plan)
-    // or use UK Land Registry / Royal Mail PAF database
-    const addresses = [{
-      display: `${result.postcode} - ${result.admin_district}, ${result.region}`,
-      street: result.admin_ward || '',
-      city: result.admin_district || '',
-      postcode: result.postcode
-    }];
+    // Map getAddress.io format to our format
+    // getAddress.io returns addresses as arrays: [line1, line2, line3, line4, locality, town/city, county]
+    const addresses = data.addresses.map((addr) => {
+      // addr is an array of address components
+      const [line1, line2, line3, line4, locality, townCity, county] = addr.split(',').map(s => s.trim());
+      
+      // Build display address (skip empty parts)
+      const displayParts = [line1, line2, line3, line4, locality, townCity].filter(part => part);
+      
+      // Street is typically line1 + line2
+      const streetParts = [line1, line2, line3].filter(part => part);
+      
+      return {
+        display: displayParts.join(', '),
+        street: streetParts.join(', '),
+        city: townCity || locality || '',
+        postcode: data.postcode || postcode.trim().toUpperCase()
+      };
+    });
 
     res.json({ 
       success: true, 
-      addresses,
-      // Include additional location data that might be useful
-      location: {
-        latitude: result.latitude,
-        longitude: result.longitude,
-        region: result.region,
-        country: result.country
-      }
+      addresses
     });
     
   } catch (error) {
