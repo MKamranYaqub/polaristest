@@ -14,6 +14,11 @@
 .text-align-left { text-align: left; }
 .vertical-align-top { vertical-align: top; }
 
+/* Force center alignment for table headers with this class (higher specificity) */
+.slds-table th.text-align-center {
+  text-align: center !important;
+}
+
 /* Display */
 .display-flex { display: flex; }
 .display-inline-flex { display: inline-flex; }
