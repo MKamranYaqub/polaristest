@@ -10,6 +10,7 @@ import dipPdfRouter from './routes/dipPdf.js';
 import quotePdfRouter from './routes/quotePdf.js';
 import exportRouter from './routes/export.js';
 import authRouter from './routes/auth.js';
+import postcodeLookupRouter from './routes/postcodeLookup.js';
 // Rate limiting middleware
 import { apiLimiter, exportLimiter, pdfLimiter } from './middleware/rateLimiter.js';
 
@@ -90,6 +91,9 @@ app.use('/api/quotes', quotesRouter);
 
 // Auth endpoints (register, login, etc.)
 app.use('/api/auth', authRouter);
+
+// Postcode lookup endpoint
+app.use('/api/postcode-lookup', postcodeLookupRouter);
 
 // DIP PDF generation endpoint
 app.use('/api/dip/pdf', pdfLimiter);

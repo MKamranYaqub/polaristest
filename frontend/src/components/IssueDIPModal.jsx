@@ -123,7 +123,7 @@ export default function IssueDIPModal({
     }
   };
 
-  // Postcode lookup using ideal-postcodes.co.uk API (free tier)
+  // Postcode lookup via backend proxy
   const handlePostcodeLookup = async (index) => {
     const postcode = securityProperties[index].postcode.trim();
     if (!postcode) {
@@ -134,40 +134,32 @@ export default function IssueDIPModal({
     setLoadingAddresses({ ...loadingAddresses, [index]: true });
     
     try {
-      // Use ideal-postcodes.co.uk free API (no key required for lookups)
-      const response = await fetch(`https://api.ideal-postcodes.co.uk/v1/postcodes/${encodeURIComponent(postcode)}?api_key=iddqd`);
+      // Call our backend API instead of external API directly
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const fullUrl = `${apiUrl}/api/postcode-lookup/${encodeURIComponent(postcode)}`;
+      
+      console.log('🔍 Postcode lookup - API URL:', apiUrl);
+      console.log('🔍 Postcode lookup - Full URL:', fullUrl);
+      
+      const response = await fetch(fullUrl);
+      
+      console.log('📡 Response status:', response.status);
       
       if (!response.ok) {
-        throw new Error('Postcode not found');
+        const errorData = await response.json();
+        console.error('❌ Error response:', errorData);
+        throw new Error(errorData.message || 'Postcode not found');
       }
       
       const data = await response.json();
+      console.log('✅ Success response:', data);
       
-      if (!data.result || data.result.length === 0) {
+      if (!data.success || !data.addresses || data.addresses.length === 0) {
         throw new Error('No addresses found for this postcode');
       }
 
-      // Map the addresses to our format
-      const suggestions = data.result.map((addr, idx) => {
-        // Build the full address line for display
-        const addressParts = [
-          addr.line_1,
-          addr.line_2,
-          addr.line_3
-        ].filter(part => part && part.trim() !== '');
-        
-        // For street field, combine all address lines except post_town
-        const streetAddress = addressParts.join(', ');
-        
-        return {
-          display: addressParts.join(', '),
-          street: streetAddress,  // Full street address with all lines
-          city: addr.post_town || '',
-          postcode: addr.postcode
-        };
-      });
-
-      setAddressLookup({ ...addressLookup, [index]: suggestions });
+      // Set the address suggestions
+      setAddressLookup({ ...addressLookup, [index]: data.addresses });
       
     } catch (err) {
       console.error('Postcode lookup error:', err);
@@ -175,7 +167,7 @@ export default function IssueDIPModal({
         show: true, 
         type: 'error', 
         title: 'Error', 
-        message: 'Could not find addresses for this postcode. Please check the postcode and try again.' 
+        message: err.message || 'Could not find addresses for this postcode. Please check the postcode and try again.' 
       });
       setAddressLookup({ ...addressLookup, [index]: [] });
     } finally {
