@@ -822,6 +822,31 @@ body.dark-mode #root {
 }
 
 /* Demo Credentials Box (Login Page) */
+.dark-mode .auth-demo-box {
+  background-color: var(--token-layer-surface) !important;
+  border: 1px solid var(--token-border-subtle) !important;
+  color: var(--token-text-primary) !important;
+}
+
+/* Created By Section (SaveQuote Modal) */
+.dark-mode .background-gray-light {
+  background-color: var(--token-layer-surface) !important;
+  border: 1px solid var(--token-border-subtle) !important;
+  color: var(--token-text-primary) !important;
+}
+
+/* Sticky Table Cells - Actions Column (QuotesList) */
+.dark-mode .sticky-table-header {
+  background-color: var(--token-layer-surface) !important;
+  border-left: 1px solid var(--token-border-subtle) !important;
+}
+
+.dark-mode .sticky-table-cell {
+  background-color: var(--token-layer-surface) !important;
+  border-left: 1px solid var(--token-border-subtle) !important;
+}
+
+/* Legacy inline style overrides */
 .dark-mode .slds-m-top_medium[style*="backgroundColor"],
 .dark-mode .slds-m-top_medium[style*="background-color"] {
   background-color: var(--token-layer-surface) !important;
