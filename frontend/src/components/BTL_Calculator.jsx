@@ -57,8 +57,8 @@ export default function BTLcalculator({ initialQuote = null }) {
   const hideTimerRef = useRef(null);
 
   // Collapsible section states
-  const [criteriaExpanded, setCriteriaExpanded] = useState(true);
-  const [loanDetailsExpanded, setLoanDetailsExpanded] = useState(true);
+  const [criteriaExpanded, setCriteriaExpanded] = useState(false);
+  const [loanDetailsExpanded, setLoanDetailsExpanded] = useState(false);
   const [clientDetailsExpanded, setClientDetailsExpanded] = useState(true);
   
   // Range toggle state (Core or Specialist)
@@ -711,6 +711,34 @@ export default function BTLcalculator({ initialQuote = null }) {
     });
   };
 
+  // Accordion toggle functions - close all other sections when opening one
+  const handleClientDetailsToggle = () => {
+    const newState = !clientDetailsExpanded;
+    setClientDetailsExpanded(newState);
+    if (newState) {
+      setCriteriaExpanded(false);
+      setLoanDetailsExpanded(false);
+    }
+  };
+
+  const handleCriteriaToggle = () => {
+    const newState = !criteriaExpanded;
+    setCriteriaExpanded(newState);
+    if (newState) {
+      setClientDetailsExpanded(false);
+      setLoanDetailsExpanded(false);
+    }
+  };
+
+  const handleLoanDetailsToggle = () => {
+    const newState = !loanDetailsExpanded;
+    setLoanDetailsExpanded(newState);
+    if (newState) {
+      setClientDetailsExpanded(false);
+      setCriteriaExpanded(false);
+    }
+  };
+
   // small helper: product select control so we can render it in two places conditionally
   const productSelectControl = (
     <select className="slds-select" value={productType} onChange={(e) => setProductType(e.target.value)}>
@@ -1171,7 +1199,7 @@ export default function BTLcalculator({ initialQuote = null }) {
       <ClientDetailsSection
         {...brokerSettings}
         expanded={clientDetailsExpanded}
-        onToggle={() => setClientDetailsExpanded(!clientDetailsExpanded)}
+        onToggle={handleClientDetailsToggle}
         isReadOnly={isReadOnly}
       />
 
@@ -1207,7 +1235,7 @@ export default function BTLcalculator({ initialQuote = null }) {
 
       <BTLCriteriaSection
         expanded={criteriaExpanded}
-        onToggle={() => setCriteriaExpanded(!criteriaExpanded)}
+        onToggle={handleCriteriaToggle}
         loading={loading}
         error={error}
         questions={questions}
@@ -1240,7 +1268,7 @@ export default function BTLcalculator({ initialQuote = null }) {
       
       <BTLLoanDetailsSection
         expanded={loanDetailsExpanded}
-        onToggle={() => setLoanDetailsExpanded(!loanDetailsExpanded)}
+        onToggle={handleLoanDetailsToggle}
         propertyValue={propertyValue}
         onPropertyValueChange={setPropertyValue}
         monthlyRent={monthlyRent}

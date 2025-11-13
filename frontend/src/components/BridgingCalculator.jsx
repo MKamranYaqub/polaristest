@@ -42,9 +42,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   const [questions, setQuestions] = useState({});
   const [answers, setAnswers] = useState({});
-  const [criteriaExpanded, setCriteriaExpanded] = useState(true);
-  const [loanDetailsExpanded, setLoanDetailsExpanded] = useState(true);
-  const [clientDetailsExpanded, setClientDetailsExpanded] = useState(true);
+  // Collapsible sections - start collapsed, only one open at a time (accordion)
+  const [criteriaExpanded, setCriteriaExpanded] = useState(false);
+  const [loanDetailsExpanded, setLoanDetailsExpanded] = useState(false);
+  const [clientDetailsExpanded, setClientDetailsExpanded] = useState(true); // First section open by default
 
   const [propertyValue, setPropertyValue] = useState('');
   const [grossLoan, setGrossLoan] = useState('');
@@ -77,7 +78,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
   const [feeCalculationType, setFeeCalculationType] = useState('pound');
   const [additionalFeeAmount, setAdditionalFeeAmount] = useState('');
 
-  const [multiPropertyDetailsExpanded, setMultiPropertyDetailsExpanded] = useState(true);
+  const [multiPropertyDetailsExpanded, setMultiPropertyDetailsExpanded] = useState(false);
   const [multiPropertyRows, setMultiPropertyRows] = useState([
     { id: Date.now(), property_address: '', property_type: 'Residential', property_value: '', charge_type: 'First charge', first_charge_amount: '', gross_loan: 0 }
   ]);
@@ -453,6 +454,47 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   const handleAnswerChange = (key, idx) => {
     setAnswers(prev => ({ ...prev, [key]: questions[key].options[idx] }));
+  };
+
+  // Accordion behavior - close all other sections when one is opened
+  const handleClientDetailsToggle = () => {
+    const newState = !clientDetailsExpanded;
+    setClientDetailsExpanded(newState);
+    if (newState) {
+      setCriteriaExpanded(false);
+      setMultiPropertyDetailsExpanded(false);
+      setLoanDetailsExpanded(false);
+    }
+  };
+
+  const handleCriteriaToggle = () => {
+    const newState = !criteriaExpanded;
+    setCriteriaExpanded(newState);
+    if (newState) {
+      setClientDetailsExpanded(false);
+      setMultiPropertyDetailsExpanded(false);
+      setLoanDetailsExpanded(false);
+    }
+  };
+
+  const handleMultiPropertyToggle = () => {
+    const newState = !multiPropertyDetailsExpanded;
+    setMultiPropertyDetailsExpanded(newState);
+    if (newState) {
+      setClientDetailsExpanded(false);
+      setCriteriaExpanded(false);
+      setLoanDetailsExpanded(false);
+    }
+  };
+
+  const handleLoanDetailsToggle = () => {
+    const newState = !loanDetailsExpanded;
+    setLoanDetailsExpanded(newState);
+    if (newState) {
+      setClientDetailsExpanded(false);
+      setCriteriaExpanded(false);
+      setMultiPropertyDetailsExpanded(false);
+    }
   };
 
   // Fetch rates for Bridging: filter depending on mode
@@ -1069,13 +1111,13 @@ export default function BridgingCalculator({ initialQuote = null }) {
       <ClientDetailsSection
         {...brokerSettings}
         expanded={clientDetailsExpanded}
-        onToggle={() => setClientDetailsExpanded(!clientDetailsExpanded)}
+        onToggle={handleClientDetailsToggle}
         isReadOnly={isReadOnly}
       />
 
       <CriteriaSection
         expanded={criteriaExpanded}
-        onToggle={() => setCriteriaExpanded(!criteriaExpanded)}
+        onToggle={handleCriteriaToggle}
         questions={questions}
         answers={answers}
         onAnswerChange={handleAnswerChange}
@@ -1090,7 +1132,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
       {isMultiProperty && (
         <MultiPropertyDetailsSection
           expanded={multiPropertyDetailsExpanded}
-          onToggle={() => setMultiPropertyDetailsExpanded(!multiPropertyDetailsExpanded)}
+          onToggle={handleMultiPropertyToggle}
           rows={multiPropertyRows}
           onRowChange={handleMultiPropertyRowChange}
           onAddRow={addMultiPropertyRow}
@@ -1103,7 +1145,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
       <LoanDetailsSection
         expanded={loanDetailsExpanded}
-        onToggle={() => setLoanDetailsExpanded(!loanDetailsExpanded)}
+        onToggle={handleLoanDetailsToggle}
         propertyValue={propertyValue}
         onPropertyValueChange={setPropertyValue}
         grossLoan={grossLoan}
