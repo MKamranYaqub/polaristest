@@ -88,7 +88,7 @@ export default function LoginPage() {
           <div className="slds-m-top_medium">
             <button
               type="submit"
-              className="slds-button slds-button_brand width-100"
+              className="slds-button slds-button_brand width-100 justify-content-center"
               disabled={loading}
             >
               {loading ? 'Logging in...' : 'Login'}
