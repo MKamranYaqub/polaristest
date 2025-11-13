@@ -208,12 +208,14 @@ table.slds-table.max-width-1200 {
 /* Special Component Styles */
 .auth-container {
   max-width: 400px;
-  margin: 2rem auto;
+  margin: 0 auto;
+  margin-top: 2rem;
 }
 
 .auth-container-wide {
   max-width: 500px;
-  margin: 2rem auto;
+  margin: 0 auto;
+  margin-top: 2rem;
 }
 
 .auth-demo-box {
