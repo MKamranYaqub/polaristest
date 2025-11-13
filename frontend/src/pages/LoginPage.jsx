@@ -34,7 +34,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="slds-p-around_large auth-container">
+    <div className="auth-container" style={{ marginTop: '1rem' }}>
       <div className="slds-box slds-theme_default">
         <h1 className="slds-text-heading_large slds-m-bottom_medium text-align-center">
           Project Polaris Login
