@@ -1,8 +1,8 @@
 // Lightweight helper to call backend /api/quotes endpoints
 import { API_BASE_URL } from '../config/api.js';
 
-const authHeaders = () => {
-  const token = localStorage.getItem('auth_token');
+export const authHeaders = (tokenOverride) => {
+  const token = tokenOverride ?? localStorage.getItem('auth_token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
@@ -58,4 +58,61 @@ export async function deleteQuote(id) {
   });
   if (!res.ok) throw new Error(`Failed to delete quote ${id}: ${res.statusText}`);
   return res.json();
+}
+
+export async function upsertQuoteData({ quoteId, calculatorType, payload, token }) {
+  const res = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders(token),
+    },
+    body: JSON.stringify({
+      calculator_type: calculatorType,
+      ...payload,
+    }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    const message = errorData.error || `Failed to update quote ${quoteId}`;
+    throw new Error(message);
+  }
+
+  return res.json().catch(() => ({}));
+}
+
+export async function requestDipPdf(quoteId, token) {
+  const res = await fetch(`${API_BASE_URL}/api/dip/pdf/${quoteId}`, {
+    method: 'POST',
+    headers: {
+      ...authHeaders(token),
+    },
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    const message = errorData.error || 'Failed to generate DIP PDF';
+    throw new Error(message);
+  }
+
+  return res;
+}
+
+export async function requestQuotePdf(quoteId, token) {
+  const res = await fetch(`${API_BASE_URL}/api/quote/pdf/${quoteId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders(token),
+    },
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    const message = errorData.error || 'Failed to generate quote PDF';
+    throw new Error(message);
+  }
+
+  return res;
 }

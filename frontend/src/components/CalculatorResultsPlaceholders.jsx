@@ -16,10 +16,10 @@ export default function CalculatorResultsPlaceholders({ labels = [], values = {}
         <>
           {labels.map((lab) => (
             <tr key={lab}>
-              <td style={{ verticalAlign: 'top', fontWeight: 600 }}>{lab}</td>
+              <td className="vertical-align-top font-weight-600">{lab}</td>
               {columns.map((c) => (
                 // center-align placeholder/value cells so they match header alignment
-                <td key={c} style={{ verticalAlign: 'top', textAlign: 'center' }}>{(values && values[lab] && Object.prototype.hasOwnProperty.call(values[lab], c)) ? values[lab][c] : '—'}</td>
+                <td key={c} className="vertical-align-top text-align-center">{(values && values[lab] && Object.prototype.hasOwnProperty.call(values[lab], c)) ? values[lab][c] : '—'}</td>
               ))}
             </tr>
           ))}
@@ -29,28 +29,28 @@ export default function CalculatorResultsPlaceholders({ labels = [], values = {}
 
     return (
       <div className="results-placeholders slds-box slds-m-top_medium">
-        <table className="slds-table slds-table_cell-buffer slds-table_bordered" style={{ width: '100%', minWidth: Math.max(560, columns.length * 160) }}>
+        <table className="slds-table slds-table_cell-buffer slds-table_bordered width-100 min-width-560">
           <thead>
             <tr>
-              <th style={{ width: '20%' }}>Label</th>
+              <th className="width-20">Label</th>
               {columns.map((c) => (
-                <th key={c} style={{ textAlign: 'left' }}>{c}</th>
+                <th key={c} className="text-align-left">{c}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {labels.map((lab) => (
               <tr key={lab}>
-                <td style={{ verticalAlign: 'top', fontWeight: 600 }}>{lab}</td>
+                <td className="vertical-align-top font-weight-600">{lab}</td>
                 {columns.map((c) => (
-                  <td key={c} style={{ verticalAlign: 'top' }}>{(values && values[lab] && Object.prototype.hasOwnProperty.call(values[lab], c)) ? values[lab][c] : '—'}</td>
+                  <td key={c} className="vertical-align-top">{(values && values[lab] && Object.prototype.hasOwnProperty.call(values[lab], c)) ? values[lab][c] : '—'}</td>
                 ))}
               </tr>
             ))}
           </tbody>
         </table>
         {note && (
-          <div style={{ marginTop: '0.5rem', color: '#666', fontSize: '0.9rem' }}>{note}</div>
+          <div className="margin-top-05 text-color-muted font-size-09rem">{note}</div>
         )}
       </div>
     );
@@ -63,8 +63,8 @@ export default function CalculatorResultsPlaceholders({ labels = [], values = {}
       <>
         {labels.map((lab) => (
           <tr key={lab}>
-            <td style={{ verticalAlign: 'top', fontWeight: 600 }}>{lab}</td>
-            <td style={{ verticalAlign: 'top', textAlign: 'center' }}>{(values && Object.prototype.hasOwnProperty.call(values, lab)) ? values[lab] : '—'}</td>
+            <td className="vertical-align-top font-weight-600">{lab}</td>
+            <td className="vertical-align-top text-align-center">{(values && Object.prototype.hasOwnProperty.call(values, lab)) ? values[lab] : '—'}</td>
           </tr>
         ))}
       </>
@@ -73,24 +73,24 @@ export default function CalculatorResultsPlaceholders({ labels = [], values = {}
 
   return (
     <div className="results-placeholders slds-box slds-m-top_medium">
-      <table className="slds-table slds-table_cell-buffer slds-table_bordered" style={{ width: '100%', minWidth: 560 }}>
+      <table className="slds-table slds-table_cell-buffer slds-table_bordered width-100 min-width-560">
         <thead>
           <tr>
-            <th style={{ width: '55%' }}>Label</th>
-            <th style={{ width: '45%' }}>Value</th>
+            <th className="width-55">Label</th>
+            <th className="width-45">Value</th>
           </tr>
         </thead>
         <tbody>
           {labels.map((lab) => (
             <tr key={lab}>
-              <td style={{ verticalAlign: 'top', fontWeight: 600 }}>{lab}</td>
-              <td style={{ verticalAlign: 'top' }}>{(values && Object.prototype.hasOwnProperty.call(values, lab)) ? values[lab] : '—'}</td>
+              <td className="vertical-align-top font-weight-600">{lab}</td>
+              <td className="vertical-align-top">{(values && Object.prototype.hasOwnProperty.call(values, lab)) ? values[lab] : '—'}</td>
             </tr>
           ))}
         </tbody>
       </table>
       {note && (
-        <div style={{ marginTop: '0.5rem', color: '#666', fontSize: '0.9rem' }}>{note}</div>
+        <div className="margin-top-05 text-color-muted font-size-09rem">{note}</div>
       )}
     </div>
   );

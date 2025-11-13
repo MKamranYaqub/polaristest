@@ -27,6 +27,7 @@ import ProtectedRoute from './pages/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import './styles/index.scss';
 import './styles/accessibility.css';
+import './styles/utilities.css';
 
 // AppContent component to use theme context
 const AppContent = () => {
@@ -39,7 +40,7 @@ const AppContent = () => {
           <div className="app-shell">
           <header className="app-header">
             <h1 className="app-header__title">Project Polaris</h1>
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.75rem', marginRight: '1rem' }}>
+            <div className="margin-left-auto display-flex align-items-center flex-gap-5 margin-right-05">
               <ThemeToggle />
               <UserProfileButton />
             </div>

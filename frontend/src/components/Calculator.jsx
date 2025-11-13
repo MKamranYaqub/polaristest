@@ -37,7 +37,7 @@ export default function Calculator() {
         </button>
       </div>
 
-      <div style={{ marginTop: '1rem' }}>
+      <div className="margin-top-1">
         {active === 'BTL' && <BTLcalculator initialQuote={loadedQuote && loadedQuote.calculator_type === 'BTL' ? loadedQuote : null} />}
         {active === 'BRIDGING' && <BridgingCalculator initialQuote={loadedQuote && (loadedQuote.calculator_type === 'BRIDGING' || loadedQuote.calculator_type === 'BRIDGE') ? loadedQuote : null} />}
       </div>

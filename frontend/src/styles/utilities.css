@@ -1,0 +1,442 @@
+/* Utility classes for replacing inline styles */
+
+/* Font Weight */
+.font-weight-300 { font-weight: 300; }
+.font-weight-400 { font-weight: 400; }
+.font-weight-500 { font-weight: 500; }
+.font-weight-600 { font-weight: 600; }
+.font-weight-700 { font-weight: 700; }
+.font-weight-bold { font-weight: bold; }
+
+/* Text Alignment */
+.text-align-center { text-align: center; }
+.text-align-right { text-align: right; }
+.text-align-left { text-align: left; }
+.vertical-align-top { vertical-align: top; }
+
+/* Display */
+.display-flex { display: flex; }
+.display-inline-flex { display: inline-flex; }
+.display-block { display: block; }
+.display-inline-block { display: inline-block; }
+.cursor-pointer { cursor: pointer; }
+.position-relative { position: relative; }
+.position-sticky { position: sticky; }
+.position-absolute { position: absolute; }
+
+/* Color Classes */
+.text-color-primary { color: #0176d3; }
+.text-color-dark { color: #333; }
+.text-color-heading { color: #181818; }
+.text-color-body { color: #3e3e3c; }
+.text-color-warning { color: #826f00; }
+.text-color-error { color: red; }
+.text-color-muted { color: #666; }
+.text-color-gray { color: #706e6b; }
+.text-color-link { color: #0176d3; }
+.text-color-white { color: white; }
+.text-color-white-semi { color: rgba(255, 255, 255, 0.9); }
+.text-italic { font-style: italic; }
+.background-gray-light { background-color: #f3f2f2; }
+.background-gray-medium { background-color: #f3f3f3; }
+.background-white { background-color: white; }
+.background-warning-light { background-color: #fdf6e3; }
+.z-index-1 { z-index: 1; }
+
+/* Font Sizes */
+.font-size-075rem { font-size: 0.75rem; }
+.font-size-0875rem { font-size: 0.875rem; }
+.font-size-09rem { font-size: 0.9rem; }
+.font-size-1rem { font-size: 1rem; }
+.font-size-12 { font-size: 12px; }
+.font-size-14 { font-size: 14px; }
+.font-size-15rem { font-size: 1.5rem; }
+.font-size-175rem { font-size: 1.75rem; }
+.font-size-48 { font-size: 48px; }
+.font-size-2rem { font-size: 2rem; }
+.font-size-large { font-size: 1.1rem; }
+
+/* Flexbox */
+.flex-direction-column { flex-direction: column; }
+.align-items-center { align-items: center; }
+.align-items-flex-end { align-items: flex-end; }
+.align-items-stretch { align-items: stretch; }
+.justify-content-flex-start { justify-content: flex-start; }
+.justify-content-flex-end { justify-content: flex-end; }
+.justify-content-center { justify-content: center; }
+.justify-content-space-between { justify-content: space-between; }
+.flex-gap-2px { gap: 2px; }
+.flex-gap-05 { gap: 0.5rem; }
+.flex-gap-075 { gap: 0.75rem; }
+.flex-gap-025 { gap: 0.25rem; }
+.flex-gap-1 { gap: 1rem; }
+.flex-gap-8 { gap: 8px; }
+.flex-gap-5 { gap: 0.5rem; }
+.flex-1 { flex: 1; }
+
+/* Margins */
+.margin-0 { margin: 0; }
+.margin-0-auto { margin: 0 auto; }
+.margin-left-auto { margin-left: auto; }
+.margin-left-8 { margin-left: 8px; }
+.margin-bottom-05 { margin-bottom: 0.5rem; }
+.margin-bottom-075 { margin-bottom: 0.75rem; }
+.margin-bottom-1 { margin-bottom: 1rem; }
+.margin-bottom-15 { margin-bottom: 1.5rem; }
+.margin-bottom-2 { margin-bottom: 2rem; }
+.margin-top-025 { margin-top: 0.25rem; }
+.margin-top-05 { margin-top: 0.5rem; }
+.margin-top-1 { margin-top: 1rem; }
+.margin-top-2 { margin-top: 2rem; }
+.margin-right-05 { margin-right: 0.5rem; }
+.margin-right-1 { margin-right: 1rem; }
+
+/* Padding */
+.padding-0 { padding: 0; }
+.padding-05 { padding: 0.5rem; }
+.padding-075 { padding: 0.75rem; }
+.padding-0375 { padding: 0.375rem; }
+.padding-1 { padding: 1rem; }
+.padding-125 { padding: 1.25rem; }
+.padding-2 { padding: 2rem; }
+.padding-3 { padding: 3rem; }
+.padding-x-05 { padding-left: 0.5rem; padding-right: 0.5rem; }
+.padding-y-05 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.padding-top-025 { padding-top: 0.25rem; }
+.padding-top-05 { padding-top: 0.5rem; }
+.padding-top-1 { padding-top: 1rem; }
+.padding-top-025 { padding-top: 0.25rem; }
+.align-self-center { align-self: center; }
+
+/* Overflow */
+.overflow-auto { overflow-x: auto; }
+.overflow-x-auto { overflow-x: auto; }
+
+/* Max Width */
+.max-width-400 { max-width: 400px; }
+.max-width-500 { max-width: 500px; }
+.max-width-900 { min-width: 900px; }
+.max-width-1200 { max-width: 1200px; }
+
+/* Grid Utilities */
+.grid-column-span-2 { grid-column: span 2; }
+.grid-column-1-end { grid-column: 1 / -1; }
+
+/* Auto Margin Centering */
+.margin-auto { margin: 0 auto; }
+.margin-2-auto { margin: 2rem auto; }
+
+/* Width Classes */
+.width-9 { width: 9%; }
+.width-10 { width: 10%; }
+.width-12 { width: 12%; }
+.width-13 { width: 13%; }
+.width-15 { width: 15%; }
+.width-20 { width: 20%; }
+.width-24 { width: 24%; }
+.width-25 { width: 25%; }
+.width-26 { width: 26%; }
+.width-45 { width: 45%; }
+.width-55 { width: 55%; }
+.width-100 { width: 100%; }
+.min-width-80 { min-width: 80px; }
+.min-width-150 { min-width: 150px; }
+.min-width-200 { min-width: 200px; }
+.min-width-260 { min-width: 260px; }
+.min-width-560 { min-width: 560px; }
+.max-width-400 { max-width: 400px; }
+.max-width-450 { max-width: 450px; }
+.max-width-500 { max-width: 500px; }
+.max-width-600 { max-width: 600px; }
+.max-width-900 { max-width: 900px; }
+.max-width-1200 { max-width: 1200px; }
+
+/* Tables should be allowed to fill their container even when a max-width
+   utility is present on the element. Some table markup uses the
+   max-width-* utilities for layout which can undesirably constrain
+   wide tables; apply a targeted override so SLDS tables remain fluid. */
+table.slds-table.max-width-900,
+table.slds-table.max-width-1200 {
+  max-width: none;
+  width: 100%;
+}
+
+/* Grid Column Span */
+.grid-column-span-2 { grid-column: span 2; }
+
+/* Letter Spacing */
+.letter-spacing-05 { letter-spacing: 0.5px; }
+
+/* Font Family */
+.font-monospace { font-family: monospace; }
+
+/* Line Height */
+.line-height-15 { line-height: 1.5; }
+
+/* Border Radius */
+.border-radius-4 { border-radius: 4px; }
+.border-radius-025 { border-radius: 0.25rem; }
+
+/* Border */
+.border-top-gray { border-top: 1px solid #dddbda; }
+.border-warning { border: 1px solid #f4d875; }
+
+/* Word Break */
+.word-break-all { word-break: break-all; }
+
+/* Text Decoration */
+.text-decoration-none { text-decoration: none; }
+.text-decoration-underline { text-decoration: underline; }
+
+/* Height */
+.height-100 { height: 100%; }
+
+/* Position + Height combo */
+.position-fixed-full-height {
+  position: fixed;
+  height: 100%;
+}
+
+/* Text Decoration */
+.text-decoration-none { text-decoration: none; }
+
+/* Special Component Styles */
+.auth-container {
+  max-width: 400px;
+  margin: 2rem auto;
+}
+
+.auth-container-wide {
+  max-width: 500px;
+  margin: 2rem auto;
+}
+
+.auth-demo-box {
+  background-color: #f3f3f3;
+  border-radius: 4px;
+}
+
+.reset-password-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f3f3;
+  padding: 1rem;
+}
+
+.reset-password-card {
+  width: 100%;
+  max-width: 450px;
+  background-color: white;
+  border-radius: 0.25rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 2rem;
+}
+
+.dev-mode-box {
+  padding: 1rem;
+  background-color: #fef8e7;
+  border: 1px solid #f4d875;
+  border-radius: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.quote-reference-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #0176d3;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.25rem;
+  border: 1px solid #014486;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 4px rgba(1, 118, 211, 0.2);
+}
+
+.quote-reference-copy-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0.25rem;
+  cursor: pointer;
+  padding: 0.375rem 0.5rem;
+  display: flex;
+  align-items: center;
+  color: white;
+  transition: background 0.2s;
+}
+
+.quote-reference-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.sticky-table-header {
+  position: sticky;
+  right: 0;
+  background: white;
+  z-index: 1;
+}
+
+.sticky-table-cell {
+  position: sticky;
+  right: 0;
+  background: white;
+  z-index: 1;
+}
+
+.quotes-filter-section {
+  background: #f3f3f3;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.property-card {
+  border: 1px solid #d8dde6;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  position: relative;
+}
+
+.property-remove-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: #c23934;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.postcode-find-btn {
+  white-space: nowrap;
+  background-color: #2e5aac;
+  color: #ffffff;
+  border: none;
+  font-weight: 500;
+}
+
+.button-group-end {
+  border-top: 1px solid var(--token-border-subtle);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.section-header {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.subsection-header {
+  font-size: 0.875rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+/* Grid Layouts */
+.grid-auto-fit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.grid-auto-fill-150 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.5rem;
+}
+
+.grid-2-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.grid-2-col-gap-margin {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.grid-3-col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.form-control-inline {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.grid-align-center-gap {
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.min-width-260 {
+  min-width: 260px;
+}
+
+.percent-unit {
+  padding: 0 0.5rem;
+  align-self: center;
+}
+
+/* Buttons & Actions */
+.button-group-end {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Specific combo classes for common patterns */
+.auth-container {
+  padding: 2rem;
+  max-width: 400px;
+  margin: 2rem auto;
+}
+
+.settings-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.modal-footer-actions {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--token-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  background: var(--token-layer-background);
+}
+
+.results-table-wrapper {
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+
+/* Hide the Multi Property Details section without removing its code.
+   This keeps the component in place but prevents it from rendering
+   visually in the UI. Remove or toggle this class to show it again. */
+.multi-property-details-hidden {
+  display: none !important;
+}
+
+.helper-icon {
+  margin-right: 0.5rem;
+  font-size: 16px;
+}

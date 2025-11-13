@@ -1,0 +1,90 @@
+// Shared UI controls used across calculators
+.modern-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  
+  .switch-track {
+    width: 51px;
+    height: 28px;
+    border-radius: 14px;
+    border: none;
+    padding: 0;
+    background: $token-color-border-subtle;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    position: relative;
+    flex-shrink: 0;
+    
+    &.checked {
+      background: $token-color-interactive;
+    }
+    
+    .switch-thumb {
+      position: absolute;
+      left: 2px;
+      display: block;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: $token-color-surface;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      transform: translateX(0);
+      transition: transform 0.15s ease;
+      
+      &.checked {
+        transform: translateX(23px);
+      }
+    }
+  }
+  
+  .switch-label {
+    font-size: 0.875rem;
+    color: $token-text-primary;
+    line-height: 1.4;
+  }
+}
+
+.range-toggle-container {
+  margin-top: $spacing-md;
+  background: $token-color-surface;
+  border: 1px solid $token-color-border-subtle;
+  border-radius: $token-radius-sm;
+  overflow: hidden;
+}
+
+.range-toggle-buttons {
+  display: flex;
+  gap: 0;
+  width: 100%;
+  
+  .range-button {
+    flex: 1;
+    padding: 0.875rem 1.5rem;
+    background: $token-color-surface;
+    border: none;
+    border-right: 1px solid $token-color-border-subtle;
+    color: $token-text-primary;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: $token-font-family;
+    
+    &:last-child {
+      border-right: none;
+    }
+    
+    &:hover:not(.active) {
+      background: $token-color-surface;
+    }
+    
+    &.active {
+      background: $token-color-interactive;
+      color: white;
+      font-weight: 600;
+    }
+  }
+}

@@ -45,39 +45,20 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#f3f3f3',
-      padding: '1rem'
-    }}>
-      <div style={{
-        width: '100%',
-        maxWidth: '450px',
-        backgroundColor: 'white',
-        borderRadius: '0.25rem',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        padding: '2rem'
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{
-            fontSize: '1.75rem',
-            fontWeight: '300',
-            color: '#181818',
-            marginBottom: '0.5rem'
-          }}>
+    <div className="reset-password-wrapper">
+      <div className="reset-password-card">
+        <div className="text-align-center margin-bottom-2">
+          <h1 className="font-size-175rem font-weight-300 text-color-heading margin-bottom-05">
             Reset Password
           </h1>
-          <p style={{ color: '#706e6b', fontSize: '14px' }}>
+          <p className="text-color-gray font-size-14">
             Enter your email address and we'll help you reset your password
           </p>
         </div>
 
         {!success ? (
           <form onSubmit={handleSubmit}>
-            <div className="slds-form-element" style={{ marginBottom: '1rem' }}>
+            <div className="slds-form-element margin-bottom-1">
               <label className="slds-form-element__label" htmlFor="email">
                 Email Address
               </label>
@@ -97,7 +78,7 @@ const ForgotPasswordPage = () => {
             </div>
 
             {error && (
-              <div className="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" style={{ marginBottom: '1rem' }}>
+              <div className="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error margin-bottom-1">
                 <span className="slds-assistive-text">Error</span>
                 <h2>{error}</h2>
               </div>
@@ -105,21 +86,16 @@ const ForgotPasswordPage = () => {
 
             <button
               type="submit"
-              className="slds-button slds-button_brand"
-              style={{ width: '100%', marginBottom: '1rem' }}
+              className="slds-button slds-button_brand width-100 margin-bottom-1"
               disabled={loading}
             >
               {loading ? 'Sending...' : 'Send Reset Link'}
             </button>
 
-            <div style={{ textAlign: 'center' }}>
+            <div className="text-align-center">
               <Link
                 to="/login"
-                style={{
-                  color: '#0176d3',
-                  textDecoration: 'none',
-                  fontSize: '14px'
-                }}
+                className="text-color-link text-decoration-none font-size-14"
               >
                 ← Back to Login
               </Link>
@@ -127,48 +103,36 @@ const ForgotPasswordPage = () => {
           </form>
         ) : (
           <div>
-            <div className="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_success" style={{ marginBottom: '1.5rem' }}>
+            <div className="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_success margin-bottom-15">
               <span className="slds-assistive-text">Success</span>
               <h2>Reset link generated successfully!</h2>
             </div>
 
-            <p style={{ color: '#3e3e3c', marginBottom: '1.5rem', fontSize: '14px', lineHeight: '1.5' }}>
+            <p className="text-color-body margin-bottom-15 font-size-14 line-height-15">
               If an account exists with the email <strong>{email}</strong>, a password reset link has been generated.
             </p>
 
             {resetLink && (
-              <div style={{
-                padding: '1rem',
-                backgroundColor: '#fef8e7',
-                border: '1px solid #f4d875',
-                borderRadius: '0.25rem',
-                marginBottom: '1.5rem'
-              }}>
-                <p style={{ fontSize: '12px', fontWeight: '600', color: '#826f00', marginBottom: '0.5rem' }}>
+              <div className="dev-mode-box">
+                <p className="font-size-12 font-weight-600 text-color-warning margin-bottom-05">
                   🔧 DEVELOPMENT MODE
                 </p>
-                <p style={{ fontSize: '12px', color: '#3e3e3c', marginBottom: '0.5rem' }}>
+                <p className="font-size-12 text-color-body margin-bottom-05">
                   Use this link to reset your password:
                 </p>
                 <a
                   href={resetLink}
-                  style={{
-                    fontSize: '12px',
-                    color: '#0176d3',
-                    wordBreak: 'break-all',
-                    textDecoration: 'underline'
-                  }}
+                  className="font-size-12 text-color-link word-break-all text-decoration-underline"
                 >
                   {resetLink}
                 </a>
               </div>
             )}
 
-            <div style={{ textAlign: 'center' }}>
+            <div className="text-align-center">
               <Link
                 to="/login"
-                className="slds-button slds-button_neutral"
-                style={{ width: '100%' }}
+                className="slds-button slds-button_neutral width-100"
               >
                 Back to Login
               </Link>

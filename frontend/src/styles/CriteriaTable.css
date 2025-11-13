@@ -71,7 +71,7 @@
   overflow-x: auto;
   background: var(--token-layer-surface, white);
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--token-shadow-soft);
 }
 
 .criteria-table {
@@ -206,7 +206,7 @@
   background: var(--token-layer-surface, #ffffff);
   z-index: 5;
   white-space: nowrap;
-  box-shadow: -6px 0 8px -6px rgba(0,0,0,0.06);
+  box-shadow: var(--token-shadow-soft);
 }
 .sticky-action {
   z-index: 6;

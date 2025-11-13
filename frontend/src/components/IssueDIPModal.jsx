@@ -300,10 +300,10 @@ export default function IssueDIPModal({
   return (
     <>
       <ModalShell isOpen={isOpen} onClose={onClose} title="Issue DIP (Decision in Principle)" footer={footerButtons}>
-      {error && <div className="slds-notify slds-notify_alert slds-theme_error" style={{ marginBottom: '1rem' }}>{error}</div>}
+      {error && <div className="slds-notify slds-notify_alert slds-theme_error margin-bottom-1">{error}</div>}
 
       {/* Residence Type */}
-      <div className="slds-form-element" style={{ marginBottom: '1rem' }}>
+      <div className="slds-form-element margin-bottom-1">
         <label className="slds-form-element__label">
           <abbr className="slds-required" title="required">*</abbr> Commercial or Main Residence
         </label>
@@ -322,7 +322,7 @@ export default function IssueDIPModal({
       </div>
 
       {/* DIP Dates */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+      <div className="grid-2-col-gap-margin">
         <div className="slds-form-element">
           <label className="slds-form-element__label">
             <abbr className="slds-required" title="required">*</abbr> DIP Date
@@ -355,7 +355,7 @@ export default function IssueDIPModal({
           </div>
 
           {/* Guarantor Name */}
-          <div className="slds-form-element" style={{ marginBottom: '1rem' }}>
+          <div className="slds-form-element margin-bottom-1">
             <label className="slds-form-element__label">Guarantor Name</label>
             <div className="slds-form-element__control">
               <input 
@@ -370,7 +370,7 @@ export default function IssueDIPModal({
           </div>
 
           {/* Lender Legal Fee and Number of Applicants */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+          <div className="grid-2-col-gap-margin">
             <div className="slds-form-element">
               <label className="slds-form-element__label">Lender Legal Fee (£)</label>
               <div className="slds-form-element__control">
@@ -407,7 +407,7 @@ export default function IssueDIPModal({
           </div>
 
           {/* Overpayments % and Paying Network/Club */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+          <div className="grid-2-col-gap-margin">
             <div className="slds-form-element">
               <label className="slds-form-element__label">Overpayments %</label>
               <div className="slds-form-element__control">
@@ -444,7 +444,7 @@ export default function IssueDIPModal({
 
           {/* Product Range Selection - Only for BTL when both ranges available */}
           {showProductRangeSelection && calculatorType === 'BTL' && (
-            <div className="slds-form-element" style={{ marginBottom: '1rem' }}>
+            <div className="slds-form-element margin-bottom-1">
               <label className="slds-form-element__label">
                 Product Range for DIP
               </label>
@@ -459,14 +459,14 @@ export default function IssueDIPModal({
                   <option value="core">Core</option>
                 </select>
               </div>
-              <div className="slds-form-element__help" style={{ fontSize: '0.875rem', color: '#706e6b', marginTop: '0.25rem' }}>
+              <div className="slds-form-element__help slds-text-body_small helper-text margin-top-025">
                 Select which product range to use for this DIP
               </div>
             </div>
           )}
 
           {/* Fee Type Selection */}
-          <div className="slds-form-element" style={{ marginBottom: '1rem' }}>
+          <div className="slds-form-element margin-bottom-1">
             <label className="slds-form-element__label">
               {calculatorType === 'BTL' ? 'Choose Fee Type' : 'Choose Product Type'}
             </label>
@@ -486,66 +486,41 @@ export default function IssueDIPModal({
           </div>
 
           {/* Security Properties */}
-          <div style={{ marginBottom: '1rem' }}>
+          <div className="margin-bottom-1">
             <label className="slds-form-element__label">
               <abbr className="slds-required" title="required">*</abbr> Security Property Address
             </label>
             
             {securityProperties.map((property, index) => (
-              <div key={index} style={{ 
-                border: '1px solid #d8dde6', 
-                padding: '1rem', 
-                marginBottom: '0.5rem', 
-                borderRadius: '4px',
-                position: 'relative'
-              }}>
+              <div key={index} className="property-card">
                 {securityProperties.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeSecurityProperty(index)}
-                    style={{
-                      position: 'absolute',
-                      top: '0.5rem',
-                      right: '0.5rem',
-                      background: '#c23934',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '0.25rem 0.5rem',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem'
-                    }}
+                    className="property-remove-btn"
                   >
                     Remove
                   </button>
                 )}
                 
                 {/* Postcode field FIRST with Find Address button */}
-                <div style={{ marginBottom: '0.5rem' }}>
-                  <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>
+                <div className="margin-bottom-05">
+                  <label className="slds-form-element__label slds-text-body_small">
                     <abbr className="slds-required" title="required">*</abbr> Postcode
                   </label>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div className="display-flex flex-gap-05">
                     <input 
                       type="text" 
-                      className="slds-input" 
+                      className="slds-input flex-1" 
                       value={property.postcode}
                       onChange={(e) => handlePropertyChange(index, 'postcode', e.target.value.toUpperCase())}
                       placeholder="e.g. KT3 4NY"
-                      style={{ flex: 1 }}
                     />
                     <button
                       type="button"
-                      className="slds-button"
+                      className="slds-button postcode-find-btn"
                       onClick={() => handlePostcodeLookup(index)}
                       disabled={loadingAddresses[index] || !property.postcode}
-                      style={{ 
-                        whiteSpace: 'nowrap',
-                        backgroundColor: '#2e5aac',
-                        color: '#ffffff',
-                        border: 'none',
-                        fontWeight: '500'
-                      }}
                     >
                       {loadingAddresses[index] ? 'Loading...' : 'Find Address'}
                     </button>
@@ -554,8 +529,8 @@ export default function IssueDIPModal({
 
                 {/* Address selection dropdown */}
                 {addressLookup[index] && addressLookup[index].length > 0 && (
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>Select Address</label>
+                  <div className="margin-bottom-05">
+                    <label className="slds-form-element__label slds-text-body_small">Select Address</label>
                     <select
                       className="slds-select"
                       onChange={(e) => {
@@ -576,8 +551,8 @@ export default function IssueDIPModal({
                   </div>
                 )}
                 
-                <div style={{ marginBottom: '0.5rem' }}>
-                  <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>Street</label>
+                <div className="margin-bottom-05">
+                  <label className="slds-form-element__label slds-text-body_small">Street</label>
                   <input 
                     type="text" 
                     className="slds-input" 
@@ -587,8 +562,8 @@ export default function IssueDIPModal({
                   />
                 </div>
                 
-                <div style={{ marginBottom: '0.5rem' }}>
-                  <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>City</label>
+                <div className="margin-bottom-05">
+                  <label className="slds-form-element__label slds-text-body_small">City</label>
                   <input 
                     type="text" 
                     className="slds-input" 
@@ -602,9 +577,8 @@ export default function IssueDIPModal({
             
             <button 
               type="button" 
-              className="slds-button slds-button_neutral" 
+              className="slds-button slds-button_neutral margin-top-05" 
               onClick={addSecurityProperty}
-              style={{ marginTop: '0.5rem' }}
             >
               + Add Another Property
             </button>

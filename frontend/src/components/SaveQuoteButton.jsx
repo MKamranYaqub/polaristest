@@ -25,6 +25,7 @@ export default function SaveQuoteButton({
   const [companyName, setCompanyName] = useState('');
   const [notes, setNotes] = useState('');
   const [productRange, setProductRange] = useState('specialist'); // Core or Specialist
+  const getUserName = () => user?.name || 'Unknown User';
   
   // Success modal state
   const [showSuccess, setShowSuccess] = useState(false);
@@ -71,10 +72,55 @@ export default function SaveQuoteButton({
         return Number.isFinite(num) ? num : null;
       };
 
+      const normalizedCalculatorType = (calculatorType || '').toString().toLowerCase();
+
+      const sanitizeValue = (value) => {
+        if (value === null || value === undefined) return undefined;
+        if (typeof value === 'number') {
+          return Number.isFinite(value) ? value : undefined;
+        }
+        if (typeof value === 'string') {
+          const trimmed = value.trim();
+          return trimmed.length > 0 ? trimmed : undefined;
+        }
+        if (typeof value === 'boolean') {
+          return value;
+        }
+        return value;
+      };
+
+      const sanitizeObject = (input) => {
+        if (Array.isArray(input)) {
+          const sanitizedArray = input
+            .map(item => (typeof item === 'object' && item !== null ? sanitizeObject(item) : sanitizeValue(item)))
+            .filter(item => {
+              if (item === undefined) return false;
+              if (typeof item === 'object' && !Array.isArray(item) && Object.keys(item).length === 0) return false;
+              return true;
+            });
+          return sanitizedArray.length > 0 ? sanitizedArray : undefined;
+        }
+
+        if (input && typeof input === 'object') {
+          return Object.entries(input).reduce((acc, [key, value]) => {
+            const sanitized = Array.isArray(value) || (value && typeof value === 'object' && !(value instanceof Date))
+              ? sanitizeObject(value)
+              : sanitizeValue(value);
+
+            if (sanitized !== undefined) {
+              acc[key] = sanitized;
+            }
+            return acc;
+          }, {});
+        }
+
+        return sanitizeValue(input);
+      };
+
       // Map calculator fields to database columns
       const quoteData = {
         name,
-        calculator_type: calculatorType,
+        calculator_type: normalizedCalculatorType,
         status: 'draft',
         // Client details (from calculators)
         client_type: calculationData.clientType || null, // 'Direct' or 'Broker'
@@ -101,7 +147,7 @@ export default function SaveQuoteButton({
       });
 
       // Add BTL-specific fields
-      if (calculatorType === 'BTL') {
+      if (normalizedCalculatorType === 'btl') {
         quoteData.product_scope = calculationData.productScope || null;
         quoteData.retention_choice = calculationData.retentionChoice || null;
         quoteData.retention_ltv = calculationData.retentionLtv ? Number(calculationData.retentionLtv) : null;
@@ -181,7 +227,7 @@ export default function SaveQuoteButton({
       }
 
       // Add Bridging-specific fields
-      if (calculatorType === 'BRIDGING' || calculatorType === 'BRIDGE') {
+      if (normalizedCalculatorType === 'bridging' || normalizedCalculatorType === 'bridge') {
         quoteData.product_scope = calculationData.productScope || null;
         quoteData.property_value = parseNumeric(calculationData.propertyValue);
         quoteData.gross_loan = parseNumeric(calculationData.grossLoan);
@@ -244,18 +290,20 @@ export default function SaveQuoteButton({
         }
       }
 
+      const sanitizedQuoteData = sanitizeObject(quoteData);
+
       // The backend will handle which table to save to based on calculator_type
       let res;
       if (existingQuote) {
         // Update existing quote - add updated_by fields
         res = await updateQuote(existingQuote.id, { 
-          ...quoteData, 
+          ...sanitizedQuoteData, 
           updated_by: getUserName(),
           updated_by_id: user?.id || null
         });
       } else {
         // Create new quote
-        res = await saveQuote(quoteData);
+        res = await saveQuote(sanitizedQuoteData);
       }
 
       setSaving(false);
@@ -278,7 +326,7 @@ export default function SaveQuoteButton({
   };
 
   return (
-    <div style={{ display: 'inline-block' }}>
+    <div className="display-inline-block">
       <button className="slds-button slds-button_brand" onClick={openForm} disabled={saving}>{saving ? 'Saving…' : (existingQuote ? ' Update Quote' : 'Save Quote')}</button>
       
       <ModalShell
@@ -295,21 +343,21 @@ export default function SaveQuoteButton({
           </>
         )}
       >
-        {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
+        {error && <div className="slds-text-color_error margin-bottom-05">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="slds-form-element">
             <label className="slds-form-element__label" htmlFor="quote-name-input">Quote Name</label>
             <div className="slds-form-element__control"><input id="quote-name-input" className="slds-input" value={name} onChange={(e) => setName(e.target.value)} /></div>
           </div>
 
-          <div className="slds-form-element" style={{ marginTop: '1rem', backgroundColor: '#f3f2f2', padding: '0.5rem 1rem', borderRadius: '0.25rem' }}>
+          <div className="slds-form-element margin-top-1 padding-y-05 padding-x-05 border-radius-4 background-gray-light">
             <label className="slds-form-element__label">Created By</label>
-            <div className="slds-form-element__control" style={{ paddingTop: '0.25rem', fontWeight: 'bold' }}>
+            <div className="slds-form-element__control padding-top-025 font-weight-bold">
               {user?.name || 'N/A'}
             </div>
           </div>
 
-          <div className="slds-form-element" style={{ marginTop: '1rem' }}>
+          <div className="slds-form-element margin-top-1">
             <label className="slds-form-element__label">Borrower Type</label>
             <div className="slds-form-element__control">
               <select className="slds-select" value={borrowerType} onChange={(e) => setBorrowerType(e.target.value)}>
@@ -342,7 +390,7 @@ export default function SaveQuoteButton({
                   <option value="core">Core</option>
                 </select>
               </div>
-              <div className="slds-form-element__help" style={{ fontSize: '0.875rem', color: '#706e6b', marginTop: '0.25rem' }}>
+              <div className="slds-form-element__help slds-text-body_small helper-text margin-top-025">
                 Only rates from the selected product range will be saved with this quote
               </div>
             </div>
@@ -368,16 +416,16 @@ export default function SaveQuoteButton({
           </button>
         )}
       >
-        <div style={{ padding: '1rem 0' }}>
-          <div style={{ marginBottom: '1rem' }}>
-            <strong style={{ display: 'block', marginBottom: '0.5rem', color: '#333' }}>Reference:</strong>
-            <span style={{ fontSize: '1.1rem', color: '#0176d3' }}>{successMessage.refNumber}</span>
+        <div className="padding-y-1">
+          <div className="margin-bottom-1">
+            <strong className="display-block margin-bottom-05 text-color-dark">Reference:</strong>
+            <span className="font-size-large text-color-primary">{successMessage.refNumber}</span>
           </div>
           <div>
-            <strong style={{ display: 'block', marginBottom: '0.5rem', color: '#333' }}>
+            <strong className="display-block margin-bottom-05 text-color-dark">
               {successMessage.timestamp === 'created' ? 'Created:' : 'Updated:'}
             </strong>
-            <span style={{ color: '#666' }}>{successMessage.date}</span>
+            <span className="helper-text">{successMessage.date}</span>
           </div>
         </div>
       </ModalShell>

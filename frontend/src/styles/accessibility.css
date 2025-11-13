@@ -20,7 +20,7 @@
 }
 
 .high-contrast a {
-  color: #0000EE !important;
+  color: var(--token-interactive) !important;
   font-weight: 600 !important;
 }
 
@@ -33,7 +33,7 @@
 .high-contrast input,
 .high-contrast textarea,
 .high-contrast select {
-  border: 2px solid #000 !important;
+  border: 2px solid var(--token-border-strong) !important;
 }
 
 /* Font Size Settings */
@@ -56,9 +56,9 @@
 /* Enhanced Focus Indicators */
 .enhanced-focus *:focus,
 .enhanced-focus *:focus-visible {
-  outline: 3px solid #0176d3 !important;
+  outline: 3px solid var(--token-interactive) !important;
   outline-offset: 2px !important;
-  box-shadow: 0 0 0 3px rgba(1, 118, 211, 0.3) !important;
+  box-shadow: 0 0 0 3px var(--token-focus-ring) !important;
 }
 
 .enhanced-focus button:focus,
@@ -66,7 +66,7 @@
 .enhanced-focus input:focus,
 .enhanced-focus select:focus,
 .enhanced-focus textarea:focus {
-  outline: 3px solid #0176d3 !important;
+  outline: 3px solid var(--token-interactive) !important;
   outline-offset: 2px !important;
 }
 
@@ -108,9 +108,9 @@
 
 /* Ensure proper color contrast in dark mode */
 :root[data-carbon-theme="g100"] {
-  --cds-text-primary: #f4f4f4;
-  --cds-text-secondary: #c6c6c6;
-  --cds-text-on-color: #ffffff;
+  --cds-text-primary: var(--token-text-primary);
+  --cds-text-secondary: var(--token-text-secondary);
+  --cds-text-on-color: var(--token-layer-surface);
 }
 
 /* Skip to content link for keyboard navigation */
@@ -118,7 +118,7 @@
   position: absolute;
   top: -100px;
   left: 0;
-  background: #0176d3;
+  background: var(--token-interactive);
   color: white;
   padding: 0.75rem 1.5rem;
   text-decoration: none;
@@ -129,7 +129,7 @@
 
 .skip-to-content:focus {
   top: 0;
-  outline: 3px solid #ffffff;
+  outline: 3px solid var(--token-layer-surface);
   outline-offset: 2px;
 }
 
@@ -143,7 +143,7 @@
 [role="button"]:focus,
 [role="link"]:focus,
 [role="menuitem"]:focus {
-  outline: 2px solid #0176d3;
+  outline: 2px solid var(--token-interactive);
   outline-offset: 2px;
 }
 
@@ -178,13 +178,13 @@ textarea:disabled {
 /* High contrast for form validation */
 .high-contrast input:invalid,
 .high-contrast textarea:invalid {
-  border-color: #d00 !important;
+  border-color: var(--token-critical) !important;
   border-width: 3px !important;
 }
 
 .high-contrast input:valid,
 .high-contrast textarea:valid {
-  border-color: #090 !important;
+  border-color: var(--token-success) !important;
 }
 
 /* Improved table accessibility */
@@ -194,8 +194,8 @@ textarea:disabled {
 }
 
 .enhanced-focus table tr:focus-within {
-  background-color: rgba(1, 118, 211, 0.1);
-  outline: 2px solid #0176d3;
+  background-color: var(--token-focus-ring);
+  outline: 2px solid var(--token-interactive);
 }
 
 /* Ensure modals are properly focused */
@@ -210,7 +210,7 @@ textarea:disabled {
 
 /* Keyboard navigation helper */
 .keyboard-nav *:focus {
-  outline: 2px solid #0176d3;
+  outline: 2px solid var(--token-interactive);
   outline-offset: 2px;
 }
 
@@ -226,8 +226,8 @@ textarea:disabled {
   body {
     font-size: 12pt;
     line-height: 1.5;
-    color: #000;
-    background: #fff;
+    color: var(--token-text-primary);
+    background: var(--token-layer-surface);
   }
 }
 

@@ -206,7 +206,7 @@ const UsersPage = () => {
 
   if (loading) {
     return (
-      <div className="slds-spinner_container" style={{ position: 'fixed', height: '100%' }}>
+      <div className="slds-spinner_container position-fixed-full-height">
         <div className="slds-spinner slds-spinner_medium" role="status">
           <span className="slds-assistive-text">Loading</span>
           <div className="slds-spinner__dot-a"></div>
@@ -218,11 +218,11 @@ const UsersPage = () => {
 
   return (
     <div className="slds-p-around_large">
-      <div className="slds-page-header" style={{ marginBottom: '1.5rem' }}>
+      <div className="slds-page-header margin-bottom-15">
         <div className="slds-grid slds-grid_vertical-align-center">
           <div className="slds-col slds-has-flexi-truncate">
             <h3 className="slds-text-heading_large">User Management</h3>
-            <p className="slds-text-body_small slds-m-top_xx-small" style={{ color: '#706e6b' }}>
+            <p className="slds-text-body_small slds-m-top_xx-small text-color-gray">
               Manage user accounts, access levels, and permissions
             </p>
           </div>
@@ -231,7 +231,7 @@ const UsersPage = () => {
               className="slds-button slds-button_brand"
               onClick={() => setShowCreateModal(true)}
             >
-              <span style={{ marginRight: '0.5rem' }}>➕</span>
+              <span className="margin-right-05">➕</span>
               Create User
             </button>
           </div>
@@ -267,22 +267,22 @@ const UsersPage = () => {
           <table className="slds-table slds-table_cell-buffer slds-table_bordered">
             <thead>
               <tr className="slds-line-height_reset">
-                <th scope="col" style={{ width: '25%' }}>
+                <th scope="col" className="width-25">
                   <div className="slds-truncate" title="Name">Name</div>
                 </th>
-                <th scope="col" style={{ width: '20%' }}>
+                <th scope="col" className="width-20">
                   <div className="slds-truncate" title="Email">Email</div>
                 </th>
-                <th scope="col" style={{ width: '15%' }}>
+                <th scope="col" className="width-15">
                   <div className="slds-truncate" title="Access Level">Access Level</div>
                 </th>
-                <th scope="col" style={{ width: '10%' }}>
+                <th scope="col" className="width-10">
                   <div className="slds-truncate" title="Status">Status</div>
                 </th>
-                <th scope="col" style={{ width: '15%' }}>
+                <th scope="col" className="width-15">
                   <div className="slds-truncate" title="Last Login">Last Login</div>
                 </th>
-                <th scope="col" style={{ width: '15%' }}>
+                <th scope="col" className="width-15">
                   <div className="slds-truncate" title="Actions">Actions</div>
                 </th>
               </tr>
@@ -351,7 +351,7 @@ const UsersPage = () => {
           </table>
 
           {users.length === 0 && (
-            <div className="slds-text-align_center slds-p-vertical_large" style={{ color: '#706e6b' }}>
+            <div className="slds-text-align_center slds-p-vertical_large text-color-gray">
               No users found
             </div>
           )}
@@ -362,7 +362,7 @@ const UsersPage = () => {
       {showCreateModal && (
         <div className="modal-backdrop">
           <div className="slds-modal slds-fade-in-open" role="dialog">
-            <div className="slds-modal__container" style={{ maxWidth: '600px' }}>
+            <div className="slds-modal__container max-width-600">
               <header className="slds-modal__header">
                 <button
                   className="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
@@ -473,7 +473,7 @@ const UsersPage = () => {
       {showEditModal && editingUser && (
         <div className="modal-backdrop">
           <div className="slds-modal slds-fade-in-open" role="dialog">
-            <div className="slds-modal__container" style={{ maxWidth: '600px' }}>
+            <div className="slds-modal__container max-width-600">
               <header className="slds-modal__header">
                 <button
                   className="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
@@ -492,10 +492,9 @@ const UsersPage = () => {
                     <div className="slds-form-element__control">
                       <input
                         type="text"
-                        className="slds-input"
+                        className="slds-input background-gray-medium"
                         value={editingUser.email}
                         disabled
-                        style={{ backgroundColor: '#f3f3f3' }}
                       />
                     </div>
                   </div>
@@ -575,7 +574,7 @@ const UsersPage = () => {
       {showResetModal && (
         <div className="modal-backdrop">
           <div className="slds-modal slds-fade-in-open" role="dialog">
-            <div className="slds-modal__container" style={{ maxWidth: '500px' }}>
+            <div className="slds-modal__container max-width-500">
               <header className="slds-modal__header">
                 <button
                   className="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
@@ -649,7 +648,7 @@ const UsersPage = () => {
           </>
         )}
       >
-        <p style={{ fontSize: '14px', lineHeight: '1.5', color: '#3e3e3c' }}>
+        <p className="font-size-14 line-height-15 text-color-body">
           Are you sure you want to delete this user? This action cannot be undone.
         </p>
       </ModalShell>

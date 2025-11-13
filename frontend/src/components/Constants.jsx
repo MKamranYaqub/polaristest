@@ -1045,7 +1045,7 @@ export default function Constants() {
     <div className="slds-p-around_medium">
 
       <p className="helper-text">Edit product lists, fee columns and LTV thresholds.</p>
-      <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+      <div className="button-group-end">
         <button className="slds-button slds-button_brand" onClick={saveToStorage} disabled={saving}>
           {saving ? 'Saving...' : 'Save All to Database'}
         </button>
@@ -1053,15 +1053,15 @@ export default function Constants() {
         <button className="slds-button slds-button_destructive" onClick={resetToDefaults}>Reset defaults</button>
       </div>
 
-      <section className="slds-box slds-m-bottom_medium" style={{ borderTop: '1px solid var(--token-border-subtle)', paddingTop: '1rem', marginTop: '1rem' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Product lists per property type</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+      <section className="slds-box slds-m-bottom_medium section-divider">
+        <h3 className="section-header">Product lists per property type</h3>
+        <div className="grid-auto-fit">
           {Object.keys(safeProductLists).map((pt) => {
             const key = `productLists:${pt}`;
             return (
               <div key={pt} className="slds-form-element">
                 <label className="slds-form-element__label">{pt}</label>
-                <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <div className="slds-form-element__control form-control-inline">
                   <input
                     className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
                     value={editingFields[key] ? (tempValues[key] ?? '') : String(Array.isArray(productLists[pt]) ? productLists[pt].join(', ') : (productLists[pt] ?? ''))}
@@ -1084,15 +1084,15 @@ export default function Constants() {
         </div>
       </section>
 
-      <section className="slds-box slds-m-bottom_medium" style={{ borderTop: '1px solid var(--token-border-subtle)', paddingTop: '1rem', marginTop: '1rem' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Fee columns</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+      <section className="slds-box slds-m-bottom_medium section-divider">
+        <h3 className="section-header">Fee columns</h3>
+        <div className="grid-auto-fit">
           {Object.keys(safeFeeColumns).map((k) => {
             const key = `feeColumns:${k}`;
             return (
               <div key={k} className="slds-form-element">
                 <label className="slds-form-element__label">{k}</label>
-                <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <div className="slds-form-element__control form-control-inline">
                   <input
                     className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
                     value={editingFields[key] ? (tempValues[key] ?? '') : String(Array.isArray(feeColumns[k]) ? feeColumns[k].join(', ') : (feeColumns[k] ?? ''))}
@@ -1117,12 +1117,12 @@ export default function Constants() {
 
       {/* Max LTV by Tier removed from Constants per user request; values are maintained in the rates table. */}
 
-      <section className="slds-box slds-m-bottom_medium" style={{ borderTop: '1px solid var(--token-border-subtle)', paddingTop: '1rem', marginTop: '1rem' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Flat-above-commercial override</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', alignItems: 'start' }}>
+      <section className="slds-box slds-m-bottom_medium section-divider">
+        <h3 className="section-header">Flat-above-commercial override</h3>
+        <div className="grid-3-col">
           <div className="slds-form-element">
             <label className="slds-form-element__label">Scope matcher</label>
-            <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <div className="slds-form-element__control form-control-inline">
               {(() => {
                 const key = 'flatAbove:scopeMatcher';
                 return (
@@ -1145,7 +1145,7 @@ export default function Constants() {
 
           <div>
             <label className="slds-form-element__label">Tier 2 (Effective max LTV)</label>
-            <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <div className="slds-form-element__control form-control-inline">
               {(() => {
                 const key = 'flatAbove:tier2';
                 return (
@@ -1167,7 +1167,7 @@ export default function Constants() {
 
           <div>
             <label className="slds-form-element__label">Tier 3 (Effective max LTV)</label>
-            <div className="slds-form-element__control" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <div className="slds-form-element__control form-control-inline">
               {(() => {
                 const key = 'flatAbove:tier3';
                 return (
@@ -1189,14 +1189,14 @@ export default function Constants() {
         </div>
       </section>
 
-      <section className="slds-box slds-m-bottom_medium" style={{ borderTop: '1px solid var(--token-border-subtle)', paddingTop: '1rem', marginTop: '1rem' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Market / Base Rates</h3>
+      <section className="slds-box slds-m-bottom_medium section-divider">
+        <h3 className="section-header">Market / Base Rates</h3>
   <p className="helper-text"></p>
 
-        <div className="slds-grid slds-wrap slds-gutters_small" style={{ gap: '1rem' }}>
-          <div className="slds-col" style={{ minWidth: 260 }}>
+        <div className="slds-grid slds-wrap slds-gutters_small flex-gap-1">
+          <div className="slds-col min-width-260">
             <label className="slds-form-element__label">Standard BBR</label>
-            <div className="slds-form-element__control slds-grid" style={{ alignItems: 'center', gap: '0.5rem' }}>
+            <div className="slds-form-element__control slds-grid grid-align-center-gap">
               {(() => {
                 const key = 'marketRates:STANDARD_BBR';
                 return (
@@ -1210,7 +1210,7 @@ export default function Constants() {
                       onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
                       disabled={!editingFields[key]}
                     />
-                    <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
+                    <div className="percent-unit">%</div>
                     {!editingFields[key] ? (
                       <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, ((marketRates?.STANDARD_BBR ?? 0) * 100).toFixed(2))}>Edit</button>
                     ) : (
@@ -1226,9 +1226,9 @@ export default function Constants() {
             <div className="helper-text">Standard Bank Base Rate used in loan calculations (showing as percent).</div>
           </div>
 
-          <div className="slds-col" style={{ minWidth: 260 }}>
+          <div className="slds-col min-width-260">
             <label className="slds-form-element__label">Stress BBR</label>
-            <div className="slds-form-element__control slds-grid" style={{ alignItems: 'center', gap: '0.5rem' }}>
+            <div className="slds-form-element__control slds-grid grid-align-center-gap">
               {(() => {
                 const key = 'marketRates:STRESS_BBR';
                 return (
@@ -1242,7 +1242,7 @@ export default function Constants() {
                       onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
                       disabled={!editingFields[key]}
                     />
-                    <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
+                    <div className="percent-unit">%</div>
                     {!editingFields[key] ? (
                       <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, ((marketRates?.STRESS_BBR ?? 0) * 100).toFixed(2))}>Edit</button>
                     ) : (
@@ -1258,9 +1258,9 @@ export default function Constants() {
             <div className="helper-text">Stress BBR value used for stress-testing assumptions.</div>
           </div>
 
-          <div className="slds-col" style={{ minWidth: 260 }}>
+          <div className="slds-col min-width-260">
             <label className="slds-form-element__label">Current MVR</label>
-            <div className="slds-form-element__control slds-grid" style={{ alignItems: 'center', gap: '0.5rem' }}>
+            <div className="slds-form-element__control slds-grid grid-align-center-gap">
               {(() => {
                 const key = 'marketRates:CURRENT_MVR';
                 return (
@@ -1274,7 +1274,7 @@ export default function Constants() {
                       onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
                       disabled={!editingFields[key]}
                     />
-                    <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
+                    <div className="percent-unit">%</div>
                     {!editingFields[key] ? (
                       <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, ((marketRates?.CURRENT_MVR ?? 0) * 100).toFixed(2))}>Edit</button>
                     ) : (
@@ -1294,12 +1294,12 @@ export default function Constants() {
         {/* Preview removed as requested */}
       </section>
 
-      <section className="slds-box slds-m-bottom_medium" style={{ borderTop: '1px solid var(--token-border-subtle)', paddingTop: '1rem', marginTop: '1rem' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Broker Settings</h3>
+      <section className="slds-box slds-m-bottom_medium section-divider">
+        <h3 className="section-header">Broker Settings</h3>
         <p className="helper-text">Configure broker routes, commission defaults, and tolerance settings.</p>
 <br></br>
         <div className="slds-m-bottom_medium">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div className="display-flex justify-content-space-between align-items-center margin-bottom-1">
             
             <h5>Broker Routes</h5>
             <button 
@@ -1311,10 +1311,10 @@ export default function Constants() {
           </div>
 
           {showAddRouteForm && (
-            <div className="slds-box slds-box_small slds-m-bottom_small" style={{ backgroundColor: '#f3f2f2', padding: '1rem' }}>
-              <h5 style={{ marginBottom: '1rem' }}>Add New Broker Route</h5>
-              <div className="slds-grid slds-wrap slds-gutters_small" style={{ gap: '1rem', marginBottom: '1rem' }}>
-                <div className="slds-col" style={{ minWidth: 200 }}>
+            <div className="slds-box slds-box_small slds-m-bottom_small padding-1 background-gray-light">
+              <h5 className="margin-bottom-1">Add New Broker Route</h5>
+              <div className="slds-grid slds-wrap slds-gutters_small flex-gap-1 margin-bottom-1">
+                <div className="slds-col min-width-200">
                   <label className="slds-form-element__label">Route Key (e.g., SOLICITOR)</label>
                   <input
                     className="slds-input"
@@ -1325,7 +1325,7 @@ export default function Constants() {
                   />
                   <div className="helper-text">Uppercase, underscores for spaces</div>
                 </div>
-                <div className="slds-col" style={{ minWidth: 200 }}>
+                <div className="slds-col min-width-200">
                   <label className="slds-form-element__label">Display Name</label>
                   <input
                     className="slds-input"
@@ -1336,7 +1336,7 @@ export default function Constants() {
                   />
                   <div className="helper-text">Name shown in dropdown</div>
                 </div>
-                <div className="slds-col" style={{ minWidth: 150 }}>
+                <div className="slds-col min-width-150">
                   <label className="slds-form-element__label">Default Commission (%)</label>
                   <input
                     className="slds-input"
@@ -1367,13 +1367,13 @@ export default function Constants() {
             </div>
           )}
 
-          <div className="slds-grid slds-wrap slds-gutters_small" style={{ gap: '1rem' }}>
+          <div className="slds-grid slds-wrap slds-gutters_small flex-gap-1">
             {Object.keys(brokerRoutes || DEFAULT_BROKER_ROUTES).map(routeKey => {
               const key = `brokerRoutes:${routeKey}`;
               return (
-                <div key={routeKey} className="slds-col" style={{ minWidth: 260 }}>
+                <div key={routeKey} className="slds-col min-width-260">
                   <label className="slds-form-element__label">{routeKey}</label>
-                  <div className="slds-form-element__control slds-grid" style={{ alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="slds-form-element__control slds-grid align-items-center flex-gap-05">
                     <input
                       className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
                       type="text"
@@ -1403,13 +1403,13 @@ export default function Constants() {
         <div className="slds-m-bottom_medium">
           <br/>
           <h5>Broker Commission Defaults (%)</h5>
-          <div className="slds-grid slds-wrap slds-gutters_small" style={{ gap: '1rem' }}>
+          <div className="slds-grid slds-wrap slds-gutters_small flex-gap-1">
             {Object.keys(brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS).map(route => {
               const key = `brokerCommission:${route}`;
               return (
-                <div key={route} className="slds-col" style={{ minWidth: 260 }}>
+                <div key={route} className="slds-col min-width-260">
                   <label className="slds-form-element__label">{route}</label>
-                  <div className="slds-form-element__control slds-grid" style={{ alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="slds-form-element__control slds-grid align-items-center flex-gap-05">
                     <input
                       className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
                       type="number"
@@ -1420,7 +1420,7 @@ export default function Constants() {
                       onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
                       disabled={!editingFields[key]}
                     />
-                    <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
+                    <div className="percent-unit">%</div>
                     {!editingFields[key] ? (
                       <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(brokerCommissionDefaults[route] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[route] ?? 0.9))}>Edit</button>
                     ) : (
@@ -1439,9 +1439,9 @@ export default function Constants() {
 
         <div>
           <h5>Commission Tolerance</h5>
-          <div className="slds-col" style={{ minWidth: 260, maxWidth: 400 }}>
+          <div className="slds-col min-width-260 max-width-400">
             <label className="slds-form-element__label">Tolerance (±%)</label>
-            <div className="slds-form-element__control slds-grid" style={{ alignItems: 'center', gap: '0.5rem' }}>
+            <div className="slds-form-element__control slds-grid align-items-center flex-gap-05">
               {(() => {
                 const key = 'brokerTolerance';
                 return (
@@ -1456,7 +1456,7 @@ export default function Constants() {
                       onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
                       disabled={!editingFields[key]}
                     />
-                    <div style={{ padding: '0 0.5rem', alignSelf: 'center' }}>%</div>
+                    <div className="percent-unit">%</div>
                     {!editingFields[key] ? (
                       <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE))}>Edit</button>
                     ) : (
@@ -1501,12 +1501,12 @@ export default function Constants() {
               <h2 className="slds-text-heading_medium">Confirm Deletion</h2>
             </header>
             <div className="slds-modal__content slds-p-around_medium">
-              <p style={{ marginBottom: '1rem' }}>
+              <p className="margin-bottom-1">
                 Are you sure you want to delete the route <strong>"{deleteConfirmation.routeKey}"</strong>?
               </p>
-              <div className="slds-notify slds-notify_alert slds-alert_warning" role="alert" style={{ marginTop: '1rem' }}>
+              <div className="slds-notify slds-notify_alert slds-alert_warning margin-top-1" role="alert">
                 <span className="slds-assistive-text">warning</span>
-                <h2 style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                <h2 className="subsection-header">
                   Warning
                 </h2>
                 <div className="slds-notify__content">

@@ -16,15 +16,14 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="settings-page" style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="settings-page padding-2 max-width-1200 margin-0-auto">
       <h1>Settings</h1>
       <p>Theme and accessibility preferences</p>
       
-      <div className="settings-tabs" style={{ marginTop: '2rem' }}>
+      <div className="settings-tabs margin-top-2">
         <button 
-          className={`settings-tab-button ${activeTab === 'theme' ? 'active' : ''}`}
-          onClick={() => setActiveTab('theme')} 
-          style={{ marginRight: '1rem' }}
+          className={`settings-tab-button margin-right-1 ${activeTab === 'theme' ? 'active' : ''}`}
+          onClick={() => setActiveTab('theme')}
         >
           Theme
         </button>
@@ -37,7 +36,7 @@ const SettingsPage = () => {
       </div>
       
       {activeTab === 'theme' && (
-        <div style={{ marginTop: '2rem' }}>
+        <div className="margin-top-2">
           <h2>Theme Preference</h2>
           <div>
             <label><input type="radio" name="theme" value="light" checked={themeMode === 'light'} onChange={(e) => setThemeMode(e.target.value)} /> Light</label><br/>
@@ -48,15 +47,15 @@ const SettingsPage = () => {
       )}
       
       {activeTab === 'accessibility' && (
-        <div style={{ marginTop: '2rem' }}>
+        <div className="margin-top-2">
           <h2>Accessibility Options</h2>
           <button className="slds-button slds-button_neutral" onClick={handleResetAccessibility}>Reset to Defaults</button>
           {resetMessage && (
-            <div className="slds-notify slds-notify_alert slds-theme_success" style={{ marginTop: '1rem', padding: '0.75rem' }}>
+            <div className="slds-notify slds-notify_alert slds-theme_success margin-top-1 padding-075">
               {resetMessage}
             </div>
           )}
-          <div style={{ marginTop: '2rem' }}>
+          <div className="margin-top-2">
             {/* Toggle switches for boolean settings */}
             <div className="setting-item">
               <label className="toggle-label">
@@ -129,8 +128,8 @@ const SettingsPage = () => {
             </div>
 
             {/* Font size radio buttons */}
-            <div className="setting-item" style={{ marginTop: '2rem' }}>
-              <div className="setting-label-text" style={{ marginBottom: '0.75rem', fontWeight: '500' }}>Font Size</div>
+            <div className="setting-item margin-top-2">
+              <div className="setting-label-text margin-bottom-075 font-weight-500">Font Size</div>
               <div className="radio-group">
                 <label className="radio-label">
                   <input 

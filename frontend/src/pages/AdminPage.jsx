@@ -6,31 +6,31 @@ import BridgeFusionRates from '../components/BridgeFusionRates';
 
 const AdminPage = ({ tab = 'constants' }) => {
   return (
-    <div style={{ padding: '2rem' }}>
+    <div className="padding-2">
       {tab === 'constants' && (
         <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>Application Constants</h1>
+          <h1 className="font-size-2rem font-weight-bold margin-bottom-1">Application Constants</h1>
           <Constants />
         </div>
       )}
       
       {tab === 'criteria' && (
         <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>BTL Criteria Management</h1>
+          <h1 className="font-size-2rem font-weight-bold margin-bottom-1">BTL Criteria Management</h1>
           <CriteriaTable />
         </div>
       )}
       
       {tab === 'btlRates' && (
         <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>BTL Rate Management</h1>
+          <h1 className="font-size-2rem font-weight-bold margin-bottom-1">BTL Rate Management</h1>
           <RatesTable />
         </div>
       )}
       
       {tab === 'bridgingRates' && (
         <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>Bridging Rate Management</h1>
+          <h1 className="font-size-2rem font-weight-bold margin-bottom-1">Bridging Rate Management</h1>
           <BridgeFusionRates />
         </div>
       )}

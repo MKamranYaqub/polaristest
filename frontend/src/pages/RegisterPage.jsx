@@ -76,9 +76,9 @@ export default function RegisterPage() {
     : accessLevelOptions.filter(opt => opt.value === '4'); // Only Underwriter for self-registration
 
   return (
-    <div className="slds-p-around_large" style={{ maxWidth: '500px', margin: '2rem auto' }}>
+    <div className="slds-p-around_large auth-container-wide">
       <div className="slds-box slds-theme_default">
-        <h1 className="slds-text-heading_large slds-m-bottom_medium" style={{ textAlign: 'center' }}>
+        <h1 className="slds-text-heading_large slds-m-bottom_medium text-align-center">
           Register New Account
         </h1>
         
@@ -202,8 +202,7 @@ export default function RegisterPage() {
           <div className="slds-m-top_medium">
             <button
               type="submit"
-              className="slds-button slds-button_brand"
-              style={{ width: '100%' }}
+              className="slds-button slds-button_brand width-100"
               disabled={loading}
             >
               {loading ? 'Creating Account...' : 'Register'}
@@ -211,7 +210,7 @@ export default function RegisterPage() {
           </div>
         </form>
 
-        <div className="slds-m-top_medium" style={{ textAlign: 'center', borderTop: '1px solid #dddbda', paddingTop: '1rem' }}>
+        <div className="slds-m-top_medium text-align-center border-top-gray padding-top-1">
           <p className="slds-text-body_small">
             Already have an account?{' '}
             <Link to="/login" className="slds-text-link">

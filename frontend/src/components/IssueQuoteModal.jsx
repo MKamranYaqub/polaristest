@@ -192,9 +192,9 @@ export default function IssueQuoteModal({
     <>
       <ModalShell isOpen={isOpen} onClose={onClose} title={`Issue ${calculatorType} Quote`} footer={footerButtons}>
       {/* Borrower Name */}
-      <div className="slds-form-element" style={{ marginBottom: '1.5rem' }}>
+      <div className="slds-form-element margin-bottom-15">
         <label className="slds-form-element__label">
-          <span style={{ color: 'red' }}>*</span> Borrower Name
+          <span className="text-color-error">*</span> Borrower Name
         </label>
         <div className="slds-form-element__control">
           <input
@@ -208,22 +208,22 @@ export default function IssueQuoteModal({
       </div>
 
       {/* Fee Range Selection */}
-      <div className="slds-form-element" style={{ marginBottom: '1.5rem' }}>
+      <div className="slds-form-element margin-bottom-15">
         <label className="slds-form-element__label">
-          <span style={{ color: 'red' }}>*</span> Select Fee Ranges to Include in Quote
+          <span className="text-color-error">*</span> Select Fee Ranges to Include in Quote
         </label>
         <div className="slds-form-element__control">
           {availableFeeRanges.length === 0 ? (
-            <p style={{ color: '#666', fontStyle: 'italic' }}>No fee ranges available</p>
+            <p className="text-color-muted text-italic">No fee ranges available</p>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.5rem' }}>
+            <div className="grid-auto-fill-150">
               {availableFeeRanges.map((feeRange) => (
-                <label key={feeRange} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                <label key={feeRange} className="display-flex align-items-center cursor-pointer">
                   <input
                           type="checkbox"
                           checked={selectedFeeRanges.includes(feeRange)}
                           onChange={() => handleFeeRangeToggle(feeRange)}
-                          style={{ marginRight: '0.5rem' }}
+                          className="margin-right-05"
                         />
                         <span>{feeRange}</span>
                       </label>
@@ -234,34 +234,31 @@ export default function IssueQuoteModal({
             </div>
 
             {/* Assumptions */}
-            <div className="slds-form-element" style={{ marginBottom: '1.5rem' }}>
+            <div className="slds-form-element margin-bottom-15">
               <label className="slds-form-element__label">Assumptions</label>
               <div className="slds-form-element__control">
                 {assumptions.map((assumption, index) => (
-                  <div key={index} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <div key={index} className="display-flex flex-gap-05 margin-bottom-05">
                     <input
-                      className="slds-input"
+                      className="slds-input flex-1"
                       type="text"
                       value={assumption}
                       onChange={(e) => handleAssumptionChange(index, e.target.value)}
                       placeholder="Enter assumption"
-                      style={{ flex: 1 }}
                     />
                     <button
-                      className="slds-button slds-button_destructive"
+                      className="slds-button slds-button_destructive min-width-80"
                       onClick={() => handleDeleteAssumption(index)}
                       type="button"
-                      style={{ minWidth: '80px' }}
                     >
                       Delete
                     </button>
                   </div>
                 ))}
                 <button
-                  className="slds-button slds-button_neutral"
+                  className="slds-button slds-button_neutral margin-top-05"
                   onClick={handleAddAssumption}
                   type="button"
-                  style={{ marginTop: '0.5rem' }}
                 >
                   + Add Assumption
                 </button>

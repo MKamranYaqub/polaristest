@@ -9,30 +9,21 @@ import IssueDIPModal from './IssueDIPModal';
 import IssueQuoteModal from './IssueQuoteModal';
 import CalculatorResultsPlaceholders from './CalculatorResultsPlaceholders';
 import NotificationModal from './NotificationModal';
-import { getQuote } from '../utils/quotes';
+import QuoteReferenceHeader from './calculator/shared/QuoteReferenceHeader';
+import ClientDetailsSection from './calculator/shared/ClientDetailsSection';
+import useBrokerSettings from '../hooks/calculator/useBrokerSettings';
+import { getQuote, upsertQuoteData, requestDipPdf, requestQuotePdf } from '../utils/quotes';
+import { parseNumber, formatCurrency, formatPercent } from '../utils/calculator/numberFormatting';
+import { computeTierFromAnswers } from '../utils/calculator/rateFiltering';
+import CollapsibleSection from './calculator/CollapsibleSection';
+import BTLCriteriaSection from './calculator/btl/BTLCriteriaSection';
+import BTLLoanDetailsSection from './calculator/btl/BTLLoanDetailsSection';
 import { 
   PRODUCT_TYPES_LIST as DEFAULT_PRODUCT_TYPES_LIST, 
   FEE_COLUMNS as DEFAULT_FEE_COLUMNS, 
   LOCALSTORAGE_CONSTANTS_KEY, 
-  FLAT_ABOVE_COMMERCIAL_RULE as DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE,
-  BROKER_ROUTES,
-  BROKER_COMMISSION_DEFAULTS,
-  BROKER_COMMISSION_TOLERANCE
+  FLAT_ABOVE_COMMERCIAL_RULE as DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE
 } from '../config/constants';
-import { API_BASE_URL } from '../config/api';
-
-// Simple heuristic to compute Tier from selected options
-// Assumptions: each option row contains a `tier` field (number or string). We'll pick the highest numeric tier
-// among selected option values. If no selection, default to Tier 1.
-function computeTierFromAnswers(answers) {
-  let maxTier = 1;
-  Object.values(answers).forEach((opt) => {
-    if (!opt) return;
-    const t = Number(opt.tier ?? opt.tier?.toString?.() ?? 1);
-    if (!Number.isNaN(t) && t > maxTier) maxTier = t;
-  });
-  return maxTier;
-}
 
 export default function BTLcalculator({ initialQuote = null }) {
   const { supabase } = useSupabase();
@@ -44,6 +35,9 @@ export default function BTLcalculator({ initialQuote = null }) {
   // Check if user has permission to edit calculator fields
   // Access levels 1-3 can edit, level 4 (Underwriter) is read-only
   const isReadOnly = !canEditCalculators();
+  
+  // Use custom hook for broker settings
+  const brokerSettings = useBrokerSettings(effectiveInitialQuote);
   
   const [allCriteria, setAllCriteria] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -69,69 +63,10 @@ export default function BTLcalculator({ initialQuote = null }) {
   
   // Range toggle state (Core or Specialist)
   const [selectedRange, setSelectedRange] = useState('specialist');
-  // Client details
-  const [clientType, setClientType] = useState('Direct'); // 'Direct' | 'Broker'
-  const [clientFirstName, setClientFirstName] = useState('');
-  const [clientLastName, setClientLastName] = useState('');
-  const [clientEmail, setClientEmail] = useState('');
-  const [clientContact, setClientContact] = useState('');
-  const [brokerRoute, setBrokerRoute] = useState(BROKER_ROUTES.DIRECT_BROKER);
-  const [brokerCommissionPercent, setBrokerCommissionPercent] = useState(BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER]);
-  const [brokerCompanyName, setBrokerCompanyName] = useState('');
-  
-  // Get broker routes and commission defaults from constants (supports runtime updates via Constants UI)
-  const getBrokerRoutesAndDefaults = () => {
-    try {
-      const raw = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
-      const parsed = raw ? JSON.parse(raw) : null;
-      return {
-        routes: parsed?.brokerRoutes || BROKER_ROUTES,
-        defaults: parsed?.brokerCommissionDefaults || BROKER_COMMISSION_DEFAULTS,
-        tolerance: parsed?.brokerCommissionTolerance ?? BROKER_COMMISSION_TOLERANCE
-      };
-    } catch (e) {
-      return {
-        routes: BROKER_ROUTES,
-        defaults: BROKER_COMMISSION_DEFAULTS,
-        tolerance: BROKER_COMMISSION_TOLERANCE
-      };
-    }
-  };
-
-  useEffect(() => {
-    if (clientType === 'Broker') {
-      const { defaults } = getBrokerRoutesAndDefaults();
-      setBrokerCommissionPercent(defaults[brokerRoute] ?? 0.9);
-    }
-  }, [clientType, brokerRoute]);
-
-  // Validate broker commission is within tolerance
-  const validateBrokerCommission = (value) => {
-    const { defaults, tolerance } = getBrokerRoutesAndDefaults();
-    const defaultValue = defaults[brokerRoute] ?? 0.9;
-    const minValue = defaultValue - tolerance;
-    const maxValue = defaultValue + tolerance;
-    const numValue = Number(value);
-    
-    if (numValue < minValue) return Number(minValue.toFixed(1));
-    if (numValue > maxValue) return Number(maxValue.toFixed(1));
-    return Number(numValue.toFixed(1));
-  };
-
-  const handleBrokerCommissionChange = (e) => {
-    const value = e.target.value;
-    if (value === '' || value === '-') {
-      setBrokerCommissionPercent(value);
-      return;
-    }
-    const validated = validateBrokerCommission(value);
-    setBrokerCommissionPercent(validated);
-  };
   
   // Quote id/ref for UI
   const [currentQuoteId, setCurrentQuoteId] = useState(effectiveInitialQuote?.id || null);
   const [currentQuoteRef, setCurrentQuoteRef] = useState(effectiveInitialQuote?.reference_number || null);
-
 
   // clear timers on unmount
   useEffect(() => {
@@ -196,22 +131,6 @@ export default function BTLcalculator({ initialQuote = null }) {
     if (v === undefined || v === null || v === '') return '';
     const n = Number(String(v).replace(/[^0-9.-]/g, ''));
     return Number.isFinite(n) ? n.toLocaleString('en-GB') : '';
-  };
-
-  const parseNumber = (v) => {
-    if (v === undefined || v === null || v === '') return NaN;
-    const n = Number(String(v).replace(/[^0-9.-]/g, ''));
-    return Number.isFinite(n) ? n : NaN;
-  };
-
-  const formatCurrency = (n) => {
-    if (!Number.isFinite(n)) return '—';
-    return `£${Number(n).toLocaleString('en-GB')}`;
-  };
-
-  const formatPercent = (n, decimals = 2) => {
-    if (n === undefined || n === null || Number.isNaN(Number(n))) return '—';
-    return `${Number(n).toFixed(decimals)}%`;
   };
 
   useEffect(() => {
@@ -329,15 +248,7 @@ export default function BTLcalculator({ initialQuote = null }) {
       if (quote.additional_fee_amount != null) setAdditionalFeeAmount(String(quote.additional_fee_amount));
       if (quote.selected_range) setSelectedRange(quote.selected_range);
       
-      // Load client details if available
-      if (quote.client_type) setClientType(quote.client_type);
-      if (quote.client_first_name) setClientFirstName(quote.client_first_name);
-      if (quote.client_last_name) setClientLastName(quote.client_last_name);
-      if (quote.client_email) setClientEmail(quote.client_email);
-      if (quote.client_contact_number) setClientContact(quote.client_contact_number);
-      if (quote.broker_company_name) setBrokerCompanyName(quote.broker_company_name);
-      if (quote.broker_route) setBrokerRoute(quote.broker_route);
-      if (quote.broker_commission_percent != null) setBrokerCommissionPercent(quote.broker_commission_percent);
+      // Note: Client details are loaded by useBrokerSettings hook
       
       // Load calculated results if available (from quote_results table)
       if (quote.results && Array.isArray(quote.results) && quote.results.length > 0) {
@@ -831,27 +742,13 @@ export default function BTLcalculator({ initialQuote = null }) {
   // DIP Modal Handlers
   const handleSaveDipData = async (quoteId, dipData) => {
     try {
-      // Save DIP data (don't include filtered_rates - it's not a database column)
       const dataToSave = { ...dipData };
-
-      const response = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          calculator_type: 'BTL',
-          ...dataToSave
-        })
+      await upsertQuoteData({
+        quoteId,
+        calculatorType: 'BTL',
+        payload: dataToSave,
+        token,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save DIP data');
-      }
-
-      // Update local DIP data state so it persists when reopening modal
       setDipData(dipData);
     } catch (err) {
       console.error('Error saving DIP data:', err);
@@ -861,15 +758,7 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   const handleCreatePDF = async (quoteId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/dip/pdf/${quoteId}`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to generate PDF');
-      }
+      const response = await requestDipPdf(quoteId, token);
 
       // Download the PDF
       const blob = await response.blob();
@@ -959,22 +848,12 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   const handleSaveQuoteData = async (quoteId, updatedQuoteData) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          calculator_type: 'BTL',
-          ...updatedQuoteData
-        })
+      await upsertQuoteData({
+        quoteId,
+        calculatorType: 'BTL',
+        payload: updatedQuoteData,
+        token,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to save quote data');
-      }
 
       // Don't close modal or show alert here - let the modal handle it
     } catch (error) {
@@ -986,18 +865,7 @@ export default function BTLcalculator({ initialQuote = null }) {
   const handleCreateQuotePDF = async (quoteId) => {
     try {
       // Trigger PDF generation
-      const response = await fetch(`${API_BASE_URL}/api/quote/pdf/${quoteId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to generate quote PDF');
-      }
+      const response = await requestQuotePdf(quoteId, token);
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -1169,70 +1037,7 @@ export default function BTLcalculator({ initialQuote = null }) {
   return (
     <div className="calculator-container">
       {/* Quote Reference Badge */}
-      {currentQuoteRef && (
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'flex-start', 
-          marginBottom: '1rem',
-          paddingTop: '0.5rem'
-        }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            background: '#0176d3',
-            padding: '0.75rem 1.25rem',
-            borderRadius: '0.25rem',
-            border: '1px solid #014486',
-            fontSize: '0.875rem',
-            boxShadow: '0 2px 4px rgba(1, 118, 211, 0.2)'
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-            </svg>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <span style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '400', fontSize: '0.75rem' }}>Quote Reference</span>
-              <span style={{ 
-                color: 'white', 
-                fontWeight: '700',
-                fontFamily: 'monospace',
-                fontSize: '1rem',
-                letterSpacing: '0.5px'
-              }}>
-                {currentQuoteRef}
-              </span>
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigator.clipboard.writeText(currentQuoteRef);
-              }}
-              style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                borderRadius: '0.25rem',
-                cursor: 'pointer',
-                padding: '0.375rem 0.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                color: 'white',
-                transition: 'background 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
-              title="Copy to clipboard"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
+      <QuoteReferenceHeader reference={currentQuoteRef} />
       
       {/* Top filters inline - no card */}
       <div className="top-filters">
@@ -1318,20 +1123,10 @@ export default function BTLcalculator({ initialQuote = null }) {
               specificNetLoan,
               targetLtv: maxLtvInput,
               productType,
-              addFeesToggle,
-              feeCalculationType,
-              additionalFeeAmount,
               selectedRange,
               answers,
-              // Client details
-              clientType,
-              clientFirstName,
-              clientLastName,
-              clientEmail,
-              clientContact,
-              brokerCompanyName: clientType === 'Broker' ? brokerCompanyName : null,
-              brokerRoute: clientType === 'Broker' ? brokerRoute : null,
-              brokerCommissionPercent: clientType === 'Broker' ? brokerCommissionPercent : null,
+              // Client details from broker settings
+              ...brokerSettings.getAllSettings(),
               relevantRates: calculatedRates,
               selectedRate: (filteredRatesForDip && filteredRatesForDip.length > 0) 
                 ? filteredRatesForDip[0] 
@@ -1373,131 +1168,12 @@ export default function BTLcalculator({ initialQuote = null }) {
       </div>
 
       {/* Client details section */}
-      <section className="collapsible-section">
-        <header className="collapsible-header" onClick={() => setClientDetailsExpanded(!clientDetailsExpanded)}>
-          <h2 className="header-title">Client details</h2>
-          <svg 
-            className={`chevron-icon ${clientDetailsExpanded ? 'expanded' : ''}`} 
-            xmlns="http://www.w3.org/2000/svg" 
-            viewBox="0 0 24 24"
-          >
-            <path d="M7 10l5 5 5-5z"/>
-          </svg>
-        </header>
-        <div className={`collapsible-body ${!clientDetailsExpanded ? 'collapsed' : ''}`}>
-          <div className="slds-grid slds-gutters" style={{ alignItems: 'stretch', marginBottom: '0.5rem' }}>
-            <div className="slds-col" style={{ width: '100%' }}>
-              <div className="slds-button-group" role="group" style={{ display: 'flex', width: '100%' }}>
-                <button type="button" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }} className={`slds-button ${clientType === 'Direct' ? 'slds-button_brand' : 'slds-button_neutral'}`} onClick={() => setClientType('Direct')}>Direct Client</button>
-                <button type="button" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }} className={`slds-button ${clientType === 'Broker' ? 'slds-button_brand' : 'slds-button_neutral'}`} onClick={() => setClientType('Broker')}>Broker</button>
-              </div>
-            </div>
-          </div>
-          <div className="loan-details-grid">
-            {clientType === 'Broker' && (
-              <div className="slds-form-element">
-                <label className="slds-form-element__label">Company name</label>
-                <div className="slds-form-element__control"><input className="slds-input" value={brokerCompanyName} onChange={(e) => setBrokerCompanyName(e.target.value)} disabled={isReadOnly} /></div>
-              </div>
-            )}
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">First name</label>
-              <div className="slds-form-element__control"><input className="slds-input" value={clientFirstName} onChange={(e) => setClientFirstName(e.target.value)} disabled={isReadOnly} /></div>
-            </div>
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Last name</label>
-              <div className="slds-form-element__control"><input className="slds-input" value={clientLastName} onChange={(e) => setClientLastName(e.target.value)} disabled={isReadOnly} /></div>
-            </div>
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Email</label>
-              <div className="slds-form-element__control"><input className="slds-input" type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} disabled={isReadOnly} /></div>
-            </div>
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Contact number</label>
-              <div className="slds-form-element__control"><input className="slds-input" value={clientContact} onChange={(e) => setClientContact(e.target.value)} disabled={isReadOnly} /></div>
-            </div>
-          </div>
-          {clientType === 'Broker' && (
-            <div className="loan-details-grid" style={{ marginTop: '0.5rem' }}>
-              <div className="slds-form-element">
-                <label className="slds-form-element__label">Broker route</label>
-                <div className="slds-form-element__control">
-                  <select className="slds-select" value={brokerRoute} onChange={(e) => setBrokerRoute(e.target.value)} disabled={isReadOnly}>
-                    {Object.values(getBrokerRoutesAndDefaults().routes).map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="slds-form-element">
-                <label className="slds-form-element__label">Broker commission (%)</label>
-                <div className="slds-form-element__control">
-                  <input 
-                    className="slds-input" 
-                    type="number" 
-                    step="0.1"
-                    value={brokerCommissionPercent} 
-                    onChange={handleBrokerCommissionChange}
-                    disabled={isReadOnly}
-                    title={`Allowed range: ${(getBrokerRoutesAndDefaults().defaults[brokerRoute] - getBrokerRoutesAndDefaults().tolerance).toFixed(1)}% to ${(getBrokerRoutesAndDefaults().defaults[brokerRoute] + getBrokerRoutesAndDefaults().tolerance).toFixed(1)}%`}
-                  />
-                </div>
-                <div className="slds-form-element__help" style={{ fontSize: '0.75rem', color: '#706e6b', marginTop: '0.25rem' }}>
-                  Adjustable within ±{getBrokerRoutesAndDefaults().tolerance}% of default ({getBrokerRoutesAndDefaults().defaults[brokerRoute]}%)
-                </div>
-              </div>
-              
-              <div className="slds-form-element" style={{ gridColumn: 'span 2' }}>
-                <div className="modern-switch" style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                  <span className="switch-label">Will you/the broker be adding any additional fees?</span>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={addFeesToggle}
-                    onClick={() => setAddFeesToggle(prev => !prev)}
-                    className={`switch-track ${addFeesToggle ? 'checked' : ''}`}
-                    aria-label="Will you/the broker be adding any additional fees?"
-                  >
-                    <span className={`switch-thumb ${addFeesToggle ? 'checked' : ''}`} />
-                  </button>
-                </div>
-              </div>
-
-              {addFeesToggle && (
-                <>
-                  <div className="slds-form-element">
-                    <label className="slds-form-element__label">Fee calculated as</label>
-                    <div className="slds-form-element__control">
-                      <select 
-                        className="slds-select" 
-                        value={feeCalculationType} 
-                        onChange={(e) => setFeeCalculationType(e.target.value)}
-                      >
-                        <option value="pound">Pound value</option>
-                        <option value="percentage">Percentage</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="slds-form-element">
-                    <label className="slds-form-element__label">Additional fee amount</label>
-                    <div className="slds-form-element__control">
-                      <input
-                        className="slds-input"
-                        value={additionalFeeAmount}
-                        onChange={(e) => setAdditionalFeeAmount(e.target.value)}
-                        placeholder={feeCalculationType === 'pound' ? '£' : 'e.g. 1.5'}
-                        aria-label="Additional fee amount"
-                      />
-                    </div>
-                    <div className="slds-form-element__help" style={{ fontSize: '0.75rem', color: '#706e6b', marginTop: '0.25rem' }}>
-                      This will be subtracted from the net loan
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
+      <ClientDetailsSection
+        {...brokerSettings}
+        expanded={clientDetailsExpanded}
+        onToggle={() => setClientDetailsExpanded(!clientDetailsExpanded)}
+        isReadOnly={isReadOnly}
+      />
 
       {tipOpen && (
         <>
@@ -1529,242 +1205,62 @@ export default function BTLcalculator({ initialQuote = null }) {
 
       
 
-      <section className="collapsible-section">
-        <header className="collapsible-header" onClick={() => setCriteriaExpanded(!criteriaExpanded)}>
-          <h2 className="header-title">Criteria</h2>
-          <svg 
-            className={`chevron-icon ${criteriaExpanded ? 'expanded' : ''}`} 
-            xmlns="http://www.w3.org/2000/svg" 
-            viewBox="0 0 24 24"
-          >
-            <path d="M7 10l5 5 5-5z"/>
-          </svg>
-        </header>
-        <div className={`collapsible-body ${!criteriaExpanded ? 'collapsed' : ''}`}>
-          {loading && <div>Loading criteria…</div>}
-          {error && <div className="slds-text-color_error">{error}</div>}
-          {!loading && !error && (
-            <div className="criteria-grid">
-              {Object.keys(questions).length === 0 && <div>No criteria found for this set/scope.</div>}
-              {orderedQuestionKeys.map((qk) => {
-                const q = questions[qk];
-                return (
-                <div key={qk} className="slds-form-element">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <label className="slds-form-element__label" style={{ margin: 0 }}>
-                      <span className="required-asterisk">*</span>{q.label}
-                    </label>
-                    {q.infoTip && (
-                      <div className="info-icon-wrapper">
-                        <button
-                          type="button"
-                          className="info-icon-button"
-                          onClick={() => { setTipContent(q.infoTip); setTipOpen(true); }}
-                          onMouseEnter={() => {
-                            if (hideTimerRef.current) {
-                              clearTimeout(hideTimerRef.current);
-                              hideTimerRef.current = null;
-                            }
-                            if (showTimerRef.current) clearTimeout(showTimerRef.current);
-                            showTimerRef.current = setTimeout(() => setHoveredTip(qk), 150);
-                          }}
-                          onMouseLeave={() => {
-                            if (showTimerRef.current) {
-                              clearTimeout(showTimerRef.current);
-                              showTimerRef.current = null;
-                            }
-                            if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-                            hideTimerRef.current = setTimeout(() => setHoveredTip(null), 200);
-                          }}
-                          aria-label={`Info: ${q.label}`}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="12" r="9" stroke="#0176d3" strokeWidth="1.6" fill="#ffffff" />
-                            <rect x="11" y="10" width="2" height="6" rx="1" fill="#0176d3" />
-                            <rect x="11" y="7" width="2" height="2" rx="1" fill="#0176d3" />
-                          </svg>
-                        </button>
-                        <span className={`info-tooltip ${hoveredTip === qk ? 'visible' : ''}`} role="tooltip">
-                          {q.infoTip}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="slds-form-element__control">
-                    <select
-                      className="slds-select"
-                      value={(() => {
-                        const selectedIndex = q.options.findIndex(opt => {
-                          const a = answers[qk];
-                          if (!a) return false;
-                          if (opt.id && a.id) return opt.id === a.id;
-                          return (opt.option_label || '').toString().trim() === (a.option_label || '').toString().trim();
-                        });
-                        return selectedIndex >= 0 ? selectedIndex : 0;
-                      })()}
-                      onChange={(e) => handleAnswerChange(qk, Number(e.target.value))}
-                    >
-                      {q.options.map((opt, idx) => (
-                        <option key={opt.id ?? `${qk}-${idx}`} value={idx}>{opt.option_label}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>      <section className="collapsible-section">
-        <header className="collapsible-header" onClick={() => setLoanDetailsExpanded(!loanDetailsExpanded)}>
-          <h2 className="header-title">Loan details</h2>
-          <svg 
-            className={`chevron-icon ${loanDetailsExpanded ? 'expanded' : ''}`} 
-            xmlns="http://www.w3.org/2000/svg" 
-            viewBox="0 0 24 24"
-          >
-            <path d="M7 10l5 5 5-5z"/>
-          </svg>
-        </header>
-        <div className={`collapsible-body ${!loanDetailsExpanded ? 'collapsed' : ''}`}>
-          <div className="loan-details-grid">
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">
-                <span className="required-asterisk">*</span>Property value
-              </label>
-              <div className="slds-form-element__control">
-                <input 
-                  className="slds-input" 
-                  value={propertyValue} 
-                  onChange={(e) => setPropertyValue(formatCurrencyInput(e.target.value))} 
-                  placeholder="£1,200,000"
-                  disabled={isReadOnly}
-                />
-                <div className="helper-text">Subject to valuation</div>
-              </div>
-            </div>
-
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">
-                <span className="required-asterisk">*</span>Monthly rent
-              </label>
-              <div className="slds-form-element__control">
-                <input 
-                  className="slds-input" 
-                  value={monthlyRent} 
-                  onChange={(e) => setMonthlyRent(formatCurrencyInput(e.target.value))} 
-                  placeholder="£3,000"
-                  disabled={isReadOnly}
-                />
-              </div>
-            </div>
-
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Top slicing</label>
-              <div className="slds-form-element__control">
-                <input 
-                  className="slds-input" 
-                  value={topSlicing} 
-                  onChange={(e) => setTopSlicing(e.target.value)} 
-                  placeholder="e.g. 600"
-                  disabled={isReadOnly}
-                />
-              </div>
-            </div>
-
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">
-                <span className="required-asterisk">*</span>Loan calculation requested
-              </label>
-              <div className="slds-form-element__control">
-                <select 
-                  className="slds-select" 
-                  value={loanType} 
-                  onChange={(e) => setLoanType(e.target.value)}
-                  disabled={isReadOnly}
-                >
-                  <option value="Max gross loan">Max Gross Loan</option>
-                  <option value="Net loan required">Net loan required</option>
-                  <option value="Specific LTV required">Specific LTV Required</option>
-                  <option value="Specific gross loan">Specific Gross Loan</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">
-                <span className="required-asterisk">*</span>Select your product
-              </label>
-              <div className="slds-form-element__control">
-                  {productSelectControl}
-                  <div className="helper-text">Default is first product for the selected product scope</div>
-                </div>
-            </div>
-
-            {loanType === 'Net loan required' && (
-              <div className="slds-form-element">
-                <label className="slds-form-element__label">
-                  <span className="required-asterisk">*</span>Net loan required
-                </label>
-                <div className="slds-form-element__control">
-                  <input 
-                    className="slds-input" 
-                    value={specificNetLoan} 
-                    onChange={(e) => setSpecificNetLoan(formatCurrencyInput(e.target.value))} 
-                    placeholder="£425,000"
-                    disabled={isReadOnly}
-                  />
-                  <div className="helper-text">Maximum GLA £9,000,000</div>
-                </div>
-              </div>
-            )}
-
-            {loanType === 'Specific LTV required' && (
-              <div className="slds-form-element">
-                <label className="slds-form-element__label">
-                  <span className="required-asterisk">*</span>Target LTV (%)
-                </label>
-                <div className="slds-form-element__control">
-                  <input
-                    type="range"
-                    min={ltvMin}
-                    max={ltvMax}
-                    value={maxLtvInput}
-                    onChange={(e) => setMaxLtvInput(Number(e.target.value))}
-                    disabled={isReadOnly}
-                    aria-valuemin={ltvMin}
-                    aria-valuemax={ltvMax}
-                    aria-valuenow={maxLtvInput}
-                    className="ltv-slider"
-                    style={{ background: `linear-gradient(90deg, #0176d3 ${ltvPercent}%, #e9eef5 ${ltvPercent}%)` }}
-                  />
-                  <div className="helper-text">
-                    Selected: <strong>{maxLtvInput}%</strong> (Max available: <strong>{ltvMax}%</strong>)
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {loanType === 'Specific gross loan' && (
-              <div className="slds-form-element">
-                <label className="slds-form-element__label">
-                  <span className="required-asterisk">*</span>Specific gross loan
-                </label>
-                <div className="slds-form-element__control">
-                  <input 
-                    className="slds-input" 
-                    value={specificGrossLoan} 
-                    onChange={(e) => setSpecificGrossLoan(formatCurrencyInput(e.target.value))} 
-                    placeholder="£550,000"
-                    disabled={isReadOnly}
-                  />
-                  <div className="helper-text">Enter desired gross loan amount</div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
+      <BTLCriteriaSection
+        expanded={criteriaExpanded}
+        onToggle={() => setCriteriaExpanded(!criteriaExpanded)}
+        loading={loading}
+        error={error}
+        questions={questions}
+        answers={answers}
+        orderedQuestionKeys={orderedQuestionKeys}
+        onAnswerChange={handleAnswerChange}
+        hoveredTip={hoveredTip}
+        onTipHover={(qk) => {
+          if (hideTimerRef.current) {
+            clearTimeout(hideTimerRef.current);
+            hideTimerRef.current = null;
+          }
+          if (showTimerRef.current) clearTimeout(showTimerRef.current);
+          showTimerRef.current = setTimeout(() => setHoveredTip(qk), 150);
+        }}
+        onTipLeave={() => {
+          if (showTimerRef.current) {
+            clearTimeout(showTimerRef.current);
+            showTimerRef.current = null;
+          }
+          if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+          hideTimerRef.current = setTimeout(() => setHoveredTip(null), 200);
+        }}
+        onTipClick={(tip) => {
+          setTipContent(tip);
+          setTipOpen(true);
+        }}
+        isReadOnly={isReadOnly}
+      />
+      
+      <BTLLoanDetailsSection
+        expanded={loanDetailsExpanded}
+        onToggle={() => setLoanDetailsExpanded(!loanDetailsExpanded)}
+        propertyValue={propertyValue}
+        onPropertyValueChange={setPropertyValue}
+        monthlyRent={monthlyRent}
+        onMonthlyRentChange={setMonthlyRent}
+        topSlicing={topSlicing}
+        onTopSlicingChange={setTopSlicing}
+        loanType={loanType}
+        onLoanTypeChange={setLoanType}
+        productSelectControl={productSelectControl}
+        specificNetLoan={specificNetLoan}
+        onSpecificNetLoanChange={setSpecificNetLoan}
+        maxLtvInput={maxLtvInput}
+        onMaxLtvInputChange={setMaxLtvInput}
+        ltvMin={ltvMin}
+        ltvMax={ltvMax}
+        ltvPercent={ltvPercent}
+        specificGrossLoan={specificGrossLoan}
+        onSpecificGrossLoanChange={setSpecificGrossLoan}
+        isReadOnly={isReadOnly}
+      />
 
       
 

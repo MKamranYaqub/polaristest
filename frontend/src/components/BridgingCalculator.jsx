@@ -8,14 +8,18 @@ import IssueDIPModal from './IssueDIPModal';
 import IssueQuoteModal from './IssueQuoteModal';
 import CalculatorResultsPlaceholders from './CalculatorResultsPlaceholders';
 import NotificationModal from './NotificationModal';
-import { getQuote } from '../utils/quotes';
-import { API_BASE_URL } from '../config/api';
-import { 
-  LOCALSTORAGE_CONSTANTS_KEY,
-  BROKER_ROUTES,
-  BROKER_COMMISSION_DEFAULTS,
-  BROKER_COMMISSION_TOLERANCE
-} from '../config/constants';
+import CollapsibleSection from './calculator/CollapsibleSection';
+import QuoteReferenceHeader from './calculator/shared/QuoteReferenceHeader';
+import ClientDetailsSection from './calculator/shared/ClientDetailsSection';
+import CriteriaSection from './calculator/bridging/CriteriaSection';
+import LoanDetailsSection from './calculator/bridging/LoanDetailsSection';
+import MultiPropertyDetailsSection from './calculator/bridging/MultiPropertyDetailsSection';
+import useBrokerSettings from '../hooks/calculator/useBrokerSettings';
+import { getQuote, upsertQuoteData, requestDipPdf, requestQuotePdf } from '../utils/quotes';
+import { parseNumber, formatCurrencyInput } from '../utils/calculator/numberFormatting';
+import { computeLoanLtv, computeLoanSize } from '../utils/calculator/loanCalculations';
+import { pickBestRate, computeModeFromAnswers } from '../utils/calculator/rateFiltering';
+import { LOCALSTORAGE_CONSTANTS_KEY } from '../config/constants';
 
 export default function BridgingCalculator({ initialQuote = null }) {
   const { supabase } = useSupabase();
@@ -23,29 +27,25 @@ export default function BridgingCalculator({ initialQuote = null }) {
   const location = useLocation();
   const navQuote = location && location.state ? location.state.loadQuote : null;
   const effectiveInitialQuote = initialQuote || navQuote;
-  
-  // Check if user has permission to edit calculator fields
-  // Access levels 1-3 can edit, level 4 (Underwriter) is read-only
+
   const isReadOnly = !canEditCalculators();
-  
+
+  // Use custom hook for broker settings
+  const brokerSettings = useBrokerSettings(effectiveInitialQuote);
+
   const [allCriteria, setAllCriteria] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // default product type / scope for bridging
   const defaultScope = 'Bridge & Fusion';
-  // start empty; we'll auto-select a sensible scope after loading criteria
   const [productScope, setProductScope] = useState('');
 
-  // Criteria-driven questions
   const [questions, setQuestions] = useState({});
   const [answers, setAnswers] = useState({});
-  // Collapsible sections like BTL
   const [criteriaExpanded, setCriteriaExpanded] = useState(true);
   const [loanDetailsExpanded, setLoanDetailsExpanded] = useState(true);
   const [clientDetailsExpanded, setClientDetailsExpanded] = useState(true);
 
-  // Loan details
   const [propertyValue, setPropertyValue] = useState('');
   const [grossLoan, setGrossLoan] = useState('');
   const [firstChargeValue, setFirstChargeValue] = useState('');
@@ -54,7 +54,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
   const [useSpecificNet, setUseSpecificNet] = useState('No');
   const [specificNetLoan, setSpecificNetLoan] = useState('');
   const [bridgingTerm, setBridgingTerm] = useState('');
-  // rates
   const [rates, setRates] = useState([]);
   const [relevantRates, setRelevantRates] = useState([]);
   const [bridgeMatched, setBridgeMatched] = useState([]);
@@ -62,88 +61,26 @@ export default function BridgingCalculator({ initialQuote = null }) {
   const [subProduct, setSubProduct] = useState('');
   const [subProductOptions, setSubProductOptions] = useState([]);
   const [subProductLimits, setSubProductLimits] = useState({});
-  const [chargeType, setChargeType] = useState('All'); // All | First | Second
+  const [chargeType, setChargeType] = useState('All');
 
-  // DIP Modal state
   const [dipModalOpen, setDipModalOpen] = useState(false);
   const [currentQuoteId, setCurrentQuoteId] = useState(null);
   const [dipData, setDipData] = useState({});
   const [selectedFeeTypeForDip, setSelectedFeeTypeForDip] = useState('');
   const [filteredRatesForDip, setFilteredRatesForDip] = useState([]);
 
-  // Quote Modal state
   const [quoteModalOpen, setQuoteModalOpen] = useState(false);
   const [quoteData, setQuoteData] = useState({});
   const [currentQuoteRef, setCurrentQuoteRef] = useState(effectiveInitialQuote?.reference_number || null);
-  // Client details
-  const [clientType, setClientType] = useState('Direct'); // 'Direct' | 'Broker'
-  const [clientFirstName, setClientFirstName] = useState('');
-  const [clientLastName, setClientLastName] = useState('');
-  const [clientEmail, setClientEmail] = useState('');
-  const [clientContact, setClientContact] = useState('');
-  const [brokerRoute, setBrokerRoute] = useState(BROKER_ROUTES.DIRECT_BROKER);
-  const [brokerCommissionPercent, setBrokerCommissionPercent] = useState(BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER]);
-  const [brokerCompanyName, setBrokerCompanyName] = useState('');
-  
-  // Additional fees state
+
   const [addFeesToggle, setAddFeesToggle] = useState(false);
   const [feeCalculationType, setFeeCalculationType] = useState('pound');
   const [additionalFeeAmount, setAdditionalFeeAmount] = useState('');
-  
-  // Multi-property details state
+
   const [multiPropertyDetailsExpanded, setMultiPropertyDetailsExpanded] = useState(true);
   const [multiPropertyRows, setMultiPropertyRows] = useState([
     { id: Date.now(), property_address: '', property_type: 'Residential', property_value: '', charge_type: 'First charge', first_charge_amount: '', gross_loan: 0 }
   ]);
-  
-  // Get broker routes and commission defaults from constants (supports runtime updates via Constants UI)
-  const getBrokerRoutesAndDefaults = () => {
-    try {
-      const raw = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
-      const parsed = raw ? JSON.parse(raw) : null;
-      return {
-        routes: parsed?.brokerRoutes || BROKER_ROUTES,
-        defaults: parsed?.brokerCommissionDefaults || BROKER_COMMISSION_DEFAULTS,
-        tolerance: parsed?.brokerCommissionTolerance ?? BROKER_COMMISSION_TOLERANCE
-      };
-    } catch (e) {
-      return {
-        routes: BROKER_ROUTES,
-        defaults: BROKER_COMMISSION_DEFAULTS,
-        tolerance: BROKER_COMMISSION_TOLERANCE
-      };
-    }
-  };
-
-  useEffect(() => {
-    if (clientType === 'Broker') {
-      const { defaults } = getBrokerRoutesAndDefaults();
-      setBrokerCommissionPercent(defaults[brokerRoute] ?? 0.9);
-    }
-  }, [clientType, brokerRoute]);
-
-  // Validate broker commission is within tolerance
-  const validateBrokerCommission = (value) => {
-    const { defaults, tolerance } = getBrokerRoutesAndDefaults();
-    const defaultValue = defaults[brokerRoute] ?? 0.9;
-    const minValue = defaultValue - tolerance;
-    const maxValue = defaultValue + tolerance;
-    const numValue = Number(value);
-    
-    if (numValue < minValue) return Number(minValue.toFixed(1));
-    if (numValue > maxValue) return Number(maxValue.toFixed(1));
-    return Number(numValue.toFixed(1));
-  };
-
-  const handleBrokerCommissionChange = (e) => {
-    const value = e.target.value;
-    if (value === '' || value === '-') {
-      setBrokerCommissionPercent(value);
-      return;
-    }
-    const validated = validateBrokerCommission(value);
-    setBrokerCommissionPercent(validated);
-  };
 
   // Multi-property helper functions
   const calculateMultiPropertyGrossLoan = (propertyType, propertyValue, firstChargeAmount) => {
@@ -422,15 +359,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
       if (quote.charge_type) setChargeType(quote.charge_type);
       if (quote.sub_product) setSubProduct(quote.sub_product);
       
-      // Load client details if available
-      if (quote.client_type) setClientType(quote.client_type);
-      if (quote.client_first_name) setClientFirstName(quote.client_first_name);
-      if (quote.client_last_name) setClientLastName(quote.client_last_name);
-      if (quote.client_email) setClientEmail(quote.client_email);
-      if (quote.client_contact_number) setClientContact(quote.client_contact_number);
-      if (quote.broker_company_name) setBrokerCompanyName(quote.broker_company_name);
-      if (quote.broker_route) setBrokerRoute(quote.broker_route);
-      if (quote.broker_commission_percent != null) setBrokerCommissionPercent(quote.broker_commission_percent);
+      // Note: Client details are loaded by useBrokerSettings hook
       
       // Load multi-property details if available
       if (quote.id) {
@@ -524,42 +453,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   const handleAnswerChange = (key, idx) => {
     setAnswers(prev => ({ ...prev, [key]: questions[key].options[idx] }));
-  };
-
-  const parseNumber = (v) => {
-    if (v === undefined || v === null || v === '') return NaN;
-    const n = Number(String(v).replace(/[^0-9.-]/g, ''));
-    return Number.isFinite(n) ? n : NaN;
-  };
-
-  const formatCurrencyInput = (v) => {
-    const n = parseNumber(v);
-    return Number.isFinite(n) ? n.toLocaleString('en-GB') : '';
-  };
-
-  const computeLoanLtv = () => {
-    const pv = parseNumber(propertyValue);
-    if (!Number.isFinite(pv) || pv <= 0) return NaN;
-    const loanAmount = parseNumber(specificNetLoan) || parseNumber(grossLoan);
-    const firstCharge = parseNumber(firstChargeValue) || 0;
-    if (!Number.isFinite(loanAmount) || loanAmount <= 0) return NaN;
-    // LTV = (Gross Loan + First Charge Value) / Property Value × 100
-    return ((loanAmount + firstCharge) / pv) * 100;
-  };
-
-  const computeLoanSize = () => {
-    const loanAmount = parseNumber(specificNetLoan) || parseNumber(grossLoan);
-    return Number.isFinite(loanAmount) ? loanAmount : NaN;
-  };
-
-  // Determine mode: Fusion vs Bridge. set_key (criteria_set) differentiates but is not used for filtering
-  const computeModeFromAnswers = () => {
-    // If any selected answer originates from a criteria row whose criteria_set mentions 'fusion', treat as Fusion
-    const vals = Object.values(answers || {});
-    for (const v of vals) {
-      if (v && v.raw && v.raw.criteria_set && /fusion/i.test(String(v.raw.criteria_set))) return 'Fusion';
-    }
-    return 'Bridge';
   };
 
   // Fetch rates for Bridging: filter depending on mode
@@ -666,8 +559,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
     // filter rates whenever inputs or answers change
     const raw = rates || [];
     const mode = computeModeFromAnswers();
-    const loanLtv = computeLoanLtv();
-    const loanSize = computeLoanSize();
+    const loanLtv = computeLoanLtv(propertyValue, specificNetLoan, grossLoan, firstChargeValue);
+    const loanSize = computeLoanSize(specificNetLoan, grossLoan);
     const parsedSub = (subProduct || '').toString().toLowerCase();
     const parsedCharge = (chargeType || 'All').toString().toLowerCase();
 
@@ -852,30 +745,50 @@ export default function BridgingCalculator({ initialQuote = null }) {
     });
   }, [relevantRates, propertyValue, grossLoan, specificNetLoan, monthlyRent, topSlicing, useSpecificNet]);
 
+  const loanLtv = computeLoanLtv(propertyValue, specificNetLoan, grossLoan, firstChargeValue);
+  const loanSize = computeLoanSize(specificNetLoan, grossLoan);
+
+  const bestBridgeRates = useMemo(() => {
+    if (!calculatedRates || calculatedRates.length === 0) {
+      return { fusion: null, variable: null, fixed: null };
+    }
+
+    const lower = (val) => (val || '').toString().toLowerCase();
+
+    const fusionRows = calculatedRates.filter(r => lower(r.set_key) === 'fusion');
+    const variableRows = calculatedRates.filter(r => {
+      const type = lower(r.type);
+      const product = lower(r.product_name || r.product);
+      return type.includes('variable') || product.includes('variable');
+    });
+    const fixedRows = calculatedRates.filter(r => {
+      const type = lower(r.type);
+      const product = lower(r.product_name || r.product);
+      return type.includes('fixed') || product.includes('fixed');
+    });
+
+    return {
+      fusion: pickBestRate(fusionRows, loanSize, 'min_loan', 'max_loan'),
+      variable: pickBestRate(variableRows, loanLtv, 'min_ltv', 'max_ltv'),
+      fixed: pickBestRate(fixedRows, loanLtv, 'min_ltv', 'max_ltv'),
+    };
+  }, [calculatedRates, loanLtv, loanSize]);
+
+  const bestBridgeRatesArray = useMemo(() => (
+    ['fusion', 'variable', 'fixed']
+      .map((key) => bestBridgeRates[key])
+      .filter(Boolean)
+  ), [bestBridgeRates]);
+
   // DIP Modal Handlers
   const handleSaveDipData = async (quoteId, dipData) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          calculator_type: 'BRIDGING',
-          ...dipData
-        })
+      await upsertQuoteData({
+        quoteId,
+        calculatorType: 'BRIDGING',
+        payload: dipData,
+        token,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('DIP save error response:', errorData);
-        throw new Error(errorData.error || 'Failed to save DIP data');
-      }
-
-      const result = await response.json();
-
-      // Update local DIP data state so it persists when reopening modal
       setDipData(dipData);
     } catch (err) {
       console.error('Error saving DIP data:', err);
@@ -885,16 +798,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   const handleCreatePDF = async (quoteId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/dip/pdf/${quoteId}`, {
-        method: 'POST',
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate PDF');
-      }
+      const response = await requestDipPdf(quoteId, token);
 
       // Download the PDF
       const blob = await response.blob();
@@ -982,22 +886,12 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   const handleSaveQuoteData = async (quoteId, updatedQuoteData) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          calculator_type: 'BRIDGING',
-          ...updatedQuoteData
-        })
+      await upsertQuoteData({
+        quoteId,
+        calculatorType: 'BRIDGING',
+        payload: updatedQuoteData,
+        token,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save quote data');
-      }
 
       setNotification({ show: true, type: 'success', title: 'Success', message: 'Quote data saved successfully!' });
     } catch (err) {
@@ -1009,16 +903,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   const handleCreateQuotePDF = async (quoteId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/quote/pdf/${quoteId}`, {
-        method: 'POST',
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate Quote PDF');
-      }
+      const response = await requestQuotePdf(quoteId, token);
 
       // Download the PDF
       const blob = await response.blob();
@@ -1055,71 +940,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
   return (
     <div className="calculator-container">
       {/* Quote Reference Badge */}
-      {currentQuoteRef && (
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'flex-start', 
-          marginBottom: '1rem',
-          paddingTop: '0.5rem'
-        }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            background: '#0176d3',
-            padding: '0.75rem 1.25rem',
-            borderRadius: '0.25rem',
-            border: '1px solid #014486',
-            fontSize: '0.875rem',
-            boxShadow: '0 2px 4px rgba(1, 118, 211, 0.2)'
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-            </svg>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <span style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '400', fontSize: '0.75rem' }}>Quote Reference</span>
-              <span style={{ 
-                color: 'white', 
-                fontWeight: '700',
-                fontFamily: 'monospace',
-                fontSize: '1rem',
-                letterSpacing: '0.5px'
-              }}>
-                {currentQuoteRef}
-              </span>
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigator.clipboard.writeText(currentQuoteRef);
-              }}
-              style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                borderRadius: '0.25rem',
-                cursor: 'pointer',
-                padding: '0.375rem 0.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                color: 'white',
-                transition: 'background 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
-              title="Copy to clipboard"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
-      
+      <QuoteReferenceHeader reference={currentQuoteRef} />
+
       <div className="top-filters">
         <div className="slds-form-element">
           <label className="slds-form-element__label">Product Type</label>
@@ -1138,20 +960,18 @@ export default function BridgingCalculator({ initialQuote = null }) {
           </div>
         </div>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="margin-left-auto display-flex align-items-center flex-gap-8">
           {currentQuoteId && (
             <>
               <button 
-                className="slds-button slds-button_brand"
+                className="slds-button slds-button_brand margin-right-05"
                 onClick={() => setDipModalOpen(true)}
-                style={{ marginRight: '0.5rem' }}
               >
                 Issue DIP
               </button>
               <button 
-                className="slds-button slds-button_neutral"
+                className="slds-button slds-button_neutral margin-right-05"
                 onClick={handleIssueQuote}
-                style={{ marginRight: '0.5rem' }}
               >
                 Issue Quote
               </button>
@@ -1172,21 +992,14 @@ export default function BridgingCalculator({ initialQuote = null }) {
               chargeType,
               subProduct,
               answers,
-              // Client details
-              clientType,
-              clientFirstName,
-              clientLastName,
-              clientEmail,
-              clientContact,
-              brokerCompanyName: clientType === 'Broker' ? brokerCompanyName : null,
-              brokerRoute: clientType === 'Broker' ? brokerRoute : null,
-              brokerCommissionPercent: clientType === 'Broker' ? brokerCommissionPercent : null,
+              // Client details from broker settings hook
+              ...brokerSettings.getAllSettings(),
               // Multi-property details
               multiPropertyDetails: isMultiProperty ? multiPropertyRows : null,
-              results: calculatedRates,
+              results: bestBridgeRatesArray,
               selectedRate: (filteredRatesForDip && filteredRatesForDip.length > 0) 
                 ? filteredRatesForDip[0] 
-                : (calculatedRates && calculatedRates.length > 0 ? calculatedRates[0] : null),
+                : (bestBridgeRatesArray && bestBridgeRatesArray.length > 0 ? bestBridgeRatesArray[0] : null),
             }}
             allColumnData={[]}
             bestSummary={null}
@@ -1253,515 +1066,64 @@ export default function BridgingCalculator({ initialQuote = null }) {
       </div>
 
       {/* Client details section */}
-      <section className="collapsible-section">
-        <header className="collapsible-header" onClick={() => setClientDetailsExpanded(!clientDetailsExpanded)}>
-          <h2 className="header-title">Client details</h2>
-          <svg 
-            className={`chevron-icon ${clientDetailsExpanded ? 'expanded' : ''}`} 
-            xmlns="http://www.w3.org/2000/svg" 
-            viewBox="0 0 24 24"
-          >
-            <path d="M7 10l5 5 5-5z"/>
-          </svg>
-        </header>
-        <div className={`collapsible-body ${!clientDetailsExpanded ? 'collapsed' : ''}`}>
-          <div className="slds-grid slds-gutters" style={{ alignItems: 'stretch', marginBottom: '0.5rem' }}>
-            <div className="slds-col" style={{ width: '100%' }}>
-              <div className="slds-button-group" role="group" style={{ display: 'flex', width: '100%' }}>
-                <button type="button" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }} className={`slds-button ${clientType === 'Direct' ? 'slds-button_brand' : 'slds-button_neutral'}`} onClick={() => setClientType('Direct')}>Direct Client</button>
-                <button type="button" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }} className={`slds-button ${clientType === 'Broker' ? 'slds-button_brand' : 'slds-button_neutral'}`} onClick={() => setClientType('Broker')}>Broker</button>
-              </div>
-            </div>
-          </div>
-          <div className="loan-details-grid">
-            {clientType === 'Broker' && (
-              <div className="slds-form-element">
-                <label className="slds-form-element__label">Company name</label>
-                <div className="slds-form-element__control"><input className="slds-input" value={brokerCompanyName} onChange={(e) => setBrokerCompanyName(e.target.value)} disabled={isReadOnly} /></div>
-              </div>
-            )}
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">First name</label>
-              <div className="slds-form-element__control"><input className="slds-input" value={clientFirstName} onChange={(e) => setClientFirstName(e.target.value)} disabled={isReadOnly} /></div>
-            </div>
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Last name</label>
-              <div className="slds-form-element__control"><input className="slds-input" value={clientLastName} onChange={(e) => setClientLastName(e.target.value)} disabled={isReadOnly} /></div>
-            </div>
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Email</label>
-              <div className="slds-form-element__control"><input className="slds-input" type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} disabled={isReadOnly} /></div>
-            </div>
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Contact number</label>
-              <div className="slds-form-element__control"><input className="slds-input" value={clientContact} onChange={(e) => setClientContact(e.target.value)} disabled={isReadOnly} /></div>
-            </div>
-          </div>
-          {clientType === 'Broker' && (
-            <div className="loan-details-grid" style={{ marginTop: '0.5rem' }}>
-              <div className="slds-form-element">
-                <label className="slds-form-element__label">Broker route</label>
-                <div className="slds-form-element__control">
-                  <select className="slds-select" value={brokerRoute} onChange={(e) => setBrokerRoute(e.target.value)} disabled={isReadOnly}>
-                    {Object.values(getBrokerRoutesAndDefaults().routes).map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="slds-form-element">
-                <label className="slds-form-element__label">Broker commission (%)</label>
-                <div className="slds-form-element__control">
-                  <input 
-                    className="slds-input" 
-                    type="number" 
-                    step="0.1"
-                    value={brokerCommissionPercent} 
-                    onChange={handleBrokerCommissionChange}
-                    disabled={isReadOnly}
-                    title={`Allowed range: ${(getBrokerRoutesAndDefaults().defaults[brokerRoute] - getBrokerRoutesAndDefaults().tolerance).toFixed(1)}% to ${(getBrokerRoutesAndDefaults().defaults[brokerRoute] + getBrokerRoutesAndDefaults().tolerance).toFixed(1)}%`}
-                  />
-                </div>
-                <div className="slds-form-element__help" style={{ fontSize: '0.75rem', color: '#706e6b', marginTop: '0.25rem' }}>
-                  Adjustable within ±{getBrokerRoutesAndDefaults().tolerance}% of default ({getBrokerRoutesAndDefaults().defaults[brokerRoute]}%)
-                </div>
-              </div>
-              
-              <div className="slds-form-element" style={{ gridColumn: 'span 2' }}>
-                <div className="modern-switch" style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                  <span className="switch-label">Will you/the broker be adding any additional fees?</span>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={addFeesToggle}
-                    onClick={() => setAddFeesToggle(prev => !prev)}
-                    className={`switch-track ${addFeesToggle ? 'checked' : ''}`}
-                    aria-label="Will you/the broker be adding any additional fees?"
-                  >
-                    <span className={`switch-thumb ${addFeesToggle ? 'checked' : ''}`} />
-                  </button>
-                </div>
-              </div>
+      <ClientDetailsSection
+        {...brokerSettings}
+        expanded={clientDetailsExpanded}
+        onToggle={() => setClientDetailsExpanded(!clientDetailsExpanded)}
+        isReadOnly={isReadOnly}
+      />
 
-              {addFeesToggle && (
-                <>
-                  <div className="slds-form-element">
-                    <label className="slds-form-element__label">Fee calculated as</label>
-                    <div className="slds-form-element__control">
-                      <select 
-                        className="slds-select" 
-                        value={feeCalculationType} 
-                        onChange={(e) => setFeeCalculationType(e.target.value)}
-                      >
-                        <option value="pound">Pound value</option>
-                        <option value="percentage">Percentage</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="slds-form-element">
-                    <label className="slds-form-element__label">Additional fee amount</label>
-                    <div className="slds-form-element__control">
-                      <input
-                        className="slds-input"
-                        value={additionalFeeAmount}
-                        onChange={(e) => setAdditionalFeeAmount(e.target.value)}
-                        placeholder={feeCalculationType === 'pound' ? '£' : 'e.g. 1.5'}
-                        aria-label="Additional fee amount"
-                      />
-                    </div>
-                    <div className="slds-form-element__help" style={{ fontSize: '0.75rem', color: '#706e6b', marginTop: '0.25rem' }}>
-                      This will be subtracted from the net loan
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="collapsible-section">
-            <header className="collapsible-header" onClick={() => setCriteriaExpanded(!criteriaExpanded)}>
-              <h2 className="header-title">Criteria</h2>
-              <svg 
-                className={`chevron-icon ${criteriaExpanded ? 'expanded' : ''}`} 
-                xmlns="http://www.w3.org/2000/svg" 
-                viewBox="0 0 24 24"
-              >
-                <path d="M7 10l5 5 5-5z"/>
-              </svg>
-            </header>
-            <div className={`collapsible-body ${!criteriaExpanded ? 'collapsed' : ''}`}>
-          <div className="criteria-grid">
-            {Object.keys(questions).length === 0 && (
-              <div>
-                <div>No criteria found for Bridge & Fusion.</div>
-                <div style={{ marginTop: '0.5rem', color: '#666' }}>
-                  Try checking Manage Criteria — available product scopes: {Array.from(new Set(allCriteria.map(r => r.product_scope).filter(Boolean))).join(', ') || 'none'}.
-                </div>
-              </div>
-            )}
-            {Object.keys(questions).sort((a,b) => (questions[a].displayOrder || 0) - (questions[b].displayOrder || 0)).map((qk) => {
-              const q = questions[qk];
-              // compute selected index by matching id or label (safer across re-creates)
-              const selectedIndex = q.options.findIndex(opt => {
-                const a = answers[qk];
-                if (!a) return false;
-                if (opt.id && a.id) return opt.id === a.id;
-                return (opt.option_label || '').toString().trim() === (a.option_label || '').toString().trim();
-              });
-              const safeIndex = selectedIndex >= 0 ? selectedIndex : 0;
-              
-              // Detect if this question is a Sub-product selector
-              const isSubQuestion = /sub[-_ ]?product|subproduct|property type|property_type|product type/i.test(q.label || qk || '');
-              const hideForSecond = isSubQuestion && ((chargeType || '').toString().toLowerCase() === 'second');
-              
-              // Detect if this question is a Charge type selector
-              const isChargeTypeQuestion = /charge[-_ ]?type|chargetype/i.test(q.label || qk || '');
-              const isNonResidential = productScope && productScope.toLowerCase() !== 'residential';
-              
-              if (isChargeTypeQuestion) {
-                console.log('Charge Type Question Found:', {
-                  label: q.label,
-                  key: qk,
-                  productScope,
-                  isNonResidential,
-                  shouldDisable: isNonResidential
-                });
-              }
-              
-              // Hide sub-product field if Second charge is selected
-              if (hideForSecond) return null;
-              
-              // For Charge type question: when product scope is not Residential (Commercial/Semi-Commercial)
-              // Default to "First Charge" and disable the field
-              let effectiveIndex = safeIndex;
-              let isDisabled = false;
-              if (isChargeTypeQuestion && isNonResidential) {
-                // Find the "First Charge" or "First charge" option index
-                const firstChargeIndex = q.options.findIndex(opt => 
-                  (opt.option_label || '').toString().toLowerCase().includes('first')
-                );
-                if (firstChargeIndex >= 0) {
-                  effectiveIndex = firstChargeIndex;
-                  // Auto-select First Charge if not already selected
-                  if (safeIndex !== firstChargeIndex) {
-                    handleAnswerChange(qk, firstChargeIndex);
-                  }
-                }
-                isDisabled = true;
-              }
-              
-              return (
-                <div key={qk} className="slds-form-element">
-                  <label className="slds-form-element__label">{q.label}</label>
-                  <div className="slds-form-element__control">
-                    <select
-                      className="slds-select"
-                      value={effectiveIndex}
-                      onChange={(e) => handleAnswerChange(qk, Number(e.target.value))}
-                      disabled={isDisabled}
-                    >
-                      {q.options.map((opt, idx) => (
-                        <option key={opt.id ?? `${qk}-${idx}`} value={idx}>{opt.option_label}</option>
-                      ))}
-                    </select>
-                    {isDisabled && (
-                      <div className="helper-text" style={{ color: '#666', marginTop: '0.25rem' }}>
-                        Only First Charge is available for {productScope} properties
-                      </div>
-                    )}
-                    {/* Show loan/LTV limits for the selected sub-product (if available) */}
-                    {isSubQuestion && (() => {
-                      const opt = q.options[safeIndex];
-                      const labelRaw = (opt && opt.option_label) ? opt.option_label.toString().trim() : '';
-                      const label = labelRaw.toLowerCase();
-                      const normalizeKey = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
-                      const labelKey = normalizeKey(label);
-                      let lim = subProductLimits[labelKey];
-                      // fuzzy fallback: try to find a limits entry whose key includes labelKey or vice-versa
-                      if (!lim) {
-                        const foundKey = Object.keys(subProductLimits).find(k => k.includes(labelKey) || labelKey.includes(k));
-                        if (foundKey) lim = subProductLimits[foundKey];
-                      }
-                      if (!lim) return null;
-                      const parts = [];
-                      if (lim.minLoan !== null || lim.maxLoan !== null) {
-                        const min = lim.minLoan ? `£${Number(lim.minLoan).toLocaleString()}` : '—';
-                        const max = lim.maxLoan ? `£${Number(lim.maxLoan).toLocaleString()}` : '—';
-                        parts.push(`Loan size: ${min} – ${max}`);
-                      }
-                      if (lim.minLtv !== null || lim.maxLtv !== null) {
-                        const min = lim.minLtv != null ? `${lim.minLtv}%` : '—';
-                        const max = lim.maxLtv != null ? `${lim.maxLtv}%` : '—';
-                        parts.push(`LTV: ${min} – ${max}`);
-                      }
-                      if (parts.length === 0) return null;
-                      return (
-                        <div className="helper-text" style={{ color: '#666', marginTop: '0.25rem' }}>{parts.join(' • ')}</div>
-                      );
-                    })()}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      <CriteriaSection
+        expanded={criteriaExpanded}
+        onToggle={() => setCriteriaExpanded(!criteriaExpanded)}
+        questions={questions}
+        answers={answers}
+        onAnswerChange={handleAnswerChange}
+        allCriteria={allCriteria}
+        chargeType={chargeType}
+        productScope={productScope}
+        subProductLimits={subProductLimits}
+        isReadOnly={isReadOnly}
+      />
 
       {/* Multi Property Details Section - Only shown when Multi-property = Yes */}
       {isMultiProperty && (
-        <section className="collapsible-section">
-          <header className="collapsible-header" onClick={() => setMultiPropertyDetailsExpanded(!multiPropertyDetailsExpanded)}>
-            <h2 className="header-title">Multi Property Details</h2>
-            <svg 
-              className={`chevron-icon ${multiPropertyDetailsExpanded ? 'expanded' : ''}`} 
-              xmlns="http://www.w3.org/2000/svg" 
-              viewBox="0 0 24 24"
-            >
-              <path d="M7 10l5 5 5-5z"/>
-            </svg>
-          </header>
-          <div className={`collapsible-body ${!multiPropertyDetailsExpanded ? 'collapsed' : ''}`}>
-            <div style={{ overflowX: 'auto' }}>
-              <table className="slds-table slds-table_bordered slds-table_cell-buffer">
-                <thead>
-                  <tr className="slds-line-height_reset">
-                    <th scope="col" style={{ width: '25%' }}>
-                      <div className="slds-truncate" title="Property Address">Property Address</div>
-                    </th>
-                    <th scope="col" style={{ width: '12%' }}>
-                      <div className="slds-truncate" title="Property Type">Property Type</div>
-                    </th>
-                    <th scope="col" style={{ width: '13%' }}>
-                      <div className="slds-truncate" title="Property Value">Property Value (£)</div>
-                    </th>
-                    <th scope="col" style={{ width: '13%' }}>
-                      <div className="slds-truncate" title="Charge Type">Charge Type</div>
-                    </th>
-                    <th scope="col" style={{ width: '15%' }}>
-                      <div className="slds-truncate" title="First Charge Amount">First Charge Amount (£)</div>
-                    </th>
-                    <th scope="col" style={{ width: '13%' }}>
-                      <div className="slds-truncate" title="Gross Loan">Gross Loan (£)</div>
-                    </th>
-                    <th scope="col" style={{ width: '9%' }}>
-                      <div className="slds-truncate" title="Actions">Actions</div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {multiPropertyRows.map((row, index) => (
-                    <tr key={row.id}>
-                      <td>
-                        <input
-                          className="slds-input"
-                          type="text"
-                          value={row.property_address}
-                          onChange={(e) => handleMultiPropertyRowChange(row.id, 'property_address', e.target.value)}
-                          placeholder="Enter address"
-                        />
-                      </td>
-                      <td>
-                        <select
-                          className="slds-select"
-                          value={row.property_type}
-                          onChange={(e) => handleMultiPropertyRowChange(row.id, 'property_type', e.target.value)}
-                        >
-                          <option value="Residential">Residential</option>
-                          <option value="Commercial">Commercial</option>
-                          <option value="Semi-Commercial">Semi-Commercial</option>
-                        </select>
-                      </td>
-                      <td>
-                        <input
-                          className="slds-input"
-                          type="text"
-                          value={formatCurrencyInput(row.property_value)}
-                          onChange={(e) => handleMultiPropertyRowChange(row.id, 'property_value', e.target.value)}
-                          placeholder="£0"
-                        />
-                      </td>
-                      <td>
-                        <select
-                          className="slds-select"
-                          value={row.charge_type}
-                          onChange={(e) => handleMultiPropertyRowChange(row.id, 'charge_type', e.target.value)}
-                        >
-                          <option value="First charge">First charge</option>
-                          <option value="Second charge">Second charge</option>
-                        </select>
-                      </td>
-                      <td>
-                        <input
-                          className="slds-input"
-                          type="text"
-                          value={formatCurrencyInput(row.first_charge_amount)}
-                          onChange={(e) => handleMultiPropertyRowChange(row.id, 'first_charge_amount', e.target.value)}
-                          placeholder="£0"
-                          disabled={row.charge_type === 'First charge'}
-                        />
-                      </td>
-                      <td>
-                        <div style={{ padding: '0.5rem', fontWeight: '600', fontFamily: 'monospace' }}>
-                          £{Number(row.gross_loan).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                      </td>
-                      <td>
-                        <button
-                          className="slds-button slds-button_icon slds-button_icon-border-filled"
-                          onClick={() => deleteMultiPropertyRow(row.id)}
-                          disabled={multiPropertyRows.length <= 1}
-                          title="Delete row"
-                        >
-                          <svg className="slds-button__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {/* Totals Row */}
-                  <tr style={{ backgroundColor: '#f3f3f3', fontWeight: '700' }}>
-                    <td colSpan="2" style={{ textAlign: 'right', padding: '0.75rem' }}>
-                      <strong>Totals:</strong>
-                    </td>
-                    <td style={{ padding: '0.75rem', fontFamily: 'monospace' }}>
-                      £{multiPropertyTotals.property_value.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td></td>
-                    <td style={{ padding: '0.75rem', fontFamily: 'monospace' }}>
-                      £{multiPropertyTotals.first_charge_amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td style={{ padding: '0.75rem', fontFamily: 'monospace' }}>
-                      £{multiPropertyTotals.gross_loan.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-              <button
-                className="slds-button slds-button_neutral"
-                onClick={addMultiPropertyRow}
-              >
-                <svg className="slds-button__icon slds-button__icon_left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Add Property
-              </button>
-              <button
-                className="slds-button slds-button_brand"
-                onClick={() => setGrossLoan(formatCurrencyInput(multiPropertyTotals.gross_loan))}
-                title="Transfer total gross loan to main Loan Details section"
-              >
-                <svg className="slds-button__icon slds-button__icon_left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-                Use Total Gross Loan
-              </button>
-            </div>
-          </div>
-        </section>
+        <MultiPropertyDetailsSection
+          expanded={multiPropertyDetailsExpanded}
+          onToggle={() => setMultiPropertyDetailsExpanded(!multiPropertyDetailsExpanded)}
+          rows={multiPropertyRows}
+          onRowChange={handleMultiPropertyRowChange}
+          onAddRow={addMultiPropertyRow}
+          onDeleteRow={deleteMultiPropertyRow}
+          totals={multiPropertyTotals}
+          onUseTotalGrossLoan={(total) => setGrossLoan(formatCurrencyInput(total))}
+          isReadOnly={isReadOnly}
+        />
       )}
 
-      <section className="collapsible-section">
-        <header className="collapsible-header" onClick={() => setLoanDetailsExpanded(!loanDetailsExpanded)}>
-          <h2 className="header-title">Loan details</h2>
-          <svg 
-            className={`chevron-icon ${loanDetailsExpanded ? 'expanded' : ''}`} 
-            xmlns="http://www.w3.org/2000/svg" 
-            viewBox="0 0 24 24"
-          >
-            <path d="M7 10l5 5 5-5z"/>
-          </svg>
-        </header>
-        <div className={`collapsible-body ${!loanDetailsExpanded ? 'collapsed' : ''}`}>
-          <div className="loan-details-grid">
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Property Value</label>
-              <div className="slds-form-element__control">
-                <input className="slds-input" value={propertyValue} onChange={(e) => setPropertyValue(formatCurrencyInput(e.target.value))} placeholder="£1,200,000" disabled={isReadOnly} />
-              </div>
-            </div>
-
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Gross loan</label>
-              <div className="slds-form-element__control">
-                <input className="slds-input" value={grossLoan} onChange={(e) => setGrossLoan(formatCurrencyInput(e.target.value))} placeholder="£550,000" disabled={isReadOnly} />
-              </div>
-            </div>
-
-            {chargeType === 'Second' && (
-              <div className="slds-form-element first-charge-warning">
-                <label className="slds-form-element__label first-charge-label">
-                  First charge value
-                  <span className="first-charge-hint"></span>
-                </label>
-                <div className="slds-form-element__control">
-                  <input className="slds-input first-charge-input" value={firstChargeValue} onChange={(e) => setFirstChargeValue(formatCurrencyInput(e.target.value))} placeholder="£0" disabled={isReadOnly} />
-                </div>
-              </div>
-            )}
-
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Monthly rent</label>
-              <div className="slds-form-element__control">
-                <input className="slds-input" value={monthlyRent} onChange={(e) => setMonthlyRent(formatCurrencyInput(e.target.value))} placeholder="£3,000" disabled={isReadOnly} />
-              </div>
-            </div>
-
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Top slicing</label>
-              <div className="slds-form-element__control">
-                <input className="slds-input" value={topSlicing} onChange={(e) => setTopSlicing(e.target.value)} placeholder="e.g. 600" disabled={isReadOnly} />
-              </div>
-            </div>
-
-            {/* Force new row by adding a full-width spacer */}
-            <div style={{ gridColumn: '1 / -1', height: '0' }}></div>
-
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Use specific net loan?</label>
-              <div className="slds-form-element__control">
-                <select className="slds-select" value={useSpecificNet} onChange={(e) => setUseSpecificNet(e.target.value)} disabled={isReadOnly}>
-                  <option value="No">No</option>
-                  <option value="Yes">Yes</option>
-                </select>
-              </div>
-            </div>
-
-            {useSpecificNet === 'Yes' && (
-              <div className="slds-form-element">
-                <label className="slds-form-element__label">Specific net loan</label>
-                <div className="slds-form-element__control">
-                  <input className="slds-input" value={specificNetLoan} onChange={(e) => setSpecificNetLoan(e.target.value)} placeholder="£" disabled={isReadOnly} />
-                </div>
-              </div>
-            )}
-
-            <div className="slds-form-element">
-              <label className="slds-form-element__label">Bridging loan term (months)</label>
-              <div className="slds-form-element__control">
-                <select className="slds-select" value={bridgingTerm} onChange={(e) => setBridgingTerm(e.target.value)} disabled={isReadOnly}>
-                  <option value="">Select months</option>
-                  {Array.from({ length: termRange.max - termRange.min + 1 }, (_, i) => termRange.min + i).map((m) => (
-                    <option key={m} value={String(m)}>{m} months</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            
-            {/*
-              Sub-product type and Charge type are driven from the Criteria section.
-              We derive `subProduct` and `chargeType` from the selected answers there so
-              users pick these via Criteria controls instead of separate Loan details fields.
-            */}
-          </div>
-        </div>
-      </section>
+      <LoanDetailsSection
+        expanded={loanDetailsExpanded}
+        onToggle={() => setLoanDetailsExpanded(!loanDetailsExpanded)}
+        propertyValue={propertyValue}
+        onPropertyValueChange={setPropertyValue}
+        grossLoan={grossLoan}
+        onGrossLoanChange={setGrossLoan}
+        chargeType={chargeType}
+        firstChargeValue={firstChargeValue}
+        onFirstChargeValueChange={setFirstChargeValue}
+        monthlyRent={monthlyRent}
+        onMonthlyRentChange={setMonthlyRent}
+        topSlicing={topSlicing}
+        onTopSlicingChange={setTopSlicing}
+        useSpecificNet={useSpecificNet}
+        onUseSpecificNetChange={setUseSpecificNet}
+        specificNetLoan={specificNetLoan}
+        onSpecificNetLoanChange={setSpecificNetLoan}
+        term={bridgingTerm}
+        onTermChange={setBridgingTerm}
+        termRange={termRange}
+        isReadOnly={isReadOnly}
+      />
 
       {/* Results section */}
       <section className="results-section">
@@ -1770,154 +1132,120 @@ export default function BridgingCalculator({ initialQuote = null }) {
         </header>
         <div className="collapsible-body">
           {/* 4-column layout: Label | Fusion | Variable Bridge | Fixed Bridge */}
-          <div style={{ marginTop: '1rem', overflowX: 'auto' }}>
-            <table className="slds-table slds-table_cell-buffer slds-table_bordered" style={{ minWidth: 900 }}>
+          <div className="results-table-wrapper">
+            <table className="slds-table slds-table_cell-buffer slds-table_bordered max-width-900">
               <thead>
                 <tr>
                   {/* increase label width a bit and adjust other columns */}
-                  <th style={{ width: '24%' }}>Label</th>
-                  <th style={{ width: '25%', textAlign: 'center' }}>Fusion</th>
-                  <th style={{ width: '25%', textAlign: 'center' }}>Variable Bridge</th>
-                  <th style={{ width: '26%', textAlign: 'center' }}>Fixed Bridge</th>
+                  <th className="width-24">Label</th>
+                  <th className="width-25 text-align-center">Fusion</th>
+                  <th className="width-25 text-align-center">Variable Bridge</th>
+                  <th className="width-26 text-align-center">Fixed Bridge</th>
                 </tr>
               </thead>
               <tbody>
                 {
                   (() => {
-                    // helper to choose the best matching row for a primary value (loanSize or loanLtv)
-                    const pickBest = (rows, primaryValue, minField, maxField) => {
-                      if (!rows || rows.length === 0) return null;
-                      if (!Number.isFinite(primaryValue)) {
-                        // no primary metric: prefer lowest rate, then first
-                        const byRate = rows.filter(r => r.rate != null).sort((a,b) => Number(a.rate) - Number(b.rate));
-                        return byRate[0] || rows[0];
-                      }
-                      // compute distance to the mid-point of the bucket, prefer rows containing the value
-                      let best = null;
-                      let bestScore = Number.POSITIVE_INFINITY;
-                      for (const r of rows) {
-                        const min = parseNumber(r[minField]);
-                        const max = parseNumber(r[maxField]);
-                        if (Number.isFinite(min) && Number.isFinite(max)) {
-                          if (primaryValue >= min && primaryValue <= max) return r; // exact bucket match
-                          const mid = (min + max) / 2;
-                          const score = Math.abs(primaryValue - mid);
-                          if (score < bestScore) { bestScore = score; best = r; }
-                        } else if (r.rate != null && best == null) {
-                          best = r;
-                        } else if (best == null) {
-                          best = r;
-                        }
-                      }
-                      return best || rows[0];
-                    };
+                    const bestFusion = bestBridgeRates.fusion;
+                    const bestVariable = bestBridgeRates.variable;
+                    const bestFixed = bestBridgeRates.fixed;
 
-                    const loanLtv = computeLoanLtv();
-                    const loanSize = computeLoanSize();
-
-                    const bestFusion = pickBest(fusionMatched, loanSize, 'min_loan', 'max_loan');
-                    const variableRows = bridgeMatched.filter(b => (b.type || '').toString().toLowerCase() === 'variable');
-                    const fixedRows = bridgeMatched.filter(b => (b.type || '').toString().toLowerCase() === 'fixed');
-                    const bestVariable = pickBest(variableRows, loanLtv, 'min_ltv', 'max_ltv');
-                    const bestFixed = pickBest(fixedRows, loanLtv, 'min_ltv', 'max_ltv');
-
-                    if (!bestFusion && !bestVariable && !bestFixed) return (
-                      <tr><td colSpan={3} className="slds-text-body_small">No results match the selected filters.</td></tr>
-                    );
-
+                    if (!bestFusion && !bestVariable && !bestFixed) {
                       return (
-                        <>
-                          <tr>
-                            <td>
-                              {/* Label column: show explicit label if available, otherwise show a simple 'Rates' marker for the first/results row */}
-                              <div style={{ fontWeight: 600 }}>{(bestFusion && bestFusion.label) || (bestVariable && bestVariable.label) || (bestFixed && bestFixed.label) || 'Rates'}</div>
-                            </td>
-                            <td style={{ textAlign: 'center' }}>
-                              {bestFusion ? (
-                                <div className="slds-box slds-m-vertical_x-small">
-                                  <div>{bestFusion.rate != null ? `${bestFusion.rate}%` : '—'}</div>
-                                  <div style={{ color: '#666', fontSize: '0.85rem' }}>Loan: {bestFusion.min_loan ? `£${Number(bestFusion.min_loan).toLocaleString()}` : '—'} – {bestFusion.max_loan ? `£${Number(bestFusion.max_loan).toLocaleString()}` : '—'}</div>
-                                </div>
-                              ) : <div className="slds-text-body_small">—</div>}
-                            </td>
-                          <td style={{ textAlign: 'center' }}>
-                              {bestVariable ? (
-                                <div className="slds-box slds-m-vertical_x-small">
-                                  <div>{bestVariable.rate != null ? `${bestVariable.rate}%` : '—'}</div>
-                                  <div style={{ color: '#666', fontSize: '0.85rem' }}>LTV: {bestVariable.min_ltv ?? '—'}% – {bestVariable.max_ltv ?? '—'}%</div>
-                                </div>
-                              ) : <div className="slds-text-body_small">—</div>}
-                            </td>
-                          <td style={{ textAlign: 'center' }}>
-                              {bestFixed ? (
-                                <div className="slds-box slds-m-vertical_x-small">
-                                  <div>{bestFixed.rate != null ? `${bestFixed.rate}%` : '—'}</div>
-                                  <div style={{ color: '#666', fontSize: '0.85rem' }}>LTV: {bestFixed.min_ltv ?? '—'}% – {bestFixed.max_ltv ?? '—'}%</div>
-                                </div>
-                              ) : <div className="slds-text-body_small">—</div>}
-                            </td>
-                          </tr>
-
-                          {/* Inject placeholders as additional rows inside the same results table */}
-                          {
-                            (() => {
-                              const columnsHeaders = [ 'Fusion', 'Variable Bridge', 'Fixed Bridge' ];
-                              const placeholders = [
-                                'APRC', 'Admin Fee', 'Broker Client Fee', 'Broker Comission (Proc Fee %)',
-                                'Broker Comission (Proc Fee £)', 'Commitment Fee £', 'Deferred Interest %', 'Deferred Interest £',
-                                'Direct Debit', 'ERC', 'ERC (Fusion Only)', 'Exit Fee', 'Gross Loan', 'ICR', 'Initial Rate', 'LTV', 'Monthly Interest Cost',
-                                'NBP', 'Net Loan', 'Net LTV', 'Pay Rate', 'Product Fee %', 'Product Fee £', 'Revert Rate', 'Revert Rate DD',
-                                'Rolled Months', 'Rolled Months Interest', 'Serviced Interest', 'Total Cost to Borrower', 'Total Loan Term'
-                              ];
-
-                              const values = {};
-                              placeholders.forEach(p => { values[p] = {}; });
-
-                              const colBest = [bestFusion, bestVariable, bestFixed];
-                              // common inputs
-                              const pv = parseNumber(propertyValue);
-                              const grossInput = parseNumber(grossLoan);
-                              const specificNet = parseNumber(specificNetLoan);
-
-                              columnsHeaders.forEach((col, idx) => {
-                                const best = colBest[idx];
-                                if (best && best.rate != null) values['Initial Rate'][col] = `${Number(best.rate).toFixed(2)}%`;
-
-                                // product fee percent may be on the row
-                                const pf = best && (best.product_fee !== undefined ? Number(best.product_fee) : NaN);
-                                if (pf && !Number.isNaN(pf)) values['Product Fee %'][col] = `${pf}%`;
-
-                                // gross loan: prefer gross input, otherwise leave blank
-                                if (Number.isFinite(grossInput)) values['Gross Loan'][col] = `£${Number(grossInput).toLocaleString('en-GB')}`;
-
-                                // product fee £ and net loan
-                                if (Number.isFinite(grossInput) && pf && !Number.isNaN(pf)) {
-                                  const pfAmount = grossInput * (pf / 100);
-                                  values['Product Fee £'][col] = `£${Number(pfAmount).toLocaleString('en-GB')}`;
-                                  const net = (Number.isFinite(specificNet) ? specificNet : grossInput - pfAmount);
-                                  if (Number.isFinite(net)) values['Net Loan'][col] = `£${Number(net).toLocaleString('en-GB')}`;
-                                  if (Number.isFinite(pv)) values['LTV'][col] = `${((net / pv) * 100).toFixed(2)}%`;
-                                }
-
-                                // monthly interest
-                                if (best && best.rate != null && Number.isFinite(grossInput)) {
-                                  const monthly = grossInput * (Number(best.rate) / 100) / 12;
-                                  values['Monthly Interest Cost'][col] = `£${Number(monthly).toLocaleString('en-GB')}`;
-                                }
-                              });
-
-                              return (
-                                <CalculatorResultsPlaceholders
-                                  renderAsRows={true}
-                                  labels={placeholders}
-                                  columns={columnsHeaders}
-                                  values={values}
-                                />
-                              );
-                            })()
-                          }
-                        </>
+                        <tr><td colSpan={4} className="slds-text-body_small">No results match the selected filters.</td></tr>
                       );
+                    }
+
+                    return (
+                      <>
+                        <tr>
+                          <td>
+                            <div className="font-weight-600">{(bestFusion && bestFusion.label) || (bestVariable && bestVariable.label) || (bestFixed && bestFixed.label) || 'Rates'}</div>
+                          </td>
+                          <td className="text-align-center">
+                            {bestFusion ? (
+                              <div className="slds-box slds-m-vertical_x-small">
+                                <div>{bestFusion.rate != null ? `${bestFusion.rate}%` : '—'}</div>
+                                <div className="helper-text">Loan: {bestFusion.min_loan ? `£${Number(bestFusion.min_loan).toLocaleString()}` : '—'} – {bestFusion.max_loan ? `£${Number(bestFusion.max_loan).toLocaleString()}` : '—'}</div>
+                              </div>
+                            ) : <div className="slds-text-body_small">—</div>}
+                          </td>
+                          <td className="text-align-center">
+                            {bestVariable ? (
+                              <div className="slds-box slds-m-vertical_x-small">
+                                <div>{bestVariable.rate != null ? `${bestVariable.rate}%` : '—'}</div>
+                                <div className="helper-text">LTV: {bestVariable.min_ltv ?? '—'}% – {bestVariable.max_ltv ?? '—'}%</div>
+                              </div>
+                            ) : <div className="slds-text-body_small">—</div>}
+                          </td>
+                          <td className="text-align-center">
+                            {bestFixed ? (
+                              <div className="slds-box slds-m-vertical_x-small">
+                                <div>{bestFixed.rate != null ? `${bestFixed.rate}%` : '—'}</div>
+                                <div className="helper-text">LTV: {bestFixed.min_ltv ?? '—'}% – {bestFixed.max_ltv ?? '—'}%</div>
+                              </div>
+                            ) : <div className="slds-text-body_small">—</div>}
+                          </td>
+                        </tr>
+
+                        {
+                          (() => {
+                            const columnsHeaders = [ 'Fusion', 'Variable Bridge', 'Fixed Bridge' ];
+                            const placeholders = [
+                              'APRC', 'Admin Fee', 'Broker Client Fee', 'Broker Comission (Proc Fee %)',
+                              'Broker Comission (Proc Fee £)', 'Commitment Fee £', 'Deferred Interest %', 'Deferred Interest £',
+                              'Direct Debit', 'ERC', 'ERC (Fusion Only)', 'Exit Fee', 'Gross Loan', 'ICR', 'LTV', 'Monthly Interest Cost',
+                              'NBP', 'Net Loan', 'Net LTV', 'Pay Rate', 'Product Fee %', 'Product Fee £', 'Revert Rate', 'Revert Rate DD',
+                              'Rolled Months', 'Rolled Months Interest', 'Serviced Interest', 'Total Cost to Borrower', 'Total Loan Term'
+                            ];
+
+                            const values = {};
+                            placeholders.forEach(p => { values[p] = {}; });
+
+                            const colBest = [bestFusion, bestVariable, bestFixed];
+                            const pv = parseNumber(propertyValue);
+                            const grossInput = parseNumber(grossLoan);
+                            const specificNet = parseNumber(specificNetLoan);
+
+                            columnsHeaders.forEach((col, idx) => {
+                              const best = colBest[idx];
+                              const pf = best && (best.product_fee !== undefined ? Number(best.product_fee) : NaN);
+                              if (pf && !Number.isNaN(pf)) values['Product Fee %'][col] = `${pf}%`;
+
+                              if (Number.isFinite(grossInput)) values['Gross Loan'][col] = `£${Number(grossInput).toLocaleString('en-GB')}`;
+
+                              if (Number.isFinite(grossInput) && pf && !Number.isNaN(pf)) {
+                                const pfAmount = grossInput * (pf / 100);
+                                values['Product Fee £'][col] = `£${Number(pfAmount).toLocaleString('en-GB')}`;
+                                const net = (Number.isFinite(specificNet) ? specificNet : grossInput - pfAmount);
+                                if (Number.isFinite(net)) values['Net Loan'][col] = `£${Number(net).toLocaleString('en-GB')}`;
+                                if (Number.isFinite(pv)) values['LTV'][col] = `${((net / pv) * 100).toFixed(2)}%`;
+                              }
+
+                              if (best && best.pay_rate != null) {
+                                values['Pay Rate'][col] = `${Number(best.pay_rate).toFixed(2)}%`;
+                              } else if (best && best.rate != null) {
+                                values['Pay Rate'][col] = `${Number(best.rate).toFixed(2)}%`;
+                              }
+
+                              if (best && best.rate != null && Number.isFinite(grossInput)) {
+                                const monthly = grossInput * (Number(best.rate) / 100) / 12;
+                                values['Monthly Interest Cost'][col] = `£${Number(monthly).toLocaleString('en-GB')}`;
+                              }
+                            });
+
+                            return (
+                              <CalculatorResultsPlaceholders
+                                renderAsRows={true}
+                                labels={placeholders}
+                                columns={columnsHeaders}
+                                values={values}
+                              />
+                            );
+                          })()
+                        }
+                      </>
+                    );
                   })()
                 }
               </tbody>

@@ -96,13 +96,7 @@ const ResetPasswordPage = () => {
 
   if (validating) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#f3f3f3'
-      }}>
+      <div className="reset-password-wrapper">
         <div className="slds-spinner_container">
           <div className="slds-spinner slds-spinner_medium" role="status">
             <span className="slds-assistive-text">Validating reset token...</span>
@@ -116,36 +110,16 @@ const ResetPasswordPage = () => {
 
   if (!token || !tokenValid) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#f3f3f3',
-        padding: '1rem'
-      }}>
-        <div style={{
-          width: '100%',
-          maxWidth: '450px',
-          backgroundColor: 'white',
-          borderRadius: '0.25rem',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          padding: '2rem',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '48px', marginBottom: '1rem' }}>⚠️</div>
-          <h1 style={{
-            fontSize: '1.5rem',
-            fontWeight: '300',
-            color: '#181818',
-            marginBottom: '1rem'
-          }}>
+      <div className="reset-password-wrapper">
+        <div className="reset-password-card text-align-center">
+          <div className="font-size-48 margin-bottom-1">⚠️</div>
+          <h1 className="font-size-15rem font-weight-300 text-color-heading margin-bottom-1">
             Invalid Reset Link
           </h1>
-          <p style={{ color: '#706e6b', marginBottom: '2rem', fontSize: '14px' }}>
+          <p className="text-color-gray margin-bottom-2 font-size-14">
             {error || 'This password reset link is invalid or has expired.'}
           </p>
-          <Link to="/forgot-password" className="slds-button slds-button_brand" style={{ marginRight: '0.5rem' }}>
+          <Link to="/forgot-password" className="slds-button slds-button_brand margin-right-05">
             Request New Link
           </Link>
           <Link to="/login" className="slds-button slds-button_neutral">
@@ -157,33 +131,14 @@ const ResetPasswordPage = () => {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#f3f3f3',
-      padding: '1rem'
-    }}>
-      <div style={{
-        width: '100%',
-        maxWidth: '450px',
-        backgroundColor: 'white',
-        borderRadius: '0.25rem',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        padding: '2rem'
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{
-            fontSize: '1.75rem',
-            fontWeight: '300',
-            color: '#181818',
-            marginBottom: '0.5rem'
-          }}>
+    <div className="reset-password-wrapper">
+      <div className="reset-password-card">
+        <div className="text-align-center margin-bottom-2">
+          <h1 className="font-size-175rem font-weight-300 text-color-heading margin-bottom-05">
             Set New Password
           </h1>
           {userEmail && (
-            <p style={{ color: '#706e6b', fontSize: '14px' }}>
+            <p className="text-color-gray font-size-14">
               for {userEmail}
             </p>
           )}
@@ -191,7 +146,7 @@ const ResetPasswordPage = () => {
 
         {!success ? (
           <form onSubmit={handleSubmit}>
-            <div className="slds-form-element" style={{ marginBottom: '1rem' }}>
+            <div className="slds-form-element margin-bottom-1">
               <label className="slds-form-element__label" htmlFor="newPassword">
                 <abbr className="slds-required" title="required">* </abbr>
                 New Password
@@ -212,7 +167,7 @@ const ResetPasswordPage = () => {
               </div>
             </div>
 
-            <div className="slds-form-element" style={{ marginBottom: '1rem' }}>
+            <div className="slds-form-element margin-bottom-1">
               <label className="slds-form-element__label" htmlFor="confirmPassword">
                 <abbr className="slds-required" title="required">* </abbr>
                 Confirm Password
@@ -233,7 +188,7 @@ const ResetPasswordPage = () => {
             </div>
 
             {error && (
-              <div className="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" style={{ marginBottom: '1rem' }}>
+              <div className="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error margin-bottom-1">
                 <span className="slds-assistive-text">Error</span>
                 <h2>{error}</h2>
               </div>
@@ -241,21 +196,16 @@ const ResetPasswordPage = () => {
 
             <button
               type="submit"
-              className="slds-button slds-button_brand"
-              style={{ width: '100%', marginBottom: '1rem' }}
+              className="slds-button slds-button_brand width-100 margin-bottom-1"
               disabled={loading}
             >
               {loading ? 'Resetting Password...' : 'Reset Password'}
             </button>
 
-            <div style={{ textAlign: 'center' }}>
+            <div className="text-align-center">
               <Link
                 to="/login"
-                style={{
-                  color: '#0176d3',
-                  textDecoration: 'none',
-                  fontSize: '14px'
-                }}
+                className="text-color-link font-size-14 text-decoration-none"
               >
                 ← Back to Login
               </Link>
@@ -263,20 +213,19 @@ const ResetPasswordPage = () => {
           </form>
         ) : (
           <div>
-            <div className="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_success" style={{ marginBottom: '1.5rem' }}>
+            <div className="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_success margin-bottom-15">
               <span className="slds-assistive-text">Success</span>
               <h2>Password Reset Successfully!</h2>
             </div>
 
-            <p style={{ color: '#3e3e3c', marginBottom: '1.5rem', fontSize: '14px', lineHeight: '1.5', textAlign: 'center' }}>
+            <p className="text-color-body margin-bottom-15 font-size-14 line-height-15 text-align-center">
               Your password has been reset. You will be redirected to the login page in a few seconds...
             </p>
 
-            <div style={{ textAlign: 'center' }}>
+            <div className="text-align-center">
               <Link
                 to="/login"
-                className="slds-button slds-button_brand"
-                style={{ width: '100%' }}
+                className="slds-button slds-button_brand width-100"
               >
                 Go to Login Now
               </Link>

@@ -33,13 +33,6 @@ function BridgeFusionRates() {
     try {
       // fetch filtered data (select * — we'll derive available columns from returned rows)
   let q = supabase.from('bridge_fusion_rates_full').select('*');
-  if (filters.set_key) q = q.eq('set_key', filters.set_key);
-  if (filters.property) q = q.eq('property', filters.property);
-  if (filters.product) q = q.eq('product', filters.product);
-  if (filters.type) q = q.eq('type', filters.type);
-  if (filters.charge_type) q = q.eq('charge_type', filters.charge_type);
-      // No term filters: `initial_term`/`full_term` are not present in bridge_fusion_rates_full
-
       const { data, error } = await q.order('set_key', { ascending: true });
       if (error) throw error;
       const rowsData = data || [];
@@ -331,7 +324,7 @@ function BridgeFusionRates() {
       </div>
 
       <div className="slds-grid slds-wrap slds-m-bottom_medium" style={{ gap: '0.5rem' }}>
-        <div className="slds-form-element" style={{ minWidth: '200px' }}>
+        <div className="slds-form-element min-width-200">
           <label className="slds-form-element__label">Set Key:</label>
           <div className="slds-form-element__control">
             <select className="slds-select" value={filters.set_key} onChange={(e) => setFilters(prev => ({ ...prev, set_key: e.target.value }))}>
@@ -341,7 +334,7 @@ function BridgeFusionRates() {
           </div>
         </div>
 
-        <div className="slds-form-element" style={{ minWidth: '150px' }}>
+        <div className="slds-form-element min-width-150">
           <label className="slds-form-element__label">Property:</label>
           <div className="slds-form-element__control">
             <select className="slds-select" value={filters.property} onChange={(e) => setFilters(prev => ({ ...prev, property: e.target.value }))}>
@@ -353,7 +346,7 @@ function BridgeFusionRates() {
 
         {/* Tier filter removed: `tier` column does not exist in bridge_fusion_rates_full table */}
 
-        <div className="slds-form-element" style={{ minWidth: '150px' }}>
+        <div className="slds-form-element min-width-150">
           <label className="slds-form-element__label">Product:</label>
           <div className="slds-form-element__control">
             <select className="slds-select" value={filters.product} onChange={(e) => setFilters(prev => ({ ...prev, product: e.target.value }))}>
@@ -363,7 +356,7 @@ function BridgeFusionRates() {
           </div>
         </div>
 
-        <div className="slds-form-element" style={{ minWidth: '150px' }}>
+        <div className="slds-form-element min-width-150">
           <label className="slds-form-element__label">Type:</label>
           <div className="slds-form-element__control">
             <select className="slds-select" value={filters.type} onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}>
@@ -373,7 +366,7 @@ function BridgeFusionRates() {
           </div>
         </div>
 
-        <div className="slds-form-element" style={{ minWidth: '150px' }}>
+        <div className="slds-form-element min-width-150">
           <label className="slds-form-element__label">Charge Type:</label>
           <div className="slds-form-element__control">
             <select className="slds-select" value={filters.charge_type} onChange={(e) => setFilters(prev => ({ ...prev, charge_type: e.target.value }))}>
@@ -386,30 +379,30 @@ function BridgeFusionRates() {
         {/* initial_term/full_term filters removed: not present in bridge_fusion_rates_full schema */}
       </div>
 
-      <div style={{ overflowX: 'auto' }}>
+      <div className="overflow-x-auto">
         <table className="slds-table slds-table_bordered slds-table_cell-buffer">
           <thead>
             <tr>
               <th>
                 <input type="checkbox" checked={selectAll} onChange={(e) => toggleSelectAll(e.target.checked)} />
               </th>
-              <th onClick={() => changeSort('set_key')} style={{ cursor: 'pointer' }}>Set Key {sortField === 'set_key' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('property')} style={{ cursor: 'pointer' }}>Property {sortField === 'property' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('product')} style={{ cursor: 'pointer' }}>Product {sortField === 'product' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('type')} style={{ cursor: 'pointer' }}>Type {sortField === 'type' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('charge_type')} style={{ cursor: 'pointer' }}>Charge Type {sortField === 'charge_type' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('product_fee')} style={{ cursor: 'pointer' }}>Product Fee {sortField === 'product_fee' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('rate')} style={{ cursor: 'pointer' }}>Rate (%) {sortField === 'rate' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th>Min Term</th>
-              <th>Max Term</th>
-              <th>Min Rolled</th>
-              <th>Max Rolled</th>
-              <th>Min Loan</th>
-              <th>Max Loan</th>
-              <th>Min LTV</th>
-              <th>Max LTV</th>
-              <th>Min ICR</th>
-              <th>Max Defer</th>
+              <th onClick={() => changeSort('set_key')} className="cursor-pointer">Set Key {sortField === 'set_key' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('property')} className="cursor-pointer">Property {sortField === 'property' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('product')} className="cursor-pointer">Product {sortField === 'product' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('type')} className="cursor-pointer">Type {sortField === 'type' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('charge_type')} className="cursor-pointer">Charge Type {sortField === 'charge_type' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('product_fee')} className="cursor-pointer text-align-center">Product Fee {sortField === 'product_fee' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('rate')} className="cursor-pointer text-align-center">Rate (%) {sortField === 'rate' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th className="text-align-center">Min Term</th>
+              <th className="text-align-center">Max Term</th>
+              <th className="text-align-center">Min Rolled</th>
+              <th className="text-align-center">Max Rolled</th>
+              <th className="text-align-center">Min Loan</th>
+              <th className="text-align-center">Max Loan</th>
+              <th className="text-align-center">Min LTV</th>
+              <th className="text-align-center">Max LTV</th>
+              <th className="text-align-center">Min ICR</th>
+              <th className="text-align-center">Max Defer</th>
               <th className="sticky-action">Actions</th>
             </tr>
           </thead>
@@ -423,20 +416,20 @@ function BridgeFusionRates() {
                 <td>{r.product}</td>
                 <td>{r.type}</td>
                 <td>{r.charge_type}</td>
-                <td>{r.product_fee}</td>
-                <td>{r.rate}</td>
-                <td>{r.min_term}</td>
-                <td>{r.max_term}</td>
-                <td>{r.min_rolled_months}</td>
-                <td>{r.max_rolled_months}</td>
-                <td>£{r.min_loan?.toLocaleString()}</td>
-                <td>£{r.max_loan?.toLocaleString()}</td>
-                <td>{r.min_ltv}%</td>
-                <td>{r.max_ltv}%</td>
-                <td>{r.min_icr}%</td>
-                <td>{r.max_defer_int}</td>
+                <td className="text-align-center">{r.product_fee}</td>
+                <td className="text-align-center">{r.rate}</td>
+                <td className="text-align-center">{r.min_term}</td>
+                <td className="text-align-center">{r.max_term}</td>
+                <td className="text-align-center">{r.min_rolled_months}</td>
+                <td className="text-align-center">{r.max_rolled_months}</td>
+                <td className="text-align-center">£{r.min_loan?.toLocaleString()}</td>
+                <td className="text-align-center">£{r.max_loan?.toLocaleString()}</td>
+                <td className="text-align-center">{r.min_ltv}%</td>
+                <td className="text-align-center">{r.max_ltv}%</td>
+                <td className="text-align-center">{r.min_icr}%</td>
+                <td className="text-align-center">{r.max_defer_int}</td>
                 <td className="sticky-action">
-                  <div className="slds-grid" style={{ gap: '0.25rem' }}>
+                  <div className="slds-grid flex-gap-025">
                     <button className="slds-button slds-button_neutral" onClick={() => setEditing(r)}>Edit</button>
                     <button className="slds-button slds-button_destructive" onClick={() => handleDelete(r.id)}>Delete</button>
                   </div>

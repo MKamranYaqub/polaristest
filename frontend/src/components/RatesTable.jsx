@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import RateEditModal from './RateEditModal';
-import BridgeFusionRates from './BridgeFusionRates';
+// Bridge & Fusion rates tab removed - keep BTL rates only
 import NotificationModal from './NotificationModal';
 import '../styles/slds.css';
 
@@ -13,7 +13,7 @@ function RatesTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRows, setSelectedRows] = useState(new Set());
   const [selectAll, setSelectAll] = useState(false);
-  const [activeTab, setActiveTab] = useState('BTL');
+  // tabs removed: always show BTL rates
   const [filterOptions, setFilterOptions] = useState({
     setKeys: new Set(),
     properties: new Set(),
@@ -587,20 +587,8 @@ function RatesTable() {
   
   return (
     <div className="slds-p-around_medium">
-      <div className="slds-m-bottom_medium">
-        <div className="slds-button-group" role="tablist">
-          <button className={`slds-button ${activeTab === 'BTL' ? 'slds-button_brand' : 'slds-button_neutral'}`} onClick={() => setActiveTab('BTL')}>BTL Rates</button>
-          <button className={`slds-button ${activeTab === 'BRIDGE' ? 'slds-button_brand' : 'slds-button_neutral'}`} onClick={() => setActiveTab('BRIDGE')}>Bridge & Fusion Rates</button>
-        </div>
-      </div>
-
-      {activeTab === 'BRIDGE' ? (
-        // lazy-load the bridge & fusion rates component
-        <React.Suspense fallback={<div>Loading Bridge & Fusion rates...</div>}>
-          <BridgeFusionRates />
-        </React.Suspense>
-      ) : (
-        <>
+      {/* Tabs removed - always showing BTL Rates */}
+      <>
       <div className="slds-grid slds-grid_vertical-align-center slds-m-bottom_medium">
         <div className="slds-col">
           <button className="slds-button slds-button_brand slds-m-right_small" onClick={handleAdd}>
@@ -917,7 +905,6 @@ function RatesTable() {
         message={notification.message}
       />
       </>
-      )}
     </div>
   );
 }

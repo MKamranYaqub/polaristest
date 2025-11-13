@@ -242,13 +242,12 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div className="display-flex justify-content-space-between align-items-center margin-bottom-1">
         <h2>Quotes {calculatorType ? `(${calculatorType})` : ''}</h2>
         <button 
-          className="slds-button slds-button_brand" 
+          className="slds-button slds-button_brand display-flex align-items-center flex-gap-05" 
           onClick={handleExport}
           disabled={exporting || loading}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
         >
           {exporting ? (
             <>
@@ -266,22 +265,12 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         </button>
       </div>
       {loading && <div>Loading…</div>}
-      {error && <div style={{ color: 'red' }}>{error}</div>}
+      {error && <div className="slds-text-color_error">{error}</div>}
       
       {/* Filters Section */}
-      <div 
-        className="quotes-filter-section"
-        style={{ 
-        background: '#f3f3f3', 
-        padding: '1rem', 
-        marginBottom: '1rem', 
-        borderRadius: '4px',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '1rem'
-      }}>
+      <div className="quotes-filter-section">
         <div className="slds-form-element">
-          <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>Name</label>
+          <label className="slds-form-element__label slds-text-body_small">Name</label>
           <div className="slds-form-element__control">
             <input 
               className="slds-input" 
@@ -293,7 +282,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         </div>
 
         <div className="slds-form-element">
-          <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>Type</label>
+          <label className="slds-form-element__label slds-text-body_small">Type</label>
           <div className="slds-form-element__control">
             <select className="slds-select" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
               <option value="">All</option>
@@ -304,7 +293,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         </div>
 
         <div className="slds-form-element">
-          <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>Borrower Type</label>
+          <label className="slds-form-element__label slds-text-body_small">Borrower Type</label>
           <div className="slds-form-element__control">
             <select className="slds-select" value={filterBorrowerType} onChange={(e) => setFilterBorrowerType(e.target.value)}>
               <option value="">All</option>
@@ -315,7 +304,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         </div>
 
         <div className="slds-form-element">
-          <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>Created From</label>
+          <label className="slds-form-element__label slds-text-body_small">Created From</label>
           <div className="slds-form-element__control">
             <input 
               type="date" 
@@ -327,7 +316,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         </div>
 
         <div className="slds-form-element">
-          <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>Created To</label>
+          <label className="slds-form-element__label slds-text-body_small">Created To</label>
           <div className="slds-form-element__control">
             <input 
               type="date" 
@@ -339,7 +328,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         </div>
 
         <div className="slds-form-element">
-          <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>Updated From</label>
+          <label className="slds-form-element__label slds-text-body_small">Updated From</label>
           <div className="slds-form-element__control">
             <input 
               type="date" 
@@ -351,7 +340,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         </div>
 
         <div className="slds-form-element">
-          <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>Updated To</label>
+          <label className="slds-form-element__label slds-text-body_small">Updated To</label>
           <div className="slds-form-element__control">
             <input 
               type="date" 
@@ -362,7 +351,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+        <div className="display-flex align-items-flex-end">
           <button 
             className="slds-button slds-button_neutral" 
             onClick={() => {
@@ -380,12 +369,12 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         </div>
       </div>
 
-      <div className="quotes-showing-count" style={{ marginBottom: '0.5rem', color: '#666' }}>
+      <div className="quotes-showing-count helper-text margin-bottom-05">
         Showing {paginatedQuotes.length} of {filteredQuotes.length} quotes
       </div>
       
-      <div style={{ overflowX: 'auto', position: 'relative' }}>
-        <table className="slds-table slds-table_cell-buffer slds-table_bordered" style={{ width: '100%' }}>
+      <div className="overflow-auto position-relative">
+        <table className="slds-table slds-table_cell-buffer slds-table_bordered width-100">
           <thead>
             <tr>
               <th>Ref #</th>
@@ -396,7 +385,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
               <th>Created By</th>
               <th>Created</th>
               <th>Updated</th>
-              <th className="sticky-actions-header" style={{ position: 'sticky', right: 0, background: 'white', zIndex: 1 }}>Actions</th>
+              <th className="sticky-table-header">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -414,9 +403,9 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                 </td>
                 <td>{new Date(q.created_at).toLocaleString()}</td>
                 <td>{q.updated_at ? new Date(q.updated_at).toLocaleString() : '—'}</td>
-                <td className="sticky-actions-cell" style={{ position: 'sticky', right: 0, background: 'white', zIndex: 1 }}>
+                <td className="sticky-table-cell">
                   <button className="slds-button slds-button_neutral" onClick={() => handleLoad(q.id)}>Load</button>
-                  <button style={{ marginLeft: 8 }} className="slds-button slds-button_destructive" onClick={() => handleDelete(q.id)}>Delete</button>
+                  <button className="slds-button slds-button_destructive margin-left-8" onClick={() => handleDelete(q.id)}>Delete</button>
                 </td>
               </tr>
             ))}
@@ -426,7 +415,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
 
       {/* Pagination Controls */}
       {totalFilteredPages > 1 && (
-        <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="display-flex justify-content-center align-items-center flex-gap-05 margin-top-1">
           <button 
             className="slds-button slds-button_neutral" 
             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}

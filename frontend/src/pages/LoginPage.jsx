@@ -34,9 +34,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="slds-p-around_large" style={{ maxWidth: '400px', margin: '2rem auto' }}>
+    <div className="slds-p-around_large auth-container">
       <div className="slds-box slds-theme_default">
-        <h1 className="slds-text-heading_large slds-m-bottom_medium" style={{ textAlign: 'center' }}>
+        <h1 className="slds-text-heading_large slds-m-bottom_medium text-align-center">
           Project Polaris Login
         </h1>
         
@@ -88,27 +88,25 @@ export default function LoginPage() {
           <div className="slds-m-top_medium">
             <button
               type="submit"
-              className="slds-button slds-button_brand"
-              style={{ width: '100%' }}
+              className="slds-button slds-button_brand width-100"
               disabled={loading}
             >
               {loading ? 'Logging in...' : 'Login'}
             </button>
           </div>
 
-          <div className="slds-m-top_small" style={{ textAlign: 'center' }}>
+          <div className="slds-m-top_small text-align-center">
             <Link 
               to="/forgot-password" 
-              className="slds-text-link"
-              style={{ fontSize: '14px' }}
+              className="slds-text-link font-size-14"
             >
               Forgot your password?
             </Link>
           </div>
         </form>
 
-        <div className="slds-m-top_medium slds-p-around_small" style={{ backgroundColor: '#f3f3f3', borderRadius: '4px' }}>
-          <p className="slds-text-body_small" style={{ margin: 0, color: '#706e6b' }}>
+        <div className="slds-m-top_medium slds-p-around_small auth-demo-box">
+          <p className="slds-text-body_small text-color-gray margin-0">
             <strong>Demo Credentials:</strong><br />
             Email: admin@polaris.local<br />
             Password: admin123
