@@ -353,7 +353,7 @@ export default function SaveQuoteButton({
           <div className="slds-form-element margin-top-1 padding-y-05 padding-x-05 border-radius-4 background-gray-light">
             <label className="slds-form-element__label">Created By</label>
             <div className="slds-form-element__control padding-top-025 font-weight-bold">
-              {user?.name || 'N/A'}
+              {existingQuote?.created_by || user?.name || 'N/A'}
             </div>
           </div>
 

@@ -384,6 +384,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
               <th>Borrower/Company</th>
               <th>Created By</th>
               <th>Created</th>
+              <th>Updated By</th>
               <th>Updated</th>
               <th className="sticky-table-header">Actions</th>
             </tr>
@@ -402,6 +403,11 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                   </span>
                 </td>
                 <td>{new Date(q.created_at).toLocaleString()}</td>
+                <td>
+                  <span title={q.updated_by_id ? `User ID: ${q.updated_by_id}` : 'No user info'}>
+                    {q.updated_by || '—'}
+                  </span>
+                </td>
                 <td>{q.updated_at ? new Date(q.updated_at).toLocaleString() : '—'}</td>
                 <td className="sticky-table-cell">
                   <button className="slds-button slds-button_neutral" onClick={() => handleLoad(q.id)}>Load</button>
