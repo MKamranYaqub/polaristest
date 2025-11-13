@@ -1121,14 +1121,14 @@ export default function BTLcalculator({ initialQuote = null }) {
           {currentQuoteId && (
             <>
               <button 
-                className="slds-button slds-button_brand"
+                className="slds-button slds-button_neutral"
                 onClick={() => setDipModalOpen(true)}
                 style={{ marginRight: '0.5rem' }}
               >
                 Issue DIP
               </button>
               <button 
-                className="slds-button slds-button_neutral"
+                className="slds-button slds-button_brand"
                 onClick={handleIssueQuote}
                 style={{ marginRight: '0.5rem' }}
               >

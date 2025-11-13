@@ -1006,13 +1006,13 @@ export default function BridgingCalculator({ initialQuote = null }) {
           {currentQuoteId && (
             <>
               <button 
-                className="slds-button slds-button_brand margin-right-05"
+                className="slds-button slds-button_neutral margin-right-05"
                 onClick={() => setDipModalOpen(true)}
               >
                 Issue DIP
               </button>
               <button 
-                className="slds-button slds-button_neutral margin-right-05"
+                className="slds-button slds-button_brand margin-right-05"
                 onClick={handleIssueQuote}
               >
                 Issue Quote

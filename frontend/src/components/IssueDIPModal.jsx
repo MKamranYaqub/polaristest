@@ -359,14 +359,14 @@ export default function IssueDIPModal({
         Cancel
       </button>
       <button
-        className="slds-button slds-button_brand"
+        className="slds-button slds-button_neutral"
         onClick={handleSaveData}
         disabled={saving}
       >
         {saving ? 'Saving...' : 'Save Data'}
       </button>
       <button
-        className="slds-button slds-button_success"
+        className="slds-button slds-button_brand"
         onClick={handleCreatePDF}
         disabled={saving}
       >
