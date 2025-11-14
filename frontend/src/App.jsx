@@ -16,6 +16,7 @@ import { UserProvider } from './contexts/UserContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
+import { ToastProvider } from './contexts/ToastContext';
 import UserProfileButton from './components/UserProfileButton';
 import ThemeToggle from './components/ThemeToggle';
 import AdminPage from './pages/AdminPage';
@@ -140,6 +141,14 @@ const AppContent = () => {
                   } 
                 />
                 <Route 
+                  path="global-settings" 
+                  element={
+                    <ErrorBoundary>
+                      <AdminPage tab="globalSettings" />
+                    </ErrorBoundary>
+                  } 
+                />
+                <Route 
                   index 
                   element={<Navigate to="/admin/constants" replace />} 
                 />
@@ -174,7 +183,9 @@ function App() {
       <AuthProvider>
         <ThemeProvider>
           <AccessibilityProvider>
-            <AppContent />
+            <ToastProvider>
+              <AppContent />
+            </ToastProvider>
           </AccessibilityProvider>
         </ThemeProvider>
       </AuthProvider>

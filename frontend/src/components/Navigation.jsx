@@ -27,6 +27,7 @@ function Navigation() {
     { label: 'BTL Criteria', path: '/admin/criteria' },
     { label: 'BTL Rates', path: '/admin/btl-rates' },
     { label: 'Bridging Rates', path: '/admin/bridging-rates' },
+    { label: 'Global Settings', path: '/admin/global-settings' },
     ...(showUserManagement ? [{ label: 'Users', path: '/admin/users' }] : [])
   ];
 

@@ -3,6 +3,7 @@ import Constants from '../components/Constants';
 import CriteriaTable from '../components/CriteriaTable';
 import RatesTable from '../components/RatesTable';
 import BridgeFusionRates from '../components/BridgeFusionRates';
+import GlobalSettings from '../components/GlobalSettings';
 
 const AdminPage = ({ tab = 'constants' }) => {
   return (
@@ -32,6 +33,16 @@ const AdminPage = ({ tab = 'constants' }) => {
         <div>
           <h1 className="font-size-2rem font-weight-bold margin-bottom-1">Bridging Rate Management</h1>
           <BridgeFusionRates />
+        </div>
+      )}
+      
+      {tab === 'globalSettings' && (
+        <div>
+          <h1 className="font-size-2rem font-weight-bold margin-bottom-1">Global Settings</h1>
+          <p className="slds-text-body_regular slds-m-bottom_medium text-color-gray">
+            Configure global application settings and control calculator results table visibility
+          </p>
+          <GlobalSettings />
         </div>
       )}
     </div>

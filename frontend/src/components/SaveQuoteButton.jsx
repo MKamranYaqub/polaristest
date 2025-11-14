@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { saveQuote, updateQuote } from '../utils/quotes';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import { useSaveShortcut, useEscapeKey } from '../hooks/useKeyboardShortcut';
+import { useUiPreferences } from '../hooks/useUiPreferences';
 import ModalShell from './ModalShell';
+import KeyboardHint from './KeyboardHint';
 
 // SaveQuoteButton shows a small modal to collect { name, borrowerName, applicantNames, notes }
 // If `existingQuote` prop provided (object with id), the button will perform an update instead of create.
@@ -16,6 +20,8 @@ export default function SaveQuoteButton({
   onSaved = null,
 }) {
   const { user } = useAuth();
+  const { showToast } = useToast();
+  const uiPrefs = useUiPreferences();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -26,10 +32,6 @@ export default function SaveQuoteButton({
   const [notes, setNotes] = useState('');
   const [productRange, setProductRange] = useState('specialist'); // Core or Specialist
   const getUserName = () => user?.name || 'Unknown User';
-  
-  // Success modal state
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState({ refNumber: '', timestamp: '', date: '' });
 
   useEffect(() => {
     if (existingQuote) {
@@ -53,6 +55,19 @@ export default function SaveQuoteButton({
 
   const openForm = () => setOpen(true);
   const closeForm = () => setOpen(false);
+  
+  // Keyboard shortcuts - only enabled if user preference allows
+  useSaveShortcut(() => {
+    if (open && !saving) {
+      handleSubmit();
+    }
+  }, open && uiPrefs.keyboardShortcutsEnabled);
+  
+  useEscapeKey(() => {
+    if (open && !saving) {
+      closeForm();
+    }
+  }, open && uiPrefs.keyboardShortcutsEnabled);
 
   const handleSubmit = async (e) => {
     e && e.preventDefault && e.preventDefault();
@@ -310,14 +325,20 @@ export default function SaveQuoteButton({
       setOpen(false);
       if (onSaved) onSaved(res.quote || res);
       
-      // Display reference number and timestamp in success modal
+      // Display reference number and timestamp in toast notification
       const quote = res.quote || res;
       const refNumber = quote.reference_number || 'N/A';
       const timestamp = existingQuote ? 'updated' : 'created';
       const date = new Date(quote.updated_at || quote.created_at).toLocaleString();
       
-      setSuccessMessage({ refNumber, timestamp, date });
-      setShowSuccess(true);
+      showToast({
+        kind: 'success',
+        title: `Quote ${timestamp} successfully!`,
+        subtitle: `Reference: ${refNumber} • ${date}`,
+        timeout: 5000
+      });
+      
+      closeForm();
     } catch (e) {
       console.error('Save failed', e);
       setError(e.message || String(e));
@@ -336,9 +357,12 @@ export default function SaveQuoteButton({
         maxWidth="640px"
         footer={(
           <>
-            <button className="slds-button slds-button_neutral" onClick={closeForm} disabled={saving}>Cancel</button>
+            <button className="slds-button slds-button_neutral" onClick={closeForm} disabled={saving}>
+              Cancel {uiPrefs.showKeyboardHints && <KeyboardHint keys="Esc" />}
+            </button>
             <button className="slds-button slds-button_brand" onClick={handleSubmit} disabled={saving}>
               {saving ? 'Saving…' : (existingQuote ? 'Update' : 'Save')}
+              {uiPrefs.showKeyboardHints && <KeyboardHint keys="Ctrl+S" />}
             </button>
           </>
         )}
@@ -402,32 +426,6 @@ export default function SaveQuoteButton({
           </div>
 
         </form>
-      </ModalShell>
-
-      {/* Success Modal */}
-      <ModalShell
-        isOpen={showSuccess}
-        onClose={() => setShowSuccess(false)}
-        title="Quote saved successfully!"
-        maxWidth="500px"
-        footer={(
-          <button className="slds-button slds-button_brand" onClick={() => setShowSuccess(false)}>
-            OK
-          </button>
-        )}
-      >
-        <div className="padding-y-1">
-          <div className="margin-bottom-1">
-            <strong className="display-block margin-bottom-05 text-color-dark">Reference:</strong>
-            <span className="font-size-large text-color-primary">{successMessage.refNumber}</span>
-          </div>
-          <div>
-            <strong className="display-block margin-bottom-05 text-color-dark">
-              {successMessage.timestamp === 'created' ? 'Created:' : 'Updated:'}
-            </strong>
-            <span className="helper-text">{successMessage.date}</span>
-          </div>
-        </div>
       </ModalShell>
     </div>
   );

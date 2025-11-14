@@ -111,3 +111,15 @@ export const FUNDING_LINES_BRIDGE = [
   'Development Line',
   'Specialist Line'
 ];
+
+// UI Preferences - controls keyboard shortcuts and visual hints
+export const UI_PREFERENCES = {
+  // Enable keyboard shortcuts (Ctrl+S, Esc, etc.)
+  keyboardShortcutsEnabled: true,
+  // Show keyboard shortcut hints on buttons (e.g., "Ctrl+S" badges)
+  showKeyboardHints: true,
+};
+
+// Slider configuration moved to rate records in database
+// Each rate now defines its own min/max values for rolled months and deferred interest
+

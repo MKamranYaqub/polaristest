@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { InlineLoading } from '@carbon/react';
+import { useSaveShortcut, useEscapeKey } from '../hooks/useKeyboardShortcut';
+import { useUiPreferences } from '../hooks/useUiPreferences';
+import { useToast } from '../contexts/ToastContext';
 import ModalShell from './ModalShell';
 import NotificationModal from './NotificationModal';
+import HelpIcon from './HelpIcon';
 
 const DEFAULT_ASSUMPTIONS = [
   'The borrower has a clean credit history.',
@@ -20,12 +25,14 @@ export default function IssueQuoteModal({
   onSave,
   onCreatePDF,
 }) {
+  const { showToast } = useToast();
   const [selectedFeeRanges, setSelectedFeeRanges] = useState([]);
   const [assumptions, setAssumptions] = useState([...DEFAULT_ASSUMPTIONS]);
   const [borrowerName, setBorrowerName] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
+  const uiPrefs = useUiPreferences();
   
   // Field-level validation errors
   const [fieldErrors, setFieldErrors] = useState({});
@@ -69,6 +76,19 @@ export default function IssueQuoteModal({
       }
     }
   }, [isOpen, existingQuoteData]);
+  
+  // Keyboard shortcuts - only enabled if user preference allows
+  useSaveShortcut(() => {
+    if (isOpen && !isSaving) {
+      handleSave();
+    }
+  }, isOpen && uiPrefs.keyboardShortcutsEnabled);
+  
+  useEscapeKey(() => {
+    if (isOpen && !isSaving) {
+      onClose();
+    }
+  }, isOpen && uiPrefs.keyboardShortcutsEnabled);
 
   const handleFeeRangeToggle = (feeRange) => {
     setSelectedFeeRanges(prev => {
@@ -165,7 +185,12 @@ export default function IssueQuoteModal({
       };
 
       await onSave(quoteId, quoteData);
-      setNotification({ show: true, type: 'success', title: 'Success', message: 'Quote data saved successfully!' });
+      showToast({ 
+        kind: 'success', 
+        title: 'Quote data saved successfully!', 
+        subtitle: 'The quote information has been saved.' 
+      });
+      onClose(); // Close modal on success
     } catch (err) {
       console.error('Error saving quote data:', err);
       setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to save quote data: ' + (err.message || String(err)) });
@@ -194,7 +219,12 @@ export default function IssueQuoteModal({
       // Then generate PDF
       console.log('Generating Quote PDF...');
       await onCreatePDF(quoteId);
-      setNotification({ show: true, type: 'success', title: 'Success', message: 'Quote data saved and PDF created successfully!' });
+      showToast({ 
+        kind: 'success', 
+        title: 'Quote PDF Created Successfully!', 
+        subtitle: 'The quote data has been saved and the PDF document has been generated.' 
+      });
+      onClose(); // Close modal on success
     } catch (err) {
       console.error('Error creating quote PDF:', err);
       setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to create quote PDF: ' + (err.message || String(err)) });
@@ -210,18 +240,20 @@ export default function IssueQuoteModal({
         Cancel
       </button>
       <button
-        className="slds-button slds-button_neutral"
+        className="slds-button slds-button_neutral display-flex align-items-center flex-gap-05"
         onClick={handleSave}
         disabled={isSaving}
       >
-        {isSaving ? 'Saving...' : 'Save Quote Data'}
+        {isSaving && <InlineLoading description="Saving..." />}
+        {!isSaving && 'Save Quote Data'}
       </button>
       <button
-        className="slds-button slds-button_brand"
+        className="slds-button slds-button_brand display-flex align-items-center flex-gap-05"
         onClick={handleCreatePDF}
         disabled={isSaving}
       >
-        Create Quote PDF
+        {isSaving && <InlineLoading description="Creating..." />}
+        {!isSaving && 'Create Quote PDF'}
       </button>
     </>
   );
@@ -257,6 +289,7 @@ export default function IssueQuoteModal({
       <div className="slds-form-element margin-bottom-15">
         <label className="slds-form-element__label">
           <span className="text-color-error">*</span> Select Fee Ranges to Include in Quote
+          <HelpIcon content="Fee ranges determine the lender fees included in the quote. Select all applicable ranges. Multiple selections allow clients to compare options. Common ranges: 0-2%, 2-3%, 3%+." />
         </label>
         <div className="slds-form-element__control">
           {availableFeeRanges.length === 0 ? (
@@ -292,7 +325,10 @@ export default function IssueQuoteModal({
 
             {/* Assumptions */}
             <div className="slds-form-element margin-bottom-15">
-              <label className="slds-form-element__label">Assumptions</label>
+              <label className="slds-form-element__label">
+                Assumptions
+                <HelpIcon content="Standard assumptions about the borrower and property that will appear on the quote. These set expectations for eligibility. Common assumptions: clean credit history, UK residency, standard property type." />
+              </label>
               <div className="slds-form-element__control">
                 {assumptions.map((assumption, index) => (
                   <div key={index} className="display-flex flex-gap-05 margin-bottom-05">

@@ -2,16 +2,21 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import '../styles/slds.css';
 import '../styles/Calculator.scss';
 import SaveQuoteButton from './SaveQuoteButton';
 import IssueDIPModal from './IssueDIPModal';
 import IssueQuoteModal from './IssueQuoteModal';
 import CalculatorResultsPlaceholders from './CalculatorResultsPlaceholders';
-import NotificationModal from './NotificationModal';
+import SliderResultRow from './calculator/SliderResultRow';
+import EditableResultRow from './calculator/EditableResultRow';
 import QuoteReferenceHeader from './calculator/shared/QuoteReferenceHeader';
 import ClientDetailsSection from './calculator/shared/ClientDetailsSection';
+import Breadcrumbs from './Breadcrumbs';
 import useBrokerSettings from '../hooks/calculator/useBrokerSettings';
+import { useResultsVisibility } from '../hooks/useResultsVisibility';
+import { useResultsRowOrder } from '../hooks/useResultsRowOrder';
 import { getQuote, upsertQuoteData, requestDipPdf, requestQuotePdf } from '../utils/quotes';
 import { parseNumber, formatCurrency, formatPercent } from '../utils/calculator/numberFormatting';
 import { computeTierFromAnswers } from '../utils/calculator/rateFiltering';
@@ -28,6 +33,7 @@ import {
 export default function BTLcalculator({ initialQuote = null }) {
   const { supabase } = useSupabase();
   const { canEditCalculators, token } = useAuth();
+  const { showToast } = useToast();
   const location = useLocation();
   const navQuote = location && location.state ? location.state.loadQuote : null;
   const effectiveInitialQuote = initialQuote || navQuote;
@@ -38,6 +44,12 @@ export default function BTLcalculator({ initialQuote = null }) {
   
   // Use custom hook for broker settings
   const brokerSettings = useBrokerSettings(effectiveInitialQuote);
+  
+  // Use custom hook for results table visibility
+  const { isRowVisible } = useResultsVisibility('btl');
+  
+  // Use custom hook for results table row ordering
+  const { getOrderedRows } = useResultsRowOrder('btl');
   
   const [allCriteria, setAllCriteria] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -92,6 +104,14 @@ export default function BTLcalculator({ initialQuote = null }) {
   // Fees: removed inline fee UI; Top slicing input added instead
   const [relevantRates, setRelevantRates] = useState([]);
 
+  // Slider controls for results - per-column state
+  const [rolledMonthsPerColumn, setRolledMonthsPerColumn] = useState({});
+  const [deferredInterestPerColumn, setDeferredInterestPerColumn] = useState({});
+
+  // Editable rate and product fee overrides - per-column state
+  const [ratesOverrides, setRatesOverrides] = useState({});
+  const [productFeeOverrides, setProductFeeOverrides] = useState({});
+
   // DIP Modal state
   const [dipModalOpen, setDipModalOpen] = useState(false);
   const [dipData, setDipData] = useState({});
@@ -101,9 +121,6 @@ export default function BTLcalculator({ initialQuote = null }) {
   // Quote Modal state
   const [quoteModalOpen, setQuoteModalOpen] = useState(false);
   const [quoteData, setQuoteData] = useState({});
-  
-  // Notification state
-  const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
 
   useEffect(() => {
     async function loadAll() {
@@ -799,10 +816,10 @@ export default function BTLcalculator({ initialQuote = null }) {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      setNotification({ show: true, type: 'success', title: 'Success', message: 'DIP PDF generated successfully!' });
+      // Note: Success toast is shown by IssueDIPModal
     } catch (err) {
       console.error('Error creating PDF:', err);
-      setNotification({ show: true, type: 'error', title: 'Error', message: `Failed to create DIP PDF: ${err.message}` });
+      showToast({ kind: 'error', title: 'Failed to create DIP PDF', subtitle: err.message });
       throw err;
     }
   };
@@ -834,17 +851,16 @@ export default function BTLcalculator({ initialQuote = null }) {
   // === Issue Quote handlers ===
   const handleIssueQuote = async () => {
     if (!currentQuoteId) {
-      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please save your quote first before issuing a quote.' });
+      showToast({ kind: 'warning', title: 'Please save your quote first', subtitle: 'Click "Save Quote" before issuing a quote.' });
       return;
     }
     
     // Check if there are calculation results to issue
     if (!relevantRates || relevantRates.length === 0) {
-      setNotification({ 
-        show: true, 
-        type: 'warning', 
-        title: 'No Results', 
-        message: 'Please calculate rates first before issuing a quote. Make sure the results table shows data, then click "Save Quote" or "Update Quote" to save the calculations.' 
+      showToast({ 
+        kind: 'warning', 
+        title: 'No calculation results', 
+        subtitle: 'Please calculate rates first. Make sure the results table shows data, then click "Save Quote".' 
       });
       return;
     }
@@ -857,11 +873,10 @@ export default function BTLcalculator({ initialQuote = null }) {
         
         // Warn if the quote has no saved results in the database
         if (!response.quote.results || response.quote.results.length === 0) {
-          setNotification({
-            show: true,
-            type: 'warning',
-            title: 'Quote Not Fully Saved',
-            message: 'The quote exists but has no saved calculation results. Please click "Update Quote" to save your calculations before issuing the quote, otherwise the PDF will not include rate details.'
+          showToast({
+            kind: 'warning',
+            title: 'Quote not fully saved',
+            subtitle: 'Please click "Update Quote" to save your calculations before issuing the quote.'
           });
           return;
         }
@@ -905,9 +920,11 @@ export default function BTLcalculator({ initialQuote = null }) {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
+      // Note: Success toast is shown by IssueQuoteModal
       setQuoteModalOpen(false);
     } catch (error) {
       console.error('Error generating quote PDF:', error);
+      showToast({ kind: 'error', title: 'Failed to create Quote PDF', subtitle: error.message });
       throw error; // Re-throw so modal can handle the error
     }
   };
@@ -1064,6 +1081,13 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   return (
     <div className="calculator-container">
+      {/* Breadcrumbs */}
+      <Breadcrumbs items={[
+        { label: 'Home', path: '/' },
+        { label: 'Calculator', path: '/calculator/btl' },
+        { label: 'Buy to Let', path: '/calculator/btl' }
+      ]} />
+      
       {/* Quote Reference Badge */}
       <QuoteReferenceHeader reference={currentQuoteRef} />
       
@@ -1353,52 +1377,93 @@ export default function BTLcalculator({ initialQuote = null }) {
                                 <tr>
                                   {/* increased label column width */}
                                   <th style={{ width: '200px' }}>Label</th>
-                                  {feeBuckets.map((fb) => (
-                                    <th key={fb} style={{ width: `${(100 - 15) / feeBuckets.length}%`, textAlign: 'center' }}>
-                                      {fb === 'none' ? 'Fee: —' : `Fee: ${fb}%`}
-                                    </th>
-                                  ))}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr>
-                                  {/* Label column: show 'Rates' for the results row or the first label available */}
-                                  <td style={{ verticalAlign: 'top', fontWeight: 600 }}>Rates</td>
                                   {feeBuckets.map((fb) => {
                                     const rows = filteredRates.filter(r => {
                                       const key = (r.product_fee === undefined || r.product_fee === null || r.product_fee === '') ? 'none' : String(r.product_fee);
                                       return key === fb;
                                     });
+                                    const firstRow = rows[0];
+                                    const productLabel = firstRow ? firstRow.product : '';
+                                    const feeLabel = fb === 'none' ? '' : ` ${fb}% Fee`;
                                     return (
-                                      <td key={fb} style={{ verticalAlign: 'top', textAlign: 'center' }}>
-                                        {rows.length === 0 ? (
-                                          <div className="slds-text-body_small">—</div>
-                                        ) : rows.map(r => (
-                                          <div key={(r.id || r.product) + '::' + (r.rate || '')} className="slds-box slds-m-bottom_x-small">
-                                            <div style={{ fontWeight: 600 }}>{r.product}</div>
-                                            <div>{r.rate != null ? `${r.rate}%` : '—'}</div>
-                                            <div style={{ color: '#666', fontSize: '0.85rem' }}>{r.property || r.product_scope || '—'}</div>
-                                          </div>
-                                        ))}
-                                      </td>
+                                      <th key={fb} style={{ width: `${(100 - 15) / feeBuckets.length}%`, textAlign: 'center' }}>
+                                        {productLabel}{feeLabel}
+                                      </th>
                                     );
                                   })}
                                 </tr>
-                                {/* Render placeholders aligned with the same fee-bucket columns as additional table rows */}
+                              </thead>
+                              <tbody>
+                                {
+                                  (() => {
+                                    // First, calculate the column headers and original rates for all columns
+                                    const columnsHeaders = feeBuckets.map((fb) => (fb === 'none' ? 'Fee: —' : `Fee: ${fb}%`));
+                                    const originalRates = {};
+                                    const ratesDisplayValues = {};
+                                    
+                                    // Check if this is a tracker product
+                                    const isTracker = /tracker/i.test(productType || '');
+
+                                    feeBuckets.forEach((fb, idx) => {
+                                      const colKey = columnsHeaders[idx];
+                                      const rows = filteredRates.filter(r => {
+                                        const key = (r.product_fee === undefined || r.product_fee === null || r.product_fee === '') ? 'none' : String(r.product_fee);
+                                        return key === fb;
+                                      });
+                                      const best = (rows || []).filter(r => r.rate != null).sort((a,b) => Number(a.rate) - Number(b.rate))[0] || (rows || [])[0] || null;
+
+                                      if (best && best.rate != null) {
+                                        const originalRate = formatPercent(best.rate, 2) + (isTracker ? ' + BBR' : '');
+                                        originalRates[colKey] = originalRate;
+                                        ratesDisplayValues[colKey] = ratesOverrides[colKey] || originalRate;
+                                      }
+                                    });
+
+                                    return (
+                                      <>
+                                        {/* Rates row - now editable */}
+                                        <EditableResultRow
+                                          label="Rates"
+                                          columns={columnsHeaders}
+                                          columnValues={ratesDisplayValues}
+                                          originalValues={originalRates}
+                                          onValueChange={(newValue, columnKey) => {
+                                            setRatesOverrides(prev => ({ ...prev, [columnKey]: newValue }));
+                                          }}
+                                          onReset={(columnKey) => {
+                                            setRatesOverrides(prev => {
+                                              const updated = { ...prev };
+                                              delete updated[columnKey];
+                                              return updated;
+                                            });
+                                          }}
+                                          disabled={isReadOnly}
+                                          suffix={isTracker ? "% + BBR" : "%"}
+                                        />
+                                      </>
+                                    );
+                                  })()
+                                }
+                                {/* Render placeholders and sliders in proper order */}
                                 {
                                   (() => {
                                     const columnsHeaders = feeBuckets.map((fb) => (fb === 'none' ? 'Fee: —' : `Fee: ${fb}%`));
-                                    const placeholders = [
-                                      'APRC','Admin Fee','Broker Client Fee','Broker Comission (Proc Fee %)',
-                                      'Broker Comission (Proc Fee £)','Commitment Fee £','Deferred Interest %','Deferred Interest £',
-                                      'Direct Debit','ERC','Gross Loan','ICR','Initial Rate','LTV','Monthly Interest Cost',
-                                      'NBP','Net Loan','Net LTV','Pay Rate','Product Fee %','Product Fee £','Revert Rate',
-                                      'Revert Rate DD','Rolled Months','Rolled Months Interest','Serviced Interest',
-                                      'Total Cost to Borrower','Total Loan Term'
+                                    const allPlaceholders = [
+                                      'APRC','Admin Fee','Broker Client Fee','Broker Commission (Proc Fee %)',
+                                      'Broker Commission (Proc Fee £)','Deferred Interest %','Deferred Interest £',
+                                      'Direct Debit','ERC','Exit Fee','Gross Loan','ICR',
+                                      'LTV','Monthly Interest Cost','NBP','Net Loan','Net LTV','Pay Rate','Product Fee %',
+                                      'Product Fee £','Revert Rate','Revert Rate DD','Rolled Months','Rolled Months Interest',
+                                      'Serviced Interest','Title Insurance Cost','Total Cost to Borrower','Total Loan Term'
                                     ];
+                                    
+                                    // Filter placeholders based on visibility settings, then apply ordering
+                                    const visiblePlaceholders = allPlaceholders.filter(p => isRowVisible(p));
+                                    const orderedRows = getOrderedRows(visiblePlaceholders);
 
                                     const values = {};
-                                    placeholders.forEach(p => { values[p] = {}; });
+                                    const originalProductFees = {};
+                                    orderedRows.forEach(p => { values[p] = {}; });
 
                                     // compute per-column values
                                     feeBuckets.forEach((fb, idx) => {
@@ -1408,44 +1473,170 @@ export default function BTLcalculator({ initialQuote = null }) {
                                         return key === fb;
                                       });
                                       const best = (rows || []).filter(r => r.rate != null).sort((a,b) => Number(a.rate) - Number(b.rate))[0] || (rows || [])[0] || null;
+                                      
+                                      // Check if this is a tracker product
+                                      const isTracker = /tracker/i.test(productType || '');
 
-                                      // Initial Rate
-                                      if (best && best.rate != null) values['Initial Rate'][colKey] = formatPercent(best.rate, 2);
+                                      // Initial Rate (display only)
+                                      if (best && best.rate != null && values['Initial Rate']) {
+                                        values['Initial Rate'][colKey] = formatPercent(best.rate, 2) + (isTracker ? ' + BBR' : '');
+                                      }
 
-                                      // Product Fee %
+                                      // Pay Rate (display only, not editable)
+                                      if (best && best.rate != null && values['Pay Rate']) {
+                                        values['Pay Rate'][colKey] = formatPercent(best.rate, 2) + (isTracker ? ' + BBR' : '');
+                                      }
+
+                                      // Product Fee % - store original and apply override if exists
                                       const pfPercent = fb === 'none' ? NaN : Number(fb);
-                                      if (!Number.isNaN(pfPercent)) values['Product Fee %'][colKey] = `${pfPercent}%`;
+                                      if (!Number.isNaN(pfPercent) && values['Product Fee %']) {
+                                        const originalFee = `${pfPercent}%`;
+                                        originalProductFees[colKey] = originalFee;
+                                        values['Product Fee %'][colKey] = productFeeOverrides[colKey] || originalFee;
+                                      }
 
                                       // Gross Loan: use specificGrossLoan if provided, otherwise estimate from propertyValue and maxLtvInput
                                       const pv = parseNumber(propertyValue);
                                       const specificGross = parseNumber(specificGrossLoan);
                                       let gross = Number.isFinite(specificGross) ? specificGross : (Number.isFinite(pv) ? pv * (Number(maxLtvInput) / 100) : NaN);
-                                      if (Number.isFinite(gross)) values['Gross Loan'][colKey] = formatCurrency(gross);
+                                      if (Number.isFinite(gross) && values['Gross Loan']) values['Gross Loan'][colKey] = formatCurrency(gross);
 
                                       // Product Fee £ and Net Loan
                                       if (Number.isFinite(gross) && !Number.isNaN(pfPercent)) {
-                                        const pfAmount = gross * (pfPercent / 100);
-                                        values['Product Fee £'][colKey] = formatCurrency(pfAmount);
-                                        const net = gross - pfAmount;
-                                        values['Net Loan'][colKey] = formatCurrency(net);
-                                        if (Number.isFinite(pv)) values['LTV'][colKey] = `${(net / pv * 100).toFixed(2)}%`;
+                                        if (values['Product Fee £']) {
+                                          const pfAmount = gross * (pfPercent / 100);
+                                          values['Product Fee £'][colKey] = formatCurrency(pfAmount);
+                                          const net = gross - pfAmount;
+                                          if (values['Net Loan']) values['Net Loan'][colKey] = formatCurrency(net);
+                                          if (Number.isFinite(pv) && values['LTV']) values['LTV'][colKey] = `${(net / pv * 100).toFixed(2)}%`;
+                                        }
                                       }
 
                                       // Monthly Interest Cost (approximation)
-                                      if (best && best.rate != null && Number.isFinite(gross)) {
+                                      if (best && best.rate != null && Number.isFinite(gross) && values['Monthly Interest Cost']) {
                                         const monthly = gross * (Number(best.rate) / 100) / 12;
                                         values['Monthly Interest Cost'][colKey] = formatCurrency(monthly);
                                       }
                                     });
 
-                                    return (
-                                      <CalculatorResultsPlaceholders
-                                        renderAsRows={true}
-                                        labels={placeholders}
-                                        columns={columnsHeaders}
-                                        values={values}
-                                      />
-                                    );
+                                    // Extract min/max values from rates for sliders
+                                    const sliderLimits = {};
+                                    const rolledMonthsMinPerCol = {};
+                                    const rolledMonthsMaxPerCol = {};
+                                    const deferredInterestMinPerCol = {};
+                                    const deferredInterestMaxPerCol = {};
+                                    
+                                    feeBuckets.forEach((fb, idx) => {
+                                      const colKey = columnsHeaders[idx];
+                                      const rows = filteredRates.filter(r => {
+                                        const key = (r.product_fee === undefined || r.product_fee === null || r.product_fee === '') ? 'none' : String(r.product_fee);
+                                        return key === fb;
+                                      });
+                                      const best = (rows || []).filter(r => r.rate != null).sort((a,b) => Number(a.rate) - Number(b.rate))[0] || (rows || [])[0] || null;
+                                      
+                                      if (best) {
+                                        rolledMonthsMinPerCol[colKey] = best.min_rolled_months ?? 0;
+                                        rolledMonthsMaxPerCol[colKey] = best.max_rolled_months ?? 24;
+                                        deferredInterestMinPerCol[colKey] = best.min_defer_int ?? 0;
+                                        deferredInterestMaxPerCol[colKey] = best.max_defer_int ?? 100;
+                                      } else {
+                                        rolledMonthsMinPerCol[colKey] = 0;
+                                        rolledMonthsMaxPerCol[colKey] = 24;
+                                        deferredInterestMinPerCol[colKey] = 0;
+                                        deferredInterestMaxPerCol[colKey] = 100;
+                                      }
+                                    });
+
+                                    // Initialize per-column values if not set
+                                    const currentRolledMonthsPerCol = { ...rolledMonthsPerColumn };
+                                    const currentDeferredInterestPerCol = { ...deferredInterestPerColumn };
+                                    columnsHeaders.forEach(col => {
+                                      if (currentRolledMonthsPerCol[col] === undefined) {
+                                        currentRolledMonthsPerCol[col] = rolledMonthsMinPerCol[col] || 0;
+                                      }
+                                      if (currentDeferredInterestPerCol[col] === undefined) {
+                                        currentDeferredInterestPerCol[col] = deferredInterestMinPerCol[col] || 0;
+                                      }
+                                    });
+
+                                    // Render rows in order, using slider for specific fields
+                                    return orderedRows.map((rowLabel) => {
+                                      if (rowLabel === 'Rolled Months') {
+                                        return (
+                                          <SliderResultRow
+                                            key="Rolled Months"
+                                            label="Rolled Months"
+                                            value={0}
+                                            onChange={(newValue, columnKey) => {
+                                              setRolledMonthsPerColumn(prev => ({ ...prev, [columnKey]: newValue }));
+                                            }}
+                                            min={0}
+                                            max={24}
+                                            step={1}
+                                            suffix=" months"
+                                            disabled={isReadOnly}
+                                            columns={columnsHeaders}
+                                            columnValues={currentRolledMonthsPerCol}
+                                            columnMinValues={rolledMonthsMinPerCol}
+                                            columnMaxValues={rolledMonthsMaxPerCol}
+                                          />
+                                        );
+                                      } else if (rowLabel === 'Deferred Interest %') {
+                                        return (
+                                          <SliderResultRow
+                                            key="Deferred Interest %"
+                                            label="Deferred Interest %"
+                                            value={0}
+                                            onChange={(newValue, columnKey) => {
+                                              setDeferredInterestPerColumn(prev => ({ ...prev, [columnKey]: newValue }));
+                                            }}
+                                            min={0}
+                                            max={100}
+                                            step={0.01}
+                                            suffix="%"
+                                            disabled={isReadOnly}
+                                            columns={columnsHeaders}
+                                            columnValues={currentDeferredInterestPerCol}
+                                            columnMinValues={deferredInterestMinPerCol}
+                                            columnMaxValues={deferredInterestMaxPerCol}
+                                          />
+                                        );
+                                      } else if (rowLabel === 'Product Fee %') {
+                                        return (
+                                          <EditableResultRow
+                                            key="Product Fee %"
+                                            label="Product Fee %"
+                                            columns={columnsHeaders}
+                                            columnValues={values['Product Fee %'] || {}}
+                                            originalValues={originalProductFees}
+                                            onValueChange={(newValue, columnKey) => {
+                                              setProductFeeOverrides(prev => ({ ...prev, [columnKey]: newValue }));
+                                            }}
+                                            onReset={(columnKey) => {
+                                              setProductFeeOverrides(prev => {
+                                                const updated = { ...prev };
+                                                delete updated[columnKey];
+                                                return updated;
+                                              });
+                                            }}
+                                            disabled={isReadOnly}
+                                            suffix="%"
+                                          />
+                                        );
+                                      } else {
+                                        // Regular placeholder row
+                                        return (
+                                          <tr key={rowLabel}>
+                                            <td className="vertical-align-top font-weight-600">{rowLabel}</td>
+                                            {columnsHeaders.map((c) => (
+                                              <td key={c} className="vertical-align-top text-align-center">
+                                                {(values && values[rowLabel] && Object.prototype.hasOwnProperty.call(values[rowLabel], c)) ? values[rowLabel][c] : '—'}
+                                              </td>
+                                            ))}
+                                          </tr>
+                                        );
+                                      }
+                                    });
                                   })()
                                 }
                               </tbody>
@@ -1489,15 +1680,6 @@ export default function BTLcalculator({ initialQuote = null }) {
         existingQuoteData={quoteData}
         onSave={handleSaveQuoteData}
         onCreatePDF={handleCreateQuotePDF}
-      />
-      
-      {/* Notification Modal */}
-      <NotificationModal
-        isOpen={notification.show}
-        onClose={() => setNotification({ ...notification, show: false })}
-        type={notification.type}
-        title={notification.title}
-        message={notification.message}
       />
 
     </div>

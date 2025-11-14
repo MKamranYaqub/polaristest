@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { InlineLoading } from '@carbon/react';
+import { useSaveShortcut, useEscapeKey } from '../hooks/useKeyboardShortcut';
+import { useUiPreferences } from '../hooks/useUiPreferences';
+import { useToast } from '../contexts/ToastContext';
 import ModalShell from './ModalShell';
 import NotificationModal from './NotificationModal';
+import HelpIcon from './HelpIcon';
 import { FUNDING_LINES_BTL, FUNDING_LINES_BRIDGE, LOCALSTORAGE_CONSTANTS_KEY } from '../config/constants';
 
 export default function IssueDIPModal({ 
@@ -16,6 +21,8 @@ export default function IssueDIPModal({
   onCreatePDF,
   onFeeTypeSelected // Callback when fee type is selected to filter rates
 }) {
+  const { showToast } = useToast();
+  
   // Calculate default dates
   const getDefaultDates = () => {
     const today = new Date();
@@ -50,6 +57,7 @@ export default function IssueDIPModal({
   );
 
   const [saving, setSaving] = useState(false);
+  const uiPrefs = useUiPreferences();
   
   // Notification state
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
@@ -96,6 +104,19 @@ export default function IssueDIPModal({
       }));
     }
   }, [formData.dip_date]);
+  
+  // Keyboard shortcuts - only enabled if user preference allows
+  useSaveShortcut(() => {
+    if (isOpen && !saving) {
+      handleSaveData();
+    }
+  }, isOpen && uiPrefs.keyboardShortcutsEnabled);
+  
+  useEscapeKey(() => {
+    if (isOpen && !saving) {
+      onClose();
+    }
+  }, isOpen && uiPrefs.keyboardShortcutsEnabled);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -314,7 +335,12 @@ export default function IssueDIPModal({
       };
 
       await onSave(quoteId, dipData);
-      setNotification({ show: true, type: 'success', title: 'Success', message: 'DIP data saved successfully!' });
+      showToast({ 
+        kind: 'success', 
+        title: 'DIP data saved successfully!', 
+        subtitle: 'The DIP information has been saved to the quote.' 
+      });
+      onClose(); // Close modal on success
     } catch (err) {
       console.error('Error saving DIP data:', err);
       setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to save DIP data: ' + (err.message || 'Unknown error') });
@@ -343,7 +369,12 @@ export default function IssueDIPModal({
       // Then generate PDF
       await onCreatePDF(quoteId);
       
-      setNotification({ show: true, type: 'success', title: 'Success', message: 'DIP data saved and PDF created successfully!' });
+      showToast({ 
+        kind: 'success', 
+        title: 'DIP PDF Created Successfully!', 
+        subtitle: 'The DIP data has been saved and the PDF document has been generated.' 
+      });
+      onClose(); // Close modal on success
     } catch (err) {
       console.error('Error creating DIP PDF:', err);
       setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to create DIP PDF: ' + (err.message || 'Unknown error') });
@@ -359,18 +390,20 @@ export default function IssueDIPModal({
         Cancel
       </button>
       <button
-        className="slds-button slds-button_neutral"
+        className="slds-button slds-button_neutral display-flex align-items-center flex-gap-05"
         onClick={handleSaveData}
         disabled={saving}
       >
-        {saving ? 'Saving...' : 'Save Data'}
+        {saving && <InlineLoading description="Saving..." />}
+        {!saving && 'Save Data'}
       </button>
       <button
-        className="slds-button slds-button_brand"
+        className="slds-button slds-button_brand display-flex align-items-center flex-gap-05"
         onClick={handleCreatePDF}
         disabled={saving}
       >
-        {saving ? 'Creating...' : 'Create PDF'}
+        {saving && <InlineLoading description="Creating..." />}
+        {!saving && 'Create PDF'}
       </button>
     </>
   );
@@ -443,6 +476,7 @@ export default function IssueDIPModal({
       <div className="slds-form-element margin-bottom-1">
         <label className="slds-form-element__label">
           <abbr className="slds-required" title="required">*</abbr> Funding Line
+          <HelpIcon content="The funding line determines the lender's capital allocation for this loan. Select the appropriate funding line based on the loan type and lender requirements." />
         </label>
         <div className="slds-form-element__control">
           <select
@@ -594,6 +628,7 @@ export default function IssueDIPModal({
         <div className="slds-form-element">
           <label className="slds-form-element__label">
             <abbr className="slds-required" title="required">*</abbr> Lender Legal Fee (£)
+            <HelpIcon content="Legal fees charged by the lender for processing the loan. This is typically a fixed amount or percentage of the loan value. Common ranges: £500-£2000." />
           </label>
           <div className="slds-form-element__control">
             <input 
@@ -650,6 +685,7 @@ export default function IssueDIPModal({
         <div className="slds-form-element">
           <label className="slds-form-element__label">
             <abbr className="slds-required" title="required">*</abbr> Overpayments %
+            <HelpIcon content="The percentage of the loan amount that can be repaid early without penalty. Typical values range from 10% to 20% per year. Default is 10%." />
           </label>
           <div className="slds-form-element__control">
             <input 

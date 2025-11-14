@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Loading } from '@carbon/react';
 import { listQuotes, getQuote, deleteQuote } from '../utils/quotes';
 import { API_BASE_URL } from '../config/api';
 import NotificationModal from './NotificationModal';
+import ConfirmationModal from './ConfirmationModal';
+import Breadcrumbs from './Breadcrumbs';
 
 export default function QuotesList({ calculatorType = null, onLoad = null }) {
   const [quotes, setQuotes] = useState([]);
@@ -23,6 +26,13 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
   
   // Notification state
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
+  
+  // Confirmation modal state
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, quoteId: null });
+  
+  // Sorting state
+  const [sortField, setSortField] = useState('created_at');
+  const [sortDirection, setSortDirection] = useState('desc'); // 'asc' or 'desc'
 
   const fetch = async () => {
     setLoading(true);
@@ -68,12 +78,27 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this quote?')) return;
+    setDeleteConfirm({ show: true, quoteId: id });
+  };
+  
+  const confirmDelete = async () => {
+    const id = deleteConfirm.quoteId;
     try {
       await deleteQuote(id);
       setQuotes(prev => prev.filter(q => q.id !== id));
     } catch (e) {
       setNotification({ show: true, type: 'error', title: 'Error', message: 'Delete failed: ' + e.message });
+    }
+  };
+  
+  const handleSort = (field) => {
+    if (sortField === field) {
+      // Toggle direction if same field
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New field, default to descending
+      setSortField(field);
+      setSortDirection('desc');
     }
   };
 
@@ -228,12 +253,38 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
 
     return true;
   });
+  
+  // Apply sorting
+  const sortedQuotes = [...filteredQuotes].sort((a, b) => {
+    let aVal = a[sortField];
+    let bVal = b[sortField];
+    
+    // Handle null/undefined values
+    if (aVal === null || aVal === undefined) aVal = '';
+    if (bVal === null || bVal === undefined) bVal = '';
+    
+    // Convert dates to timestamps for comparison
+    if (sortField === 'created_at' || sortField === 'updated_at') {
+      aVal = new Date(aVal).getTime();
+      bVal = new Date(bVal).getTime();
+    }
+    
+    // String comparison (case-insensitive)
+    if (typeof aVal === 'string' && typeof bVal === 'string') {
+      aVal = aVal.toLowerCase();
+      bVal = bVal.toLowerCase();
+    }
+    
+    if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
 
-  // Apply pagination to filtered results
-  const totalFilteredPages = Math.ceil(filteredQuotes.length / rowsPerPage);
+  // Apply pagination to sorted results
+  const totalFilteredPages = Math.ceil(sortedQuotes.length / rowsPerPage);
   const filteredStartIndex = (currentPage - 1) * rowsPerPage;
   const filteredEndIndex = filteredStartIndex + rowsPerPage;
-  const paginatedQuotes = filteredQuotes.slice(filteredStartIndex, filteredEndIndex);
+  const paginatedQuotes = sortedQuotes.slice(filteredStartIndex, filteredEndIndex);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -242,6 +293,12 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
 
   return (
     <div>
+      {/* Breadcrumbs */}
+      <Breadcrumbs items={[
+        { label: 'Home', path: '/' },
+        { label: 'Quotes', path: '/quotes' }
+      ]} />
+      
       <div className="display-flex justify-content-space-between align-items-center margin-bottom-1">
         <h2>Quotes {calculatorType ? `(${calculatorType})` : ''}</h2>
         <button 
@@ -264,7 +321,11 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
           )}
         </button>
       </div>
-      {loading && <div>Loading…</div>}
+      {loading && (
+        <div className="display-flex justify-content-center align-items-center margin-vertical-2">
+          <Loading description="Loading quotes" withOverlay={false} />
+        </div>
+      )}
       {error && <div className="slds-text-color_error">{error}</div>}
       
       {/* Filters Section */}
@@ -370,31 +431,142 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
       </div>
 
       <div className="quotes-showing-count helper-text margin-bottom-05">
-        Showing {paginatedQuotes.length} of {filteredQuotes.length} quotes
+        Showing {paginatedQuotes.length} of {sortedQuotes.length} quotes
       </div>
       
       <div className="overflow-auto position-relative">
         <table className="slds-table slds-table_cell-buffer slds-table_bordered width-100">
           <thead>
             <tr>
-              <th>Ref #</th>
-              <th>Quote Name</th>
-              <th>Type</th>
-              <th>Borrower Type</th>
+              <th>
+                <button 
+                  className="slds-th__action" 
+                  onClick={() => handleSort('reference_number')}
+                  title="Sort by Reference Number"
+                >
+                  <span className="slds-th__action-text">Ref #</span>
+                  {sortField === 'reference_number' && (
+                    <span className="slds-th__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </button>
+              </th>
+              <th>
+                <button 
+                  className="slds-th__action" 
+                  onClick={() => handleSort('name')}
+                  title="Sort by Quote Name"
+                >
+                  <span className="slds-th__action-text">Quote Name</span>
+                  {sortField === 'name' && (
+                    <span className="slds-th__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </button>
+              </th>
+              <th>
+                <button 
+                  className="slds-th__action" 
+                  onClick={() => handleSort('calculator_type')}
+                  title="Sort by Type"
+                >
+                  <span className="slds-th__action-text">Type</span>
+                  {sortField === 'calculator_type' && (
+                    <span className="slds-th__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </button>
+              </th>
+              <th>Status</th>
+              <th>
+                <button 
+                  className="slds-th__action" 
+                  onClick={() => handleSort('borrower_type')}
+                  title="Sort by Borrower Type"
+                >
+                  <span className="slds-th__action-text">Borrower Type</span>
+                  {sortField === 'borrower_type' && (
+                    <span className="slds-th__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </button>
+              </th>
               <th>Borrower/Company</th>
               <th>Created By</th>
-              <th>Created</th>
+              <th>
+                <button 
+                  className="slds-th__action" 
+                  onClick={() => handleSort('created_at')}
+                  title="Sort by Created Date"
+                >
+                  <span className="slds-th__action-text">Created</span>
+                  {sortField === 'created_at' && (
+                    <span className="slds-th__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </button>
+              </th>
               <th>Updated By</th>
-              <th>Updated</th>
+              <th>
+                <button 
+                  className="slds-th__action" 
+                  onClick={() => handleSort('updated_at')}
+                  title="Sort by Updated Date"
+                >
+                  <span className="slds-th__action-text">Updated</span>
+                  {sortField === 'updated_at' && (
+                    <span className="slds-th__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </button>
+              </th>
               <th className="sticky-table-header">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {paginatedQuotes.map(q => (
+            {paginatedQuotes.length === 0 ? (
+              <tr>
+                <td colSpan="11">
+                  <div className="quotes-empty-state">
+                    <div className="quotes-empty-state__icon">📋</div>
+                    <div className="quotes-empty-state__title">
+                      {sortedQuotes.length === 0 && quotes.length === 0 
+                        ? 'No quotes yet' 
+                        : 'No quotes match your filters'}
+                    </div>
+                    <div className="quotes-empty-state__message">
+                      {sortedQuotes.length === 0 && quotes.length === 0 
+                        ? 'Create your first quote using the calculator to get started.'
+                        : 'Try adjusting your filters to see more results.'}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              paginatedQuotes.map(q => {
+              // Determine status badge
+              const dipStatus = q.dip_status || 'Not Issued';
+              const quoteStatus = q.quote_status || 'Not Issued';
+              
+              // Choose the most relevant status to display
+              let statusText = 'Draft';
+              let statusClass = 'slds-badge_default';
+              
+              if (quoteStatus === 'Issued') {
+                statusText = 'Quote Issued';
+                statusClass = 'slds-theme_success';
+              } else if (dipStatus === 'Issued') {
+                statusText = 'DIP Issued';
+                statusClass = 'slds-theme_info';
+              } else if (dipStatus === 'Expired') {
+                statusText = 'DIP Expired';
+                statusClass = 'slds-theme_warning';
+              }
+
+              return (
               <tr key={q.id}>
                 <td><strong>{q.reference_number || 'N/A'}</strong></td>
                 <td>{q.name}</td>
                 <td>{q.calculator_type}</td>
+                <td>
+                  <span className={`slds-badge ${statusClass}`}>
+                    {statusText}
+                  </span>
+                </td>
                 <td>{q.borrower_type || '—'}</td>
                 <td>{q.borrower_type === 'Company' ? q.company_name : q.borrower_name || '—'}</td>
                 <td>
@@ -414,7 +586,9 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                   <button className="slds-button slds-button_destructive margin-left-8" onClick={() => handleDelete(q.id)}>Delete</button>
                 </td>
               </tr>
-            ))}
+              );
+            })
+            )}
           </tbody>
         </table>
       </div>
@@ -446,6 +620,17 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         type={notification.type}
         title={notification.title}
         message={notification.message}
+      />
+      
+      <ConfirmationModal
+        isOpen={deleteConfirm.show}
+        onClose={() => setDeleteConfirm({ show: false, quoteId: null })}
+        onConfirm={confirmDelete}
+        title="Delete Quote"
+        message="Are you sure you want to delete this quote? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        confirmButtonClass="slds-button_destructive"
       />
     </div>
   );

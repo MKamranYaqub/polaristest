@@ -2,19 +2,24 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import '../styles/Calculator.scss';
 import SaveQuoteButton from './SaveQuoteButton';
 import IssueDIPModal from './IssueDIPModal';
 import IssueQuoteModal from './IssueQuoteModal';
 import CalculatorResultsPlaceholders from './CalculatorResultsPlaceholders';
-import NotificationModal from './NotificationModal';
+import SliderResultRow from './calculator/SliderResultRow';
+import EditableResultRow from './calculator/EditableResultRow';
 import CollapsibleSection from './calculator/CollapsibleSection';
 import QuoteReferenceHeader from './calculator/shared/QuoteReferenceHeader';
 import ClientDetailsSection from './calculator/shared/ClientDetailsSection';
+import Breadcrumbs from './Breadcrumbs';
 import CriteriaSection from './calculator/bridging/CriteriaSection';
 import LoanDetailsSection from './calculator/bridging/LoanDetailsSection';
 import MultiPropertyDetailsSection from './calculator/bridging/MultiPropertyDetailsSection';
 import useBrokerSettings from '../hooks/calculator/useBrokerSettings';
+import { useResultsVisibility } from '../hooks/useResultsVisibility';
+import { useResultsRowOrder } from '../hooks/useResultsRowOrder';
 import { getQuote, upsertQuoteData, requestDipPdf, requestQuotePdf } from '../utils/quotes';
 import { parseNumber, formatCurrencyInput } from '../utils/calculator/numberFormatting';
 import { computeLoanLtv, computeLoanSize } from '../utils/calculator/loanCalculations';
@@ -24,6 +29,7 @@ import { LOCALSTORAGE_CONSTANTS_KEY } from '../config/constants';
 export default function BridgingCalculator({ initialQuote = null }) {
   const { supabase } = useSupabase();
   const { canEditCalculators, token } = useAuth();
+  const { showToast } = useToast();
   const location = useLocation();
   const navQuote = location && location.state ? location.state.loadQuote : null;
   const effectiveInitialQuote = initialQuote || navQuote;
@@ -32,6 +38,12 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   // Use custom hook for broker settings
   const brokerSettings = useBrokerSettings(effectiveInitialQuote);
+  
+  // Use custom hook for results table visibility
+  const { isRowVisible } = useResultsVisibility('bridge');
+  
+  // Use custom hook for results table row ordering
+  const { getOrderedRows } = useResultsRowOrder('bridge');
 
   const [allCriteria, setAllCriteria] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +75,14 @@ export default function BridgingCalculator({ initialQuote = null }) {
   const [subProductOptions, setSubProductOptions] = useState([]);
   const [subProductLimits, setSubProductLimits] = useState({});
   const [chargeType, setChargeType] = useState('All');
+
+  // Slider controls for results - per-column state
+  const [rolledMonthsPerColumn, setRolledMonthsPerColumn] = useState({});
+  const [deferredInterestPerColumn, setDeferredInterestPerColumn] = useState({});
+
+  // Editable rate and product fee overrides - per-column state
+  const [ratesOverrides, setRatesOverrides] = useState({});
+  const [productFeeOverrides, setProductFeeOverrides] = useState({});
 
   const [dipModalOpen, setDipModalOpen] = useState(false);
   const [currentQuoteId, setCurrentQuoteId] = useState(null);
@@ -207,9 +227,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
   }, [rates]);
 
   
-  // Notification state
-  const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
-
   useEffect(() => {
     let mounted = true;
     async function load() {
@@ -852,8 +869,11 @@ export default function BridgingCalculator({ initialQuote = null }) {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      // Note: Success toast is shown by IssueDIPModal
     } catch (err) {
       console.error('Error creating PDF:', err);
+      showToast({ kind: 'error', title: 'Failed to create DIP PDF', subtitle: err.message });
       throw err;
     }
   };
@@ -886,17 +906,16 @@ export default function BridgingCalculator({ initialQuote = null }) {
   // === Issue Quote handlers ===
   const handleIssueQuote = async () => {
     if (!currentQuoteId) {
-      setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Please save your quote first before issuing a quote.' });
+      showToast({ kind: 'warning', title: 'Please save your quote first', subtitle: 'Click "Save Quote" before issuing a quote.' });
       return;
     }
     
     // Check if there are calculation results to issue
     if (!relevantRates || relevantRates.length === 0) {
-      setNotification({ 
-        show: true, 
-        type: 'warning', 
-        title: 'No Results', 
-        message: 'Please calculate rates first before issuing a quote. Make sure the results table shows data, then click "Save Quote" or "Update Quote" to save the calculations.' 
+      showToast({ 
+        kind: 'warning', 
+        title: 'No calculation results', 
+        subtitle: 'Please calculate rates first. Make sure the results table shows data, then click "Save Quote".' 
       });
       return;
     }
@@ -909,11 +928,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
         
         // Warn if the quote has no saved results in the database
         if (!response.quote.results || response.quote.results.length === 0) {
-          setNotification({
-            show: true,
-            type: 'warning',
-            title: 'Quote Not Fully Saved',
-            message: 'The quote exists but has no saved calculation results. Please click "Update Quote" to save your calculations before issuing the quote, otherwise the PDF will not include rate details.'
+          showToast({
+            kind: 'warning',
+            title: 'Quote not fully saved',
+            subtitle: 'Please click "Update Quote" to save your calculations before issuing the quote.'
           });
           return;
         }
@@ -935,10 +953,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
         token,
       });
 
-      setNotification({ show: true, type: 'success', title: 'Success', message: 'Quote data saved successfully!' });
+      // Note: Success toast is shown by IssueQuoteModal
     } catch (err) {
       console.error('Error saving quote data:', err);
-      setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to save quote data: ' + err.message });
+      showToast({ kind: 'error', title: 'Failed to save quote data', subtitle: err.message });
       throw err;
     }
   };
@@ -957,9 +975,11 @@ export default function BridgingCalculator({ initialQuote = null }) {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      // Note: Success toast is shown by IssueQuoteModal
     } catch (err) {
       console.error('Error creating Quote PDF:', err);
-      setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to create Quote PDF: ' + err.message });
+      showToast({ kind: 'error', title: 'Failed to create Quote PDF', subtitle: err.message });
       throw err;
     }
   };
@@ -981,6 +1001,13 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   return (
     <div className="calculator-container">
+      {/* Breadcrumbs */}
+      <Breadcrumbs items={[
+        { label: 'Home', path: '/' },
+        { label: 'Calculator', path: '/calculator/btl' },
+        { label: 'Bridging', path: '/calculator/bridging' }
+      ]} />
+      
       {/* Quote Reference Badge */}
       <QuoteReferenceHeader reference={currentQuoteRef} />
 
@@ -1180,9 +1207,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
                 <tr>
                   {/* increase label width a bit and adjust other columns */}
                   <th className="width-24">Label</th>
-                  <th className="width-25 text-align-center">Fusion</th>
-                  <th className="width-25 text-align-center">Variable Bridge</th>
-                  <th className="width-26 text-align-center">Fixed Bridge</th>
+                  <th className="width-25 text-align-center">{bestBridgeRates.fusion?.label || 'Fusion'}</th>
+                  <th className="width-25 text-align-center">{bestBridgeRates.variable?.label || 'Variable Bridge'}</th>
+                  <th className="width-26 text-align-center">{bestBridgeRates.fixed?.label || 'Fixed Bridge'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1200,90 +1227,220 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
                     return (
                       <>
-                        <tr>
-                          <td>
-                            <div className="font-weight-600">{(bestFusion && bestFusion.label) || (bestVariable && bestVariable.label) || (bestFixed && bestFixed.label) || 'Rates'}</div>
-                          </td>
-                          <td className="text-align-center">
-                            {bestFusion ? (
-                              <div className="slds-box slds-m-vertical_x-small">
-                                <div>{bestFusion.rate != null ? `${bestFusion.rate}%` : '—'}</div>
-                                <div className="helper-text">Loan: {bestFusion.min_loan ? `£${Number(bestFusion.min_loan).toLocaleString()}` : '—'} – {bestFusion.max_loan ? `£${Number(bestFusion.max_loan).toLocaleString()}` : '—'}</div>
-                              </div>
-                            ) : <div className="slds-text-body_small">—</div>}
-                          </td>
-                          <td className="text-align-center">
-                            {bestVariable ? (
-                              <div className="slds-box slds-m-vertical_x-small">
-                                <div>{bestVariable.rate != null ? `${bestVariable.rate}%` : '—'}</div>
-                                <div className="helper-text">LTV: {bestVariable.min_ltv ?? '—'}% – {bestVariable.max_ltv ?? '—'}%</div>
-                              </div>
-                            ) : <div className="slds-text-body_small">—</div>}
-                          </td>
-                          <td className="text-align-center">
-                            {bestFixed ? (
-                              <div className="slds-box slds-m-vertical_x-small">
-                                <div>{bestFixed.rate != null ? `${bestFixed.rate}%` : '—'}</div>
-                                <div className="helper-text">LTV: {bestFixed.min_ltv ?? '—'}% – {bestFixed.max_ltv ?? '—'}%</div>
-                              </div>
-                            ) : <div className="slds-text-body_small">—</div>}
-                          </td>
-                        </tr>
+                        {
+                          (() => {
+                            // Calculate rates for all columns first
+                            const columnsHeaders = [ 'Fusion', 'Variable Bridge', 'Fixed Bridge' ];
+                            const colBest = [bestFusion, bestVariable, bestFixed];
+                            const originalRates = {};
+                            const ratesDisplayValues = {};
+
+                            columnsHeaders.forEach((col, idx) => {
+                              const best = colBest[idx];
+                              if (best && best.rate != null) {
+                                // Add " + BBR" for Fusion and Variable Bridge
+                                const needsBBR = col === 'Fusion' || col === 'Variable Bridge';
+                                const originalRate = `${Number(best.rate).toFixed(2)}%` + (needsBBR ? ' + BBR' : '');
+                                originalRates[col] = originalRate;
+                                ratesDisplayValues[col] = ratesOverrides[col] || originalRate;
+                              }
+                            });
+
+                            return (
+                              <EditableResultRow
+                                label="Rates"
+                                columns={columnsHeaders}
+                                columnValues={ratesDisplayValues}
+                                originalValues={originalRates}
+                                onValueChange={(newValue, columnKey) => {
+                                  setRatesOverrides(prev => ({ ...prev, [columnKey]: newValue }));
+                                }}
+                                onReset={(columnKey) => {
+                                  setRatesOverrides(prev => {
+                                    const updated = { ...prev };
+                                    delete updated[columnKey];
+                                    return updated;
+                                  });
+                                }}
+                                disabled={isReadOnly}
+                                suffix="%"
+                              />
+                            );
+                          })()
+                        }
 
                         {
                           (() => {
                             const columnsHeaders = [ 'Fusion', 'Variable Bridge', 'Fixed Bridge' ];
-                            const placeholders = [
+                            const allPlaceholders = [
                               'APRC', 'Admin Fee', 'Broker Client Fee', 'Broker Comission (Proc Fee %)',
                               'Broker Comission (Proc Fee £)', 'Commitment Fee £', 'Deferred Interest %', 'Deferred Interest £',
                               'Direct Debit', 'ERC', 'ERC (Fusion Only)', 'Exit Fee', 'Gross Loan', 'ICR', 'LTV', 'Monthly Interest Cost',
                               'NBP', 'Net Loan', 'Net LTV', 'Pay Rate', 'Product Fee %', 'Product Fee £', 'Revert Rate', 'Revert Rate DD',
-                              'Rolled Months', 'Rolled Months Interest', 'Serviced Interest', 'Total Cost to Borrower', 'Total Loan Term'
+                              'Rolled Months', 'Rolled Months Interest', 'Serviced Interest', 'Title Insurance Cost', 'Total Cost to Borrower', 'Total Loan Term'
                             ];
+                            
+                            // Filter placeholders based on visibility settings, then apply ordering
+                            const visiblePlaceholders = allPlaceholders.filter(p => isRowVisible(p));
+                            const orderedRows = getOrderedRows(visiblePlaceholders);
 
                             const values = {};
-                            placeholders.forEach(p => { values[p] = {}; });
+                            const originalProductFees = {};
+                            orderedRows.forEach(p => { values[p] = {}; });
 
                             const colBest = [bestFusion, bestVariable, bestFixed];
                             const pv = parseNumber(propertyValue);
                             const grossInput = parseNumber(grossLoan);
                             const specificNet = parseNumber(specificNetLoan);
 
-                            columnsHeaders.forEach((col, idx) => {
+                              columnsHeaders.forEach((col, idx) => {
                               const best = colBest[idx];
+                              
+                              // Check if this column needs " + BBR" suffix (Fusion or Variable Bridge)
+                              const needsBBR = col === 'Fusion' || col === 'Variable Bridge';
+                              
+                              // Product Fee % - store original and apply override
                               const pf = best && (best.product_fee !== undefined ? Number(best.product_fee) : NaN);
-                              if (pf && !Number.isNaN(pf)) values['Product Fee %'][col] = `${pf}%`;
+                              if (pf && !Number.isNaN(pf) && values['Product Fee %']) {
+                                const originalFee = `${pf}%`;
+                                originalProductFees[col] = originalFee;
+                                values['Product Fee %'][col] = productFeeOverrides[col] || originalFee;
+                              }
 
-                              if (Number.isFinite(grossInput)) values['Gross Loan'][col] = `£${Number(grossInput).toLocaleString('en-GB')}`;
+                              if (Number.isFinite(grossInput) && values['Gross Loan']) values['Gross Loan'][col] = `£${Number(grossInput).toLocaleString('en-GB')}`;
 
                               if (Number.isFinite(grossInput) && pf && !Number.isNaN(pf)) {
                                 const pfAmount = grossInput * (pf / 100);
-                                values['Product Fee £'][col] = `£${Number(pfAmount).toLocaleString('en-GB')}`;
+                                if (values['Product Fee £']) values['Product Fee £'][col] = `£${Number(pfAmount).toLocaleString('en-GB')}`;
                                 const net = (Number.isFinite(specificNet) ? specificNet : grossInput - pfAmount);
-                                if (Number.isFinite(net)) values['Net Loan'][col] = `£${Number(net).toLocaleString('en-GB')}`;
-                                if (Number.isFinite(pv)) values['LTV'][col] = `${((net / pv) * 100).toFixed(2)}%`;
+                                if (Number.isFinite(net) && values['Net Loan']) values['Net Loan'][col] = `£${Number(net).toLocaleString('en-GB')}`;
+                                if (Number.isFinite(pv) && values['LTV']) values['LTV'][col] = `${((net / pv) * 100).toFixed(2)}%`;
                               }
 
-                              if (best && best.pay_rate != null) {
-                                values['Pay Rate'][col] = `${Number(best.pay_rate).toFixed(2)}%`;
-                              } else if (best && best.rate != null) {
-                                values['Pay Rate'][col] = `${Number(best.rate).toFixed(2)}%`;
+                              // Pay Rate - display only (not editable)
+                              if (best && best.pay_rate != null && values['Pay Rate']) {
+                                values['Pay Rate'][col] = `${Number(best.pay_rate).toFixed(2)}%` + (needsBBR ? ' + BBR' : '');
+                              } else if (best && best.rate != null && values['Pay Rate']) {
+                                values['Pay Rate'][col] = `${Number(best.rate).toFixed(2)}%` + (needsBBR ? ' + BBR' : '');
                               }
 
-                              if (best && best.rate != null && Number.isFinite(grossInput)) {
+                              if (best && best.rate != null && Number.isFinite(grossInput) && values['Monthly Interest Cost']) {
                                 const monthly = grossInput * (Number(best.rate) / 100) / 12;
                                 values['Monthly Interest Cost'][col] = `£${Number(monthly).toLocaleString('en-GB')}`;
                               }
                             });
 
-                            return (
-                              <CalculatorResultsPlaceholders
-                                renderAsRows={true}
-                                labels={placeholders}
-                                columns={columnsHeaders}
-                                values={values}
-                              />
-                            );
+                            // Extract min/max values from rates for sliders
+                            const rolledMonthsMinPerCol = {};
+                            const rolledMonthsMaxPerCol = {};
+                            const deferredInterestMinPerCol = {};
+                            const deferredInterestMaxPerCol = {};
+                            
+                            columnsHeaders.forEach((col, idx) => {
+                              const best = colBest[idx];
+                              if (best) {
+                                rolledMonthsMinPerCol[col] = best.min_rolled_months ?? 0;
+                                rolledMonthsMaxPerCol[col] = best.max_rolled_months ?? 24;
+                                deferredInterestMinPerCol[col] = best.min_defer_int ?? 0;
+                                deferredInterestMaxPerCol[col] = best.max_defer_int ?? 100;
+                              } else {
+                                rolledMonthsMinPerCol[col] = 0;
+                                rolledMonthsMaxPerCol[col] = 24;
+                                deferredInterestMinPerCol[col] = 0;
+                                deferredInterestMaxPerCol[col] = 100;
+                              }
+                            });
+
+                            // Initialize per-column values if not set
+                            const currentRolledMonthsPerCol = { ...rolledMonthsPerColumn };
+                            const currentDeferredInterestPerCol = { ...deferredInterestPerColumn };
+                            columnsHeaders.forEach(col => {
+                              if (currentRolledMonthsPerCol[col] === undefined) {
+                                currentRolledMonthsPerCol[col] = rolledMonthsMinPerCol[col] || 0;
+                              }
+                              if (currentDeferredInterestPerCol[col] === undefined) {
+                                currentDeferredInterestPerCol[col] = deferredInterestMinPerCol[col] || 0;
+                              }
+                            });
+
+                            // Render rows in order, using slider for specific fields
+                            return orderedRows.map((rowLabel) => {
+                              if (rowLabel === 'Rolled Months') {
+                                return (
+                                  <SliderResultRow
+                                    key="Rolled Months"
+                                    label="Rolled Months"
+                                    value={0}
+                                    onChange={(newValue, columnKey) => {
+                                      setRolledMonthsPerColumn(prev => ({ ...prev, [columnKey]: newValue }));
+                                    }}
+                                    min={0}
+                                    max={24}
+                                    step={1}
+                                    suffix=" months"
+                                    disabled={isReadOnly}
+                                    columns={columnsHeaders}
+                                    columnValues={currentRolledMonthsPerCol}
+                                    columnMinValues={rolledMonthsMinPerCol}
+                                    columnMaxValues={rolledMonthsMaxPerCol}
+                                  />
+                                );
+                              } else if (rowLabel === 'Deferred Interest %') {
+                                return (
+                                  <SliderResultRow
+                                    key="Deferred Interest %"
+                                    label="Deferred Interest %"
+                                    value={0}
+                                    onChange={(newValue, columnKey) => {
+                                      setDeferredInterestPerColumn(prev => ({ ...prev, [columnKey]: newValue }));
+                                    }}
+                                    min={0}
+                                    max={100}
+                                    step={0.01}
+                                    suffix="%"
+                                    disabled={isReadOnly}
+                                    columns={columnsHeaders}
+                                    columnValues={currentDeferredInterestPerCol}
+                                    columnMinValues={deferredInterestMinPerCol}
+                                    columnMaxValues={deferredInterestMaxPerCol}
+                                  />
+                                );
+                              } else if (rowLabel === 'Product Fee %') {
+                                return (
+                                  <EditableResultRow
+                                    key="Product Fee %"
+                                    label="Product Fee %"
+                                    columns={columnsHeaders}
+                                    columnValues={values['Product Fee %'] || {}}
+                                    originalValues={originalProductFees}
+                                    onValueChange={(newValue, columnKey) => {
+                                      setProductFeeOverrides(prev => ({ ...prev, [columnKey]: newValue }));
+                                    }}
+                                    onReset={(columnKey) => {
+                                      setProductFeeOverrides(prev => {
+                                        const updated = { ...prev };
+                                        delete updated[columnKey];
+                                        return updated;
+                                      });
+                                    }}
+                                    disabled={isReadOnly}
+                                    suffix="%"
+                                  />
+                                );
+                              } else {
+                                // Regular placeholder row
+                                return (
+                                  <tr key={rowLabel}>
+                                    <td className="vertical-align-top font-weight-600">{rowLabel}</td>
+                                    {columnsHeaders.map((c) => (
+                                      <td key={c} className="vertical-align-top text-align-center">
+                                        {(values && values[rowLabel] && Object.prototype.hasOwnProperty.call(values[rowLabel], c)) ? values[rowLabel][c] : '—'}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                );
+                              }
+                            });
                           })()
                         }
                       </>
@@ -1326,15 +1483,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
         existingQuoteData={quoteData}
         onSave={handleSaveQuoteData}
         onCreatePDF={handleCreateQuotePDF}
-      />
-      
-      {/* Notification Modal */}
-      <NotificationModal
-        isOpen={notification.show}
-        onClose={() => setNotification({ ...notification, show: false })}
-        type={notification.type}
-        title={notification.title}
-        message={notification.message}
       />
 
     </div>

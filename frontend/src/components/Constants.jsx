@@ -11,6 +11,7 @@ import {
   BROKER_COMMISSION_TOLERANCE as DEFAULT_BROKER_COMMISSION_TOLERANCE,
   FUNDING_LINES_BTL,
   FUNDING_LINES_BRIDGE,
+  UI_PREFERENCES as DEFAULT_UI_PREFERENCES,
   LOCALSTORAGE_CONSTANTS_KEY,
 } from '../config/constants';
 import '../styles/slds.css';
@@ -40,6 +41,7 @@ export default function Constants() {
   const [brokerCommissionTolerance, setBrokerCommissionTolerance] = useState(DEFAULT_BROKER_COMMISSION_TOLERANCE);
   const [fundingLinesBTL, setFundingLinesBTL] = useState([]);
   const [fundingLinesBridge, setFundingLinesBridge] = useState([]);
+  const [uiPreferences, setUiPreferences] = useState(DEFAULT_UI_PREFERENCES);
   const [jsonInput, setJsonInput] = useState('');
   const [message, setMessage] = useState('');
   const { supabase } = useSupabase();
@@ -79,6 +81,7 @@ export default function Constants() {
       setBrokerCommissionTolerance(overrides.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE);
       setFundingLinesBTL(overrides.fundingLinesBTL || FUNDING_LINES_BTL);
       setFundingLinesBridge(overrides.fundingLinesBridge || FUNDING_LINES_BRIDGE);
+      setUiPreferences(overrides.uiPreferences || DEFAULT_UI_PREFERENCES);
       // initialize temp values
       const tv = {};
       // product lists: tolerate malformed overrides (strings/arrays) and fall back to defaults per key
@@ -992,6 +995,28 @@ export default function Constants() {
     }
   };
 
+  // Update UI preferences (keyboard shortcuts toggle)
+  const updateUiPreferences = async (changes) => {
+    const newPrefs = { ...(uiPreferences || {}), ...changes };
+    setUiPreferences(newPrefs);
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates,
+      brokerRoutes: brokerRoutes,
+      brokerCommissionDefaults: brokerCommissionDefaults,
+      brokerCommissionTolerance: brokerCommissionTolerance,
+      fundingLinesBTL: fundingLinesBTL,
+      fundingLinesBridge: fundingLinesBridge,
+      uiPreferences: newPrefs
+    };
+    writeOverrides(currentOverrides);
+    // Dispatch storage event so other components can react
+    window.dispatchEvent(new Event('storage'));
+    setMessage('UI preferences saved to localStorage.');
+  };
+
   // Add new broker route
   const addBrokerRoute = async () => {
     // Validate inputs
@@ -1715,6 +1740,60 @@ export default function Constants() {
               <div className="helper-text">Update options used in the Bridge DIP "Funding Line" dropdown.</div>
             </div>
           </div>
+      </section>
+
+      {/* UI Preferences Section */}
+      <section className="slds-card slds-p-around_medium slds-m-bottom_medium">
+        <h3 className="slds-text-heading_small slds-m-bottom_small">UI Preferences</h3>
+        <p className="slds-m-bottom_medium">Control keyboard shortcuts and visual hints throughout the application.</p>
+        
+        <div className="slds-grid slds-gutters slds-wrap">
+          <div className="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+            <div className="slds-form-element">
+              <label className="slds-checkbox_toggle slds-grid">
+                <span className="slds-form-element__label slds-m-bottom_none">Enable Keyboard Shortcuts</span>
+                <input
+                  type="checkbox"
+                  name="keyboardShortcutsEnabled"
+                  checked={uiPreferences?.keyboardShortcutsEnabled ?? true}
+                  onChange={(e) => updateUiPreferences({ keyboardShortcutsEnabled: e.target.checked })}
+                  aria-describedby="shortcuts-desc"
+                />
+                <span id="slds-toggle-desc-shortcuts" className="slds-checkbox_faux_container" aria-live="assertive">
+                  <span className="slds-checkbox_faux"></span>
+                  <span className="slds-checkbox_on">Enabled</span>
+                  <span className="slds-checkbox_off">Disabled</span>
+                </span>
+              </label>
+              <div id="shortcuts-desc" className="helper-text slds-m-top_x-small">
+                Enable or disable keyboard shortcuts (Ctrl+S to save, Esc to close modals, etc.)
+              </div>
+            </div>
+          </div>
+
+          <div className="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+            <div className="slds-form-element">
+              <label className="slds-checkbox_toggle slds-grid">
+                <span className="slds-form-element__label slds-m-bottom_none">Show Keyboard Hints</span>
+                <input
+                  type="checkbox"
+                  name="showKeyboardHints"
+                  checked={uiPreferences?.showKeyboardHints ?? true}
+                  onChange={(e) => updateUiPreferences({ showKeyboardHints: e.target.checked })}
+                  aria-describedby="hints-desc"
+                />
+                <span id="slds-toggle-desc-hints" className="slds-checkbox_faux_container" aria-live="assertive">
+                  <span className="slds-checkbox_faux"></span>
+                  <span className="slds-checkbox_on">Visible</span>
+                  <span className="slds-checkbox_off">Hidden</span>
+                </span>
+              </label>
+              <div id="hints-desc" className="helper-text slds-m-top_x-small">
+                Show or hide visual keyboard shortcut hints on buttons (e.g., "Ctrl+S" badges)
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Flat-above-commercial override removed — rule is now hard-coded in calculator logic per user request. */}

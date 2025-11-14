@@ -79,10 +79,9 @@ export default function NotificationModal({
         <div style={{ 
           flex: 1,
           paddingTop: '0.5rem',
-          color: '#333',
           lineHeight: '1.5',
           whiteSpace: 'pre-wrap'
-        }}>
+        }} className="notification-message-text">
           {message}
         </div>
       </div>

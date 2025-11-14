@@ -170,9 +170,13 @@ body.dark-mode #root {
 .dark-mode select:focus,
 .dark-mode input[type="text"]:focus,
 .dark-mode input[type="date"]:focus,
-.dark-mode input[type="search"]:focus {
+.dark-mode input[type="search"]:focus,
+.dark-mode input[type="email"]:focus,
+.dark-mode input[type="number"]:focus,
+.dark-mode input[type="password"]:focus {
   border-color: var(--token-interactive) !important;
   background-color: var(--token-layer-surface) !important;
+  color: var(--token-text-primary) !important;
   outline: none;
   box-shadow: 0 0 0 2px var(--token-focus-ring);
 }
@@ -877,3 +881,89 @@ body.dark-mode #root {
 .dark-mode .slds-form-element[style*="background-color: #f3f2f2"] .slds-form-element__control[style*="font-weight"] {
   color: var(--token-text-primary) !important;
 }
+
+/* ============================================
+   SLDS Toggle Switches (Constants UI Preferences)
+   ============================================ */
+.dark-mode .slds-checkbox_toggle .slds-form-element__label,
+[data-carbon-theme="g100"] .slds-checkbox_toggle .slds-form-element__label {
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .slds-checkbox_faux_container,
+[data-carbon-theme="g100"] .slds-checkbox_faux_container {
+  background-color: transparent !important;
+}
+
+.dark-mode .slds-checkbox_faux,
+[data-carbon-theme="g100"] .slds-checkbox_faux {
+  background-color: var(--token-border-strong) !important;
+  border-color: var(--token-border-strong) !important;
+}
+
+.dark-mode input:checked ~ .slds-checkbox_faux_container .slds-checkbox_faux,
+[data-carbon-theme="g100"] input:checked ~ .slds-checkbox_faux_container .slds-checkbox_faux {
+  background-color: var(--token-interactive-brand) !important;
+  border-color: var(--token-interactive-brand) !important;
+}
+
+.dark-mode .slds-checkbox_on,
+.dark-mode .slds-checkbox_off,
+[data-carbon-theme="g100"] .slds-checkbox_on,
+[data-carbon-theme="g100"] .slds-checkbox_off {
+  color: var(--token-text-primary) !important;
+}
+
+/* Ensure toggle labels are visible */
+.dark-mode .slds-form-element__label.slds-m-bottom_none,
+[data-carbon-theme="g100"] .slds-form-element__label.slds-m-bottom_none {
+  color: var(--token-text-primary) !important;
+  font-weight: 500;
+}
+
+/* Helper text for toggles */
+.dark-mode .helper-text.slds-m-top_x-small,
+[data-carbon-theme="g100"] .helper-text.slds-m-top_x-small {
+  color: var(--token-text-secondary) !important;
+}
+
+/* Carbon Toast Notifications - Ensure visibility in dark mode */
+.dark-mode .cds--toast-notification,
+.dark-mode .cds--inline-notification,
+[data-carbon-theme="g100"] .cds--toast-notification,
+[data-carbon-theme="g100"] .cds--inline-notification {
+  background-color: var(--token-layer-01) !important;
+  border-color: var(--token-border-subtle) !important;
+}
+
+.dark-mode .cds--toast-notification__title,
+.dark-mode .cds--toast-notification__subtitle,
+.dark-mode .cds--inline-notification__title,
+.dark-mode .cds--inline-notification__subtitle,
+[data-carbon-theme="g100"] .cds--toast-notification__title,
+[data-carbon-theme="g100"] .cds--toast-notification__subtitle,
+[data-carbon-theme="g100"] .cds--inline-notification__title,
+[data-carbon-theme="g100"] .cds--inline-notification__subtitle {
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .cds--toast-notification__close-button,
+.dark-mode .cds--inline-notification__close-button,
+[data-carbon-theme="g100"] .cds--toast-notification__close-button,
+[data-carbon-theme="g100"] .cds--inline-notification__close-button {
+  color: var(--token-text-secondary) !important;
+}
+
+.dark-mode .cds--toast-notification__close-button:hover,
+.dark-mode .cds--inline-notification__close-button:hover,
+[data-carbon-theme="g100"] .cds--toast-notification__close-button:hover,
+[data-carbon-theme="g100"] .cds--inline-notification__close-button:hover {
+  background-color: var(--token-layer-hover) !important;
+  color: var(--token-text-primary) !important;
+}
+
+/* NotificationModal - Ensure text is readable in dark mode */
+.dark-mode .notification-message-text {
+  color: var(--token-text-primary) !important;
+}
+

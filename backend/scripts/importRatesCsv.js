@@ -113,8 +113,14 @@ function parseCsv(content) {
     const max_rolled_months_raw = get(['max_rolled_months', 'max-rolled-months']);
     const max_rolled_months = max_rolled_months_raw === '' ? null : Number(max_rolled_months_raw);
 
+    const min_rolled_months_raw = get(['min_rolled_months', 'min-rolled-months']);
+    const min_rolled_months = min_rolled_months_raw === '' ? null : Number(min_rolled_months_raw);
+
     const max_defer_int_raw = get(['max_defer_int', 'max-defer-int']);
     const max_defer_int = max_defer_int_raw === '' ? null : Number(max_defer_int_raw);
+
+    const min_defer_int_raw = get(['min_defer_int', 'min-defer-int']);
+    const min_defer_int = min_defer_int_raw === '' ? null : Number(min_defer_int_raw);
 
     const min_icr_raw = get(['min_icr', 'min-icr']);
     const min_icr = min_icr_raw === '' ? null : Number(min_icr_raw);
@@ -173,7 +179,9 @@ function parseCsv(content) {
       min_loan,
       max_loan,
       max_rolled_months,
+      min_rolled_months,
       max_defer_int,
+      min_defer_int,
       min_icr,
       is_tracker,
       max_top_slicing,
