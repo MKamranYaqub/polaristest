@@ -20,6 +20,7 @@ import { useResultsRowOrder } from '../hooks/useResultsRowOrder';
 import { getQuote, upsertQuoteData, requestDipPdf, requestQuotePdf } from '../utils/quotes';
 import { parseNumber, formatCurrency, formatPercent } from '../utils/calculator/numberFormatting';
 import { computeTierFromAnswers } from '../utils/calculator/rateFiltering';
+import { computeBTLLoan } from '../utils/btlCalculationEngine';
 import CollapsibleSection from './calculator/CollapsibleSection';
 import BTLCriteriaSection from './calculator/btl/BTLCriteriaSection';
 import BTLLoanDetailsSection from './calculator/btl/BTLLoanDetailsSection';
@@ -107,6 +108,16 @@ export default function BTLcalculator({ initialQuote = null }) {
   // Slider controls for results - per-column state
   const [rolledMonthsPerColumn, setRolledMonthsPerColumn] = useState({});
   const [deferredInterestPerColumn, setDeferredInterestPerColumn] = useState({});
+  
+  // Track whether manual mode has been activated (stays true until reset)
+  const [manualModeActivePerColumn, setManualModeActivePerColumn] = useState({});
+  
+  // Optimized values from calculation engine - per-column state
+  const [optimizedRolledPerColumn, setOptimizedRolledPerColumn] = useState({});
+  const [optimizedDeferredPerColumn, setOptimizedDeferredPerColumn] = useState({});
+  
+  // Ref to collect optimized values during render without causing re-renders
+  const optimizedValuesRef = useRef({ rolled: {}, deferred: {} });
 
   // Editable rate and product fee overrides - per-column state
   const [ratesOverrides, setRatesOverrides] = useState({});
@@ -614,9 +625,31 @@ export default function BTLcalculator({ initialQuote = null }) {
     fetchRelevant();
   }, [supabase, productScope, currentTier, productType, retentionChoice, retentionLtv, selectedRange]);
 
+  // Update optimized values state after calculations complete
+  // This runs after render to avoid infinite loop
+  useEffect(() => {
+    const newRolled = optimizedValuesRef.current.rolled;
+    const newDeferred = optimizedValuesRef.current.deferred;
+    
+    // Only update if there are new optimized values
+    if (Object.keys(newRolled).length > 0 || Object.keys(newDeferred).length > 0) {
+      setOptimizedRolledPerColumn(prev => {
+        // Check if values actually changed to avoid unnecessary updates
+        const hasChanges = Object.keys(newRolled).some(key => prev[key] !== newRolled[key]);
+        return hasChanges ? { ...prev, ...newRolled } : prev;
+      });
+      setOptimizedDeferredPerColumn(prev => {
+        const hasChanges = Object.keys(newDeferred).some(key => prev[key] !== newDeferred[key]);
+        return hasChanges ? { ...prev, ...newDeferred } : prev;
+      });
+    }
+  }, [relevantRates, propertyValue, monthlyRent, specificNetLoan, specificGrossLoan, maxLtvInput, topSlicing, loanType, productType, currentTier, rolledMonthsPerColumn, deferredInterestPerColumn, ratesOverrides, productFeeOverrides]);
+
   // Compute calculated rates with all financial values
   const calculatedRates = useMemo(() => {
     if (!relevantRates || relevantRates.length === 0) return [];
+
+  // (debug logs removed)
 
     const pv = parseNumber(propertyValue);
     const specificGross = parseNumber(specificGrossLoan);
@@ -654,12 +687,14 @@ export default function BTLcalculator({ initialQuote = null }) {
       if (Number.isFinite(pfAmount)) net -= pfAmount;
       if (Number.isFinite(adminFee)) net -= adminFee;
       
-      // Additional fees
+      // Additional fees (Broker Client Fee)
       let brokerClientFee = 0;
-      if (addFeesToggle && Number.isFinite(additionalFeeNum)) {
+      if (addFeesToggle && Number.isFinite(additionalFeeNum) && additionalFeeNum > 0 && Number.isFinite(gross)) {
         if (feeCalculationType === 'percentage') {
+          // Percentage of gross loan
           brokerClientFee = gross * (additionalFeeNum / 100);
         } else {
+          // Fixed pound amount
           brokerClientFee = additionalFeeNum;
         }
         net -= brokerClientFee;
@@ -676,9 +711,17 @@ export default function BTLcalculator({ initialQuote = null }) {
         ? (monthlyRentNum / monthlyInterest * 100) 
         : NaN;
 
-      // Broker commission (proc fee) - 1% of gross loan
-      const procFeePercent = Number(rate.proc_fee) || 1;
-      const brokerCommissionProcFeePounds = Number.isFinite(gross) ? gross * (procFeePercent / 100) : NaN;
+      // Broker commission (proc fee) - use broker commission % from client details if client is Broker
+      // brokerCommissionPercent is stored as actual percentage (e.g., 0.7 for 0.7%)
+      let procFeePercent = 0;
+      let brokerCommissionProcFeePounds = 0;
+      
+      if (brokerSettings.clientType === 'Broker' && Number.isFinite(gross)) {
+        procFeePercent = Number(brokerSettings.brokerCommissionPercent) || 0;
+        if (procFeePercent > 0) {
+          brokerCommissionProcFeePounds = gross * (procFeePercent / 100);
+        }
+      }
 
       return {
         ...rate,
@@ -694,8 +737,8 @@ export default function BTLcalculator({ initialQuote = null }) {
         product_fee_pounds: Number.isFinite(pfAmount) ? pfAmount.toFixed(2) : null,
         admin_fee: adminFee,
         broker_client_fee: brokerClientFee > 0 ? brokerClientFee.toFixed(2) : null,
-        broker_commission_proc_fee_percent: procFeePercent,
-        broker_commission_proc_fee_pounds: Number.isFinite(brokerCommissionProcFeePounds) ? brokerCommissionProcFeePounds.toFixed(2) : null,
+        broker_commission_proc_fee_percent: procFeePercent > 0 ? procFeePercent.toFixed(2) : null,
+        broker_commission_proc_fee_pounds: brokerCommissionProcFeePounds > 0 ? brokerCommissionProcFeePounds.toFixed(2) : null,
         monthly_interest_cost: Number.isFinite(monthlyInterest) ? monthlyInterest.toFixed(2) : null,
         rent: Number.isFinite(monthlyRentNum) ? monthlyRentNum.toFixed(2) : null,
         top_slicing: Number.isFinite(topSlicingNum) ? topSlicingNum.toFixed(2) : null,
@@ -719,7 +762,7 @@ export default function BTLcalculator({ initialQuote = null }) {
         total_loan_term: null
       };
     });
-  }, [relevantRates, propertyValue, specificGrossLoan, specificNetLoan, monthlyRent, topSlicing, loanType, maxLtvInput, addFeesToggle, feeCalculationType, additionalFeeAmount]);
+  }, [relevantRates, propertyValue, specificGrossLoan, specificNetLoan, monthlyRent, topSlicing, loanType, maxLtvInput, addFeesToggle, feeCalculationType, additionalFeeAmount, brokerSettings.clientType, brokerSettings.brokerCommissionPercent]);
 
   const handleAnswerChange = (questionKey, optionIndex) => {
     setAnswers((prev) => {
@@ -1465,6 +1508,9 @@ export default function BTLcalculator({ initialQuote = null }) {
                                     const originalProductFees = {};
                                     orderedRows.forEach(p => { values[p] = {}; });
 
+                                    // Reset optimized values ref at start of calculation
+                                    optimizedValuesRef.current = { rolled: {}, deferred: {} };
+
                                     // compute per-column values
                                     feeBuckets.forEach((fb, idx) => {
                                       const colKey = columnsHeaders[idx];
@@ -1477,45 +1523,206 @@ export default function BTLcalculator({ initialQuote = null }) {
                                       // Check if this is a tracker product
                                       const isTracker = /tracker/i.test(productType || '');
 
-                                      // Initial Rate (display only)
-                                      if (best && best.rate != null && values['Initial Rate']) {
-                                        values['Initial Rate'][colKey] = formatPercent(best.rate, 2) + (isTracker ? ' + BBR' : '');
-                                      }
+                                      // Get manual slider values for this column
+                                      const manualRolled = rolledMonthsPerColumn[colKey];
+                                      const manualDeferred = deferredInterestPerColumn[colKey];
 
-                                      // Pay Rate (display only, not editable)
-                                      if (best && best.rate != null && values['Pay Rate']) {
-                                        values['Pay Rate'][colKey] = formatPercent(best.rate, 2) + (isTracker ? ' + BBR' : '');
-                                      }
+                                      // Run calculation engine for this column
+                                      // Derive broker-related fees from client details
+                                      const isBrokerClient = brokerSettings.clientType === 'Broker';
+                                      const derivedProcFeePct = isBrokerClient
+                                        ? Number(brokerSettings.brokerCommissionPercent) || 0
+                                        : 0;
+                                      const additionalFeeRaw = parseNumber(brokerSettings.additionalFeeAmount);
+                                      const useAdditional = !!brokerSettings.addFeesToggle && Number.isFinite(additionalFeeRaw) && additionalFeeRaw > 0;
+                                      const derivedBrokerFeePct = useAdditional && brokerSettings.feeCalculationType === 'percentage'
+                                        ? additionalFeeRaw
+                                        : 0;
+                                      const derivedBrokerFeeFlat = useAdditional && brokerSettings.feeCalculationType === 'pound'
+                                        ? additionalFeeRaw
+                                        : 0;
 
-                                      // Product Fee % - store original and apply override if exists
-                                      const pfPercent = fb === 'none' ? NaN : Number(fb);
-                                      if (!Number.isNaN(pfPercent) && values['Product Fee %']) {
-                                        const originalFee = `${pfPercent}%`;
-                                        originalProductFees[colKey] = originalFee;
-                                        values['Product Fee %'][colKey] = productFeeOverrides[colKey] || originalFee;
-                                      }
+                                      const calculationParams = {
+                                        colKey,
+                                        selectedRate: best,
+                                        overriddenRate: ratesOverrides[colKey] ? parseNumber(ratesOverrides[colKey]) : null,
+                                        propertyValue,
+                                        monthlyRent,
+                                        specificNetLoan,
+                                        specificGrossLoan,
+                                        maxLtvInput,
+                                        topSlicing,
+                                        loanType,
+                                        productType,
+                                        productScope,
+                                        tier: currentTier,
+                                        selectedRange,
+                                        criteria: answers,
+                                        retentionChoice,
+                                        retentionLtv,
+                                        productFeePercent: fb === 'none' ? 0 : Number(fb),
+                                        feeOverrides: productFeeOverrides,
+                                        manualRolled,
+                                        manualDeferred,
+                                        brokerRoute: brokerSettings.brokerRoute,
+                                        // Use Broker commission (%) as Proc Fee when client type is Broker
+                                        procFeePct: derivedProcFeePct,
+                                        // Map Additional fees toggle+amount into Broker Client Fee (either % of gross or £ flat)
+                                        brokerFeePct: derivedBrokerFeePct,
+                                        brokerFeeFlat: derivedBrokerFeeFlat,
+                                      };
 
-                                      // Gross Loan: use specificGrossLoan if provided, otherwise estimate from propertyValue and maxLtvInput
-                                      const pv = parseNumber(propertyValue);
-                                      const specificGross = parseNumber(specificGrossLoan);
-                                      let gross = Number.isFinite(specificGross) ? specificGross : (Number.isFinite(pv) ? pv * (Number(maxLtvInput) / 100) : NaN);
-                                      if (Number.isFinite(gross) && values['Gross Loan']) values['Gross Loan'][colKey] = formatCurrency(gross);
+                                      const result = computeBTLLoan(calculationParams);
 
-                                      // Product Fee £ and Net Loan
-                                      if (Number.isFinite(gross) && !Number.isNaN(pfPercent)) {
-                                        if (values['Product Fee £']) {
-                                          const pfAmount = gross * (pfPercent / 100);
-                                          values['Product Fee £'][colKey] = formatCurrency(pfAmount);
-                                          const net = gross - pfAmount;
-                                          if (values['Net Loan']) values['Net Loan'][colKey] = formatCurrency(net);
-                                          if (Number.isFinite(pv) && values['LTV']) values['LTV'][colKey] = `${(net / pv * 100).toFixed(2)}%`;
+                                      // If calculation succeeded, populate values
+                                      if (result) {
+                                        // Collect optimized values in ref (don't update state during render)
+                                        if (!result.isManual) {
+                                          optimizedValuesRef.current.rolled[colKey] = result.rolledMonths;
+                                          optimizedValuesRef.current.deferred[colKey] = result.deferredCapPct;
                                         }
-                                      }
+                                        
+                                        // Initial Rate (display only)
+                                        if (values['Initial Rate']) {
+                                          values['Initial Rate'][colKey] = result.fullRateText;
+                                        }
 
-                                      // Monthly Interest Cost (approximation)
-                                      if (best && best.rate != null && Number.isFinite(gross) && values['Monthly Interest Cost']) {
-                                        const monthly = gross * (Number(best.rate) / 100) / 12;
-                                        values['Monthly Interest Cost'][colKey] = formatCurrency(monthly);
+                                        // Pay Rate (display only, not editable)
+                                        if (values['Pay Rate']) {
+                                          values['Pay Rate'][colKey] = result.payRateText;
+                                        }
+
+                                        // Product Fee %
+                                        const pfPercent = fb === 'none' ? NaN : Number(fb);
+                                        if (!Number.isNaN(pfPercent) && values['Product Fee %']) {
+                                          const originalFee = `${pfPercent}%`;
+                                          originalProductFees[colKey] = originalFee;
+                                          values['Product Fee %'][colKey] = productFeeOverrides[colKey] || originalFee;
+                                        }
+
+                                        // Gross Loan
+                                        if (values['Gross Loan']) {
+                                          values['Gross Loan'][colKey] = formatCurrency(result.grossLoan, 0);
+                                        }
+
+                                        // Net Loan
+                                        if (values['Net Loan']) {
+                                          values['Net Loan'][colKey] = formatCurrency(result.netLoan, 0);
+                                        }
+
+                                        // Product Fee £
+                                        if (values['Product Fee £']) {
+                                          values['Product Fee £'][colKey] = formatCurrency(result.productFeeAmount, 0);
+                                        }
+
+                                        // LTV
+                                        if (values['LTV'] && result.ltv) {
+                                          values['LTV'][colKey] = `${(result.ltv * 100).toFixed(2)}%`;
+                                        }
+
+                                        // Net LTV
+                                        if (values['Net LTV'] && result.netLtv) {
+                                          values['Net LTV'][colKey] = `${(result.netLtv * 100).toFixed(2)}%`;
+                                        }
+
+                                        // ICR
+                                        if (values['ICR'] && result.icr) {
+                                          values['ICR'][colKey] = `${result.icr.toFixed(2)}%`;
+                                        }
+
+                                        // Monthly Interest Cost
+                                        if (values['Monthly Interest Cost']) {
+                                          values['Monthly Interest Cost'][colKey] = formatCurrency(result.monthlyInterestCost, 0);
+                                        }
+
+                                        // Direct Debit (with 2 decimal places)
+                                        if (values['Direct Debit']) {
+                                          values['Direct Debit'][colKey] = formatCurrency(result.directDebit, 2);
+                                        }
+
+                                        // Rolled Months Interest (0 decimal places)
+                                        if (values['Rolled Months Interest']) {
+                                          values['Rolled Months Interest'][colKey] = formatCurrency(result.rolledInterestAmount, 0);
+                                        }
+
+                                        // Deferred Interest £ (2 decimal places)
+                                        if (values['Deferred Interest £']) {
+                                          values['Deferred Interest £'][colKey] = formatCurrency(result.deferredInterestAmount, 2);
+                                        }
+
+                                        // Broker Commission (Proc Fee %)
+                                        if (values['Broker Commission (Proc Fee %)']) {
+                                          values['Broker Commission (Proc Fee %)'][colKey] = `${result.procFeePct}%`;
+                                        }
+
+                                        // Broker Commission (Proc Fee £)
+                                        if (values['Broker Commission (Proc Fee £)']) {
+                                          values['Broker Commission (Proc Fee £)'][colKey] = formatCurrency(result.procFeeValue, 0);
+                                        }
+
+                                        // Broker Client Fee
+                                        if (values['Broker Client Fee']) {
+                                          values['Broker Client Fee'][colKey] = formatCurrency(result.brokerClientFee, 0);
+                                        }
+
+                                        // APRC
+                                        if (values['APRC'] && result.aprc) {
+                                          values['APRC'][colKey] = `${result.aprc.toFixed(2)}%`;
+                                        }
+
+                                        // Admin Fee
+                                        if (values['Admin Fee']) {
+                                          values['Admin Fee'][colKey] = formatCurrency(result.adminFee, 0);
+                                        }
+
+                                        // ERC (show schedule text like "Yr1 5%, Yr2 4%")
+                                        if (values['ERC']) {
+                                          values['ERC'][colKey] = result.ercText || '—';
+                                        }
+
+                                        // Exit Fee
+                                        if (values['Exit Fee']) {
+                                          values['Exit Fee'][colKey] = formatCurrency(result.exitFee, 0);
+                                        }
+
+                                        // NBP
+                                        if (values['NBP']) {
+                                          values['NBP'][colKey] = formatCurrency(result.nbp, 0);
+                                        }
+
+                                        // Revert Rate
+                                        if (values['Revert Rate']) {
+                                          if (result.revertRateText) {
+                                            values['Revert Rate'][colKey] = result.revertRateText;
+                                          } else if (result.revertRate) {
+                                            values['Revert Rate'][colKey] = `${result.revertRate.toFixed(2)}%`;
+                                          }
+                                        }
+
+                                        // Revert Rate DD
+                                        if (values['Revert Rate DD'] && result.revertRateDD) {
+                                          values['Revert Rate DD'][colKey] = formatCurrency(result.revertRateDD, 0);
+                                        }
+
+                                        // Serviced Interest
+                                        if (values['Serviced Interest']) {
+                                          values['Serviced Interest'][colKey] = formatCurrency(result.servicedInterest, 0);
+                                        }
+
+                                        // Title Insurance Cost
+                                        if (values['Title Insurance Cost']) {
+                                          values['Title Insurance Cost'][colKey] = formatCurrency(result.titleInsuranceCost, 0);
+                                        }
+
+                                        // Total Cost to Borrower
+                                        if (values['Total Cost to Borrower']) {
+                                          values['Total Cost to Borrower'][colKey] = formatCurrency(result.totalCostToBorrower, 0);
+                                        }
+
+                                        // Total Loan Term
+                                        if (values['Total Loan Term']) {
+                                          values['Total Loan Term'][colKey] = `${result.totalLoanTerm} months`;
+                                        }
                                       }
                                     });
 
@@ -1547,17 +1754,37 @@ export default function BTLcalculator({ initialQuote = null }) {
                                       }
                                     });
 
-                                    // Initialize per-column values if not set
-                                    const currentRolledMonthsPerCol = { ...rolledMonthsPerColumn };
-                                    const currentDeferredInterestPerCol = { ...deferredInterestPerColumn };
+                                    // Use per-column values or optimized values for display
+                                    // Important: Use optimizedValuesRef.current to get the LATEST optimized values
+                                    // calculated during this render, not the stale state values
+                                    const currentRolledMonthsPerCol = {};
+                                    const currentDeferredInterestPerCol = {};
                                     columnsHeaders.forEach(col => {
-                                      if (currentRolledMonthsPerCol[col] === undefined) {
-                                        currentRolledMonthsPerCol[col] = rolledMonthsMinPerCol[col] || 0;
-                                      }
-                                      if (currentDeferredInterestPerCol[col] === undefined) {
-                                        currentDeferredInterestPerCol[col] = deferredInterestMinPerCol[col] || 0;
-                                      }
+                                      // Priority: manual value > latest ref value > old state value > min value
+                                      // Use manual value if explicitly set, otherwise always prefer the latest optimized from ref
+                                      const hasManualRolled = rolledMonthsPerColumn[col] !== undefined;
+                                      const hasManualDeferred = deferredInterestPerColumn[col] !== undefined;
+                                      
+                                      currentRolledMonthsPerCol[col] = hasManualRolled
+                                        ? rolledMonthsPerColumn[col]
+                                        : (optimizedValuesRef.current.rolled[col] !== undefined 
+                                          ? optimizedValuesRef.current.rolled[col]
+                                          : (optimizedRolledPerColumn[col] !== undefined 
+                                            ? optimizedRolledPerColumn[col] 
+                                            : (rolledMonthsMinPerCol[col] || 0)));
+                                          
+                                      currentDeferredInterestPerCol[col] = hasManualDeferred
+                                        ? deferredInterestPerColumn[col]
+                                        : (optimizedValuesRef.current.deferred[col] !== undefined
+                                          ? optimizedValuesRef.current.deferred[col]
+                                          : (optimizedDeferredPerColumn[col] !== undefined
+                                            ? optimizedDeferredPerColumn[col]
+                                            : (deferredInterestMinPerCol[col] || 0)));
                                     });
+
+                                    // Merge state optimized values with latest ref values for SliderResultRow
+                                    const latestOptimizedRolled = { ...optimizedRolledPerColumn, ...optimizedValuesRef.current.rolled };
+                                    const latestOptimizedDeferred = { ...optimizedDeferredPerColumn, ...optimizedValuesRef.current.deferred };
 
                                     // Render rows in order, using slider for specific fields
                                     return orderedRows.map((rowLabel) => {
@@ -1568,7 +1795,44 @@ export default function BTLcalculator({ initialQuote = null }) {
                                             label="Rolled Months"
                                             value={0}
                                             onChange={(newValue, columnKey) => {
+                                              // Always set as manual value - don't auto-clear even if matches optimized
+                                              // User must explicitly click reset button to re-optimize
                                               setRolledMonthsPerColumn(prev => ({ ...prev, [columnKey]: newValue }));
+                                              
+                                              // Mark manual mode as active (stays true until reset)
+                                              setManualModeActivePerColumn(prev => ({ ...prev, [columnKey]: true }));
+                                              
+                                              // When user manually changes rolled months, also lock the current deferred value
+                                              // to prevent re-optimization
+                                              setDeferredInterestPerColumn(prev => {
+                                                // If deferred is already manual, don't change it
+                                                if (prev[columnKey] !== undefined) return prev;
+                                                // Lock the current displayed deferred value
+                                                const currentDeferred = currentDeferredInterestPerCol[columnKey];
+                                                if (currentDeferred !== undefined) {
+                                                  return { ...prev, [columnKey]: currentDeferred };
+                                                }
+                                                return prev;
+                                              });
+                                            }}
+                                            onReset={(columnKey) => {
+                                              setRolledMonthsPerColumn(prev => {
+                                                const updated = { ...prev };
+                                                delete updated[columnKey];
+                                                return updated;
+                                              });
+                                              // Also clear deferred to allow full re-optimization
+                                              setDeferredInterestPerColumn(prev => {
+                                                const updated = { ...prev };
+                                                delete updated[columnKey];
+                                                return updated;
+                                              });
+                                              // Clear manual mode flag
+                                              setManualModeActivePerColumn(prev => {
+                                                const updated = { ...prev };
+                                                delete updated[columnKey];
+                                                return updated;
+                                              });
                                             }}
                                             min={0}
                                             max={24}
@@ -1579,6 +1843,8 @@ export default function BTLcalculator({ initialQuote = null }) {
                                             columnValues={currentRolledMonthsPerCol}
                                             columnMinValues={rolledMonthsMinPerCol}
                                             columnMaxValues={rolledMonthsMaxPerCol}
+                                            columnOptimizedValues={latestOptimizedRolled}
+                                            columnManualModeActive={manualModeActivePerColumn}
                                           />
                                         );
                                       } else if (rowLabel === 'Deferred Interest %') {
@@ -1588,7 +1854,44 @@ export default function BTLcalculator({ initialQuote = null }) {
                                             label="Deferred Interest %"
                                             value={0}
                                             onChange={(newValue, columnKey) => {
+                                              // Always set as manual value - don't auto-clear even if matches optimized
+                                              // User must explicitly click reset button to re-optimize
                                               setDeferredInterestPerColumn(prev => ({ ...prev, [columnKey]: newValue }));
+                                              
+                                              // Mark manual mode as active (stays true until reset)
+                                              setManualModeActivePerColumn(prev => ({ ...prev, [columnKey]: true }));
+                                              
+                                              // When user manually changes deferred interest, also lock the current rolled value
+                                              // to prevent re-optimization
+                                              setRolledMonthsPerColumn(prev => {
+                                                // If rolled is already manual, don't change it
+                                                if (prev[columnKey] !== undefined) return prev;
+                                                // Lock the current displayed rolled value
+                                                const currentRolled = currentRolledMonthsPerCol[columnKey];
+                                                if (currentRolled !== undefined) {
+                                                  return { ...prev, [columnKey]: currentRolled };
+                                                }
+                                                return prev;
+                                              });
+                                            }}
+                                            onReset={(columnKey) => {
+                                              setDeferredInterestPerColumn(prev => {
+                                                const updated = { ...prev };
+                                                delete updated[columnKey];
+                                                return updated;
+                                              });
+                                              // Also clear rolled to allow full re-optimization
+                                              setRolledMonthsPerColumn(prev => {
+                                                const updated = { ...prev };
+                                                delete updated[columnKey];
+                                                return updated;
+                                              });
+                                              // Clear manual mode flag
+                                              setManualModeActivePerColumn(prev => {
+                                                const updated = { ...prev };
+                                                delete updated[columnKey];
+                                                return updated;
+                                              });
                                             }}
                                             min={0}
                                             max={100}
@@ -1599,6 +1902,9 @@ export default function BTLcalculator({ initialQuote = null }) {
                                             columnValues={currentDeferredInterestPerCol}
                                             columnMinValues={deferredInterestMinPerCol}
                                             columnMaxValues={deferredInterestMaxPerCol}
+                                            columnOptimizedValues={latestOptimizedDeferred}
+                                            columnManualModeActive={manualModeActivePerColumn}
+                                            formatValue={(v) => (Number.isFinite(v) ? Number(v).toFixed(2) : v)}
                                           />
                                         );
                                       } else if (rowLabel === 'Product Fee %') {

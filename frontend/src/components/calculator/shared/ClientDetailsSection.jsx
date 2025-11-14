@@ -185,7 +185,7 @@ export default function ClientDetailsSection({
               />
             </div>
             <div className="slds-form-element__help font-size-075rem text-color-gray margin-top-025">
-              Adjustable within ±{getBrokerRoutesAndDefaults().tolerance}% of default ({getBrokerRoutesAndDefaults().defaults[brokerRoute]}%)
+              Adjustable within ±{getBrokerRoutesAndDefaults().tolerance}% of default ({getBrokerRoutesAndDefaults().defaults[brokerRoute]}%) - Used for proc fee calculation
             </div>
           </div>
           

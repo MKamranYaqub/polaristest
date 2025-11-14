@@ -7,6 +7,7 @@ import React from 'react';
  * @param {string} label - The label for the row
  * @param {number} value - Current value (used as fallback if columnValues not provided)
  * @param {function} onChange - Callback when value changes, receives (newValue, columnKey)
+ * @param {function} onReset - Optional callback when reset button clicked, receives (columnKey)
  * @param {number} min - Minimum value (fallback if columnMinValues not provided)
  * @param {number} max - Maximum value (fallback if columnMaxValues not provided)
  * @param {number} step - Step increment
@@ -16,11 +17,15 @@ import React from 'react';
  * @param {object} columnValues - Values for each column {columnKey: value}
  * @param {object} columnMinValues - Min values for each column {columnKey: min}
  * @param {object} columnMaxValues - Max values for each column {columnKey: max}
+ * @param {object} columnOptimizedValues - Optimized values for each column {columnKey: optimizedValue}
+ * @param {object} columnManualModeActive - Whether manual mode is active for each column {columnKey: boolean}
+ * @param {function} formatValue - Optional formatter for displaying values (receives number, returns string)
  */
 export default function SliderResultRow({ 
   label, 
   value, 
-  onChange, 
+  onChange,
+  onReset,
   min = 0, 
   max = 100, 
   step = 1, 
@@ -29,7 +34,10 @@ export default function SliderResultRow({
   columns = null,
   columnValues = null,
   columnMinValues = null,
-  columnMaxValues = null
+  columnMaxValues = null,
+  columnOptimizedValues = null,
+  columnManualModeActive = null,
+  formatValue = null
 }) {
   const handleChange = (e, columnKey = null) => {
     const newValue = parseFloat(e.target.value);
@@ -45,9 +53,20 @@ export default function SliderResultRow({
           const colValue = columnValues && columnValues[col] !== undefined ? columnValues[col] : value;
           const colMin = columnMinValues && columnMinValues[col] !== undefined ? columnMinValues[col] : min;
           const colMax = columnMaxValues && columnMaxValues[col] !== undefined ? columnMaxValues[col] : max;
+          const colOptimized = columnOptimizedValues && columnOptimizedValues[col];
+          // Use explicit manual mode flag instead of comparing values
+          const isManuallyChanged = columnManualModeActive && columnManualModeActive[col] === true;
+          
           const range = colMax - colMin;
           const percentage = range > 0 ? ((colValue - colMin) / range) * 100 : 0;
           
+          const display = (n) => {
+            if (typeof formatValue === 'function') {
+              try { return formatValue(n); } catch { /* ignore */ }
+            }
+            return n;
+          };
+
           return (
             <td key={col} className="vertical-align-middle" style={{ padding: '0.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -64,7 +83,9 @@ export default function SliderResultRow({
                     minWidth: '100px',
                     height: '6px',
                     borderRadius: '3px',
-                    background: `linear-gradient(to right, #0176d3 0%, #0176d3 ${percentage}%, #dddbda ${percentage}%, #dddbda 100%)`,
+                    background: isManuallyChanged
+                      ? `linear-gradient(to right, #ff9800 0%, #ff9800 ${percentage}%, #dddbda ${percentage}%, #dddbda 100%)`
+                      : `linear-gradient(to right, #0176d3 0%, #0176d3 ${percentage}%, #dddbda ${percentage}%, #dddbda 100%)`,
                     outline: 'none',
                     cursor: disabled ? 'not-allowed' : 'pointer',
                     WebkitAppearance: 'none',
@@ -77,11 +98,30 @@ export default function SliderResultRow({
                     textAlign: 'center',
                     fontWeight: '600',
                     fontSize: '0.875rem',
-                    color: '#080707'
+                    color: isManuallyChanged ? '#ff9800' : '#080707'
                   }}
                 >
-                  {colValue}{suffix}
+                  {display(colValue)}{suffix}
                 </span>
+                {isManuallyChanged && onReset && (
+                  <button
+                    onClick={() => onReset(col)}
+                    disabled={disabled}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: disabled ? 'not-allowed' : 'pointer',
+                      fontSize: '1.2rem',
+                      color: '#0176d3',
+                      padding: '0 0.25rem',
+                      lineHeight: 1,
+                      opacity: disabled ? 0.5 : 1
+                    }}
+                    title={`Reset to optimized value (${display(colOptimized)}${suffix})`}
+                  >
+                    ↺
+                  </button>
+                )}
               </div>
             </td>
           );
@@ -94,6 +134,13 @@ export default function SliderResultRow({
   const range = max - min;
   const percentage = range > 0 ? ((value - min) / range) * 100 : 0;
   
+  const display = (n) => {
+    if (typeof formatValue === 'function') {
+      try { return formatValue(n); } catch { /* ignore */ }
+    }
+    return n;
+  };
+
   return (
     <tr>
       <td className="vertical-align-middle font-weight-600">{label}</td>
@@ -128,7 +175,7 @@ export default function SliderResultRow({
               color: '#080707'
             }}
           >
-            {value}{suffix}
+            {display(value)}{suffix}
           </span>
         </div>
       </td>

@@ -30,11 +30,12 @@ export function formatCurrencyInput(v) {
  * Format number as currency display (for read-only display)
  * Used in BTL calculator
  * @param {number} n - Number to format
+ * @param {number} decimals - Number of decimal places (default: 0)
  * @returns {string} Formatted currency string or '—' if invalid
  */
-export function formatCurrency(n) {
+export function formatCurrency(n, decimals = 0) {
   if (!Number.isFinite(n)) return '—';
-  return `£${Number(n).toLocaleString('en-GB')}`;
+  return `£${Number(n).toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 }
 
 /**
