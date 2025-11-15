@@ -103,6 +103,7 @@ const BTLLoanDetailsSection = ({
               onChange={(e) => onLoanTypeChange(e.target.value)}
               disabled={isReadOnly}
             >
+              <option value="">Select loan type...</option>
               <option value="Max gross loan">Max Gross Loan</option>
               <option value="Net loan required">Net loan required</option>
               <option value="Specific LTV required">Specific LTV Required</option>

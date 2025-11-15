@@ -97,7 +97,7 @@ export default function BTLcalculator({ initialQuote = null }) {
   const [feeCalculationType, setFeeCalculationType] = useState('pound'); // 'pound' or 'percentage'
   const [additionalFeeAmount, setAdditionalFeeAmount] = useState('');
   // normalize loanType values to match select option values used in the JSX
-  const [loanType, setLoanType] = useState('Max gross loan');
+  const [loanType, setLoanType] = useState(''); // Start with empty - user must select
   const [specificGrossLoan, setSpecificGrossLoan] = useState('');
   const [specificNetLoan, setSpecificNetLoan] = useState('');
   const [maxLtvInput, setMaxLtvInput] = useState(75);
@@ -647,6 +647,9 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   // Compute calculated rates with all financial values
   const calculatedRates = useMemo(() => {
+    // Don't compute if no loan type selected
+    if (!loanType || loanType === '') return [];
+    
     if (!relevantRates || relevantRates.length === 0) return [];
 
   // (debug logs removed)
@@ -770,6 +773,9 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   // Compute full results using BTLCalculationEngine for saving to database
   const fullComputedResults = useMemo(() => {
+    // Don't compute if no loan type selected
+    if (!loanType || loanType === '') return [];
+    
     if (!relevantRates || relevantRates.length === 0) return [];
 
     const pv = parseNumber(propertyValue);
@@ -1489,6 +1495,16 @@ export default function BTLcalculator({ initialQuote = null }) {
         {/* Rates display */}
         <div className="rates-display">
           {(() => {
+            // Check if loan type is selected
+            if (!loanType || loanType === '') {
+              return (
+                <div className="no-rates" style={{ padding: '2rem', textAlign: 'center', color: '#706e6b' }}>
+                  <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Please select a loan calculation type above to view rates and results.</p>
+                  <p style={{ fontSize: '0.9rem' }}>Choose from Max Gross Loan, Net loan required, Specific LTV Required, or Specific Gross Loan.</p>
+                </div>
+              );
+            }
+
             // Filter rates based on selected range
             const filteredRates = relevantRates.filter(r => {
               const rateType = (r.rate_type || r.type || '').toString().toLowerCase();

@@ -103,14 +103,8 @@ export class BTLCalculationEngine {
     this.retentionChoice = retentionChoice;
     this.retentionLtv = retentionLtv;
     
-    // Normalize loan type and log for debugging
-    const originalLoanType = loanType;
+    // Normalize loan type
     this.loanType = normalizeLoanType(loanType); // Normalize UI string to LOAN_TYPES constant
-    
-    // Debug logging (can be removed in production)
-    if (originalLoanType !== this.loanType) {
-      console.log(`[BTL Engine] Normalized loan type: "${originalLoanType}" -> "${this.loanType}"`);
-    }
     
     this.limits = limits;
     this.brokerRoute = brokerRoute;
@@ -336,14 +330,11 @@ export class BTLCalculationEngine {
     
     // Apply specific gross loan constraint
     if (loanType === LOAN_TYPES.SPECIFIC_GROSS && specificGrossLoan > 0) {
-      console.log(`[BTL Engine] Applying SPECIFIC_GROSS constraint: ${specificGrossLoan}`);
       loanCap = Math.min(loanCap, specificGrossLoan);
     }
     
     // For specific net loan, we calculate max gross that produces the target net
     // This is handled in evaluateLoan via grossFromNet calculation
-    
-    console.log(`[BTL Engine] computeLoanCap - loanType: ${loanType}, maxLtv: ${(maxLtv * 100).toFixed(2)}%, ltvCap: £${ltvCap.toFixed(0)}, finalCap: £${loanCap.toFixed(0)}`);
     
     return loanCap;
   }
@@ -402,19 +393,13 @@ export class BTLCalculationEngine {
       maxFromRent
     );
     
-    console.log(`[BTL Engine] evaluateLoan - loanType: ${loanType}, loanCap: £${this.computeLoanCap().toFixed(0)}, maxFromRent: £${maxFromRent.toFixed(0)}, initial eligibleGross: £${eligibleGross.toFixed(0)}`);
-    
     // Apply specific net loan constraint
     if (loanType === LOAN_TYPES.SPECIFIC_NET) {
-      console.log(`[BTL Engine] Applying SPECIFIC_NET constraint: grossFromNet: £${grossFromNet.toFixed(0)}`);
       eligibleGross = Math.min(eligibleGross, grossFromNet);
     }
     
-    console.log(`[BTL Engine] Final eligibleGross: £${eligibleGross.toFixed(0)} (minLoan: £${minLoan})`);
-    
     // Check minimum loan requirement
     if (eligibleGross < minLoan) {
-      console.log(`[BTL Engine] eligibleGross below minimum, setting to 0`);
       eligibleGross = 0;
     }
     
