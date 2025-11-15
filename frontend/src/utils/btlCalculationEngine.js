@@ -1,11 +1,43 @@
 /**
  * BTL Loan Calculation Engine
  * Handles all BTL loan calculations including gross loan, net loan, fees, ICR, LTV, etc.
- * Based on the integration/calculationEngine.js pattern
+ * Based on the integration/calculationEngine.js pattern with enhanced rate table integration
  */
 
 import { parseNumber } from './calculator/numberFormatting';
 import { LOAN_TYPES, PRODUCT_GROUPS, PROPERTY_TYPES, MARKET_RATES } from '../config/constants';
+
+/**
+ * Map UI loan type strings to LOAN_TYPES constants
+ * The UI uses different strings than the LOAN_TYPES constants
+ */
+function normalizeLoanType(loanType) {
+  if (!loanType) return LOAN_TYPES.MAX_LTV;
+  
+  const normalized = loanType.toLowerCase().trim();
+  
+  // Map UI strings to LOAN_TYPES constants
+  if (normalized.includes('max') && normalized.includes('gross')) {
+    return LOAN_TYPES.MAX_LTV; // "Max gross loan" -> MAX_LTV
+  }
+  if (normalized.includes('net') && normalized.includes('required')) {
+    return LOAN_TYPES.SPECIFIC_NET; // "Net loan required" -> SPECIFIC_NET
+  }
+  if (normalized.includes('specific') && normalized.includes('gross')) {
+    return LOAN_TYPES.SPECIFIC_GROSS; // "Specific gross loan" -> SPECIFIC_GROSS
+  }
+  if (normalized.includes('specific') && normalized.includes('ltv')) {
+    return LOAN_TYPES.MAX_LTV; // "Specific LTV required" -> MAX_LTV
+  }
+  
+  // Check if it's already a LOAN_TYPES constant
+  if (Object.values(LOAN_TYPES).includes(loanType)) {
+    return loanType;
+  }
+  
+  // Default to MAX_LTV
+  return LOAN_TYPES.MAX_LTV;
+}
 
 export class BTLCalculationEngine {
   constructor(params) {
@@ -70,7 +102,16 @@ export class BTLCalculationEngine {
     this.criteria = criteria || {};
     this.retentionChoice = retentionChoice;
     this.retentionLtv = retentionLtv;
-    this.loanType = loanType;
+    
+    // Normalize loan type and log for debugging
+    const originalLoanType = loanType;
+    this.loanType = normalizeLoanType(loanType); // Normalize UI string to LOAN_TYPES constant
+    
+    // Debug logging (can be removed in production)
+    if (originalLoanType !== this.loanType) {
+      console.log(`[BTL Engine] Normalized loan type: "${originalLoanType}" -> "${this.loanType}"`);
+    }
+    
     this.limits = limits;
     this.brokerRoute = brokerRoute;
 
@@ -107,84 +148,202 @@ export class BTLCalculationEngine {
     this.brokerFeePct = parseNumber(brokerFeePct) || 0;
     this.brokerFeeFlat = parseNumber(brokerFeeFlat) || 0;
 
-    // --- Limits and constraints from rate record or defaults
-    this.minLoan = selectedRate?.min_loan || limits.MIN_LOAN || 50000;
-    this.maxLoan = selectedRate?.max_loan || limits.MAX_LOAN || 25000000;
-    this.termMonths = selectedRate?.term_months || limits.TERM_MONTHS || 24;
+    // --- Limits and constraints from rate record (prioritize rate table values)
+    this.minLoan = selectedRate?.min_loan ?? limits.MIN_LOAN ?? 50000;
+    this.maxLoan = selectedRate?.max_loan ?? limits.MAX_LOAN ?? 25000000;
+    this.termMonths = selectedRate?.term_months ?? limits.TERM_MONTHS ?? 24;
     
-    // ICR requirements
-    this.minimumICR = this.isTracker ? 125 : 145; // Default ICR requirements
-    if (selectedRate?.min_icr) {
-      this.minimumICR = selectedRate.min_icr;
+    // ICR requirements from rate table (primary source)
+    this.minimumICR = selectedRate?.min_icr ?? (this.isTracker ? 125 : 145);
+    
+    // Rolled and deferred limits from rate table
+    this.maxRolledMonths = selectedRate?.max_rolled_months ?? limits.MAX_ROLLED_MONTHS ?? 24;
+    this.minRolledMonths = selectedRate?.min_rolled_months ?? 0;
+    
+    this.maxDeferredRate = selectedRate?.max_defer_int ?? limits.MAX_DEFERRED ?? 1.5;
+    this.minDeferredRate = selectedRate?.min_defer_int ?? 0;
+    
+    // Market rates from constants
+    this.standardBBR = MARKET_RATES.STANDARD_BBR ?? 0.04;
+    this.stressBBR = MARKET_RATES.STRESS_BBR ?? 0.0425;
+    
+    // Max LTV from rate table or user input
+    this.rateLtvLimit = selectedRate?.max_ltv ? parseNumber(selectedRate.max_ltv) / 100 : null;
+    
+    // Floor rate from rate table (for Core products)
+    this.floorRate = selectedRate?.floor_rate ? parseNumber(selectedRate.floor_rate) : null;
+    
+    // Max top slicing from rate table (percentage, default 20%)
+    this.maxTopSlicingPct = selectedRate?.max_top_slicing ? parseNumber(selectedRate.max_top_slicing) : 20;
+    
+    // Calculate maximum allowed top slicing value
+    this.maxTopSlicingValue = this.monthlyRent * (this.maxTopSlicingPct / 100);
+    
+    // Validate and cap top slicing to maximum allowed
+    if (this.topSlicing > this.maxTopSlicingValue) {
+      this.topSlicing = this.maxTopSlicingValue;
     }
-    
-    // Rolled and deferred limits from rate
-    this.maxRolledMonths = selectedRate?.max_rolled_months || limits.MAX_ROLLED_MONTHS || 24;
-    this.minRolledMonths = selectedRate?.min_rolled_months || 0;
-    
-    this.maxDeferredRate = selectedRate?.max_defer_int || limits.MAX_DEFERRED || 1.5;
-    this.minDeferredRate = selectedRate?.min_defer_int || 0;
-    
-    // Market rates
-    this.standardBBR = MARKET_RATES.STANDARD_BBR || 0.04;
-    this.stressBBR = MARKET_RATES.STRESS_BBR || 0.0425;
   }
 
-  /** Compute display rate and stress rate */
+  /** Apply floor rate from rate table */
+  applyFloorRate(rate) {
+    // If rate table has floor_rate column, use that value
+    if (this.floorRate !== null && this.floorRate !== undefined) {
+      const floorRateDecimal = this.floorRate / 100; // Convert percentage to decimal
+      return Math.max(rate, floorRateDecimal);
+    }
+    
+    // No floor rate specified
+    return rate;
+  }
+
+  /** Compute display rate and stress rate with floor applied */
   computeRates() {
     const { actualRate, isTracker, standardBBR, stressBBR } = this;
     
     // For tracker, add BBR to get display rate
-    const displayRate = isTracker 
-      ? actualRate + standardBBR 
-      : actualRate;
+    const baseDisplayRate = isTracker 
+      ? (actualRate / 100) + standardBBR 
+      : actualRate / 100;
     
     // For stress calculations, use stress BBR for trackers
-    const stressRate = isTracker 
-      ? actualRate + stressBBR 
-      : displayRate;
+    const baseStressRate = isTracker 
+      ? (actualRate / 100) + stressBBR 
+      : baseDisplayRate;
 
+    // Apply floor rate from rate table (if specified)
     return {
-      displayRate: displayRate / 100, // Convert to decimal
-      stressRate: stressRate / 100,   // Convert to decimal
+      displayRate: this.applyFloorRate(baseDisplayRate),
+      stressRate: this.applyFloorRate(baseStressRate),
     };
   }
 
-  /** Get maximum LTV based on loan type and inputs */
+  /** 
+   * Get maximum LTV based on multiple factors:
+   * - Rate table max_ltv
+   * - Retention LTV rules
+   * - User slider input (for Specific LTV loan type)
+   * - Property type and tier
+   */
   getMaxLTV() {
-    const { loanType, maxLtvInput, specificGrossLoan, propertyValue } = this;
+    const { 
+      loanType, 
+      maxLtvInput, 
+      specificGrossLoan, 
+      propertyValue,
+      retentionChoice,
+      retentionLtv,
+      rateLtvLimit,
+      productScope,
+      tier,
+      criteria
+    } = this;
     
-    // If specific gross loan is provided, calculate max LTV from that
-    if (loanType === LOAN_TYPES.SPECIFIC_GROSS && specificGrossLoan > 0 && propertyValue > 0) {
-      return specificGrossLoan / propertyValue;
-    }
-    
-    // If max LTV loan type, use the input LTV
+    // For "Specific LTV required" loan type, prioritize the slider input
+    // This allows user to specify exact LTV they want
     if (loanType === LOAN_TYPES.MAX_LTV) {
-      return maxLtvInput;
+      // Start with user's slider input
+      let maxLtv = maxLtvInput;
+      
+      // Still respect rate table limit as absolute maximum
+      if (rateLtvLimit !== null) {
+        maxLtv = Math.min(maxLtv, rateLtvLimit);
+      }
+      
+      // Apply retention rules if applicable
+      if (retentionChoice === 'Yes' && retentionLtv) {
+        const retentionLimit = parseNumber(retentionLtv) / 100;
+        maxLtv = Math.min(maxLtv, retentionLimit);
+      }
+      
+      // Check for special flat-above-commercial rules from criteria
+      const hasFlatAboveCommercial = Object.keys(criteria).some(qKey => {
+        const answer = criteria[qKey];
+        const answerLabel = (answer?.option_label || '').toLowerCase();
+        return answerLabel === 'yes' && qKey.toLowerCase().includes('flat');
+      });
+      
+      if (hasFlatAboveCommercial) {
+        // Apply tier-based LTV limits for flat above commercial
+        const tierNum = parseNumber(tier);
+        if (tierNum === 2) {
+          maxLtv = Math.min(maxLtv, 0.65); // 65% for tier 2
+        } else if (tierNum === 3) {
+          maxLtv = Math.min(maxLtv, 0.75); // 75% for tier 3
+        }
+      }
+      
+      return maxLtv;
     }
     
-    // Default to maxLtvInput
-    return maxLtvInput;
+    // For specific gross loan, calculate effective LTV from that
+    if (loanType === LOAN_TYPES.SPECIFIC_GROSS && specificGrossLoan > 0 && propertyValue > 0) {
+      const effectiveLtv = specificGrossLoan / propertyValue;
+      // Still respect rate table limit
+      if (rateLtvLimit !== null) {
+        return Math.min(effectiveLtv, rateLtvLimit);
+      }
+      return effectiveLtv;
+    }
+    
+    // For other loan types, start with rate table limit or user input
+    let maxLtv = rateLtvLimit ?? maxLtvInput;
+    
+    // Apply retention LTV rules
+    if (retentionChoice === 'Yes' && retentionLtv) {
+      const retentionLimit = parseNumber(retentionLtv) / 100;
+      maxLtv = Math.min(maxLtv, retentionLimit);
+    }
+    
+    // Check for special flat-above-commercial rules from criteria
+    const hasFlatAboveCommercial = Object.keys(criteria).some(qKey => {
+      const answer = criteria[qKey];
+      const answerLabel = (answer?.option_label || '').toLowerCase();
+      return answerLabel === 'yes' && qKey.toLowerCase().includes('flat');
+    });
+    
+    if (hasFlatAboveCommercial) {
+      // Apply tier-based LTV limits for flat above commercial
+      const tierNum = parseNumber(tier);
+      if (tierNum === 2) {
+        maxLtv = Math.min(maxLtv, 0.65); // 65% for tier 2
+      } else if (tierNum === 3) {
+        maxLtv = Math.min(maxLtv, 0.75); // 75% for tier 3
+      }
+    }
+    
+    return maxLtv;
   }
 
-  /** Compute loan cap based on LTV and other constraints */
+  /** Compute loan cap based on LTV rules and loan type */
   computeLoanCap() {
-    const { propertyValue, specificGrossLoan, specificNetLoan, loanType, maxLoan } = this;
+    const { 
+      propertyValue, 
+      specificGrossLoan, 
+      specificNetLoan, 
+      loanType, 
+      maxLoan,
+      feePctDecimal 
+    } = this;
+    
     const maxLtv = this.getMaxLTV();
     
-    // LTV-based cap
+    // Primary LTV-based cap
     const ltvCap = propertyValue > 0 ? maxLtv * propertyValue : Infinity;
     
-    let loanCap = ltvCap;
+    // Start with LTV cap and max loan constraint
+    let loanCap = Math.min(ltvCap, maxLoan);
     
     // Apply specific gross loan constraint
     if (loanType === LOAN_TYPES.SPECIFIC_GROSS && specificGrossLoan > 0) {
+      console.log(`[BTL Engine] Applying SPECIFIC_GROSS constraint: ${specificGrossLoan}`);
       loanCap = Math.min(loanCap, specificGrossLoan);
     }
     
-    // Apply max loan limit
-    loanCap = Math.min(loanCap, maxLoan);
+    // For specific net loan, we calculate max gross that produces the target net
+    // This is handled in evaluateLoan via grossFromNet calculation
+    
+    console.log(`[BTL Engine] computeLoanCap - loanType: ${loanType}, maxLtv: ${(maxLtv * 100).toFixed(2)}%, ltvCap: £${ltvCap.toFixed(0)}, finalCap: £${loanCap.toFixed(0)}`);
     
     return loanCap;
   }
@@ -208,52 +367,62 @@ export class BTLCalculationEngine {
     // Calculate remaining months after rolled period
     const remainingMonths = Math.max(termMonths - rolledMonths, 1);
     
-    // Adjust stress rate by deferred interest
-    const stressAdjRate = Math.max(stressRate - (deferredRate / 100), 0.0001);
+    // Adjust stress rate by deferred interest (deferred rate reduces payment burden)
+    const deferredRateDecimal = deferredRate / 100;
+    const stressAdjRate = Math.max(stressRate - deferredRateDecimal, 1e-6);
     
     // --- Calculate rental-based cap (ICR constraint)
     const effectiveRent = monthlyRent + (topSlicing || 0);
     const annualRent = effectiveRent * termMonths;
     
     let maxFromRent = Infinity;
-    if (effectiveRent > 0 && stressAdjRate > 0) {
+    if (effectiveRent > 0 && stressAdjRate > 0 && minimumICR > 0) {
       // ICR = (Annual Rent) / (Annual Interest)
-      // Annual Interest = Gross * (Rate/12) * RemainingMonths
-      // Rearranging: Gross = (Annual Rent) / (ICR * (Rate/12) * RemainingMonths)
-      maxFromRent = annualRent / (minimumICR / 100 * (stressAdjRate / 12) * remainingMonths);
+      // Rearranging: Gross = (Annual Rent) / (ICR/100 * (Rate/12) * RemainingMonths)
+      maxFromRent = annualRent / ((minimumICR / 100) * (stressAdjRate / 12) * remainingMonths);
     }
     
-    // --- Calculate gross from net loan (if specific net loan type)
+    // --- Calculate gross from net loan (for specific net loan type)
     let grossFromNet = Infinity;
     if (loanType === LOAN_TYPES.SPECIFIC_NET && specificNetLoan > 0 && feePctDecimal < 1) {
-      const payRateAdj = Math.max(displayRate - (deferredRate / 100), 0);
-      const denom = 1 - feePctDecimal - (payRateAdj / 12 * rolledMonths) - ((deferredRate / 100) / 12 * termMonths);
+      const payRateAdj = Math.max(displayRate - deferredRateDecimal, 0);
       
-      if (denom > 0.0001) {
+      // Net = Gross * (1 - fee% - payRate/12*rolled - deferredRate/12*term)
+      // Rearranging: Gross = Net / (1 - fee% - payRate/12*rolled - deferredRate/12*term)
+      const denom = 1 - feePctDecimal - (payRateAdj / 12 * rolledMonths) - (deferredRateDecimal / 12 * termMonths);
+      
+      if (denom > 1e-7) {
         grossFromNet = specificNetLoan / denom;
       }
     }
     
-    // --- Determine eligible gross loan
+    // --- Determine eligible gross loan (minimum of all constraints)
     let eligibleGross = Math.min(
       this.computeLoanCap(),
       maxFromRent
     );
     
+    console.log(`[BTL Engine] evaluateLoan - loanType: ${loanType}, loanCap: £${this.computeLoanCap().toFixed(0)}, maxFromRent: £${maxFromRent.toFixed(0)}, initial eligibleGross: £${eligibleGross.toFixed(0)}`);
+    
+    // Apply specific net loan constraint
     if (loanType === LOAN_TYPES.SPECIFIC_NET) {
+      console.log(`[BTL Engine] Applying SPECIFIC_NET constraint: grossFromNet: £${grossFromNet.toFixed(0)}`);
       eligibleGross = Math.min(eligibleGross, grossFromNet);
     }
     
-    // Check minimum loan
+    console.log(`[BTL Engine] Final eligibleGross: £${eligibleGross.toFixed(0)} (minLoan: £${minLoan})`);
+    
+    // Check minimum loan requirement
     if (eligibleGross < minLoan) {
+      console.log(`[BTL Engine] eligibleGross below minimum, setting to 0`);
       eligibleGross = 0;
     }
     
     // --- Calculate loan components
-    const payRateAdj = Math.max(displayRate - (deferredRate / 100), 0);
+    const payRateAdj = Math.max(displayRate - deferredRateDecimal, 0);
     const productFeeAmt = eligibleGross * feePctDecimal;
     const rolledInterestAmt = eligibleGross * payRateAdj * rolledMonths / 12;
-    const deferredInterestAmt = eligibleGross * (deferredRate / 100) * termMonths / 12;
+    const deferredInterestAmt = eligibleGross * deferredRateDecimal * termMonths / 12;
     const netLoan = eligibleGross - productFeeAmt - rolledInterestAmt - deferredInterestAmt;
     
     // Calculate LTV
@@ -292,7 +461,23 @@ export class BTLCalculationEngine {
     return annualRent / annualizedInterest;
   }
 
-  /** Run full loan computation with optimization */
+  /** 
+   * Run full loan computation with optimization
+   * 
+   * This method implements three loan calculation strategies:
+   * 1. MAX_LTV: Calculate max loan based on LTV slider value (respects rate table max)
+   * 2. SPECIFIC_GROSS: Use user-specified gross loan amount
+   * 3. SPECIFIC_NET: Work backwards from target net loan to find gross loan
+   * 
+   * For non-Core-Residential products, it optimizes rolled months and deferred 
+   * interest % to maximize net loan proceeds while respecting:
+   * - LTV limits (from slider for MAX_LTV, or rate table absolute max)
+   * - ICR requirements (from rate table)
+   * - Min/max loan limits (from rate table)
+   * - Floor rates (from rate table floor_rate column)
+   * 
+   * Market rates (BBR) are sourced from constants.js MARKET_RATES
+   */
   compute() {
     const {
       isCore,
@@ -317,11 +502,11 @@ export class BTLCalculationEngine {
 
     let bestLoan = null;
 
-    // --- Core & Residential: no rolled/deferred allowed
+    // --- Core & Residential: no rolled/deferred allowed (direct evaluation)
     if (isCore && isResidential) {
       bestLoan = this.evaluateLoan(0, 0);
     }
-    // --- Manual input override
+    // --- Manual input override (user adjusted sliders)
     else if (manualRolled != null || manualDeferred != null) {
       const rolled = Math.min(
         Math.max(minRolledMonths, Number(manualRolled) || 0),
@@ -335,14 +520,16 @@ export class BTLCalculationEngine {
     }
     // --- Auto-optimize across rolled/deferred combinations
     else {
-      const step = 0.01; // 0.01% increments for deferred rate
+      const step = 0.0001; // 0.01% increments for deferred rate (finer granularity)
       const deferredSteps = Math.round(maxDeferredRate / step);
+      const maxRolledToTest = Math.min(maxRolledMonths, termMonths);
 
-      for (let r = minRolledMonths; r <= Math.min(maxRolledMonths, termMonths); r++) {
+      for (let r = minRolledMonths; r <= maxRolledToTest; r++) {
         for (let i = 0; i <= deferredSteps; i++) {
           const deferredVal = minDeferredRate + (i * step);
           const candidate = this.evaluateLoan(r, deferredVal);
           
+          // Select combination that maximizes net loan
           if (!bestLoan || candidate.netLoan > bestLoan.netLoan) {
             bestLoan = candidate;
           }
@@ -440,8 +627,9 @@ export class BTLCalculationEngine {
     }
     const revertRateDD = revertRate ? bestLoan.grossLoan * (revertRate / 100) / 12 : null;
 
-    // NBP (Net Borrowing Position) - Net loan minus fees
-    const nbp = bestLoan.netLoan - adminFee - exitFee;
+    // NBP (Net Borrowing Position) - Uses min of 2% of gross loan or actual product/arrangement fee
+    // This ensures we take the lower of the two values
+    const nbp = bestLoan.netLoan + Math.min(bestLoan.grossLoan * 0.02, bestLoan.productFeeAmount);
 
     // Serviced Interest - interest that's paid monthly (not rolled/deferred)
     const servicedInterest = bestLoan.directDebit * (this.termMonths - bestLoan.rolledMonths);

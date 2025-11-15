@@ -15,6 +15,8 @@ const BTLLoanDetailsSection = ({
   onMonthlyRentChange,
   topSlicing,
   onTopSlicingChange,
+  maxTopSlicingPct = 20,
+  maxTopSlicingValue = 0,
   loanType,
   onLoanTypeChange,
   productSelectControl,
@@ -30,6 +32,12 @@ const BTLLoanDetailsSection = ({
   onSpecificGrossLoanChange,
   isReadOnly = false
 }) => {
+  // Format max top slicing value for display
+  const formatMaxTopSlicing = () => {
+    if (!maxTopSlicingValue || maxTopSlicingValue <= 0) return '£0';
+    return `£${maxTopSlicingValue.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
   return (
     <CollapsibleSection 
       title="Loan details" 
@@ -78,6 +86,9 @@ const BTLLoanDetailsSection = ({
               placeholder="e.g. 600"
               disabled={isReadOnly}
             />
+            <div className="helper-text">
+              Maximum top slicing: {formatMaxTopSlicing()} ({maxTopSlicingPct}% of monthly rent)
+            </div>
           </div>
         </div>
 

@@ -217,6 +217,22 @@ router.post('/:id', async (req, res) => {
           if (result.pay_rate) doc.text(`  Pay Rate: ${Number(result.pay_rate).toFixed(2)}%`);
           if (result.icr) doc.text(`  ICR: ${Number(result.icr).toFixed(2)}%`);
           if (result.monthly_interest_cost) doc.text(`  Monthly Interest: £${Number(result.monthly_interest_cost).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          if (result.direct_debit) doc.text(`  Direct Debit: £${Number(result.direct_debit).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          if (result.product_fee_pounds) doc.text(`  Product Fee: £${Number(result.product_fee_pounds).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          if (result.admin_fee) doc.text(`  Admin Fee: £${Number(result.admin_fee).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          if (result.rolled_months) doc.text(`  Rolled Months: ${result.rolled_months}`);
+          if (result.rolled_months_interest) doc.text(`  Rolled Interest: £${Number(result.rolled_months_interest).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          if (result.deferred_interest_percent) doc.text(`  Deferred Interest %: ${Number(result.deferred_interest_percent).toFixed(2)}%`);
+          if (result.deferred_interest_pounds) doc.text(`  Deferred Interest £: £${Number(result.deferred_interest_pounds).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          if (result.serviced_interest) doc.text(`  Serviced Interest: £${Number(result.serviced_interest).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          if (result.nbp) doc.text(`  NBP: £${Number(result.nbp).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          if (result.exit_fee) doc.text(`  Exit Fee: £${Number(result.exit_fee).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          if (result.erc) doc.text(`  ERC: ${result.erc}`);
+          if (result.aprc) doc.text(`  APRC: ${Number(result.aprc).toFixed(2)}%`);
+          if (result.total_cost_to_borrower) doc.text(`  Total Cost: £${Number(result.total_cost_to_borrower).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          if (result.total_loan_term) doc.text(`  Total Term: ${result.total_loan_term} months`);
+          if (result.broker_client_fee) doc.text(`  Broker Client Fee: £${Number(result.broker_client_fee).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          if (result.broker_commission_proc_fee_pounds) doc.text(`  Broker Commission: £${Number(result.broker_commission_proc_fee_pounds).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
           if (result.product_name) doc.text(`  Product: ${result.product_name}`);
           
           doc.moveDown(0.8);

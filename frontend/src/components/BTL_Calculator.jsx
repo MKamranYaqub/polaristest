@@ -661,15 +661,17 @@ export default function BTLcalculator({ initialQuote = null }) {
     return relevantRates.map(rate => {
       // Determine gross loan based on loan calculation type
       let gross = NaN;
-      if (loanType === 'Specific gross loan' && Number.isFinite(specificGross)) {
+      const loanTypeNormalized = (loanType || '').toLowerCase();
+      
+      if (loanTypeNormalized.includes('specific') && loanTypeNormalized.includes('gross') && Number.isFinite(specificGross)) {
         gross = specificGross;
-      } else if (loanType === 'Specific net loan' && Number.isFinite(specificNet)) {
+      } else if (loanTypeNormalized.includes('net') && loanTypeNormalized.includes('required') && Number.isFinite(specificNet)) {
         // Work backwards from net loan to gross loan
         const pfPercent = Number(rate.product_fee);
         if (!Number.isNaN(pfPercent)) {
           gross = specificNet / (1 - pfPercent / 100);
         }
-      } else if (loanType === 'Max gross loan' && Number.isFinite(pv)) {
+      } else if ((loanTypeNormalized.includes('max') || loanTypeNormalized.includes('ltv')) && Number.isFinite(pv)) {
         // Use max LTV from rate or input
         const maxLtv = Number(rate.max_ltv || maxLtvInput);
         gross = pv * (maxLtv / 100);
@@ -742,6 +744,8 @@ export default function BTLcalculator({ initialQuote = null }) {
         monthly_interest_cost: Number.isFinite(monthlyInterest) ? monthlyInterest.toFixed(2) : null,
         rent: Number.isFinite(monthlyRentNum) ? monthlyRentNum.toFixed(2) : null,
         top_slicing: Number.isFinite(topSlicingNum) ? topSlicingNum.toFixed(2) : null,
+        max_top_slicing_pct: rate.max_top_slicing || 20, // Default to 20%
+        max_top_slicing_value: Number.isFinite(monthlyRentNum) ? (monthlyRentNum * ((rate.max_top_slicing || 20) / 100)).toFixed(2) : null,
         product_name: rate.product || null,
         // Add other fields that might be needed
         revert_rate: null, // Not calculated in BTL
@@ -763,6 +767,106 @@ export default function BTLcalculator({ initialQuote = null }) {
       };
     });
   }, [relevantRates, propertyValue, specificGrossLoan, specificNetLoan, monthlyRent, topSlicing, loanType, maxLtvInput, addFeesToggle, feeCalculationType, additionalFeeAmount, brokerSettings.clientType, brokerSettings.brokerCommissionPercent]);
+
+  // Compute full results using BTLCalculationEngine for saving to database
+  const fullComputedResults = useMemo(() => {
+    if (!relevantRates || relevantRates.length === 0) return [];
+
+    const pv = parseNumber(propertyValue);
+    const specificGross = parseNumber(specificGrossLoan);
+    const specificNet = parseNumber(specificNetLoan);
+    const monthlyRentNum = parseNumber(monthlyRent);
+    const topSlicingNum = parseNumber(topSlicing);
+    const additionalFeeNum = parseNumber(additionalFeeAmount);
+
+    const results = [];
+
+    relevantRates.forEach(rate => {
+      const derivedProcFeePct = brokerSettings.clientType === 'Broker' ? Number(brokerSettings.brokerCommissionPercent) || 0 : 0;
+      
+      const additionalFeeRaw = Number(additionalFeeNum);
+      const derivedBrokerFeePct = (addFeesToggle && feeCalculationType === 'percentage' && Number.isFinite(additionalFeeRaw))
+        ? additionalFeeRaw
+        : 0;
+      const derivedBrokerFeeFlat = (addFeesToggle && feeCalculationType === 'fixed' && Number.isFinite(additionalFeeRaw))
+        ? additionalFeeRaw
+        : 0;
+
+      const calculationParams = {
+        colKey: `rate_${rate.id || Math.random()}`,
+        selectedRate: rate,
+        overriddenRate: null,
+        propertyValue,
+        monthlyRent,
+        specificNetLoan,
+        specificGrossLoan,
+        maxLtvInput,
+        topSlicing,
+        loanType,
+        productType,
+        productScope,
+        tier: currentTier,
+        selectedRange,
+        criteria: answers,
+        retentionChoice,
+        retentionLtv,
+        productFeePercent: rate.product_fee || 0,
+        feeOverrides: {},
+        manualRolled: rolledMonthsPerColumn[`rate_${rate.id}`],
+        manualDeferred: deferredInterestPerColumn[`rate_${rate.id}`],
+        brokerRoute: brokerSettings.brokerRoute,
+        procFeePct: derivedProcFeePct,
+        brokerFeePct: derivedBrokerFeePct,
+        brokerFeeFlat: derivedBrokerFeeFlat,
+      };
+
+      const result = computeBTLLoan(calculationParams);
+
+      if (result) {
+        results.push({
+          ...rate,
+          fee_column: rate.product_fee !== undefined && rate.product_fee !== null && rate.product_fee !== '' 
+            ? String(rate.product_fee) 
+            : null,
+          gross_loan: result.grossLoan,
+          net_loan: result.netLoan,
+          ltv: result.ltv ? result.ltv * 100 : null,
+          net_ltv: result.netLtv ? result.netLtv * 100 : null,
+          property_value: pv,
+          icr: result.icr,
+          initial_rate: result.actualRateUsed * 100,
+          pay_rate: result.actualRateUsed * 100,
+          full_rate: result.fullRateText,
+          revert_rate: result.revertRate,
+          revert_rate_dd: result.revertRateDD,
+          aprc: result.aprc,
+          product_fee_percent: result.productFeePercent,
+          product_fee_pounds: result.productFeeAmount,
+          admin_fee: result.adminFee,
+          broker_client_fee: result.brokerClientFee,
+          broker_commission_proc_fee_percent: result.procFeePct,
+          broker_commission_proc_fee_pounds: result.procFeeValue,
+          exit_fee: result.exitFee,
+          monthly_interest_cost: result.monthlyInterestCost,
+          rolled_months: result.rolledMonths,
+          rolled_months_interest: result.rolledInterestAmount,
+          deferred_interest_percent: result.deferredCapPct,
+          deferred_interest_pounds: result.deferredInterestAmount,
+          serviced_interest: result.servicedInterest,
+          direct_debit: result.directDebit,
+          erc: result.ercText,
+          rent: monthlyRentNum,
+          top_slicing: topSlicingNum,
+          nbp: result.nbp,
+          total_cost_to_borrower: result.totalCostToBorrower,
+          total_loan_term: result.totalLoanTerm,
+          product_name: result.productName,
+        });
+      }
+    });
+
+    return results;
+  }, [relevantRates, propertyValue, monthlyRent, specificNetLoan, specificGrossLoan, maxLtvInput, topSlicing, loanType, productType, productScope, currentTier, selectedRange, answers, retentionChoice, retentionLtv, rolledMonthsPerColumn, deferredInterestPerColumn, brokerSettings, addFeesToggle, feeCalculationType, additionalFeeAmount]);
 
   const handleAnswerChange = (questionKey, optionIndex) => {
     setAnswers((prev) => {
@@ -1099,14 +1203,16 @@ export default function BTLcalculator({ initialQuote = null }) {
   const dynamicMaxLtv = calculateMaxAvailableLtv();
   
   // LTV slider range bounds (used for percentage calculation and to keep UI consistent)
-  const ltvMin = 20;
+  const ltvMin = 1; // BTL minimum is 1%
   const ltvMax = dynamicMaxLtv;
   const ltvPercent = Math.round(((maxLtvInput - ltvMin) / (ltvMax - ltvMin)) * 100);
 
-  // Clamp maxLtvInput when dynamicMaxLtv changes
+  // Clamp maxLtvInput when dynamicMaxLtv changes (ensure between 1% and dynamicMaxLtv)
   useEffect(() => {
     if (maxLtvInput > dynamicMaxLtv) {
       setMaxLtvInput(dynamicMaxLtv);
+    } else if (maxLtvInput < 1) {
+      setMaxLtvInput(1);
     }
   }, [dynamicMaxLtv, maxLtvInput]);
 
@@ -1222,10 +1328,10 @@ export default function BTLcalculator({ initialQuote = null }) {
               answers,
               // Client details from broker settings
               ...brokerSettings.getAllSettings(),
-              relevantRates: calculatedRates,
+              relevantRates: fullComputedResults, // Use full computed results instead of simple calculatedRates
               selectedRate: (filteredRatesForDip && filteredRatesForDip.length > 0) 
                 ? filteredRatesForDip[0] 
-                : (calculatedRates && calculatedRates.length > 0 ? calculatedRates[0] : null),
+                : (fullComputedResults && fullComputedResults.length > 0 ? fullComputedResults[0] : null),
             }}
             allColumnData={[]}
             bestSummary={null}
@@ -1342,6 +1448,8 @@ export default function BTLcalculator({ initialQuote = null }) {
         onMonthlyRentChange={setMonthlyRent}
         topSlicing={topSlicing}
         onTopSlicingChange={setTopSlicing}
+        maxTopSlicingPct={relevantRates?.[0]?.max_top_slicing || 20}
+        maxTopSlicingValue={parseNumber(monthlyRent) * ((relevantRates?.[0]?.max_top_slicing || 20) / 100)}
         loanType={loanType}
         onLoanTypeChange={setLoanType}
         productSelectControl={productSelectControl}
