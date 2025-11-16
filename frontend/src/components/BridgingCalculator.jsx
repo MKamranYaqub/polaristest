@@ -361,7 +361,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
           paying_network_club: quote.paying_network_club,
           security_properties: quote.security_properties,
           fee_type_selection: quote.fee_type_selection,
-          dip_status: quote.dip_status
+          dip_status: quote.dip_status,
+          funding_line: quote.funding_line
         });
       }
       
