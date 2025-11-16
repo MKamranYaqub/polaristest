@@ -266,15 +266,15 @@ router.post('/:id', async (req, res) => {
           // Fees Section
           doc.fontSize(10).fillColor('#555555').text('Fees:', { underline: true });
           doc.fillColor('black').fontSize(9);
-          if (result.product_fee_percent !== undefined) doc.text(`  Product Fee %: ${formatPercent(result.product_fee_percent)}`);
-          if (result.product_fee_pounds !== undefined) doc.text(`  Product Fee £: ${formatCurrency(result.product_fee_pounds)}`);
-          if (result.admin_fee !== undefined) doc.text(`  Admin Fee: ${formatCurrency(result.admin_fee)}`);
-          if (result.broker_client_fee !== undefined) doc.text(`  Broker Client Fee: ${formatCurrency(result.broker_client_fee)}`);
-          if (result.broker_commission_proc_fee_percent !== undefined) doc.text(`  Broker Commission %: ${formatPercent(result.broker_commission_proc_fee_percent)}`);
-          if (result.broker_commission_proc_fee_pounds !== undefined) doc.text(`  Broker Commission £: ${formatCurrency(result.broker_commission_proc_fee_pounds)}`);
-          if (result.commitment_fee_pounds !== undefined) doc.text(`  Commitment Fee: ${formatCurrency(result.commitment_fee_pounds)}`);
-          if (result.exit_fee !== undefined) doc.text(`  Exit Fee: ${formatCurrency(result.exit_fee)}`);
-          if (result.title_insurance_cost !== undefined) doc.text(`  Title Insurance Cost: ${formatCurrency(result.title_insurance_cost)}`);
+          if (result.product_fee_percent !== undefined && result.product_fee_percent !== null) doc.text(`  Product Fee %: ${formatPercent(result.product_fee_percent)}`);
+          if (result.product_fee_pounds !== undefined && result.product_fee_pounds !== null) doc.text(`  Product Fee £: ${formatCurrency(result.product_fee_pounds)}`);
+          if (result.admin_fee !== undefined && result.admin_fee !== null) doc.text(`  Admin Fee: ${formatCurrency(result.admin_fee)}`);
+          if (result.broker_client_fee !== undefined && result.broker_client_fee !== null) doc.text(`  Broker Client Fee: ${formatCurrency(result.broker_client_fee)}`);
+          if (result.broker_commission_proc_fee_percent !== undefined && result.broker_commission_proc_fee_percent !== null) doc.text(`  Broker Commission %: ${formatPercent(result.broker_commission_proc_fee_percent)}`);
+          if (result.broker_commission_proc_fee_pounds !== undefined && result.broker_commission_proc_fee_pounds !== null) doc.text(`  Broker Commission £: ${formatCurrency(result.broker_commission_proc_fee_pounds)}`);
+          if (result.commitment_fee_pounds !== undefined && result.commitment_fee_pounds !== null) doc.text(`  Commitment Fee: ${formatCurrency(result.commitment_fee_pounds)}`);
+          if (result.exit_fee !== undefined && result.exit_fee !== null) doc.text(`  Exit Fee: ${formatCurrency(result.exit_fee)}`);
+          if (result.title_insurance_cost !== undefined && result.title_insurance_cost !== null) doc.text(`  Title Insurance Cost: ${formatCurrency(result.title_insurance_cost)}`);
           doc.moveDown(0.3);
           
           // Interest Calculations Section
@@ -294,11 +294,11 @@ router.post('/:id', async (req, res) => {
           if (result.direct_debit !== undefined && result.direct_debit !== null) doc.text(`  Direct Debit: ${formatCurrency(result.direct_debit)}`);
           if (result.erc !== undefined && result.erc !== null) doc.text(`  ERC: ${result.erc}`);
           if (result.erc_fusion_only !== undefined && result.erc_fusion_only !== null) doc.text(`  ERC (Fusion Only): ${result.erc_fusion_only}`);
-          if (result.rent !== undefined) doc.text(`  Rent: ${formatCurrency(result.rent)}`);
-          if (result.top_slicing !== undefined) doc.text(`  Top Slicing: ${formatCurrency(result.top_slicing)}`);
-          if (result.nbp !== undefined) doc.text(`  NBP: ${formatCurrency(result.nbp)}`);
-          if (result.total_cost_to_borrower !== undefined) doc.text(`  Total Cost to Borrower: ${formatCurrency(result.total_cost_to_borrower)}`);
-          if (result.total_loan_term !== undefined) doc.text(`  Total Loan Term: ${formatNumber(result.total_loan_term, 0)} months`);
+          if (result.rent !== undefined && result.rent !== null) doc.text(`  Rent: ${formatCurrency(result.rent)}`);
+          if (result.top_slicing !== undefined && result.top_slicing !== null) doc.text(`  Top Slicing: ${formatCurrency(result.top_slicing)}`);
+          if (result.nbp !== undefined && result.nbp !== null) doc.text(`  NBP: ${formatCurrency(result.nbp)}`);
+          if (result.total_cost_to_borrower !== undefined && result.total_cost_to_borrower !== null) doc.text(`  Total Cost to Borrower: ${formatCurrency(result.total_cost_to_borrower)}`);
+          if (result.total_loan_term !== undefined && result.total_loan_term !== null) doc.text(`  Total Loan Term: ${formatNumber(result.total_loan_term, 0)} months`);
           if (result.product_name) doc.text(`  Product: ${result.product_name}`);
           
           doc.moveDown(1);
