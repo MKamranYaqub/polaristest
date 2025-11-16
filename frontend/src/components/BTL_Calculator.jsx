@@ -334,6 +334,51 @@ export default function BTLcalculator({ initialQuote = null }) {
           console.debug('Failed to parse criteria_answers', e);
         }
       }
+      
+      // Load overrides if available
+      if (quote.rates_overrides) {
+        try {
+          const overridesData = typeof quote.rates_overrides === 'string' 
+            ? JSON.parse(quote.rates_overrides) 
+            : quote.rates_overrides;
+          if (overridesData) setRatesOverrides(overridesData);
+        } catch (e) {
+          console.debug('Failed to parse rates_overrides', e);
+        }
+      }
+      
+      if (quote.product_fee_overrides) {
+        try {
+          const overridesData = typeof quote.product_fee_overrides === 'string' 
+            ? JSON.parse(quote.product_fee_overrides) 
+            : quote.product_fee_overrides;
+          if (overridesData) setProductFeeOverrides(overridesData);
+        } catch (e) {
+          console.debug('Failed to parse product_fee_overrides', e);
+        }
+      }
+      
+      if (quote.rolled_months_per_column) {
+        try {
+          const columnData = typeof quote.rolled_months_per_column === 'string' 
+            ? JSON.parse(quote.rolled_months_per_column) 
+            : quote.rolled_months_per_column;
+          if (columnData) setRolledMonthsPerColumn(columnData);
+        } catch (e) {
+          console.debug('Failed to parse rolled_months_per_column', e);
+        }
+      }
+      
+      if (quote.deferred_interest_per_column) {
+        try {
+          const columnData = typeof quote.deferred_interest_per_column === 'string' 
+            ? JSON.parse(quote.deferred_interest_per_column) 
+            : quote.deferred_interest_per_column;
+          if (columnData) setDeferredInterestPerColumn(columnData);
+        } catch (e) {
+          console.debug('Failed to parse deferred_interest_per_column', e);
+        }
+      }
     } catch (e) {
       // ignore load errors
       // eslint-disable-next-line no-console
@@ -798,10 +843,12 @@ export default function BTLcalculator({ initialQuote = null }) {
         ? additionalFeeRaw
         : 0;
 
+      const colKey = `rate_${rate.id || Math.random()}`;
+
       const calculationParams = {
-        colKey: `rate_${rate.id || Math.random()}`,
+        colKey,
         selectedRate: rate,
-        overriddenRate: null,
+        overriddenRate: ratesOverrides[colKey] ? parseNumber(ratesOverrides[colKey]) : null,
         propertyValue,
         monthlyRent,
         specificNetLoan,
@@ -817,9 +864,9 @@ export default function BTLcalculator({ initialQuote = null }) {
         retentionChoice,
         retentionLtv,
         productFeePercent: rate.product_fee || 0,
-        feeOverrides: {},
-        manualRolled: rolledMonthsPerColumn[`rate_${rate.id}`],
-        manualDeferred: deferredInterestPerColumn[`rate_${rate.id}`],
+        feeOverrides: productFeeOverrides,
+        manualRolled: rolledMonthsPerColumn[colKey],
+        manualDeferred: deferredInterestPerColumn[colKey],
         brokerRoute: brokerSettings.brokerRoute,
         procFeePct: derivedProcFeePct,
         brokerFeePct: derivedBrokerFeePct,
@@ -866,13 +913,14 @@ export default function BTLcalculator({ initialQuote = null }) {
           nbp: result.nbp,
           total_cost_to_borrower: result.totalCostToBorrower,
           total_loan_term: result.totalLoanTerm,
+          titleInsuranceCost: result.titleInsuranceCost,
           product_name: result.productName,
         });
       }
     });
 
     return results;
-  }, [relevantRates, propertyValue, monthlyRent, specificNetLoan, specificGrossLoan, maxLtvInput, topSlicing, loanType, productType, productScope, currentTier, selectedRange, answers, retentionChoice, retentionLtv, rolledMonthsPerColumn, deferredInterestPerColumn, brokerSettings, addFeesToggle, feeCalculationType, additionalFeeAmount]);
+  }, [relevantRates, propertyValue, monthlyRent, specificNetLoan, specificGrossLoan, maxLtvInput, topSlicing, loanType, productType, productScope, currentTier, selectedRange, answers, retentionChoice, retentionLtv, rolledMonthsPerColumn, deferredInterestPerColumn, ratesOverrides, productFeeOverrides, brokerSettings, addFeesToggle, feeCalculationType, additionalFeeAmount]);
 
   const handleAnswerChange = (questionKey, optionIndex) => {
     setAnswers((prev) => {
@@ -1338,6 +1386,11 @@ export default function BTLcalculator({ initialQuote = null }) {
               selectedRate: (filteredRatesForDip && filteredRatesForDip.length > 0) 
                 ? filteredRatesForDip[0] 
                 : (fullComputedResults && fullComputedResults.length > 0 ? fullComputedResults[0] : null),
+              // Include overrides for saving
+              ratesOverrides,
+              productFeeOverrides,
+              rolledMonthsPerColumn,
+              deferredInterestPerColumn,
             }}
             allColumnData={[]}
             bestSummary={null}

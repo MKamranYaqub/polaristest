@@ -61,15 +61,29 @@ router.post('/', validate(createQuoteSchema), asyncHandler(async (req, res) => {
   
   // Save results to the corresponding results table if provided
   if (savedQuote && results && Array.isArray(results) && results.length > 0) {
+    log.info(`💾 Saving ${results.length} results to ${resultsTable}`);
+    
     const resultsToInsert = results.map(result => ({
       quote_id: savedQuote.id,
       ...result
     }));
     
+    // Log sample of first result to verify title_insurance_cost is present
+    if (resultsToInsert.length > 0) {
+      log.info('Sample result data:', {
+        fee_column: resultsToInsert[0].fee_column,
+        has_title_insurance: 'title_insurance_cost' in resultsToInsert[0],
+        title_insurance_value: resultsToInsert[0].title_insurance_cost
+      });
+    }
+    
     const { error: resultsError } = await supabase.from(resultsTable).insert(resultsToInsert);
     if (resultsError) {
-      log.error('Error saving quote results', resultsError);
+      log.error('❌ Error saving quote results to ' + resultsTable, resultsError);
+      log.error('Failed result data sample:', JSON.stringify(resultsToInsert[0], null, 2));
       // Don't fail the entire request if results saving fails
+    } else {
+      log.info(`✅ Successfully saved ${resultsToInsert.length} results to ${resultsTable}`);
     }
   }
   
@@ -224,6 +238,8 @@ router.put('/:id', validate(updateQuoteSchema), asyncHandler(async (req, res) =>
   
   // Update results: delete existing and insert new ones
   if (results && Array.isArray(results) && results.length > 0) {
+    log.info(`🔄 Updating ${results.length} results in ${resultsTable} for quote ${id}`);
+    
     // Delete existing results
     await supabase.from(resultsTable).delete().eq('quote_id', id);
     
@@ -233,9 +249,21 @@ router.put('/:id', validate(updateQuoteSchema), asyncHandler(async (req, res) =>
       ...result
     }));
     
+    // Log sample of first result to verify title_insurance_cost is present
+    if (resultsToInsert.length > 0) {
+      log.info('Sample updated result data:', {
+        fee_column: resultsToInsert[0].fee_column,
+        has_title_insurance: 'title_insurance_cost' in resultsToInsert[0],
+        title_insurance_value: resultsToInsert[0].title_insurance_cost
+      });
+    }
+    
     const { error: resultsError } = await supabase.from(resultsTable).insert(resultsToInsert);
     if (resultsError) {
-      log.error('Error saving quote results', resultsError);
+      log.error('❌ Error updating quote results in ' + resultsTable, resultsError);
+      log.error('Failed result data sample:', JSON.stringify(resultsToInsert[0], null, 2));
+    } else {
+      log.info(`✅ Successfully updated ${resultsToInsert.length} results in ${resultsTable}`);
     }
   }
   

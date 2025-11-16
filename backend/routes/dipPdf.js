@@ -59,9 +59,12 @@ router.post('/:id', async (req, res) => {
     // Pipe PDF to response
     doc.pipe(res);
 
-    // Header
-    doc.fontSize(20).text('Decision in Principle (DIP)', { align: 'center' });
-    doc.moveDown();
+  // Header
+  doc.fontSize(20).text('Decision in Principle (DIP)', { align: 'center' });
+  doc.moveDown();
+  // Visible layout/version marker to distinguish DIP generator
+  doc.fontSize(10).fillColor('gray').text('Layout: DIP Compact v1', { align: 'center' });
+  doc.fillColor('black');
     doc.fontSize(12).text(`Reference Number: ${quote.reference_number || 'N/A'}`, { align: 'center' });
     doc.moveDown(2);
 

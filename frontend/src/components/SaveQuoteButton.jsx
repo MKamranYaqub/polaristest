@@ -182,6 +182,20 @@ export default function SaveQuoteButton({
         // Serialize criteria answers as JSON string
         quoteData.criteria_answers = calculationData.answers ? JSON.stringify(calculationData.answers) : null;
         
+        // Save overrides as JSON strings
+        quoteData.rates_overrides = calculationData.ratesOverrides && Object.keys(calculationData.ratesOverrides).length > 0 
+          ? JSON.stringify(calculationData.ratesOverrides) 
+          : null;
+        quoteData.product_fee_overrides = calculationData.productFeeOverrides && Object.keys(calculationData.productFeeOverrides).length > 0 
+          ? JSON.stringify(calculationData.productFeeOverrides) 
+          : null;
+        quoteData.rolled_months_per_column = calculationData.rolledMonthsPerColumn && Object.keys(calculationData.rolledMonthsPerColumn).length > 0 
+          ? JSON.stringify(calculationData.rolledMonthsPerColumn) 
+          : null;
+        quoteData.deferred_interest_per_column = calculationData.deferredInterestPerColumn && Object.keys(calculationData.deferredInterestPerColumn).length > 0 
+          ? JSON.stringify(calculationData.deferredInterestPerColumn) 
+          : null;
+        
         // Filter rates by selected product range before saving
         let ratesToSave = calculationData.relevantRates || [];
         if (showProductRangeSelection && ratesToSave.length > 0) {
@@ -199,6 +213,8 @@ export default function SaveQuoteButton({
         
         // Prepare all rate results for saving to quote_results table (filtered by product range)
         if (ratesToSave && Array.isArray(ratesToSave)) {
+          console.log('🔍 BTL - Preparing results to save, count:', ratesToSave.length);
+          
           quoteData.results = ratesToSave.map(rate => ({
             fee_column: rate.product_fee !== undefined && rate.product_fee !== null && rate.product_fee !== '' 
               ? String(rate.product_fee) 
@@ -236,8 +252,20 @@ export default function SaveQuoteButton({
             nbp: parseNumeric(rate.nbp),
             total_cost_to_borrower: parseNumeric(rate.total_cost_to_borrower),
             total_loan_term: parseNumeric(rate.total_loan_term),
+            title_insurance_cost: parseNumeric(rate.titleInsuranceCost || rate.title_insurance_cost),
             product_name: rate.product_name || rate.product || null,
           }));
+          
+          // Log sample result for debugging
+          if (quoteData.results.length > 0) {
+            console.log('📋 BTL Sample result being saved:', {
+              fee_column: quoteData.results[0].fee_column,
+              title_insurance_cost: quoteData.results[0].title_insurance_cost,
+              has_title_insurance: 'title_insurance_cost' in quoteData.results[0],
+              raw_titleInsuranceCost: ratesToSave[0].titleInsuranceCost,
+              raw_title_insurance_cost: ratesToSave[0].title_insurance_cost
+            });
+          }
         }
       }
 
@@ -259,7 +287,7 @@ export default function SaveQuoteButton({
         
         // Prepare all rate results for saving to bridge_quote_results table
         if (calculationData.results && Array.isArray(calculationData.results)) {
-          console.log('SaveQuoteButton - Bridging results count:', calculationData.results.length);
+          console.log('🔍 Bridge - Preparing results to save, count:', calculationData.results.length);
           
           quoteData.results = calculationData.results.map(rate => ({
             fee_column: rate.product_fee !== undefined && rate.product_fee !== null && rate.product_fee !== '' 
@@ -300,8 +328,20 @@ export default function SaveQuoteButton({
             nbp: parseNumeric(rate.nbp),
             total_cost_to_borrower: parseNumeric(rate.total_cost_to_borrower),
             total_loan_term: parseNumeric(rate.total_loan_term),
+            title_insurance_cost: parseNumeric(rate.titleInsuranceCost || rate.title_insurance_cost),
             product_name: rate.product_name || rate.product || null,
           }));
+          
+          // Log sample result for debugging
+          if (quoteData.results.length > 0) {
+            console.log('📋 Bridge Sample result being saved:', {
+              fee_column: quoteData.results[0].fee_column,
+              title_insurance_cost: quoteData.results[0].title_insurance_cost,
+              has_title_insurance: 'title_insurance_cost' in quoteData.results[0],
+              raw_titleInsuranceCost: calculationData.results[0].titleInsuranceCost,
+              raw_title_insurance_cost: calculationData.results[0].title_insurance_cost
+            });
+          }
         }
       }
 
