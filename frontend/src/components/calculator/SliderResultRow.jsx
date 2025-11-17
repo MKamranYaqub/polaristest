@@ -17,7 +17,6 @@ import React from 'react';
  * @param {object} columnValues - Values for each column {columnKey: value}
  * @param {object} columnMinValues - Min values for each column {columnKey: min}
  * @param {object} columnMaxValues - Max values for each column {columnKey: max}
- * @param {object} columnDisabled - Whether each column is disabled {columnKey: boolean}
  * @param {object} columnOptimizedValues - Optimized values for each column {columnKey: optimizedValue}
  * @param {object} columnManualModeActive - Whether manual mode is active for each column {columnKey: boolean}
  * @param {function} formatValue - Optional formatter for displaying values (receives number, returns string)
@@ -36,7 +35,6 @@ export default function SliderResultRow({
   columnValues = null,
   columnMinValues = null,
   columnMaxValues = null,
-  columnDisabled = null,
   columnOptimizedValues = null,
   columnManualModeActive = null,
   formatValue = null
@@ -55,7 +53,6 @@ export default function SliderResultRow({
           const colValue = columnValues && columnValues[col] !== undefined ? columnValues[col] : value;
           const colMin = columnMinValues && columnMinValues[col] !== undefined ? columnMinValues[col] : min;
           const colMax = columnMaxValues && columnMaxValues[col] !== undefined ? columnMaxValues[col] : max;
-          const colDisabled = disabled || (columnDisabled && columnDisabled[col]);
           const colOptimized = columnOptimizedValues && columnOptimizedValues[col];
           // Use explicit manual mode flag instead of comparing values
           const isManuallyChanged = columnManualModeActive && columnManualModeActive[col] === true;
@@ -80,7 +77,7 @@ export default function SliderResultRow({
                   step={step}
                   value={colValue}
                   onChange={(e) => handleChange(e, col)}
-                  disabled={colDisabled}
+                  disabled={disabled}
                   style={{
                     flex: 1,
                     minWidth: '100px',
@@ -88,14 +85,11 @@ export default function SliderResultRow({
                     borderRadius: '3px',
                     background: isManuallyChanged
                       ? `linear-gradient(to right, #ff9800 0%, #ff9800 ${percentage}%, #dddbda ${percentage}%, #dddbda 100%)`
-                      : colDisabled
-                      ? '#cccccc'
                       : `linear-gradient(to right, #0176d3 0%, #0176d3 ${percentage}%, #dddbda ${percentage}%, #dddbda 100%)`,
                     outline: 'none',
-                    cursor: colDisabled ? 'not-allowed' : 'pointer',
+                    cursor: disabled ? 'not-allowed' : 'pointer',
                     WebkitAppearance: 'none',
-                    appearance: 'none',
-                    opacity: colDisabled ? 0.5 : 1
+                    appearance: 'none'
                   }}
                 />
                 <span 
@@ -104,25 +98,24 @@ export default function SliderResultRow({
                     textAlign: 'center',
                     fontWeight: '600',
                     fontSize: '0.875rem',
-                    color: colDisabled ? '#999999' : (isManuallyChanged ? '#ff9800' : '#080707'),
-                    opacity: colDisabled ? 0.6 : 1
+                    color: isManuallyChanged ? '#ff9800' : '#080707'
                   }}
                 >
                   {display(colValue)}{suffix}
                 </span>
-                {isManuallyChanged && onReset && !colDisabled && (
+                {isManuallyChanged && onReset && (
                   <button
                     onClick={() => onReset(col)}
-                    disabled={colDisabled}
+                    disabled={disabled}
                     style={{
                       background: 'transparent',
                       border: 'none',
-                      cursor: colDisabled ? 'not-allowed' : 'pointer',
+                      cursor: disabled ? 'not-allowed' : 'pointer',
                       fontSize: '1.2rem',
                       color: '#0176d3',
                       padding: '0 0.25rem',
                       lineHeight: 1,
-                      opacity: colDisabled ? 0.5 : 1
+                      opacity: disabled ? 0.5 : 1
                     }}
                     title={`Reset to optimized value (${display(colOptimized)}${suffix})`}
                   >

@@ -336,7 +336,12 @@ export class BridgeFusionCalculator {
     const rolledInterestGBP = rolledIntCoupon + rolledIntBBR;
 
     // Serviced interest (monthly interest paid during term)
-    const servicedInterestGBP = gross * (fullAnnualRate / 12) * servicedMonths;
+    // For Fusion: exclude deferred rate from serviced interest
+    // For Bridge: use full rate (no deferred component)
+    const servicedRate = productKind === 'fusion' 
+      ? (fullAnnualRate - deferredAnnualRate) 
+      : fullAnnualRate;
+    const servicedInterestGBP = gross * (servicedRate / 12) * servicedMonths;
 
     // Total interest over loan term
     const totalInterest = deferredGBP + rolledInterestGBP + servicedInterestGBP;
@@ -348,9 +353,11 @@ export class BridgeFusionCalculator {
     );
 
     // === MONTHLY PAYMENT ===
-    // Monthly payment = principal interest only (coupon + BBR for variable)
-    const monthlyPaymentGBP = gross * couponMonthly + 
-      (['bridge-var', 'fusion'].includes(productKind) ? gross * bbrMonthly : 0);
+    // Monthly payment = serviced interest divided by serviced months
+    // When interest is rolled or deferred, monthly payment should be reduced
+    const monthlyPaymentGBP = servicedMonths > 0 
+      ? servicedInterestGBP / servicedMonths 
+      : 0;
 
     // === LTV CALCULATIONS ===
     const grossLTV = pv > 0 ? (gross / pv) * 100 : 0;
@@ -366,11 +373,23 @@ export class BridgeFusionCalculator {
     const aprcMonthly = aprcAnnual / 12;
 
     // === ICR (Interest Coverage Ratio) - Fusion only ===
+    // Formula: ((rent + topslice) * 24) / (((yearly_rate - deferred) * grossloan * 2) - rolled_interest)
+    // This represents: 2 years of income / 2 years of net interest costs
     let icr = null;
     if (productKind === 'fusion') {
       const totalIncome = rent + topSlice;
-      if (totalIncome > 0 && monthlyPaymentGBP > 0) {
-        icr = (totalIncome / monthlyPaymentGBP) * 100;
+      if (totalIncome > 0) {
+        // Calculate 2 years of income
+        const annualIncome = totalIncome * 24; // 24 months = 2 years
+        
+        // Calculate 2 years of interest costs (net of deferred) minus rolled
+        const yearlyRate = fullAnnualRate; // Already as decimal (e.g., 0.10 for 10%)
+        const twoYearsInterest = (yearlyRate - deferredAnnualRate) * gross * 2;
+        const netInterestCost = twoYearsInterest - rolledInterestGBP;
+        
+        if (netInterestCost > 0) {
+          icr = (annualIncome / netInterestCost) * 100;
+        }
       }
     }
 

@@ -24,8 +24,7 @@ import { getQuote, upsertQuoteData, requestDipPdf, requestQuotePdf } from '../ut
 import { parseNumber, formatCurrencyInput } from '../utils/calculator/numberFormatting';
 import { computeLoanLtv, computeLoanSize } from '../utils/calculator/loanCalculations';
 import { pickBestRate, computeModeFromAnswers } from '../utils/calculator/rateFiltering';
-import { LOCALSTORAGE_CONSTANTS_KEY, MARKET_RATES } from '../config/constants';
-import { BridgeFusionCalculator } from '../utils/bridgeFusionCalculationEngine';
+import { LOCALSTORAGE_CONSTANTS_KEY } from '../config/constants';
 
 export default function BridgingCalculator({ initialQuote = null }) {
   const { supabase } = useSupabase();
@@ -68,8 +67,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
   const [useSpecificNet, setUseSpecificNet] = useState('No');
   const [specificNetLoan, setSpecificNetLoan] = useState('');
   const [bridgingTerm, setBridgingTerm] = useState('');
-  const [commitmentFee, setCommitmentFee] = useState('');
-  const [exitFeePercent, setExitFeePercent] = useState('');
   const [rates, setRates] = useState([]);
   const [relevantRates, setRelevantRates] = useState([]);
   const [bridgeMatched, setBridgeMatched] = useState([]);
@@ -364,8 +361,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
           paying_network_club: quote.paying_network_club,
           security_properties: quote.security_properties,
           fee_type_selection: quote.fee_type_selection,
-          dip_status: quote.dip_status,
-          funding_line: quote.funding_line
+          dip_status: quote.dip_status
         });
       }
       
@@ -377,8 +373,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
       if (quote.use_specific_net_loan != null) setUseSpecificNet(quote.use_specific_net_loan ? 'Yes' : 'No');
       if (quote.specific_net_loan != null) setSpecificNetLoan(formatCurrencyInput(quote.specific_net_loan));
       if (quote.bridging_loan_term != null) setBridgingTerm(String(quote.bridging_loan_term));
-      if (quote.commitment_fee != null) setCommitmentFee(formatCurrencyInput(quote.commitment_fee));
-      if (quote.exit_fee_percent != null) setExitFeePercent(String(quote.exit_fee_percent));
       if (quote.product_scope) setProductScope(quote.product_scope);
       if (quote.charge_type) setChargeType(quote.charge_type);
       if (quote.sub_product) setSubProduct(quote.sub_product);
@@ -697,7 +691,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
     setRelevantRates([...bridgeOut, ...fusionOut]);
   }, [rates, productScope, subProduct, propertyValue, grossLoan, specificNetLoan, answers, chargeType]);
 
-  // Compute calculated rates using Bridge & Fusion calculation engine
+  // Compute calculated rates with all financial values for Bridging
   const calculatedRates = useMemo(() => {
     if (!relevantRates || relevantRates.length === 0) return [];
 
@@ -706,193 +700,109 @@ export default function BridgingCalculator({ initialQuote = null }) {
     const specificNet = parseNumber(specificNetLoan);
     const monthlyRentNum = parseNumber(monthlyRent);
     const topSlicingNum = parseNumber(topSlicing);
-    const term = parseNumber(bridgingTerm) || 12;
-
-    // Check if we have required inputs
-    const hasGrossLoan = !isNaN(grossInput) && grossInput > 0;
-    const hasSpecificNet = useSpecificNet === 'Yes' && !isNaN(specificNet) && specificNet > 0;
-    
-    // If neither gross nor specific net is provided, return empty results
-    if (!hasGrossLoan && !hasSpecificNet) {
-      console.log('⚠️ Bridge Calculator: No gross loan or specific net loan provided');
-      return [];
-    }
-
-    // Get BBR from constants
-    const bbrAnnual = MARKET_RATES?.STANDARD_BBR || 0.04;
-
-    console.log('🔍 Bridge Calculator Inputs:', {
-      hasGrossLoan,
-      grossInput,
-      hasSpecificNet,
-      specificNet,
-      propertyValue: pv,
-      relevantRatesCount: relevantRates.length
-    });
 
     return relevantRates.map(rate => {
-      try {
-        // Get broker client fee from broker settings additional fees
-        const brokerClientFee = brokerSettings.addFeesToggle && brokerSettings.additionalFeeAmount
-          ? (brokerSettings.feeCalculationType === 'percentage' 
-              ? grossInput * (parseNumber(brokerSettings.additionalFeeAmount) / 100)
-              : parseNumber(brokerSettings.additionalFeeAmount))
-          : 0;
+      // Gross loan - use the input value
+      const gross = grossInput;
 
-        // Get broker commission % - for Broker clients use the commission %, for Direct clients use 0
-        const brokerCommissionPct = brokerSettings.clientType === 'Broker' 
-          ? parseNumber(brokerSettings.brokerCommissionPercent) || 0.9
-          : 0;
+      // Product fee calculations
+      const pfPercent = Number(rate.product_fee);
+      const pfAmount = Number.isFinite(gross) && !Number.isNaN(pfPercent) ? gross * (pfPercent / 100) : NaN;
+      
+      // Admin fee
+      const adminFee = Number(rate.admin_fee) || 0;
 
-        // Use the comprehensive Bridge & Fusion calculation engine
-        const calculated = BridgeFusionCalculator.calculateForRate(rate, {
-          grossLoan: grossInput,
-          propertyValue: pv,
-          monthlyRent: monthlyRentNum,
-          topSlicing: topSlicingNum,
-          useSpecificNet: useSpecificNet === 'Yes',
-          specificNetLoan: specificNet,
-          termMonths: term,
-          bbrAnnual: bbrAnnual,
-          procFeePct: brokerCommissionPct,
-          brokerFeeFlat: 0,
-          brokerClientFee: brokerClientFee,
-          rolledMonthsOverride: rolledMonthsPerColumn?.[rate.set_key] || rolledMonthsPerColumn?.[rate.id],
-          deferredRateOverride: deferredInterestPerColumn?.[rate.set_key] || deferredInterestPerColumn?.[rate.id],
-        });
-
-        // Debug log first calculation
-        if (rate === relevantRates[0]) {
-          console.log('🔍 Bridge Calculation Debug:', {
-            inputs: {
-              grossLoan: grossInput,
-              propertyValue: pv,
-              useSpecificNet: useSpecificNet === 'Yes',
-              specificNetLoan: specificNet,
-              term: term,
-            },
-            rate: {
-              product: rate.product,
-              set_key: rate.set_key,
-              rate: rate.rate,
-              product_fee: rate.product_fee,
-            },
-            calculated: {
-              gross: calculated.gross,
-              netLoanGBP: calculated.netLoanGBP,
-              fullAnnualRate: calculated.fullAnnualRate,
-              rolledInterestGBP: calculated.rolledInterestGBP,
-              productKind: calculated.productKind,
-            }
-          });
-        }
-
-        // Determine product name for display
-        let productName = 'Bridge';
-        const setKey = (rate.set_key || '').toString().toLowerCase();
-        
-        if (setKey === 'fusion') {
-          productName = 'Fusion';
-        } else if (setKey.includes('var')) {
-          productName = 'Variable Bridge';
-        } else if (setKey.includes('fix')) {
-          productName = 'Fixed Bridge';
-        }
-
-        // Map engine results to UI fields
-        return {
-          ...rate,
-          // Core loan metrics (0 decimal places)
-          gross_loan: calculated.gross?.toFixed(0) || null,
-          net_loan: calculated.netLoanGBP?.toFixed(0) || null,
-          nbp: calculated.npb?.toFixed(0) || null,
-          property_value: calculated.propertyValue?.toFixed(0) || null,
-          
-          // LTV metrics
-          ltv: calculated.grossLTV?.toFixed(2) || null,
-          ltv_percentage: calculated.grossLTV?.toFixed(2) || null,
-          net_ltv: calculated.netLTV?.toFixed(2) || null,
-          ltv_bucket: calculated.ltv,
-          
-          // Rate metrics
-          initial_rate: calculated.fullAnnualRate?.toFixed(2) || null,
-          pay_rate: calculated.payRateMonthly?.toFixed(2) || null,
-          full_rate: calculated.fullRateText || null,
-          margin_monthly: calculated.marginMonthly?.toFixed(2) || null,
-          bbr_monthly: calculated.bbrMonthly?.toFixed(2) || null,
-          
-          // Fee metrics (0 decimal places)
-          product_fee_percent: calculated.productFeePercent?.toFixed(2) || null,
-          product_fee_pounds: calculated.productFeePounds?.toFixed(0) || null,
-          admin_fee: calculated.adminFee || 0,
-          broker_commission_proc_fee_percent: calculated.procFeePct?.toFixed(2) || null,
-          broker_commission_proc_fee_pounds: calculated.procFeeGBP?.toFixed(0) || null,
-          
-          // Interest breakdown (0 decimal places)
-          rolled_months: calculated.rolledMonths,
-          rolled_months_interest: calculated.rolledInterestGBP?.toFixed(0) || null,
-          rolled_interest_coupon: calculated.rolledIntCoupon?.toFixed(0) || null,
-          rolled_interest_bbr: calculated.rolledIntBBR?.toFixed(0) || null,
-          deferred_interest_percent: calculated.deferredInterestRate?.toFixed(2) || null,
-          deferred_interest_pounds: calculated.deferredGBP?.toFixed(0) || null,
-          serviced_interest: calculated.servicedInterestGBP?.toFixed(0) || null,
-          total_interest: calculated.totalInterest?.toFixed(0) || null,
-          
-          // Payment metrics - Direct Debit keeps 2 decimal places
-          monthly_interest_cost: calculated.monthlyPaymentGBP?.toFixed(0) || null,
-          direct_debit: calculated.directDebit?.toFixed(2) || null,
-          
-          // APR metrics
-          aprc: calculated.aprcAnnual?.toFixed(2) || null,
-          aprc_annual: calculated.aprcAnnual?.toFixed(2) || null,
-          aprc_monthly: calculated.aprcMonthly?.toFixed(2) || null,
-          total_amount_repayable: calculated.totalAmountRepayable?.toFixed(0) || null,
-          
-          // Term metrics
-          total_loan_term: calculated.termMonths,
-          serviced_months: calculated.servicedMonths,
-          
-          // Product details
-          product_name: productName,
-          product_kind: calculated.productKind,
-          tier_name: calculated.tierName,
-          
-          // Income metrics
-          icr: calculated.icr?.toFixed(2) || null,
-          rent: calculated.rent?.toFixed(0) || null,
-          top_slicing: calculated.topSlicing?.toFixed(0) || null,
-          
-          // Additional fees - Broker Client Fee 0 decimals, Title Insurance keeps 2 decimals
-          broker_client_fee: calculated.brokerClientFee?.toFixed(0) || null,
-          title_insurance_cost: calculated.titleInsuranceCost?.toFixed(2) || null,
-          
-          // Commitment Fee and Exit Fee (from calculation engine, 0 decimal places)
-          commitment_fee_pounds: calculated.commitmentFeePounds?.toFixed(0) || null,
-          exit_fee: calculated.exitFee?.toFixed(0) || null,
-          
-          // ERC (Early Repayment Charges) - Fusion only, 0 decimal places
-          erc_1_pounds: calculated.erc1Pounds?.toFixed(0) || null,
-          erc_2_pounds: calculated.erc2Pounds?.toFixed(0) || null,
-          
-          // Legacy/unused fields (keep for compatibility)
-          revert_rate: null,
-          revert_rate_dd: null,
-          erc: null,
-          erc_fusion_only: null,
-          total_cost_to_borrower: null,
-        };
-      } catch (error) {
-        console.error('Error calculating rate:', error, rate);
-        // Return rate with null values if calculation fails
-        return {
-          ...rate,
-          gross_loan: null,
-          net_loan: null,
-          error: error.message,
-        };
+      // Net loan calculation - use specific net if provided, otherwise calculate
+      let net = NaN;
+      if (useSpecificNet === 'Yes' && Number.isFinite(specificNet)) {
+        net = specificNet;
+      } else if (Number.isFinite(gross)) {
+        net = gross;
+        if (Number.isFinite(pfAmount)) net -= pfAmount;
+        if (Number.isFinite(adminFee)) net -= adminFee;
       }
+
+      // LTV calculations
+      const ltvPercent = Number.isFinite(pv) && pv > 0 && Number.isFinite(net) ? (net / pv * 100) : NaN;
+      const netLtv = ltvPercent; // For bridging, LTV and Net LTV are typically the same
+
+      // ICR calculation (if applicable)
+      const initialRate = Number(rate.rate);
+      const monthlyInterest = Number.isFinite(gross) && Number.isFinite(initialRate) ? gross * (initialRate / 100) / 12 : NaN;
+      const icr = Number.isFinite(monthlyRentNum) && Number.isFinite(monthlyInterest) && monthlyInterest > 0 
+        ? (monthlyRentNum / monthlyInterest * 100) 
+        : NaN;
+
+      // Broker commission (proc fee) - typically 1% of gross loan
+      const procFeePercent = Number(rate.proc_fee) || 1;
+      const brokerCommissionProcFeePounds = Number.isFinite(gross) ? gross * (procFeePercent / 100) : NaN;
+
+      // Determine product name: "Fusion", "Variable Bridge", or "Fixed Bridge"
+      let productName = null;
+      const setKey = (rate.set_key || '').toString().toLowerCase();
+      
+      if (setKey === 'fusion') {
+        productName = 'Fusion';
+      } else if (setKey === 'bridging_fix' || setKey.includes('bridging_fix') || setKey.includes('fix')) {
+        productName = 'Fixed Bridge';
+      } else if (setKey === 'bridging_var' || setKey.includes('bridging_var') || setKey.includes('var')) {
+        productName = 'Variable Bridge';
+      } else {
+        // Fallback: check rate type field
+        const rateType = (rate.type || '').toString().toLowerCase();
+        if (rateType.includes('fixed')) {
+          productName = 'Fixed Bridge';
+        } else if (rateType.includes('variable')) {
+          productName = 'Variable Bridge';
+        } else {
+          // Final fallback: use the product field or "Bridge" as default
+          productName = rate.product || 'Bridge';
+        }
+      }
+
+      return {
+        ...rate,
+        gross_loan: Number.isFinite(gross) ? gross.toFixed(2) : null,
+        net_loan: Number.isFinite(net) ? net.toFixed(2) : null,
+        ltv: Number.isFinite(ltvPercent) ? ltvPercent.toFixed(2) : null,
+        ltv_percentage: Number.isFinite(ltvPercent) ? ltvPercent.toFixed(2) : null,
+        net_ltv: Number.isFinite(netLtv) ? netLtv.toFixed(2) : null,
+        property_value: Number.isFinite(pv) ? pv.toFixed(2) : null,
+        icr: Number.isFinite(icr) ? icr.toFixed(2) : null,
+        initial_rate: initialRate,
+        pay_rate: initialRate, // Assuming pay rate same as initial rate
+        product_fee_percent: pfPercent,
+        product_fee_pounds: Number.isFinite(pfAmount) ? pfAmount.toFixed(2) : null,
+        admin_fee: adminFee,
+        broker_commission_proc_fee_percent: procFeePercent,
+        broker_commission_proc_fee_pounds: Number.isFinite(brokerCommissionProcFeePounds) ? brokerCommissionProcFeePounds.toFixed(2) : null,
+        monthly_interest_cost: Number.isFinite(monthlyInterest) ? monthlyInterest.toFixed(2) : null,
+        rent: Number.isFinite(monthlyRentNum) ? monthlyRentNum.toFixed(2) : null,
+        top_slicing: Number.isFinite(topSlicingNum) ? topSlicingNum.toFixed(2) : null,
+        product_name: productName,
+        // Bridging-specific fields (set to null if not calculated)
+        revert_rate: null,
+        revert_rate_dd: null,
+        full_rate: null,
+        aprc: null,
+        broker_client_fee: null,
+        commitment_fee_pounds: null,
+        exit_fee: null,
+        rolled_months: null,
+        rolled_months_interest: null,
+        deferred_interest_percent: null,
+        deferred_interest_pounds: null,
+        deferred_rate: null,
+        serviced_interest: null,
+        direct_debit: null,
+        erc: null,
+        erc_fusion_only: null,
+        nbp: null,
+        total_cost_to_borrower: null,
+        total_loan_term: null
+      };
     });
-  }, [relevantRates, propertyValue, grossLoan, specificNetLoan, monthlyRent, topSlicing, useSpecificNet, bridgingTerm, commitmentFee, exitFeePercent, rolledMonthsPerColumn, deferredInterestPerColumn, brokerSettings.clientType, brokerSettings.brokerCommissionPercent, brokerSettings.addFeesToggle, brokerSettings.feeCalculationType, brokerSettings.additionalFeeAmount]);
+  }, [relevantRates, propertyValue, grossLoan, specificNetLoan, monthlyRent, topSlicing, useSpecificNet]);
 
   const loanLtv = computeLoanLtv(propertyValue, specificNetLoan, grossLoan, firstChargeValue);
   const loanSize = computeLoanSize(specificNetLoan, grossLoan);
@@ -1148,8 +1058,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
               useSpecificNet,
               specificNetLoan,
               bridgingTerm,
-              commitmentFee,
-              exitFeePercent,
               chargeType,
               subProduct,
               answers,
@@ -1282,10 +1190,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
         onSpecificNetLoanChange={setSpecificNetLoan}
         term={bridgingTerm}
         onTermChange={setBridgingTerm}
-        commitmentFee={commitmentFee}
-        onCommitmentFeeChange={setCommitmentFee}
-        exitFeePercent={exitFeePercent}
-        onExitFeePercentChange={setExitFeePercent}
         termRange={termRange}
         isReadOnly={isReadOnly}
       />
@@ -1316,27 +1220,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
                     const bestFixed = bestBridgeRates.fixed;
 
                     if (!bestFusion && !bestVariable && !bestFixed) {
-                      // Check if it's because no inputs were provided
-                      const hasPropertyValue = parseNumber(propertyValue) > 0;
-                      const hasGrossLoan = parseNumber(grossLoan) > 0;
-                      const hasSpecificNet = useSpecificNet === 'Yes' && parseNumber(specificNetLoan) > 0;
-                      
-                      if (!hasPropertyValue || (!hasGrossLoan && !hasSpecificNet)) {
-                        return (
-                          <tr>
-                            <td colSpan={4} className="slds-text-body_small" style={{ padding: '2rem', textAlign: 'center', color: '#706e6b' }}>
-                              Please enter Property Value and Gross Loan (or Net Loan if using specific net) to see results.
-                            </td>
-                          </tr>
-                        );
-                      }
-                      
                       return (
-                        <tr>
-                          <td colSpan={4} className="slds-text-body_small" style={{ padding: '2rem', textAlign: 'center', color: '#706e6b' }}>
-                            No results match the selected criteria. Please adjust your loan details or criteria answers.
-                          </td>
-                        </tr>
+                        <tr><td colSpan={4} className="slds-text-body_small">No results match the selected filters.</td></tr>
                       );
                     }
 
@@ -1349,17 +1234,13 @@ export default function BridgingCalculator({ initialQuote = null }) {
                             const colBest = [bestFusion, bestVariable, bestFixed];
                             const originalRates = {};
                             const ratesDisplayValues = {};
-                            const columnSuffixes = {}; // Track suffix per column
 
                             columnsHeaders.forEach((col, idx) => {
                               const best = colBest[idx];
                               if (best && best.rate != null) {
                                 // Add " + BBR" for Fusion and Variable Bridge
                                 const needsBBR = col === 'Fusion' || col === 'Variable Bridge';
-                                const suffix = needsBBR ? ' + BBR' : '%';
-                                columnSuffixes[col] = suffix;
-                                
-                                const originalRate = `${Number(best.rate).toFixed(2)}${suffix}`;
+                                const originalRate = `${Number(best.rate).toFixed(2)}%` + (needsBBR ? ' + BBR' : '');
                                 originalRates[col] = originalRate;
                                 ratesDisplayValues[col] = ratesOverrides[col] || originalRate;
                               }
@@ -1371,7 +1252,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                 columns={columnsHeaders}
                                 columnValues={ratesDisplayValues}
                                 originalValues={originalRates}
-                                columnSuffixes={columnSuffixes}
                                 onValueChange={(newValue, columnKey) => {
                                   setRatesOverrides(prev => ({ ...prev, [columnKey]: newValue }));
                                 }}
@@ -1383,6 +1263,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                   });
                                 }}
                                 disabled={isReadOnly}
+                                suffix="%"
                               />
                             );
                           })()
@@ -1394,7 +1275,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
                             const allPlaceholders = [
                               'APRC', 'Admin Fee', 'Broker Client Fee', 'Broker Comission (Proc Fee %)',
                               'Broker Comission (Proc Fee £)', 'Commitment Fee £', 'Deferred Interest %', 'Deferred Interest £',
-                              'Direct Debit', 'ERC 1 £', 'ERC 2 £', 'Exit Fee', 'Gross Loan', 'ICR', 'LTV', 'Monthly Interest Cost',
+                              'Direct Debit', 'ERC', 'ERC (Fusion Only)', 'Exit Fee', 'Gross Loan', 'ICR', 'LTV', 'Monthly Interest Cost',
                               'NBP', 'Net Loan', 'Net LTV', 'Pay Rate', 'Product Fee %', 'Product Fee £', 'Revert Rate', 'Revert Rate DD',
                               'Rolled Months', 'Rolled Months Interest', 'Serviced Interest', 'Title Insurance Cost', 'Total Cost to Borrower', 'Total Loan Term'
                             ];
@@ -1414,173 +1295,38 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
                               columnsHeaders.forEach((col, idx) => {
                               const best = colBest[idx];
-                              if (!best) return;
                               
                               // Check if this column needs " + BBR" suffix (Fusion or Variable Bridge)
                               const needsBBR = col === 'Fusion' || col === 'Variable Bridge';
                               
-                              // Use the already-calculated values from bridgeFusionCalculationEngine
-                              // Product Fee %
-                              if (best.product_fee_percent && values['Product Fee %']) {
-                                const originalFee = `${best.product_fee_percent}%`;
+                              // Product Fee % - store original and apply override
+                              const pf = best && (best.product_fee !== undefined ? Number(best.product_fee) : NaN);
+                              if (pf && !Number.isNaN(pf) && values['Product Fee %']) {
+                                const originalFee = `${pf}%`;
                                 originalProductFees[col] = originalFee;
                                 values['Product Fee %'][col] = productFeeOverrides[col] || originalFee;
                               }
 
-                              // Gross Loan
-                              if (best.gross_loan && values['Gross Loan']) {
-                                values['Gross Loan'][col] = `£${Number(best.gross_loan).toLocaleString('en-GB')}`;
+                              if (Number.isFinite(grossInput) && values['Gross Loan']) values['Gross Loan'][col] = `£${Number(grossInput).toLocaleString('en-GB')}`;
+
+                              if (Number.isFinite(grossInput) && pf && !Number.isNaN(pf)) {
+                                const pfAmount = grossInput * (pf / 100);
+                                if (values['Product Fee £']) values['Product Fee £'][col] = `£${Number(pfAmount).toLocaleString('en-GB')}`;
+                                const net = (Number.isFinite(specificNet) ? specificNet : grossInput - pfAmount);
+                                if (Number.isFinite(net) && values['Net Loan']) values['Net Loan'][col] = `£${Number(net).toLocaleString('en-GB')}`;
+                                if (Number.isFinite(pv) && values['LTV']) values['LTV'][col] = `${((net / pv) * 100).toFixed(2)}%`;
                               }
 
-                              // Product Fee £
-                              if (best.product_fee_pounds && values['Product Fee £']) {
-                                values['Product Fee £'][col] = `£${Number(best.product_fee_pounds).toLocaleString('en-GB')}`;
+                              // Pay Rate - display only (not editable)
+                              if (best && best.pay_rate != null && values['Pay Rate']) {
+                                values['Pay Rate'][col] = `${Number(best.pay_rate).toFixed(2)}%` + (needsBBR ? ' + BBR' : '');
+                              } else if (best && best.rate != null && values['Pay Rate']) {
+                                values['Pay Rate'][col] = `${Number(best.rate).toFixed(2)}%` + (needsBBR ? ' + BBR' : '');
                               }
 
-                              // Net Loan
-                              if (best.net_loan && values['Net Loan']) {
-                                values['Net Loan'][col] = `£${Number(best.net_loan).toLocaleString('en-GB')}`;
-                              }
-
-                              // NBP (Net Proceeds to Borrower)
-                              if (best.nbp && values['NBP']) {
-                                values['NBP'][col] = `£${Number(best.nbp).toLocaleString('en-GB')}`;
-                              }
-
-                              // LTV
-                              if (best.ltv && values['LTV']) {
-                                values['LTV'][col] = `${best.ltv}%`;
-                              }
-
-                              // Net LTV
-                              if (best.net_ltv && values['Net LTV']) {
-                                values['Net LTV'][col] = `${best.net_ltv}%`;
-                              }
-
-                              // Pay Rate - Recalculate dynamically based on current deferred interest
-                              if (best.pay_rate && values['Pay Rate']) {
-                                // For Fusion: Pay Rate = margin - deferred (annual %)
-                                // For Bridge: Pay Rate = coupon monthly %
-                                let payRateValue = parseFloat(best.pay_rate);
-                                
-                                if (col === 'Fusion') {
-                                  // Fusion: margin is in best.rate, need to subtract current deferred
-                                  const marginRate = parseFloat(best.rate) || 0;
-                                  const currentDeferred = deferredInterestPerColumn['Fusion'] || 0;
-                                  payRateValue = marginRate - currentDeferred;
-                                }
-                                
-                                values['Pay Rate'][col] = `${payRateValue.toFixed(2)}%${needsBBR ? ' + BBR' : ''}`;
-                              }
-
-                              // Monthly Interest Cost
-                              if (best.monthly_interest_cost && values['Monthly Interest Cost']) {
-                                values['Monthly Interest Cost'][col] = `£${Number(best.monthly_interest_cost).toLocaleString('en-GB')}`;
-                              }
-
-                              // Direct Debit
-                              if (best.direct_debit && values['Direct Debit']) {
-                                values['Direct Debit'][col] = `£${Number(best.direct_debit).toLocaleString('en-GB')}`;
-                              }
-
-                              // APRC
-                              if (best.aprc && values['APRC']) {
-                                values['APRC'][col] = `${best.aprc}%`;
-                              }
-
-                              // ICR
-                              if (best.icr && values['ICR']) {
-                                values['ICR'][col] = `${best.icr}%`;
-                              }
-
-                              // Admin Fee
-                              if (best.admin_fee !== undefined && values['Admin Fee']) {
-                                values['Admin Fee'][col] = `£${Number(best.admin_fee).toLocaleString('en-GB')}`;
-                              }
-
-                              // Broker Commission (Proc Fee %)
-                              if (best.broker_commission_proc_fee_percent && values['Broker Comission (Proc Fee %)']) {
-                                values['Broker Comission (Proc Fee %)'][col] = `${best.broker_commission_proc_fee_percent}%`;
-                              }
-
-                              // Broker Commission (Proc Fee £)
-                              if (best.broker_commission_proc_fee_pounds && values['Broker Comission (Proc Fee £)']) {
-                                values['Broker Comission (Proc Fee £)'][col] = `£${Number(best.broker_commission_proc_fee_pounds).toLocaleString('en-GB')}`;
-                              }
-
-                              // Rolled Months
-                              if (best.rolled_months !== undefined && values['Rolled Months']) {
-                                values['Rolled Months'][col] = `${best.rolled_months} months`;
-                              }
-
-                              // Rolled Months Interest
-                              if (best.rolled_months_interest && values['Rolled Months Interest']) {
-                                values['Rolled Months Interest'][col] = `£${Number(best.rolled_months_interest).toLocaleString('en-GB')}`;
-                              }
-
-                              // Deferred Interest %
-                              if (best.deferred_interest_percent !== undefined && values['Deferred Interest %']) {
-                                values['Deferred Interest %'][col] = `${best.deferred_interest_percent}%`;
-                              }
-
-                              // Deferred Interest £
-                              if (best.deferred_interest_pounds && values['Deferred Interest £']) {
-                                values['Deferred Interest £'][col] = `£${Number(best.deferred_interest_pounds).toLocaleString('en-GB')}`;
-                              }
-
-                              // Serviced Interest
-                              if (best.serviced_interest && values['Serviced Interest']) {
-                                values['Serviced Interest'][col] = `£${Number(best.serviced_interest).toLocaleString('en-GB')}`;
-                              }
-
-                              // Total Loan Term
-                              if (best.total_loan_term && values['Total Loan Term']) {
-                                values['Total Loan Term'][col] = `${best.total_loan_term} months`;
-                              }
-
-                              // Revert Rate (if available)
-                              if (best.revert_rate && values['Revert Rate']) {
-                                values['Revert Rate'][col] = `${best.revert_rate}%`;
-                              }
-
-                              // Revert Rate DD (if available)
-                              if (best.revert_rate_dd && values['Revert Rate DD']) {
-                                values['Revert Rate DD'][col] = `£${Number(best.revert_rate_dd).toLocaleString('en-GB')}`;
-                              }
-
-                              // Commitment Fee £ (if available)
-                              if (best.commitment_fee_pounds && values['Commitment Fee £']) {
-                                values['Commitment Fee £'][col] = `£${Number(best.commitment_fee_pounds).toLocaleString('en-GB')}`;
-                              }
-
-                              // Exit Fee (if available)
-                              if (best.exit_fee && values['Exit Fee']) {
-                                values['Exit Fee'][col] = `£${Number(best.exit_fee).toLocaleString('en-GB')}`;
-                              }
-
-                              // ERC 1 £ (Fusion only)
-                              if (col === 'Fusion' && best.erc_1_pounds !== undefined && values['ERC 1 £']) {
-                                values['ERC 1 £'][col] = `£${Number(best.erc_1_pounds).toLocaleString('en-GB')}`;
-                              }
-
-                              // ERC 2 £ (Fusion only)
-                              if (col === 'Fusion' && best.erc_2_pounds !== undefined && values['ERC 2 £']) {
-                                values['ERC 2 £'][col] = `£${Number(best.erc_2_pounds).toLocaleString('en-GB')}`;
-                              }
-
-                              // Broker Client Fee (if available)
-                              if (best.broker_client_fee && values['Broker Client Fee']) {
-                                values['Broker Client Fee'][col] = `£${Number(best.broker_client_fee).toLocaleString('en-GB')}`;
-                              }
-
-                              // Total Cost to Borrower (if available)
-                              if (best.total_cost_to_borrower && values['Total Cost to Borrower']) {
-                                values['Total Cost to Borrower'][col] = `£${Number(best.total_cost_to_borrower).toLocaleString('en-GB')}`;
-                              }
-
-                              // Title Insurance Cost (if available)
-                              if (best.title_insurance_cost && values['Title Insurance Cost']) {
-                                values['Title Insurance Cost'][col] = `£${Number(best.title_insurance_cost).toLocaleString('en-GB')}`;
+                              if (best && best.rate != null && Number.isFinite(grossInput) && values['Monthly Interest Cost']) {
+                                const monthly = grossInput * (Number(best.rate) / 100) / 12;
+                                values['Monthly Interest Cost'][col] = `£${Number(monthly).toLocaleString('en-GB')}`;
                               }
                             });
 
@@ -1589,42 +1335,19 @@ export default function BridgingCalculator({ initialQuote = null }) {
                             const rolledMonthsMaxPerCol = {};
                             const deferredInterestMinPerCol = {};
                             const deferredInterestMaxPerCol = {};
-                            const isDeferredDisabledPerCol = {}; // Track if deferred is disabled for Bridge
-                            
-                            const bridgingTermMonths = parseNumber(bridgingTerm) || 12;
                             
                             columnsHeaders.forEach((col, idx) => {
                               const best = colBest[idx];
                               if (best) {
                                 rolledMonthsMinPerCol[col] = best.min_rolled_months ?? 0;
-                                
-                                // For Bridge products, cap rolled months at loan term
-                                // Fusion has its own 24-month term
-                                const maxRolledFromRate = best.max_rolled_months ?? 24;
-                                if (col === 'Fusion') {
-                                  rolledMonthsMaxPerCol[col] = maxRolledFromRate; // Fusion independent
-                                } else {
-                                  // Bridge products: cap at loan term
-                                  rolledMonthsMaxPerCol[col] = Math.min(maxRolledFromRate, bridgingTermMonths);
-                                }
-                                
-                                // Deferred interest: only enabled for Fusion
-                                if (col === 'Fusion') {
-                                  deferredInterestMinPerCol[col] = 0; // Start at 0
-                                  deferredInterestMaxPerCol[col] = best.max_defer_int ?? 2;
-                                  isDeferredDisabledPerCol[col] = false;
-                                } else {
-                                  // Bridge products: deferred interest disabled
-                                  deferredInterestMinPerCol[col] = 0;
-                                  deferredInterestMaxPerCol[col] = 0;
-                                  isDeferredDisabledPerCol[col] = true;
-                                }
+                                rolledMonthsMaxPerCol[col] = best.max_rolled_months ?? 24;
+                                deferredInterestMinPerCol[col] = best.min_defer_int ?? 0;
+                                deferredInterestMaxPerCol[col] = best.max_defer_int ?? 100;
                               } else {
                                 rolledMonthsMinPerCol[col] = 0;
                                 rolledMonthsMaxPerCol[col] = 24;
                                 deferredInterestMinPerCol[col] = 0;
-                                deferredInterestMaxPerCol[col] = 0;
-                                isDeferredDisabledPerCol[col] = true;
+                                deferredInterestMaxPerCol[col] = 100;
                               }
                             });
 
@@ -1669,10 +1392,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                     label="Deferred Interest %"
                                     value={0}
                                     onChange={(newValue, columnKey) => {
-                                      // Only allow changes for Fusion
-                                      if (!isDeferredDisabledPerCol[columnKey]) {
-                                        setDeferredInterestPerColumn(prev => ({ ...prev, [columnKey]: newValue }));
-                                      }
+                                      setDeferredInterestPerColumn(prev => ({ ...prev, [columnKey]: newValue }));
                                     }}
                                     min={0}
                                     max={100}
@@ -1683,7 +1403,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                     columnValues={currentDeferredInterestPerCol}
                                     columnMinValues={deferredInterestMinPerCol}
                                     columnMaxValues={deferredInterestMaxPerCol}
-                                    columnDisabled={isDeferredDisabledPerCol}
                                   />
                                 );
                               } else if (rowLabel === 'Product Fee %') {

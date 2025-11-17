@@ -26,10 +26,6 @@ const LoanDetailsSection = ({
   onSpecificNetLoanChange,
   term,
   onTermChange,
-  commitmentFee,
-  onCommitmentFeeChange,
-  exitFeePercent,
-  onExitFeePercentChange,
   termRange = { min: 1, max: 24 },
   isReadOnly = false
 }) => {
@@ -157,32 +153,6 @@ const LoanDetailsSection = ({
                 <option key={m} value={String(m)}>{m} months</option>
               ))}
             </select>
-          </div>
-        </div>
-
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">Commitment Fee £</label>
-          <div className="slds-form-element__control">
-            <input 
-              className="slds-input" 
-              value={commitmentFee} 
-              onChange={(e) => onCommitmentFeeChange(formatCurrencyInput(e.target.value))} 
-              placeholder="£0" 
-              disabled={isReadOnly} 
-            />
-          </div>
-        </div>
-
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">Exit Fee %</label>
-          <div className="slds-form-element__control">
-            <input 
-              className="slds-input" 
-              value={exitFeePercent} 
-              onChange={(e) => onExitFeePercentChange(e.target.value)} 
-              placeholder="e.g. 1.5" 
-              disabled={isReadOnly} 
-            />
           </div>
         </div>
         

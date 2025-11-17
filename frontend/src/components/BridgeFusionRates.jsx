@@ -54,11 +54,7 @@ function BridgeFusionRates() {
   };
 
   useEffect(() => { fetch(); }, [supabase]);
-  
-  // Reset to page 1 when filters change
-  useEffect(() => { 
-    setCurrentPage(1); 
-  }, [filters]);
+  useEffect(() => { fetch(); }, [supabase, filters]);
 
   const handleAdd = () => {
     // default values depending on product type
@@ -156,17 +152,7 @@ function BridgeFusionRates() {
   };
 
   const getCurrentPageRows = () => {
-    // Apply filters first
-    let filtered = rows.filter(r => {
-      if (filters.set_key && r.set_key !== filters.set_key) return false;
-      if (filters.property && r.property !== filters.property) return false;
-      if (filters.product && r.product !== filters.product) return false;
-      if (filters.type && r.type !== filters.type) return false;
-      if (filters.charge_type && r.charge_type !== filters.charge_type) return false;
-      return true;
-    });
-    
-    // Then sort
+    const sorted = [...rows];
     if (sortField) {
       const compare = (a, b) => {
         const va = a[sortField];
@@ -180,27 +166,13 @@ function BridgeFusionRates() {
         const sb = String(vb).toLowerCase();
         if (sa < sb) return -1; if (sa > sb) return 1; return 0;
       };
-      filtered.sort((x, y) => (sortDir === 'asc' ? compare(x, y) : -compare(x, y)));
+      sorted.sort((x, y) => (sortDir === 'asc' ? compare(x, y) : -compare(x, y)));
     }
-    
-    // Finally paginate
     const start = (currentPage - 1) * itemsPerPage;
-    return filtered.slice(start, start + itemsPerPage);
+    return sorted.slice(start, start + itemsPerPage);
   };
 
-  // Update totalPages to use filtered count
-  const getFilteredRowsCount = () => {
-    return rows.filter(r => {
-      if (filters.set_key && r.set_key !== filters.set_key) return false;
-      if (filters.property && r.property !== filters.property) return false;
-      if (filters.product && r.product !== filters.product) return false;
-      if (filters.type && r.type !== filters.type) return false;
-      if (filters.charge_type && r.charge_type !== filters.charge_type) return false;
-      return true;
-    }).length;
-  };
-
-  const totalPages = Math.max(1, Math.ceil(getFilteredRowsCount() / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(rows.length / itemsPerPage));
 
   // Import/Export support (copied/adjusted from RatesTable)
   const parseCsv = (text) => {
@@ -246,7 +218,7 @@ function BridgeFusionRates() {
             const raw = row[i] === undefined ? '' : row[i];
             const key = headers[i];
             if (!key) continue;
-            if (['rate','product_fee','min_loan','max_loan','min_ltv','max_ltv','min_icr','max_defer_int','min_term','max_term','min_rolled_months','max_rolled_months','erc_1','erc_2'].includes(key)) {
+            if (['rate','product_fee','min_loan','max_loan','min_ltv','max_ltv','min_icr','max_defer_int','min_term','max_term','min_rolled_months','max_rolled_months'].includes(key)) {
               obj[key] = toNumeric(raw);
             } else if (['is_retention','is_tracker'].includes(key)) {
               obj[key] = toBoolean(raw);
@@ -254,13 +226,6 @@ function BridgeFusionRates() {
               obj[key] = raw === undefined ? null : raw.toString().trim();
             }
           }
-          
-          // Auto-set ERC values for Fusion products if not already set
-          if (obj.set_key === 'Fusion' || (obj.set_key && obj.set_key.toLowerCase().includes('fusion'))) {
-            if (obj.erc_1 === null || obj.erc_1 === undefined) obj.erc_1 = 3;
-            if (obj.erc_2 === null || obj.erc_2 === undefined) obj.erc_2 = 1.5;
-          }
-          
           return obj;
         }).filter(r => r.set_key || r.setkey || r.set_key === 0);
 
@@ -285,7 +250,7 @@ function BridgeFusionRates() {
         for (let i = 0; i < cleaned.length; i += chunkSize) {
           const chunk = cleaned.slice(i, i + chunkSize);
           // Use the full column set for conflict so rows differing by LTV/type/etc are allowed
-          const onConflictCols = 'set_key,property,product,type,charge_type,product_fee,min_ltv,max_ltv,rate,min_term,max_term,min_rolled_months,max_rolled_months,min_loan,max_loan,min_icr,max_defer_int,erc_1,erc_2';
+          const onConflictCols = 'set_key,property,product,type,charge_type,product_fee,min_ltv,max_ltv,rate,min_term,max_term,min_rolled_months,max_rolled_months,min_loan,max_loan,min_icr,max_defer_int';
           const { error } = await supabase.from('bridge_fusion_rates_full').upsert(chunk, { onConflict: onConflictCols });
           if (error) { setError(error.message || JSON.stringify(error)); return; }
         }
@@ -315,7 +280,7 @@ function BridgeFusionRates() {
   };
 
   const handleExport = () => {
-  const headers = ['set_key','property','product','type','charge_type','product_fee','min_ltv','max_ltv','rate','min_term','max_term','min_rolled_months','max_rolled_months','min_loan','max_loan','min_icr','max_defer_int','erc_1','erc_2'];
+  const headers = ['set_key','property','product','type','charge_type','product_fee','min_ltv','max_ltv','rate','min_term','max_term','min_rolled_months','max_rolled_months','min_loan','max_loan','min_icr','max_defer_int'];
     const headerRow = headers.map(h => formatCsvValue(h)).join(',');
     const dataRows = rows.map(r => headers.map(h => formatExportField(h, r)).join(','));
     const csv = [headerRow, ...dataRows].join('\r\n');
@@ -338,7 +303,7 @@ function BridgeFusionRates() {
           {selectedRows.size > 0 && (
             <button className="slds-button slds-button_destructive slds-m-left_small" onClick={handleBulkDelete}>Delete Selected ({selectedRows.size})</button>
           )}
-          <span className="slds-m-left_small slds-text-title">Total rows: {getFilteredRowsCount()}</span>
+          <span className="slds-m-left_small slds-text-title">Total rows: {rows.length}</span>
         </div>
         <div className="slds-col_bump-left">
           <div className="slds-grid slds-grid_vertical-align-center">
@@ -438,8 +403,6 @@ function BridgeFusionRates() {
               <th className="text-align-center">Max LTV</th>
               <th className="text-align-center">Min ICR</th>
               <th className="text-align-center">Max Defer</th>
-              <th className="text-align-center">ERC 1 (%)</th>
-              <th className="text-align-center">ERC 2 (%)</th>
               <th className="sticky-action">Actions</th>
             </tr>
           </thead>
@@ -465,8 +428,6 @@ function BridgeFusionRates() {
                 <td className="text-align-center">{r.max_ltv}%</td>
                 <td className="text-align-center">{r.min_icr}%</td>
                 <td className="text-align-center">{r.max_defer_int}</td>
-                <td className="text-align-center">{r.erc_1 || '—'}</td>
-                <td className="text-align-center">{r.erc_2 || '—'}</td>
                 <td className="sticky-action">
                   <div className="slds-grid flex-gap-025">
                     <button className="slds-button slds-button_neutral" onClick={() => setEditing(r)}>Edit</button>
