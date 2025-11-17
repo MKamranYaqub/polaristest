@@ -239,6 +239,8 @@ export default function SaveQuoteButton({
             broker_commission_proc_fee_pounds: parseNumeric(rate.broker_commission_proc_fee_pounds),
             commitment_fee_pounds: parseNumeric(rate.commitment_fee_pounds),
             exit_fee: parseNumeric(rate.exit_fee),
+            erc_1_pounds: parseNumeric(rate.erc_1_pounds),
+            erc_2_pounds: parseNumeric(rate.erc_2_pounds),
             monthly_interest_cost: parseNumeric(rate.monthly_interest_cost),
             rolled_months: parseNumeric(rate.rolled_months),
             rolled_months_interest: parseNumeric(rate.rolled_months_interest),
@@ -280,6 +282,8 @@ export default function SaveQuoteButton({
         quoteData.use_specific_net_loan = calculationData.useSpecificNet === 'Yes' || calculationData.useSpecificNet === true;
         quoteData.specific_net_loan = parseNumeric(calculationData.specificNetLoan);
         quoteData.bridging_loan_term = calculationData.bridgingTerm ? Number(calculationData.bridgingTerm) : null;
+        quoteData.commitment_fee = parseNumeric(calculationData.commitmentFee);
+        quoteData.exit_fee_percent = calculationData.exitFeePercent ? Number(calculationData.exitFeePercent) : null;
         quoteData.charge_type = calculationData.chargeType || null;
         quoteData.sub_product = calculationData.subProduct || null;
         // Serialize criteria answers as JSON string
@@ -313,6 +317,8 @@ export default function SaveQuoteButton({
             broker_commission_proc_fee_pounds: parseNumeric(rate.broker_commission_proc_fee_pounds),
             commitment_fee_pounds: parseNumeric(rate.commitment_fee_pounds),
             exit_fee: parseNumeric(rate.exit_fee),
+            erc_1_pounds: parseNumeric(rate.erc_1_pounds),
+            erc_2_pounds: parseNumeric(rate.erc_2_pounds),
             monthly_interest_cost: parseNumeric(rate.monthly_interest_cost),
             rolled_months: parseNumeric(rate.rolled_months),
             rolled_months_interest: parseNumeric(rate.rolled_months_interest || rate.rolled_interest),
@@ -330,6 +336,30 @@ export default function SaveQuoteButton({
             total_loan_term: parseNumeric(rate.total_loan_term),
             title_insurance_cost: parseNumeric(rate.titleInsuranceCost || rate.title_insurance_cost),
             product_name: rate.product_name || rate.product || null,
+            
+            // New comprehensive calculation fields from bridgeFusionCalculationEngine
+            rolled_interest_coupon: parseNumeric(rate.rolled_interest_coupon),
+            rolled_interest_bbr: parseNumeric(rate.rolled_interest_bbr),
+            deferred_interest: parseNumeric(rate.deferred_interest_pounds || rate.deferred_interest),
+            total_interest: parseNumeric(rate.total_interest),
+            aprc_annual: parseNumeric(rate.aprc_annual || rate.aprc),
+            aprc_monthly: parseNumeric(rate.aprc_monthly),
+            total_amount_repayable: parseNumeric(rate.total_amount_repayable),
+            monthly_payment: parseNumeric(rate.monthly_interest_cost || rate.monthly_payment),
+            full_annual_rate: parseNumeric(rate.full_annual_rate),
+            full_rate_monthly: parseNumeric(rate.full_rate_monthly),
+            full_coupon_rate_monthly: parseNumeric(rate.full_coupon_rate_monthly),
+            margin_monthly: parseNumeric(rate.margin_monthly),
+            bbr_monthly: parseNumeric(rate.bbr_monthly),
+            deferred_interest_rate: parseNumeric(rate.deferred_interest_rate || rate.deferred_interest_percent),
+            term_months: parseNumeric(rate.total_loan_term || rate.term_months),
+            serviced_months: parseNumeric(rate.serviced_months),
+            tier_name: rate.tier_name || rate.tierName || null,
+            product_kind: rate.product_kind || null,
+            ltv_bucket: parseNumeric(rate.ltv_bucket),
+            gross_ltv: parseNumeric(rate.ltv || rate.gross_ltv),
+            arrangement_fee_gbp: parseNumeric(rate.product_fee_pounds || rate.arrangement_fee_gbp),
+            arrangement_fee_pct: parseNumeric(rate.product_fee_percent || rate.arrangement_fee_pct),
           }));
           
           // Log sample result for debugging
@@ -338,6 +368,10 @@ export default function SaveQuoteButton({
               fee_column: quoteData.results[0].fee_column,
               title_insurance_cost: quoteData.results[0].title_insurance_cost,
               has_title_insurance: 'title_insurance_cost' in quoteData.results[0],
+              product_kind: quoteData.results[0].product_kind,
+              tier_name: quoteData.results[0].tier_name,
+              rolled_interest_coupon: quoteData.results[0].rolled_interest_coupon,
+              aprc_annual: quoteData.results[0].aprc_annual,
               raw_titleInsuranceCost: calculationData.results[0].titleInsuranceCost,
               raw_title_insurance_cost: calculationData.results[0].title_insurance_cost
             });
@@ -508,6 +542,8 @@ SaveQuoteButton.propTypes = {
     firstChargeValue: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     useSpecificNet: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
     bridgingTerm: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    commitmentFee: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    exitFeePercent: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     chargeType: PropTypes.string,
     subProduct: PropTypes.string,
     results: PropTypes.arrayOf(PropTypes.object),

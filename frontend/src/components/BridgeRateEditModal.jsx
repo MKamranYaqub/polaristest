@@ -27,6 +27,8 @@ function BridgeRateEditModal({ rate, onSave, onCancel }) {
       max_ltv: formData.max_ltv === '' || formData.max_ltv === null ? null : Number(formData.max_ltv),
       min_icr: formData.min_icr === '' || formData.min_icr === null ? null : Number(formData.min_icr),
       max_defer_int: formData.max_defer_int === '' || formData.max_defer_int === null ? null : Number(formData.max_defer_int),
+      erc_1: formData.erc_1 === '' || formData.erc_1 === null ? null : Number(formData.erc_1),
+      erc_2: formData.erc_2 === '' || formData.erc_2 === null ? null : Number(formData.erc_2),
     };
     onSave(out);
   };
@@ -162,6 +164,17 @@ function BridgeRateEditModal({ rate, onSave, onCancel }) {
                 <div className="slds-col">
                   <label className="slds-form-element__label">Max Defer Int</label>
                   <input name="max_defer_int" value={formData.max_defer_int ?? ''} onChange={handleChange} className="slds-input" type="number" />
+                </div>
+              </div>
+
+              <div className="slds-form-element slds-grid slds-gutters">
+                <div className="slds-col">
+                  <label className="slds-form-element__label">ERC 1 (%) - Fusion Only</label>
+                  <input name="erc_1" value={formData.erc_1 ?? ''} onChange={handleChange} className="slds-input" type="number" step="0.01" placeholder="e.g., 3" />
+                </div>
+                <div className="slds-col">
+                  <label className="slds-form-element__label">ERC 2 (%) - Fusion Only</label>
+                  <input name="erc_2" value={formData.erc_2 ?? ''} onChange={handleChange} className="slds-input" type="number" step="0.01" placeholder="e.g., 1.5" />
                 </div>
               </div>
 
