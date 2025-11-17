@@ -326,7 +326,7 @@ export class BridgeFusionCalculator {
 
     // Rolled interest (upfront interest added to loan)
     // Coupon portion (margin only)
-    const rolledIntCoupon = gross * couponMonthly * rolled;
+    const rolledIntCoupon = gross * (couponMonthly - deferredMonthlyRate) * rolled;
     
     // BBR portion (for variable products only)
     const rolledIntBBR = ['bridge-var', 'fusion'].includes(productKind)
