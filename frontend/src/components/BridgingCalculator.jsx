@@ -732,19 +732,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
     return relevantRates.map(rate => {
       try {
-        // Get broker client fee from broker settings additional fees
-        const brokerClientFee = brokerSettings.addFeesToggle && brokerSettings.additionalFeeAmount
-          ? (brokerSettings.feeCalculationType === 'percentage' 
-              ? grossInput * (parseNumber(brokerSettings.additionalFeeAmount) / 100)
-              : parseNumber(brokerSettings.additionalFeeAmount))
-          : 0;
-
-        // Get broker commission % - for Broker clients use the commission %, for Direct clients use 0
-        const brokerCommissionPct = brokerSettings.clientType === 'Broker' 
-          ? parseNumber(brokerSettings.brokerCommissionPercent) || 0.9
-          : 0;
-
         // Use the comprehensive Bridge & Fusion calculation engine
+        // Pass broker settings to let the engine calculate fees internally
         const calculated = BridgeFusionCalculator.calculateForRate(rate, {
           grossLoan: grossInput,
           propertyValue: pv,
@@ -754,11 +743,19 @@ export default function BridgingCalculator({ initialQuote = null }) {
           specificNetLoan: specificNet,
           termMonths: term,
           bbrAnnual: bbrAnnual,
-          procFeePct: brokerCommissionPct,
+          procFeePct: 0, // Will be calculated from brokerSettings
           brokerFeeFlat: 0,
-          brokerClientFee: brokerClientFee,
+          brokerClientFee: 0, // Will be calculated from brokerSettings
           rolledMonthsOverride: rolledMonthsPerColumn?.[rate.set_key] || rolledMonthsPerColumn?.[rate.id],
           deferredRateOverride: deferredInterestPerColumn?.[rate.set_key] || deferredInterestPerColumn?.[rate.id],
+          // Pass broker settings for automatic fee calculation
+          brokerSettings: {
+            addFeesToggle: brokerSettings.addFeesToggle,
+            feeCalculationType: brokerSettings.feeCalculationType,
+            additionalFeeAmount: brokerSettings.additionalFeeAmount,
+            clientType: brokerSettings.clientType,
+            brokerCommissionPercent: brokerSettings.brokerCommissionPercent,
+          },
         });
 
         // Debug log first calculation

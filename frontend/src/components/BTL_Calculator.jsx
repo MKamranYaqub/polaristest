@@ -691,132 +691,6 @@ export default function BTLcalculator({ initialQuote = null }) {
     }
   }, [relevantRates, propertyValue, monthlyRent, specificNetLoan, specificGrossLoan, maxLtvInput, topSlicing, loanType, productType, currentTier, rolledMonthsPerColumn, deferredInterestPerColumn, ratesOverrides, productFeeOverrides]);
 
-  // Compute calculated rates with all financial values
-  const calculatedRates = useMemo(() => {
-    // Don't compute if no loan type selected
-    if (!loanType || loanType === '') return [];
-    
-    if (!relevantRates || relevantRates.length === 0) return [];
-
-  // (debug logs removed)
-
-    const pv = parseNumber(propertyValue);
-    const specificGross = parseNumber(specificGrossLoan);
-    const specificNet = parseNumber(specificNetLoan);
-    const monthlyRentNum = parseNumber(monthlyRent);
-    const topSlicingNum = parseNumber(topSlicing);
-    const additionalFeeNum = parseNumber(additionalFeeAmount);
-
-    return relevantRates.map(rate => {
-      // Determine gross loan based on loan calculation type
-      let gross = NaN;
-      const loanTypeNormalized = (loanType || '').toLowerCase();
-      
-      if (loanTypeNormalized.includes('specific') && loanTypeNormalized.includes('gross') && Number.isFinite(specificGross)) {
-        gross = specificGross;
-      } else if (loanTypeNormalized.includes('net') && loanTypeNormalized.includes('required') && Number.isFinite(specificNet)) {
-        // Work backwards from net loan to gross loan
-        const pfPercent = Number(rate.product_fee);
-        if (!Number.isNaN(pfPercent)) {
-          gross = specificNet / (1 - pfPercent / 100);
-        }
-      } else if ((loanTypeNormalized.includes('max') || loanTypeNormalized.includes('ltv')) && Number.isFinite(pv)) {
-        // Use max LTV from rate or input
-        const maxLtv = Number(rate.max_ltv || maxLtvInput);
-        gross = pv * (maxLtv / 100);
-      }
-
-      // Product fee calculations
-      const pfPercent = Number(rate.product_fee);
-      const pfAmount = Number.isFinite(gross) && !Number.isNaN(pfPercent) ? gross * (pfPercent / 100) : NaN;
-      
-      // Admin fee
-      const adminFee = Number(rate.admin_fee) || 0;
-
-      // Net loan calculation
-      let net = gross;
-      if (Number.isFinite(pfAmount)) net -= pfAmount;
-      if (Number.isFinite(adminFee)) net -= adminFee;
-      
-      // Additional fees (Broker Client Fee)
-      let brokerClientFee = 0;
-      if (addFeesToggle && Number.isFinite(additionalFeeNum) && additionalFeeNum > 0 && Number.isFinite(gross)) {
-        if (feeCalculationType === 'percentage') {
-          // Percentage of gross loan
-          brokerClientFee = gross * (additionalFeeNum / 100);
-        } else {
-          // Fixed pound amount
-          brokerClientFee = additionalFeeNum;
-        }
-        net -= brokerClientFee;
-      }
-
-      // LTV calculations
-      const ltvPercent = Number.isFinite(pv) && pv > 0 ? (gross / pv * 100) : NaN;
-      const netLtv = Number.isFinite(pv) && pv > 0 ? (net / pv * 100) : NaN;
-
-      // ICR calculation
-      const initialRate = Number(rate.rate);
-      const monthlyInterest = Number.isFinite(gross) && Number.isFinite(initialRate) ? gross * (initialRate / 100) / 12 : NaN;
-      const icr = Number.isFinite(monthlyRentNum) && Number.isFinite(monthlyInterest) && monthlyInterest > 0 
-        ? (monthlyRentNum / monthlyInterest * 100) 
-        : NaN;
-
-      // Broker commission (proc fee) - use broker commission % from client details if client is Broker
-      // brokerCommissionPercent is stored as actual percentage (e.g., 0.7 for 0.7%)
-      let procFeePercent = 0;
-      let brokerCommissionProcFeePounds = 0;
-      
-      if (brokerSettings.clientType === 'Broker' && Number.isFinite(gross)) {
-        procFeePercent = Number(brokerSettings.brokerCommissionPercent) || 0;
-        if (procFeePercent > 0) {
-          brokerCommissionProcFeePounds = gross * (procFeePercent / 100);
-        }
-      }
-
-      return {
-        ...rate,
-        gross_loan: Number.isFinite(gross) ? gross.toFixed(2) : null,
-        net_loan: Number.isFinite(net) ? net.toFixed(2) : null,
-        ltv: Number.isFinite(ltvPercent) ? ltvPercent.toFixed(2) : null,
-        net_ltv: Number.isFinite(netLtv) ? netLtv.toFixed(2) : null,
-        property_value: Number.isFinite(pv) ? pv.toFixed(2) : null,
-        icr: Number.isFinite(icr) ? icr.toFixed(2) : null,
-        initial_rate: initialRate,
-        pay_rate: initialRate, // Assuming pay rate same as initial rate for BTL
-        product_fee_percent: pfPercent,
-        product_fee_pounds: Number.isFinite(pfAmount) ? pfAmount.toFixed(2) : null,
-        admin_fee: adminFee,
-        broker_client_fee: brokerClientFee > 0 ? brokerClientFee.toFixed(2) : null,
-        broker_commission_proc_fee_percent: procFeePercent > 0 ? procFeePercent.toFixed(2) : null,
-        broker_commission_proc_fee_pounds: brokerCommissionProcFeePounds > 0 ? brokerCommissionProcFeePounds.toFixed(2) : null,
-        monthly_interest_cost: Number.isFinite(monthlyInterest) ? monthlyInterest.toFixed(2) : null,
-        rent: Number.isFinite(monthlyRentNum) ? monthlyRentNum.toFixed(2) : null,
-        top_slicing: Number.isFinite(topSlicingNum) ? topSlicingNum.toFixed(2) : null,
-        max_top_slicing_pct: rate.max_top_slicing || 20, // Default to 20%
-        max_top_slicing_value: Number.isFinite(monthlyRentNum) ? (monthlyRentNum * ((rate.max_top_slicing || 20) / 100)).toFixed(2) : null,
-        product_name: rate.product || null,
-        // Add other fields that might be needed
-        revert_rate: null, // Not calculated in BTL
-        revert_rate_dd: null,
-        full_rate: null,
-        aprc: null,
-        commitment_fee_pounds: null,
-        exit_fee: null,
-        rolled_months: null,
-        rolled_months_interest: null,
-        deferred_interest_percent: null,
-        deferred_interest_pounds: null,
-        serviced_interest: null,
-        direct_debit: null,
-        erc: null,
-        nbp: null,
-        total_cost_to_borrower: null,
-        total_loan_term: null
-      };
-    });
-  }, [relevantRates, propertyValue, specificGrossLoan, specificNetLoan, monthlyRent, topSlicing, loanType, maxLtvInput, addFeesToggle, feeCalculationType, additionalFeeAmount, brokerSettings.clientType, brokerSettings.brokerCommissionPercent]);
-
   // Compute full results using BTLCalculationEngine for saving to database
   const fullComputedResults = useMemo(() => {
     // Don't compute if no loan type selected
@@ -1383,7 +1257,7 @@ export default function BTLcalculator({ initialQuote = null }) {
               answers,
               // Client details from broker settings
               ...brokerSettings.getAllSettings(),
-              relevantRates: fullComputedResults, // Use full computed results instead of simple calculatedRates
+              relevantRates: fullComputedResults,
               selectedRate: (filteredRatesForDip && filteredRatesForDip.length > 0) 
                 ? filteredRatesForDip[0] 
                 : (fullComputedResults && fullComputedResults.length > 0 ? fullComputedResults[0] : null),

@@ -498,7 +498,30 @@ export class BridgeFusionCalculator {
       brokerClientFee = 0,
       rolledMonthsOverride,
       deferredRateOverride,
+      // Broker settings for automatic fee calculation
+      brokerSettings = null,
     } = inputs;
+
+    // Calculate broker client fee from broker settings if provided
+    let calculatedBrokerClientFee = brokerClientFee;
+    if (brokerSettings?.addFeesToggle && brokerSettings?.additionalFeeAmount) {
+      const grossValue = parseNumber(grossLoan);
+      const feeAmount = parseNumber(brokerSettings.additionalFeeAmount);
+      
+      if (brokerSettings.feeCalculationType === 'percentage' && grossValue > 0) {
+        calculatedBrokerClientFee = grossValue * (feeAmount / 100);
+      } else {
+        calculatedBrokerClientFee = feeAmount;
+      }
+    }
+
+    // Calculate broker commission percentage from broker settings
+    let calculatedProcFeePct = procFeePct;
+    if (brokerSettings?.clientType === 'Broker') {
+      calculatedProcFeePct = parseNumber(brokerSettings.brokerCommissionPercent) || 0.9;
+    } else if (brokerSettings?.clientType === 'Direct') {
+      calculatedProcFeePct = 0;
+    }
 
     // Determine product kind from rate record
     const setKey = (rateRecord.set_key || '').toString().toLowerCase();
@@ -572,9 +595,9 @@ export class BridgeFusionCalculator {
       rolledMonths,
       arrangementPct,
       deferredAnnualRate,
-      procFeePct,
+      procFeePct: calculatedProcFeePct,
       brokerFeeFlat,
-      brokerClientFee,
+      brokerClientFee: calculatedBrokerClientFee,
       adminFee,
       useSpecificNet,
       specificNetLoan,
