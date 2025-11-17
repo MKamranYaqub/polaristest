@@ -32,6 +32,7 @@ export const PRODUCT_TYPES_LIST = {
   Residential: ['2yr Fix', '3yr Fix', '2yr Tracker'],
   Commercial: ['2yr Fix', '3yr Fix', '2yr Tracker'],
   'Semi-Commercial': ['2yr Fix', '3yr Fix', '2yr Tracker'],
+  Core: ['2yr Fix', '3yr Fix', '2yr Tracker'],
 };
 
 // Fee columns to display in output per property type and retention/core variants.

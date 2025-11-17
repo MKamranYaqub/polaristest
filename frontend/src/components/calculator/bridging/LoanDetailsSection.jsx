@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import CollapsibleSection from '../CollapsibleSection';
 import { formatCurrencyInput } from '../../../utils/calculator/numberFormatting';
 
@@ -33,6 +33,13 @@ const LoanDetailsSection = ({
   termRange = { min: 1, max: 24 },
   isReadOnly = false
 }) => {
+  // When 'Use specific net loan' is toggled, adjust gross loan
+  useEffect(() => {
+    if (useSpecificNet === 'Yes') {
+      onGrossLoanChange('0');
+    }
+  }, [useSpecificNet]);
+
   return (
     <CollapsibleSection 
       title="Loan details" 
@@ -61,7 +68,7 @@ const LoanDetailsSection = ({
               value={grossLoan} 
               onChange={(e) => onGrossLoanChange(formatCurrencyInput(e.target.value))} 
               placeholder="£550,000" 
-              disabled={isReadOnly} 
+              disabled={isReadOnly || useSpecificNet === 'Yes'} 
             />
           </div>
         </div>
@@ -135,7 +142,7 @@ const LoanDetailsSection = ({
               <input 
                 className="slds-input" 
                 value={specificNetLoan} 
-                onChange={(e) => onSpecificNetLoanChange(e.target.value)} 
+                onChange={(e) => onSpecificNetLoanChange(formatCurrencyInput(e.target.value))} 
                 placeholder="£" 
                 disabled={isReadOnly} 
               />

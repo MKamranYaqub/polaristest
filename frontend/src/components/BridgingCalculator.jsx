@@ -27,6 +27,11 @@ import { pickBestRate, computeModeFromAnswers } from '../utils/calculator/rateFi
 import { LOCALSTORAGE_CONSTANTS_KEY, MARKET_RATES } from '../config/constants';
 import { BridgeFusionCalculator } from '../utils/bridgeFusionCalculationEngine';
 
+const getNumericValue = (value) => {
+  const parsed = parseNumber(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 export default function BridgingCalculator({ initialQuote = null }) {
   const { supabase } = useSupabase();
   const { canEditCalculators, token } = useAuth();
@@ -67,7 +72,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
   const [topSlicing, setTopSlicing] = useState('');
   const [useSpecificNet, setUseSpecificNet] = useState('No');
   const [specificNetLoan, setSpecificNetLoan] = useState('');
-  const [bridgingTerm, setBridgingTerm] = useState('');
+  const [bridgingTerm, setBridgingTerm] = useState('12');
   const [commitmentFee, setCommitmentFee] = useState('');
   const [exitFeePercent, setExitFeePercent] = useState('');
   const [rates, setRates] = useState([]);
@@ -411,7 +416,30 @@ export default function BridgingCalculator({ initialQuote = null }) {
       // Load calculated results if available (from bridge_quote_results table)
       if (quote.results && Array.isArray(quote.results) && quote.results.length > 0) {
         // Map database results back to the format expected by the calculator
-        const loadedRates = quote.results.map(result => ({
+        const bbrPercent = (MARKET_RATES?.STANDARD_BBR || 0) * 100; // e.g., 4% => 4
+        const loadedRates = quote.results.map(result => {
+          const productName = result.product_name;
+          const initialRatePct = Number(result.initial_rate);
+          const isFusion = productName === 'Fusion';
+          const isVarBridge = productName === 'Variable Bridge';
+          const isFixedBridge = productName === 'Fixed Bridge';
+          // Reconstruct the underlying rate used by engine
+          // - Fusion: annual margin (percent)
+          // - Variable Bridge: monthly margin (percent) = (initial annual - BBR annual)/12
+          // - Fixed Bridge: monthly coupon (percent) = initial annual / 12
+          const reconstructedRate = Number.isFinite(initialRatePct)
+            ? (
+                isFusion
+                  ? (initialRatePct - bbrPercent) // keep annual margin for Fusion
+                  : isVarBridge
+                    ? ((initialRatePct - bbrPercent) / 12)
+                    : isFixedBridge
+                      ? (initialRatePct / 12)
+                      : initialRatePct
+              )
+            : null;
+
+          return ({
           product_fee: result.fee_column,
           gross_loan: result.gross_loan,
           net_loan: result.net_loan,
@@ -421,7 +449,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
           property_value: result.property_value,
           icr: result.icr,
           initial_rate: result.initial_rate,
-          rate: result.initial_rate,
+          rate: reconstructedRate,
           pay_rate: result.pay_rate,
           revert_rate: result.revert_rate,
           revert_rate_dd: result.revert_rate_dd,
@@ -439,11 +467,26 @@ export default function BridgingCalculator({ initialQuote = null }) {
           rolled_months: result.rolled_months,
           rolled_months_interest: result.rolled_months_interest || result.rolled_interest,
           rolled_interest: result.rolled_months_interest || result.rolled_interest,
+          rolled_interest_coupon: result.rolled_interest_coupon,
+          rolled_interest_bbr: result.rolled_interest_bbr,
+          full_interest_coupon: result.full_interest_coupon,
+          full_interest_bbr: result.full_interest_bbr,
           deferred_interest_percent: result.deferred_interest_percent,
           deferred_interest_pounds: result.deferred_interest_pounds || result.deferred_interest,
           deferred_interest: result.deferred_interest_pounds || result.deferred_interest,
           deferred_rate: result.deferred_rate,
           serviced_interest: result.serviced_interest,
+          serviced_months: result.serviced_months,
+          total_interest: result.total_interest,
+          aprc_annual: result.aprc_annual || result.aprc,
+          aprc_monthly: result.aprc_monthly,
+          total_amount_repayable: result.total_amount_repayable,
+          full_rate_monthly: result.full_rate_monthly,
+          full_coupon_rate_monthly: result.full_coupon_rate_monthly,
+          margin_monthly: result.margin_monthly,
+          bbr_monthly: result.bbr_monthly,
+          erc_1_pounds: result.erc_1_pounds,
+          erc_2_pounds: result.erc_2_pounds,
           direct_debit: result.direct_debit,
           erc: result.erc,
           erc_fusion_only: result.erc_fusion_only,
@@ -454,8 +497,43 @@ export default function BridgingCalculator({ initialQuote = null }) {
           total_loan_term: result.total_loan_term,
           product_name: result.product_name,
           product: result.product_name,
-        }));
+        });
+        });
         setRelevantRates(loadedRates);
+        
+        // Restore product fee overrides if they were edited
+        // We need to check if saved product_fee_percent differs from what would be calculated
+        const overrides = {};
+        quote.results.forEach(result => {
+          const productName = result.product_name;
+          if (productName && result.product_fee_percent !== null && result.product_fee_percent !== undefined) {
+            overrides[productName] = `${result.product_fee_percent}%`;
+          }
+        });
+        if (Object.keys(overrides).length > 0) {
+          setProductFeeOverrides(overrides);
+        }
+
+        // Restore rate overrides per column (Fusion / Variable Bridge / Fixed Bridge)
+        const rateOverrides = {};
+        quote.results.forEach(result => {
+          const col = result.product_name;
+          const initialRate = Number(result.initial_rate);
+          if (!col || !Number.isFinite(initialRate)) return;
+          if (col === 'Fusion') {
+            const marginAnnual = initialRate - bbrPercent;
+            rateOverrides[col] = `${marginAnnual.toFixed(2)}% + BBR`;
+          } else if (col === 'Variable Bridge') {
+            const marginMonthly = (initialRate - bbrPercent) / 12;
+            rateOverrides[col] = `${marginMonthly.toFixed(2)}% + BBR`;
+          } else if (col === 'Fixed Bridge') {
+            const couponMonthly = initialRate / 12;
+            rateOverrides[col] = `${couponMonthly.toFixed(2)}%`;
+          }
+        });
+        if (Object.keys(rateOverrides).length > 0) {
+          setRatesOverrides(rateOverrides);
+        }
       }
       
       // Load criteria answers if available
@@ -732,6 +810,21 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
     return relevantRates.map(rate => {
       try {
+        // Determine column key for this rate to match slider state
+        // Map rate type to column header
+        const rateSetKey = (rate.set_key || '').toString().toLowerCase();
+        let columnKey = 'Fixed Bridge'; // default
+        if (rateSetKey === 'fusion') {
+          columnKey = 'Fusion';
+        } else if (rateSetKey.includes('var')) {
+          columnKey = 'Variable Bridge';
+        } else if (rateSetKey.includes('fix')) {
+          columnKey = 'Fixed Bridge';
+        }
+
+        const overrideRateValue = getNumericValue(ratesOverrides?.[columnKey]);
+        const overrideProductFeeValue = getNumericValue(productFeeOverrides?.[columnKey]);
+
         // Use the comprehensive Bridge & Fusion calculation engine
         // Pass broker settings to let the engine calculate fees internally
         const calculated = BridgeFusionCalculator.calculateForRate(rate, {
@@ -746,8 +839,12 @@ export default function BridgingCalculator({ initialQuote = null }) {
           procFeePct: 0, // Will be calculated from brokerSettings
           brokerFeeFlat: 0,
           brokerClientFee: 0, // Will be calculated from brokerSettings
-          rolledMonthsOverride: rolledMonthsPerColumn?.[rate.set_key] || rolledMonthsPerColumn?.[rate.id],
-          deferredRateOverride: deferredInterestPerColumn?.[rate.set_key] || deferredInterestPerColumn?.[rate.id],
+          rolledMonthsOverride: rolledMonthsPerColumn?.[columnKey],
+          deferredRateOverride: deferredInterestPerColumn?.[columnKey],
+          commitmentFeePounds: parseNumber(commitmentFee) || 0,
+          exitFeePercent: parseNumber(exitFeePercent) || 1,
+          overriddenRate: overrideRateValue,
+          productFeeOverridePercent: overrideProductFeeValue,
           // Pass broker settings for automatic fee calculation
           brokerSettings: {
             addFeesToggle: brokerSettings.addFeesToggle,
@@ -796,9 +893,35 @@ export default function BridgingCalculator({ initialQuote = null }) {
           productName = 'Fixed Bridge';
         }
 
+        const rateForReturn = { ...rate };
+
+        const originalRateValue = getNumericValue(calculated.original_rate ?? rate.rate);
+        const appliedRateValue = getNumericValue(calculated.applied_rate ?? overrideRateValue ?? originalRateValue);
+        if (originalRateValue != null) {
+          rateForReturn.original_rate = originalRateValue;
+        }
+        if (appliedRateValue != null) {
+          rateForReturn.rate = appliedRateValue;
+          rateForReturn.applied_rate = appliedRateValue;
+        }
+
+        const originalProductFeeValue = getNumericValue(calculated.original_product_fee ?? rate.product_fee);
+        const appliedProductFeeValue = getNumericValue(calculated.applied_product_fee ?? overrideProductFeeValue ?? originalProductFeeValue);
+        if (originalProductFeeValue != null) {
+          rateForReturn.original_product_fee = originalProductFeeValue;
+        }
+        if (appliedProductFeeValue != null) {
+          rateForReturn.product_fee = appliedProductFeeValue;
+          rateForReturn.applied_product_fee = appliedProductFeeValue;
+        }
+
+        const productFeePercentApplied = Number.isFinite(calculated.productFeePercent)
+          ? calculated.productFeePercent
+          : appliedProductFeeValue;
+
         // Map engine results to UI fields
         return {
-          ...rate,
+          ...rateForReturn,
           // Core loan metrics (0 decimal places)
           gross_loan: calculated.gross?.toFixed(0) || null,
           net_loan: calculated.netLoanGBP?.toFixed(0) || null,
@@ -819,7 +942,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
           bbr_monthly: calculated.bbrMonthly?.toFixed(2) || null,
           
           // Fee metrics (0 decimal places)
-          product_fee_percent: calculated.productFeePercent?.toFixed(2) || null,
+          product_fee_percent: productFeePercentApplied != null ? Number(productFeePercentApplied).toFixed(2) : null,
           product_fee_pounds: calculated.productFeePounds?.toFixed(0) || null,
           admin_fee: calculated.adminFee || 0,
           broker_commission_proc_fee_percent: calculated.procFeePct?.toFixed(2) || null,
@@ -830,6 +953,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
           rolled_months_interest: calculated.rolledInterestGBP?.toFixed(0) || null,
           rolled_interest_coupon: calculated.rolledIntCoupon?.toFixed(0) || null,
           rolled_interest_bbr: calculated.rolledIntBBR?.toFixed(0) || null,
+          full_interest_coupon: calculated.fullIntCoupon?.toFixed(0) || null,
+          full_interest_bbr: calculated.fullIntBBR?.toFixed(0) || null,
           deferred_interest_percent: calculated.deferredInterestRate?.toFixed(2) || null,
           deferred_interest_pounds: calculated.deferredGBP?.toFixed(0) || null,
           serviced_interest: calculated.servicedInterestGBP?.toFixed(0) || null,
@@ -889,7 +1014,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
         };
       }
     });
-  }, [relevantRates, propertyValue, grossLoan, specificNetLoan, monthlyRent, topSlicing, useSpecificNet, bridgingTerm, commitmentFee, exitFeePercent, rolledMonthsPerColumn, deferredInterestPerColumn, brokerSettings.clientType, brokerSettings.brokerCommissionPercent, brokerSettings.addFeesToggle, brokerSettings.feeCalculationType, brokerSettings.additionalFeeAmount]);
+  }, [relevantRates, propertyValue, grossLoan, specificNetLoan, monthlyRent, topSlicing, useSpecificNet, bridgingTerm, commitmentFee, exitFeePercent, rolledMonthsPerColumn, deferredInterestPerColumn, ratesOverrides, productFeeOverrides, brokerSettings.clientType, brokerSettings.brokerCommissionPercent, brokerSettings.addFeesToggle, brokerSettings.feeCalculationType, brokerSettings.additionalFeeAmount]);
 
   const loanLtv = computeLoanLtv(propertyValue, specificNetLoan, grossLoan, firstChargeValue);
   const loanSize = computeLoanSize(specificNetLoan, grossLoan);
@@ -1327,6 +1452,15 @@ export default function BridgingCalculator({ initialQuote = null }) {
                           </tr>
                         );
                       }
+                      if (useSpecificNet === 'Yes' && !specificNetLoan) {
+                        return (
+                            <tr>
+                                <td colSpan={4} className="slds-text-body_small" style={{ padding: '2rem', textAlign: 'center', color: '#706e6b' }}>
+                                    Please enter a specific net loan amount to view rates and results.
+                                </td>
+                            </tr>
+                        );
+                    }
                       
                       return (
                         <tr>
@@ -1353,12 +1487,24 @@ export default function BridgingCalculator({ initialQuote = null }) {
                               if (best && best.rate != null) {
                                 // Add " + BBR" for Fusion and Variable Bridge
                                 const needsBBR = col === 'Fusion' || col === 'Variable Bridge';
-                                const suffix = needsBBR ? ' + BBR' : '%';
+                                // Show percent and BBR together for these columns
+                                const suffix = needsBBR ? '% + BBR' : '%';
                                 columnSuffixes[col] = suffix;
-                                
-                                const originalRate = `${Number(best.rate).toFixed(2)}${suffix}`;
-                                originalRates[col] = originalRate;
-                                ratesDisplayValues[col] = ratesOverrides[col] || originalRate;
+                                const originalRateValue = getNumericValue(best.original_rate ?? best.rate);
+                                const appliedRateValue = getNumericValue(best.rate);
+                                const baselineRateValue = originalRateValue ?? appliedRateValue;
+
+                                if (baselineRateValue != null) {
+                                  const originalRate = `${baselineRateValue.toFixed(2)}${suffix}`;
+                                  originalRates[col] = originalRate;
+
+                                  if (ratesOverrides[col]) {
+                                    ratesDisplayValues[col] = ratesOverrides[col];
+                                  } else {
+                                    const displayRateValue = appliedRateValue ?? baselineRateValue;
+                                    ratesDisplayValues[col] = `${displayRateValue.toFixed(2)}${suffix}`;
+                                  }
+                                }
                               }
                             });
 
@@ -1391,9 +1537,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
                             const allPlaceholders = [
                               'APRC', 'Admin Fee', 'Broker Client Fee', 'Broker Comission (Proc Fee %)',
                               'Broker Comission (Proc Fee £)', 'Commitment Fee £', 'Deferred Interest %', 'Deferred Interest £',
-                              'Direct Debit', 'ERC 1 £', 'ERC 2 £', 'Exit Fee', 'Gross Loan', 'ICR', 'LTV', 'Monthly Interest Cost',
+                              'Direct Debit', 'ERC 1 £', 'ERC 2 £', 'Exit Fee', 'Full Int BBR £', 'Full Int Coupon £', 
+                              'Gross Loan', 'ICR', 'LTV', 'Monthly Interest Cost',
                               'NBP', 'Net Loan', 'Net LTV', 'Pay Rate', 'Product Fee %', 'Product Fee £', 'Revert Rate', 'Revert Rate DD',
-                              'Rolled Months', 'Rolled Months Interest', 'Serviced Interest', 'Title Insurance Cost', 'Total Cost to Borrower', 'Total Loan Term'
+                              'Rolled Months', 'Rolled Months Interest', 'Serviced Interest', 'Title Insurance Cost', 'Total Interest', 'Total Loan Term'
                             ];
                             
                             // Filter placeholders based on visibility settings, then apply ordering
@@ -1418,10 +1565,20 @@ export default function BridgingCalculator({ initialQuote = null }) {
                               
                               // Use the already-calculated values from bridgeFusionCalculationEngine
                               // Product Fee %
-                              if (best.product_fee_percent && values['Product Fee %']) {
-                                const originalFee = `${best.product_fee_percent}%`;
-                                originalProductFees[col] = originalFee;
-                                values['Product Fee %'][col] = productFeeOverrides[col] || originalFee;
+                              if (values['Product Fee %']) {
+                                const originalFeeValue = getNumericValue(best.original_product_fee ?? best.product_fee_percent);
+                                const appliedFeeValue = getNumericValue(best.product_fee_percent);
+
+                                if (originalFeeValue != null) {
+                                  originalProductFees[col] = `${originalFeeValue}%`;
+                                } else if (appliedFeeValue != null) {
+                                  originalProductFees[col] = `${appliedFeeValue}%`;
+                                }
+
+                                if (appliedFeeValue != null) {
+                                  const appliedFeeText = `${appliedFeeValue}%`;
+                                  values['Product Fee %'][col] = productFeeOverrides[col] || appliedFeeText;
+                                }
                               }
 
                               // Gross Loan
@@ -1477,7 +1634,18 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
                               // Direct Debit
                               if (best.direct_debit && values['Direct Debit']) {
-                                values['Direct Debit'][col] = `£${Number(best.direct_debit).toLocaleString('en-GB')}`;
+                                const directDebitAmount = Number(best.direct_debit);
+                                const rolledMonths = rolledMonthsPerColumn?.[col] || 0;
+                                const directFromMonth = rolledMonths + 1;
+                                
+                                let displayValue = `£${directDebitAmount.toLocaleString('en-GB')}`;
+                                
+                                // Add "Direct from month X" text if direct debit > 0 and there are rolled months
+                                if (directDebitAmount > 0 && rolledMonths > 0) {
+                                  displayValue += ` (from month ${directFromMonth})`;
+                                }
+                                
+                                values['Direct Debit'][col] = displayValue;
                               }
 
                               // APRC
@@ -1530,6 +1698,16 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                 values['Serviced Interest'][col] = `£${Number(best.serviced_interest).toLocaleString('en-GB')}`;
                               }
 
+                              // Full Int Coupon £
+                              if (best.full_interest_coupon && values['Full Int Coupon £']) {
+                                values['Full Int Coupon £'][col] = `£${Number(best.full_interest_coupon).toLocaleString('en-GB')}`;
+                              }
+
+                              // Full Int BBR £
+                              if (best.full_interest_bbr && values['Full Int BBR £']) {
+                                values['Full Int BBR £'][col] = `£${Number(best.full_interest_bbr).toLocaleString('en-GB')}`;
+                              }
+
                               // Total Loan Term
                               if (best.total_loan_term && values['Total Loan Term']) {
                                 values['Total Loan Term'][col] = `${best.total_loan_term} months`;
@@ -1570,9 +1748,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                 values['Broker Client Fee'][col] = `£${Number(best.broker_client_fee).toLocaleString('en-GB')}`;
                               }
 
-                              // Total Cost to Borrower (if available)
-                              if (best.total_cost_to_borrower && values['Total Cost to Borrower']) {
-                                values['Total Cost to Borrower'][col] = `£${Number(best.total_cost_to_borrower).toLocaleString('en-GB')}`;
+                              // Total Interest (Deferred + Rolled + Serviced)
+                              if (best.total_interest && values['Total Interest']) {
+                                values['Total Interest'][col] = `£${Number(best.total_interest).toLocaleString('en-GB')}`;
                               }
 
                               // Title Insurance Cost (if available)

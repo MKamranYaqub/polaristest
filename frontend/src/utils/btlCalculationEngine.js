@@ -505,7 +505,7 @@ export class BTLCalculationEngine {
     }
     // --- Auto-optimize across rolled/deferred combinations
     else {
-      const step = 0.0001; // 0.01% increments for deferred rate (finer granularity)
+      const step = 0.01; // 0.01% increments for deferred rate (finer granularity)
       const deferredSteps = Math.round(maxDeferredRate / step);
       const maxRolledToTest = Math.min(maxRolledMonths, termMonths);
 

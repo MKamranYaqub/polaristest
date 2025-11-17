@@ -119,6 +119,8 @@ export class BridgeFusionCalculator {
       adminFee = 0,
       useSpecificNet = false,
       specificNetLoan = 0,
+      commitmentFeePounds = 0,
+      exitFeePercent = 0,
     } = params;
 
     let gross = parseNumber(grossLoan);
@@ -129,6 +131,8 @@ export class BridgeFusionCalculator {
     const rolled = Math.min(parseNumber(rolledMonths) || 0, term);
     const adminFeeAmt = parseNumber(adminFee) || 0;
     const targetNet = parseNumber(specificNetLoan);
+    const commitmentFee = parseNumber(commitmentFeePounds) || 0;
+    const exitFeePct = parseNumber(exitFeePercent) || 0;
 
     // Validate inputs
     if (isNaN(gross) || gross <= 0) {
@@ -241,7 +245,7 @@ export class BridgeFusionCalculator {
         // Check if we're close enough
         const diff = Math.abs(calculatedNet - targetNet);
         if (diff < 0.01) {
-          gross = tempGross;
+          gross = this.roundUpTo(tempGross);
           break;
         }
         
@@ -250,6 +254,9 @@ export class BridgeFusionCalculator {
           estimatedGross = tempGross + (targetNet - calculatedNet);
         } else {
           estimatedGross = tempGross - (calculatedNet - targetNet);
+        }
+        if (i === 9) { // If loop is finishing, round up the last estimate
+          gross = this.roundUpTo(estimatedGross);
         }
       }
     }
@@ -346,6 +353,15 @@ export class BridgeFusionCalculator {
     // Total interest over loan term
     const totalInterest = deferredGBP + rolledInterestGBP + servicedInterestGBP;
 
+    // Full interest components over the entire term (not just rolled)
+    // Full Int Coupon = Coupon interest over full term (margin/coupon * gross * term)
+    const fullIntCoupon = gross * (couponMonthly - deferredMonthlyRate) * term;
+    
+    // Full Int BBR = BBR interest over full term (for variable products)
+    const fullIntBBR = ['bridge-var', 'fusion'].includes(productKind)
+      ? gross * bbrMonthly * term
+      : 0;
+
     // === NET PROCEEDS ===
     const netLoanGBP = Math.max(
       0,
@@ -394,11 +410,15 @@ export class BridgeFusionCalculator {
     }
 
     // === RETURN RESULTS ===
+    // NBP = Net Loan + max(2% of gross loan, arrangement fee)
+    const maxFeeForNBP = Math.max(gross * 0.02, arrangementFeeGBP);
+    const nbp = netLoanGBP + maxFeeForNBP;
+    
     return {
       // Basic loan metrics
       gross,
       netLoanGBP,
-      npb: netLoanGBP, // Net Proceeds to Borrower
+      npb: nbp, // Net Proceeds to Borrower
       grossLTV,
       netLTV,
       ltv: ltvBucket,
@@ -433,11 +453,11 @@ export class BridgeFusionCalculator {
       productFeePounds: arrangementFeeGBP,
       titleInsuranceCost,
 
-      // Commitment Fee and Exit Fee (typically 1% each for Bridge/Fusion products)
-      commitmentFeePercent: 1, // 1% standard
-      commitmentFeePounds: grossLoan * 0.01, // 1% of gross loan
-      exitFeePercent: 1, // 1% standard  
-      exitFee: grossLoan * 0.01, // 1% of gross loan
+      // Commitment Fee and Exit Fee (from user inputs)
+      commitmentFeePercent: commitmentFee > 0 ? (commitmentFee / gross) * 100 : 0,
+      commitmentFeePounds: commitmentFee,
+      exitFeePercent: exitFeePct,
+      exitFee: gross * (exitFeePct / 100),
 
       // ERC (Early Repayment Charges) - Fusion only (pulled from rate record, not hardcoded)
       erc1Percent: productKind === 'fusion' ? (parseNumber(rateRecord.erc_1) || 0) : 0,
@@ -452,6 +472,8 @@ export class BridgeFusionCalculator {
       rolledInterestGBP,
       rolledIntCoupon,
       rolledIntBBR,
+      fullIntCoupon,
+      fullIntBBR,
       deferredGBP,
       deferredInterestRate: deferredAnnualRate * 100,
       servicedInterestGBP,
@@ -498,9 +520,36 @@ export class BridgeFusionCalculator {
       brokerClientFee = 0,
       rolledMonthsOverride,
       deferredRateOverride,
+      commitmentFeePounds = 0,
+      exitFeePercent = 0,
+      overriddenRate = null,
+      productFeeOverridePercent = null,
       // Broker settings for automatic fee calculation
       brokerSettings = null,
     } = inputs;
+
+    // Normalize override inputs
+    const originalRateValue = parseNumber(rateRecord.rate);
+    const parsedOverrideRate = parseNumber(overriddenRate);
+    const appliedRateValue = Number.isFinite(parsedOverrideRate)
+      ? parsedOverrideRate
+      : (Number.isFinite(originalRateValue) ? originalRateValue : 0);
+
+    const originalProductFeeValue = parseNumber(rateRecord.product_fee);
+    const parsedProductFeeOverride = parseNumber(productFeeOverridePercent);
+    const appliedProductFeeValue = Number.isFinite(parsedProductFeeOverride)
+      ? parsedProductFeeOverride
+      : (Number.isFinite(originalProductFeeValue) ? originalProductFeeValue : 2);
+
+    const normalizedRateRecord = {
+      ...rateRecord,
+      rate: appliedRateValue,
+      product_fee: appliedProductFeeValue,
+      original_rate: Number.isFinite(originalRateValue) ? originalRateValue : null,
+      original_product_fee: Number.isFinite(originalProductFeeValue) ? originalProductFeeValue : null,
+      applied_rate: appliedRateValue,
+      applied_product_fee: appliedProductFeeValue,
+    };
 
     // Calculate broker client fee from broker settings if provided
     let calculatedBrokerClientFee = brokerClientFee;
@@ -524,7 +573,7 @@ export class BridgeFusionCalculator {
     }
 
     // Determine product kind from rate record
-    const setKey = (rateRecord.set_key || '').toString().toLowerCase();
+    const setKey = (normalizedRateRecord.set_key || '').toString().toLowerCase();
     let productKind = 'bridge-fix';
     
     if (setKey === 'fusion') {
@@ -536,19 +585,19 @@ export class BridgeFusionCalculator {
     }
 
     // Determine if commercial
-    const property = (rateRecord.property || '').toString().toLowerCase();
+    const property = (normalizedRateRecord.property || '').toString().toLowerCase();
     const isCommercial = property.includes('commercial') && !property.includes('semi');
 
     // Get term: Fusion always uses 24 months, Bridge uses provided term or rate record
     const term = productKind === 'fusion' 
       ? 24 
-      : (termMonths || parseNumber(rateRecord.max_term) || 12);
+      : (termMonths || parseNumber(normalizedRateRecord.max_term) || 12);
 
-    // Get arrangement fee from rate record
-    const arrangementPct = (parseNumber(rateRecord.product_fee) || 2) / 100;
+    // Get arrangement fee from rate record (allow override)
+    const arrangementPct = (Number.isFinite(appliedProductFeeValue) ? appliedProductFeeValue : 0) / 100;
 
     // Get admin fee from rate record
-    const adminFee = parseNumber(rateRecord.admin_fee) || 0;
+    const adminFee = parseNumber(normalizedRateRecord.admin_fee) || 0;
 
     // Determine rolled months and deferred rate
     let rolledMonths = 0;
@@ -556,21 +605,21 @@ export class BridgeFusionCalculator {
 
     if (productKind === 'fusion') {
       // Fusion typically has rolled interest (6-12 months, independent of term)
-      const minRolled = parseNumber(rateRecord.min_rolled_months) || 6;
-      const maxRolled = parseNumber(rateRecord.max_rolled_months) || 12;
+      const minRolled = parseNumber(normalizedRateRecord.min_rolled_months) || 6;
+      const maxRolled = parseNumber(normalizedRateRecord.max_rolled_months) || 12;
       rolledMonths = rolledMonthsOverride !== undefined 
         ? Math.min(Math.max(rolledMonthsOverride, minRolled), maxRolled)
         : minRolled;
 
       // Fusion: deferred interest defaults to 0, user can adjust up to max_defer_int
-      const maxDefer = parseNumber(rateRecord.max_defer_int) || 0;
+      const maxDefer = parseNumber(normalizedRateRecord.max_defer_int) || 0;
       deferredAnnualRate = deferredRateOverride !== undefined
         ? Math.min(deferredRateOverride / 100, maxDefer / 100)
         : 0; // Default to 0, not max
     } else {
       // Bridge products: rolled months cannot exceed loan term
-      const minRolled = parseNumber(rateRecord.min_rolled_months) || 3;
-      const maxRolledFromRate = parseNumber(rateRecord.max_rolled_months) || 18;
+      const minRolled = parseNumber(normalizedRateRecord.min_rolled_months) || 3;
+      const maxRolledFromRate = parseNumber(normalizedRateRecord.max_rolled_months) || 18;
       const maxRolled = Math.min(maxRolledFromRate, term); // Cap at loan term
       
       rolledMonths = rolledMonthsOverride !== undefined
@@ -582,11 +631,11 @@ export class BridgeFusionCalculator {
     }
 
     // Run the calculation
-    return this.solve({
+    const results = this.solve({
       productKind,
       grossLoan,
       propertyValue,
-      rateRecord,
+  rateRecord: normalizedRateRecord,
       isCommercial,
       bbrAnnual,
       rentPm: monthlyRent,
@@ -601,7 +650,17 @@ export class BridgeFusionCalculator {
       adminFee,
       useSpecificNet,
       specificNetLoan,
+      commitmentFeePounds,
+      exitFeePercent,
     });
+
+    return {
+      ...results,
+      applied_rate: appliedRateValue,
+      original_rate: Number.isFinite(originalRateValue) ? originalRateValue : null,
+      applied_product_fee: appliedProductFeeValue,
+      original_product_fee: Number.isFinite(originalProductFeeValue) ? originalProductFeeValue : null,
+    };
   }
 }
 

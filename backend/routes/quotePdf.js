@@ -322,12 +322,17 @@ router.post('/:id', async (req, res) => {
           // Rates Section
           doc.fontSize(10).fillColor('#555555').text('Interest Rates:', { underline: true });
           doc.fillColor('black').fontSize(9);
-          if (result.initial_rate !== undefined) doc.text(`  Initial Rate: ${formatPercent(result.initial_rate)}`);
-          if (result.pay_rate !== undefined) doc.text(`  Pay Rate: ${formatPercent(result.pay_rate)}`);
+          if (result.initial_rate !== undefined) doc.text(`  Full Annual Rate: ${formatPercent(result.initial_rate)}`);
+          if (result.pay_rate !== undefined) doc.text(`  Pay Rate (pm): ${formatPercent(result.pay_rate)}`);
+          if (result.full_rate !== undefined) doc.text(`  Full Rate (pm): ${result.full_rate}`);
+          if (result.full_rate_monthly !== undefined) doc.text(`  Full Rate Monthly: ${formatPercent(result.full_rate_monthly)}`);
+          if (result.full_coupon_rate_monthly !== undefined) doc.text(`  Full Coupon Rate (pm): ${formatPercent(result.full_coupon_rate_monthly)}`);
+          if (result.margin_monthly !== undefined) doc.text(`  Margin Monthly: ${formatPercent(result.margin_monthly)}`);
+          if (result.bbr_monthly !== undefined) doc.text(`  BBR Monthly: ${formatPercent(result.bbr_monthly)}`);
           if (result.revert_rate !== undefined) doc.text(`  Revert Rate: ${formatPercent(result.revert_rate)}`);
           if (result.revert_rate_dd !== undefined) doc.text(`  Revert Rate DD: ${formatPercent(result.revert_rate_dd)}`);
-          if (result.full_rate !== undefined) doc.text(`  Full Rate: ${result.full_rate}`);
           if (result.aprc !== undefined) doc.text(`  APRC: ${formatPercent(result.aprc)}`);
+          if (result.aprc_monthly !== undefined) doc.text(`  APRC (pm): ${formatPercent(result.aprc_monthly)}`);
           if (result.deferred_rate !== undefined) doc.text(`  Deferred Rate: ${formatPercent(result.deferred_rate)}`);
           doc.moveDown(0.3);
           
@@ -351,9 +356,15 @@ router.post('/:id', async (req, res) => {
           if (result.monthly_interest_cost !== undefined) doc.text(`  Monthly Interest Cost: ${formatCurrency(result.monthly_interest_cost)}`);
           if (result.rolled_months !== undefined) doc.text(`  Rolled Months: ${formatNumber(result.rolled_months, 0)} months`);
           if (result.rolled_months_interest !== undefined) doc.text(`  Rolled Months Interest: ${formatCurrency(result.rolled_months_interest)}`);
+          if (result.rolled_interest_coupon !== undefined) doc.text(`  Roll Int Coupon: ${formatCurrency(result.rolled_interest_coupon)}`);
+          if (result.rolled_interest_bbr !== undefined) doc.text(`  Roll Int BBR: ${formatCurrency(result.rolled_interest_bbr)}`);
+          if (result.full_interest_coupon !== undefined) doc.text(`  Full Int Coupon: ${formatCurrency(result.full_interest_coupon)}`);
+          if (result.full_interest_bbr !== undefined) doc.text(`  Full Int BBR: ${formatCurrency(result.full_interest_bbr)}`);
           if (result.deferred_interest_percent !== undefined) doc.text(`  Deferred Interest %: ${formatPercent(result.deferred_interest_percent)}`);
           if (result.deferred_interest_pounds !== undefined) doc.text(`  Deferred Interest £: ${formatCurrency(result.deferred_interest_pounds)}`);
           if (result.serviced_interest !== undefined) doc.text(`  Serviced Interest: ${formatCurrency(result.serviced_interest)}`);
+          if (result.serviced_months !== undefined) doc.text(`  Serviced Months: ${formatNumber(result.serviced_months, 0)} months`);
+          if (result.total_interest !== undefined) doc.text(`  Total Interest (Defer + Rolled + Serviced): ${formatCurrency(result.total_interest)}`);
           doc.moveDown(0.3);
           
           // ERC Section (Early Repayment Charges - Fusion only, Bridge calculator only)
@@ -368,10 +379,12 @@ router.post('/:id', async (req, res) => {
           // Other Details Section
           doc.fontSize(10).fillColor('#555555').text('Other Details:', { underline: true });
           doc.fillColor('black').fontSize(9);
-          if (result.direct_debit !== undefined && result.direct_debit !== null) doc.text(`  Direct Debit: ${formatCurrency(result.direct_debit)}`);
+          if (result.direct_debit !== undefined && result.direct_debit !== null) doc.text(`  Direct Debit (Monthly Payment): ${formatCurrency(result.direct_debit)}`);
           if (result.rent !== undefined && result.rent !== null) doc.text(`  Rent: ${formatCurrency(result.rent)}`);
           if (result.top_slicing !== undefined && result.top_slicing !== null) doc.text(`  Top Slicing: ${formatCurrency(result.top_slicing)}`);
-          if (result.nbp !== undefined && result.nbp !== null) doc.text(`  NBP: ${formatCurrency(result.nbp)}`);
+          if (result.nbp !== undefined && result.nbp !== null) doc.text(`  NBP (Net Proceeds to Borrower): ${formatCurrency(result.nbp)}`);
+          if (result.total_amount_repayable !== undefined && result.total_amount_repayable !== null) doc.text(`  Total Amount Repayable: ${formatCurrency(result.total_amount_repayable)}`);
+          if (result.total_interest !== undefined && result.total_interest !== null) doc.text(`  Total Interest: ${formatCurrency(result.total_interest)}`);
           if (result.total_cost_to_borrower !== undefined && result.total_cost_to_borrower !== null) doc.text(`  Total Cost to Borrower: ${formatCurrency(result.total_cost_to_borrower)}`);
           if (result.total_loan_term !== undefined && result.total_loan_term !== null) doc.text(`  Total Loan Term: ${formatNumber(result.total_loan_term, 0)} months`);
           if (result.product_name) doc.text(`  Product: ${result.product_name}`);

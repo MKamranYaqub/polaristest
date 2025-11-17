@@ -340,6 +340,8 @@ export default function SaveQuoteButton({
             // New comprehensive calculation fields from bridgeFusionCalculationEngine
             rolled_interest_coupon: parseNumeric(rate.rolled_interest_coupon),
             rolled_interest_bbr: parseNumeric(rate.rolled_interest_bbr),
+            full_interest_coupon: parseNumeric(rate.full_interest_coupon),
+            full_interest_bbr: parseNumeric(rate.full_interest_bbr),
             deferred_interest: parseNumeric(rate.deferred_interest_pounds || rate.deferred_interest),
             total_interest: parseNumeric(rate.total_interest),
             aprc_annual: parseNumeric(rate.aprc_annual || rate.aprc),

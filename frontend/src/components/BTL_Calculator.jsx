@@ -1432,6 +1432,21 @@ export default function BTLcalculator({ initialQuote = null }) {
                 </div>
               );
             }
+            if (loanType === 'Net loan required' && !specificNetLoan) {
+                return (
+                  <div className="no-rates" style={{ padding: '2rem', textAlign: 'center', color: '#706e6b' }}>
+                    <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Please enter a required net loan amount to view rates and results.</p>
+                  </div>
+                );
+              }
+  
+              if (loanType === 'Specific gross loan' && !specificGrossLoan) {
+                return (
+                  <div className="no-rates" style={{ padding: '2rem', textAlign: 'center', color: '#706e6b' }}>
+                    <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Please enter a specific gross loan amount to view rates and results.</p>
+                  </div>
+                );
+              }
 
             // Filter rates based on selected range
             const filteredRates = relevantRates.filter(r => {

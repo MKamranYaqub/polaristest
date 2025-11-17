@@ -408,7 +408,8 @@ export default function Constants() {
       brokerCommissionDefaults, 
       brokerCommissionTolerance,
       fundingLinesBTL,
-      fundingLinesBridge
+      fundingLinesBridge,
+      uiPreferences
     };
     writeOverrides(payload);
     setMessage('Saved to localStorage. This will take effect for open calculator tabs.');
@@ -438,6 +439,7 @@ export default function Constants() {
           broker_commission_tolerance: payload.brokerCommissionTolerance ?? null,
           funding_lines_btl: payload.fundingLinesBTL || null,
           funding_lines_bridge: payload.fundingLinesBridge || null,
+          ui_preferences: payload.uiPreferences || null,
         };
         try {
           const { data: inserted, error: insertErr } = await supabase.from('app_constants').insert([insertRow]).select('*');
@@ -452,6 +454,14 @@ export default function Constants() {
           } else {
             setMessage('Saved to localStorage and persisted structured constants to Supabase.');
             setNotification({ show: true, type: 'success', title: 'Success', message: 'Save successful — structured constants persisted.' });
+            // Dispatch event so other components update immediately
+            window.dispatchEvent(new CustomEvent('uiPreferencesChanged', { detail: payload.uiPreferences }));
+            window.dispatchEvent(new StorageEvent('storage', {
+              key: LOCALSTORAGE_CONSTANTS_KEY,
+              newValue: JSON.stringify(payload),
+              url: window.location.href,
+              storageArea: localStorage
+            }));
             // refresh latest row into UI
             try {
               const { data: latest, error: latestErr } = await supabase.from('app_constants').select('*').order('updated_at', { ascending: false }).limit(1);
@@ -462,12 +472,14 @@ export default function Constants() {
                   setFeeColumns(row.fee_columns || DEFAULT_FEE_COLUMNS);
                   setFlatAboveCommercialRule(row.flat_above_commercial_rule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE);
                   setMarketRates(row.market_rates || DEFAULT_MARKET_RATES);
+                  setUiPreferences(row.ui_preferences || DEFAULT_UI_PREFERENCES);
                 } else if (row.value) {
                   const v = row.value;
                   setProductLists(v.productLists || DEFAULT_PRODUCT_TYPES_LIST);
                   setFeeColumns(v.feeColumns || DEFAULT_FEE_COLUMNS);
                   setFlatAboveCommercialRule(v.flatAboveCommercialRule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE);
                   setMarketRates(v.marketRates || DEFAULT_MARKET_RATES);
+                  setUiPreferences(v.uiPreferences || DEFAULT_UI_PREFERENCES);
                 }
               }
             } catch (e) {
@@ -492,6 +504,14 @@ export default function Constants() {
         setMessage('Saved locally, but failed to persist to Supabase. See console for details.');
       } else {
         setMessage('Saved to localStorage and persisted to Supabase.');
+        // Dispatch event so other components update immediately
+        window.dispatchEvent(new CustomEvent('uiPreferencesChanged', { detail: payload.uiPreferences }));
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: LOCALSTORAGE_CONSTANTS_KEY,
+          newValue: JSON.stringify(payload),
+          url: window.location.href,
+          storageArea: localStorage
+        }));
       }
     } catch (e) {
       setSaving(false);
@@ -510,6 +530,7 @@ export default function Constants() {
     setBrokerCommissionTolerance(DEFAULT_BROKER_COMMISSION_TOLERANCE);
     setFundingLinesBTL(FUNDING_LINES_BTL);
     setFundingLinesBridge(FUNDING_LINES_BRIDGE);
+    setUiPreferences(DEFAULT_UI_PREFERENCES);
     const payload = { 
       productLists: DEFAULT_PRODUCT_TYPES_LIST, 
       feeColumns: DEFAULT_FEE_COLUMNS, 
@@ -519,10 +540,19 @@ export default function Constants() {
       brokerCommissionDefaults: DEFAULT_BROKER_COMMISSION_DEFAULTS,
       brokerCommissionTolerance: DEFAULT_BROKER_COMMISSION_TOLERANCE,
       fundingLinesBTL: FUNDING_LINES_BTL,
-      fundingLinesBridge: FUNDING_LINES_BRIDGE
+      fundingLinesBridge: FUNDING_LINES_BRIDGE,
+      uiPreferences: DEFAULT_UI_PREFERENCES
     };
     setMessage('Reset to defaults and removed overrides from localStorage.');
     localStorage.removeItem(LOCALSTORAGE_CONSTANTS_KEY);
+    // Dispatch events
+    window.dispatchEvent(new CustomEvent('uiPreferencesChanged', { detail: DEFAULT_UI_PREFERENCES }));
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: LOCALSTORAGE_CONSTANTS_KEY,
+      newValue: null,
+      url: window.location.href,
+      storageArea: localStorage
+    }));
     setSaving(true);
 
     try {
@@ -544,6 +574,7 @@ export default function Constants() {
           broker_commission_tolerance: payload.brokerCommissionTolerance,
           funding_lines_btl: payload.fundingLinesBTL,
           funding_lines_bridge: payload.fundingLinesBridge,
+          ui_preferences: payload.uiPreferences,
         };
         const { error: upsertErr } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
         setSaving(false);
@@ -1012,9 +1043,55 @@ export default function Constants() {
       uiPreferences: newPrefs
     };
     writeOverrides(currentOverrides);
-    // Dispatch storage event so other components can react
-    window.dispatchEvent(new Event('storage'));
-    setMessage('UI preferences saved to localStorage.');
+    // Dispatch custom event so other components can react immediately
+    window.dispatchEvent(new CustomEvent('uiPreferencesChanged', { detail: newPrefs }));
+    // Also dispatch storage event for backwards compatibility
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: LOCALSTORAGE_CONSTANTS_KEY,
+      newValue: JSON.stringify(currentOverrides),
+      url: window.location.href,
+      storageArea: localStorage
+    }));
+    setMessage('UI preferences saved to localStorage and syncing to database...');
+    
+    // Also persist to database immediately
+    try {
+      let tryStructured = structuredSupported;
+      if (tryStructured === null) {
+        tryStructured = await detectStructuredSupport();
+        setStructuredSupported(tryStructured);
+      }
+
+      if (tryStructured && supabase) {
+        const upsertRow = {
+          key: 'app.constants',
+          ui_preferences: newPrefs,
+        };
+        const { error } = await supabase.from('app_constants').upsert([upsertRow], { 
+          onConflict: 'key',
+          ignoreDuplicates: false 
+        });
+        
+        if (error) {
+          console.warn('Failed to save UI preferences to Supabase', error);
+          setMessage('UI preferences saved locally but failed to sync to database.');
+        } else {
+          setMessage('UI preferences saved and synced to database.');
+        }
+      } else {
+        // Fallback to value column
+        const { error } = await saveToSupabase(currentOverrides);
+        if (error) {
+          console.warn('Failed to save UI preferences to Supabase (fallback)', error);
+          setMessage('UI preferences saved locally but failed to sync to database.');
+        } else {
+          setMessage('UI preferences saved and synced to database.');
+        }
+      }
+    } catch (e) {
+      console.error('Error saving UI preferences to database', e);
+      setMessage('UI preferences saved locally but error syncing to database.');
+    }
   };
 
   // Add new broker route

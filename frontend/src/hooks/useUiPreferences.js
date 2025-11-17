@@ -26,14 +26,25 @@ export function useUiPreferences() {
 
     loadPreferences();
 
-    // Listen for storage events (changes from Constants component)
-    const handleStorageChange = () => {
-      loadPreferences();
+    // Listen for custom uiPreferencesChanged event (same-window changes)
+    const handleUiPreferencesChange = (event) => {
+      if (event.detail) {
+        setPreferences(prev => ({ ...prev, ...event.detail }));
+      }
     };
 
+    // Listen for storage events (changes from other tabs)
+    const handleStorageChange = (event) => {
+      if (event.key === LOCALSTORAGE_CONSTANTS_KEY || event.key === null) {
+        loadPreferences();
+      }
+    };
+
+    window.addEventListener('uiPreferencesChanged', handleUiPreferencesChange);
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
+      window.removeEventListener('uiPreferencesChanged', handleUiPreferencesChange);
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);

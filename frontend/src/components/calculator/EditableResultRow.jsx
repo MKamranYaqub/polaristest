@@ -87,24 +87,26 @@ export default function EditableResultRow({
       <td className="vertical-align-middle font-weight-600">{label}</td>
       {columns.map((col) => {
         const isEditing = editingColumn === col;
-        
+        // Determine suffix for this specific column (falls back to default suffix prop)
+        const effectiveSuffix = (columnSuffixes && columnSuffixes[col]) || suffix || '';
+
         // Get the raw value (without suffix)
         let rawValue = '';
         if (isEditing && localValues[col] !== undefined) {
           rawValue = localValues[col];
         } else {
           const storedValue = columnValues?.[col] ?? '';
-          // Remove suffix from stored value to get raw value
-          if (suffix && storedValue.endsWith(suffix)) {
-            rawValue = storedValue.slice(0, -suffix.length);
+          // Remove per-column suffix from stored value to get raw value
+          if (effectiveSuffix && typeof storedValue === 'string' && storedValue.endsWith(effectiveSuffix)) {
+            rawValue = storedValue.slice(0, -effectiveSuffix.length);
           } else {
             rawValue = storedValue;
           }
         }
-        
+
         // When editing, show only raw value for easier editing (suffix added visually on blur)
-        // When not editing, show with suffix
-        const displayValue = isEditing ? rawValue : (rawValue + suffix);
+        // When not editing, show with the per-column suffix
+        const displayValue = isEditing ? rawValue : (rawValue + effectiveSuffix);
         
         const originalValue = originalValues?.[col] ?? '';
         const hasOverride = columnValues?.[col] !== originalValue && originalValue !== '';
