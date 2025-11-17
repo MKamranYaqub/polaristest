@@ -8,9 +8,13 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // Generate Quote PDF (different from DIP PDF - shows multiple fee ranges)
+// UPDATED: Now shows ALL fields per fee range in organized sections
 router.post('/:id', async (req, res) => {
+  console.log('🚀🚀🚀 QUOTE PDF ROUTE HIT - ID:', req.params.id);
   try {
     const { id } = req.params;
+    
+    console.log('📥 Fetching quote with ID:', id);
     
     // Fetch the quote from either table
     let quote = null;
@@ -59,16 +63,23 @@ router.post('/:id', async (req, res) => {
     // Create PDF document
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     
-    // Set response headers for PDF download
+  // Set response headers for PDF download
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=Quote_${quote.reference_number || id}.pdf`);
+  // Prevent any caching of generated PDFs
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
     
     // Pipe PDF to response
     doc.pipe(res);
 
-    // Header
-    doc.fontSize(20).text('Mortgage Quote', { align: 'center' });
-    doc.moveDown();
+  // Header
+  doc.fontSize(20).text('Mortgage Quote', { align: 'center' });
+  doc.moveDown();
+  // Visible layout/version marker to confirm correct route & code path
+  doc.fontSize(10).fillColor('gray').text('Layout: Quote Detailed v2', { align: 'center' });
+  doc.fillColor('black');
     doc.fontSize(12).text(`Reference Number: ${quote.reference_number || 'N/A'}`, { align: 'center' });
     doc.moveDown(2);
 
@@ -245,17 +256,18 @@ router.post('/:id', async (req, res) => {
         }
       }
       
-      console.log('Filtered results:', selectedResults.length);
+      console.log('📊 QUOTE PDF - Filtered results:', selectedResults.length);
+      console.log('📊 QUOTE PDF - Sample result keys:', selectedResults.length > 0 ? Object.keys(selectedResults[0]).join(', ') : 'none');
       
       if (selectedResults.length > 0) {
+        console.log('🎯 QUOTE PDF - Starting detailed rendering loop for', selectedResults.length, 'results');
         selectedResults.forEach((result, idx) => {
-          console.log(`Rendering result ${idx + 1}:`, {
+          console.log(`📝 QUOTE PDF - Rendering result ${idx + 1}:`, {
             fee_column: result.fee_column,
             product_name: result.product_name,
             gross_loan: result.gross_loan,
-            net_loan: result.net_loan,
-            ltv_percentage: result.ltv_percentage,
-            initial_rate: result.initial_rate
+            title_insurance_cost: result.title_insurance_cost,
+            total_cost_to_borrower: result.total_cost_to_borrower
           });
           
           // For Bridging, show product name (Fusion, Variable Bridge, Fixed Bridge)
@@ -266,23 +278,105 @@ router.post('/:id', async (req, res) => {
               ? `Fee ${result.fee_column}%` 
               : `Option ${idx + 1}`;
           
+          // Add page break if this is not the first result and we're running low on space
+          if (idx > 0 && doc.y > 650) {
+            doc.addPage();
+          }
+          
           doc.fontSize(13).fillColor('#0176d3').text(`${optionLabel}`, { underline: false });
           doc.fillColor('black');
-          doc.fontSize(10);
+          doc.fontSize(9);
           doc.moveDown(0.3);
           
-          // Display key financial details
-          if (result.gross_loan) doc.text(`  Gross Loan: £${Number(result.gross_loan).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-          if (result.net_loan) doc.text(`  Net Loan: £${Number(result.net_loan).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-          if (result.ltv_percentage) doc.text(`  LTV: ${Number(result.ltv_percentage).toFixed(2)}%`);
-          if (result.net_ltv) doc.text(`  Net LTV: ${Number(result.net_ltv).toFixed(2)}%`);
-          if (result.initial_rate) doc.text(`  Initial Rate: ${Number(result.initial_rate).toFixed(2)}%`);
-          if (result.pay_rate) doc.text(`  Pay Rate: ${Number(result.pay_rate).toFixed(2)}%`);
-          if (result.icr) doc.text(`  ICR: ${Number(result.icr).toFixed(2)}%`);
-          if (result.monthly_interest_cost) doc.text(`  Monthly Interest: £${Number(result.monthly_interest_cost).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          // Helper function to format currency
+          const formatCurrency = (value) => {
+            if (value === null || value === undefined) return '—';
+            return `£${Number(value).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          };
+          
+          // Helper function to format percentage
+          const formatPercent = (value, decimals = 2) => {
+            if (value === null || value === undefined) return '—';
+            return `${Number(value).toFixed(decimals)}%`;
+          };
+          
+          // Helper function to format number
+          const formatNumber = (value, decimals = 2) => {
+            if (value === null || value === undefined) return '—';
+            return Number(value).toFixed(decimals);
+          };
+          
+          // Display ALL financial details in organized sections
+          
+          // Loan Amounts Section
+          doc.fontSize(10).fillColor('#555555').text('Loan Details:', { underline: true });
+          doc.fillColor('black').fontSize(9);
+          if (result.gross_loan !== undefined) doc.text(`  Gross Loan: ${formatCurrency(result.gross_loan)}`);
+          if (result.net_loan !== undefined) doc.text(`  Net Loan: ${formatCurrency(result.net_loan)}`);
+          if (result.property_value !== undefined) doc.text(`  Property Value: ${formatCurrency(result.property_value)}`);
+          if (result.ltv_percentage !== undefined) doc.text(`  LTV: ${formatPercent(result.ltv_percentage)}`);
+          if (result.net_ltv !== undefined) doc.text(`  Net LTV: ${formatPercent(result.net_ltv)}`);
+          if (result.icr !== undefined) doc.text(`  ICR: ${formatPercent(result.icr)}`);
+          doc.moveDown(0.3);
+          
+          // Rates Section
+          doc.fontSize(10).fillColor('#555555').text('Interest Rates:', { underline: true });
+          doc.fillColor('black').fontSize(9);
+          if (result.initial_rate !== undefined) doc.text(`  Initial Rate: ${formatPercent(result.initial_rate)}`);
+          if (result.pay_rate !== undefined) doc.text(`  Pay Rate: ${formatPercent(result.pay_rate)}`);
+          if (result.revert_rate !== undefined) doc.text(`  Revert Rate: ${formatPercent(result.revert_rate)}`);
+          if (result.revert_rate_dd !== undefined) doc.text(`  Revert Rate DD: ${formatPercent(result.revert_rate_dd)}`);
+          if (result.full_rate !== undefined) doc.text(`  Full Rate: ${result.full_rate}`);
+          if (result.aprc !== undefined) doc.text(`  APRC: ${formatPercent(result.aprc)}`);
+          if (result.deferred_rate !== undefined) doc.text(`  Deferred Rate: ${formatPercent(result.deferred_rate)}`);
+          doc.moveDown(0.3);
+          
+          // Fees Section
+          doc.fontSize(10).fillColor('#555555').text('Fees:', { underline: true });
+          doc.fillColor('black').fontSize(9);
+          if (result.product_fee_percent !== undefined && result.product_fee_percent !== null) doc.text(`  Product Fee %: ${formatPercent(result.product_fee_percent)}`);
+          if (result.product_fee_pounds !== undefined && result.product_fee_pounds !== null) doc.text(`  Product Fee £: ${formatCurrency(result.product_fee_pounds)}`);
+          if (result.admin_fee !== undefined && result.admin_fee !== null) doc.text(`  Admin Fee: ${formatCurrency(result.admin_fee)}`);
+          if (result.broker_client_fee !== undefined && result.broker_client_fee !== null) doc.text(`  Broker Client Fee: ${formatCurrency(result.broker_client_fee)}`);
+          if (result.broker_commission_proc_fee_percent !== undefined && result.broker_commission_proc_fee_percent !== null) doc.text(`  Broker Commission %: ${formatPercent(result.broker_commission_proc_fee_percent)}`);
+          if (result.broker_commission_proc_fee_pounds !== undefined && result.broker_commission_proc_fee_pounds !== null) doc.text(`  Broker Commission £: ${formatCurrency(result.broker_commission_proc_fee_pounds)}`);
+          if (result.commitment_fee_pounds !== undefined && result.commitment_fee_pounds !== null) doc.text(`  Commitment Fee: ${formatCurrency(result.commitment_fee_pounds)}`);
+          if (result.exit_fee !== undefined && result.exit_fee !== null) doc.text(`  Exit Fee: ${formatCurrency(result.exit_fee)}`);
+          if (result.title_insurance_cost !== undefined && result.title_insurance_cost !== null) doc.text(`  Title Insurance Cost: ${formatCurrency(result.title_insurance_cost)}`);
+          doc.moveDown(0.3);
+          
+          // Interest Calculations Section
+          doc.fontSize(10).fillColor('#555555').text('Interest Calculations:', { underline: true });
+          doc.fillColor('black').fontSize(9);
+          if (result.monthly_interest_cost !== undefined) doc.text(`  Monthly Interest Cost: ${formatCurrency(result.monthly_interest_cost)}`);
+          if (result.rolled_months !== undefined) doc.text(`  Rolled Months: ${formatNumber(result.rolled_months, 0)} months`);
+          if (result.rolled_months_interest !== undefined) doc.text(`  Rolled Months Interest: ${formatCurrency(result.rolled_months_interest)}`);
+          if (result.deferred_interest_percent !== undefined) doc.text(`  Deferred Interest %: ${formatPercent(result.deferred_interest_percent)}`);
+          if (result.deferred_interest_pounds !== undefined) doc.text(`  Deferred Interest £: ${formatCurrency(result.deferred_interest_pounds)}`);
+          if (result.serviced_interest !== undefined) doc.text(`  Serviced Interest: ${formatCurrency(result.serviced_interest)}`);
+          doc.moveDown(0.3);
+          
+          // ERC Section (Early Repayment Charges - Fusion only, Bridge calculator only)
+          if (isBridge && result.erc_1_pounds !== undefined && result.erc_1_pounds !== null && result.erc_1_pounds > 0) {
+            doc.fontSize(10).fillColor('#555555').text('Early Repayment Charges (Fusion Only):', { underline: true });
+            doc.fillColor('black').fontSize(9);
+            if (result.erc_1_pounds !== undefined && result.erc_1_pounds !== null) doc.text(`  ERC Year 1: ${formatCurrency(result.erc_1_pounds)}`);
+            if (result.erc_2_pounds !== undefined && result.erc_2_pounds !== null) doc.text(`  ERC Year 2: ${formatCurrency(result.erc_2_pounds)}`);
+            doc.moveDown(0.3);
+          }
+          
+          // Other Details Section
+          doc.fontSize(10).fillColor('#555555').text('Other Details:', { underline: true });
+          doc.fillColor('black').fontSize(9);
+          if (result.direct_debit !== undefined && result.direct_debit !== null) doc.text(`  Direct Debit: ${formatCurrency(result.direct_debit)}`);
+          if (result.rent !== undefined && result.rent !== null) doc.text(`  Rent: ${formatCurrency(result.rent)}`);
+          if (result.top_slicing !== undefined && result.top_slicing !== null) doc.text(`  Top Slicing: ${formatCurrency(result.top_slicing)}`);
+          if (result.nbp !== undefined && result.nbp !== null) doc.text(`  NBP: ${formatCurrency(result.nbp)}`);
+          if (result.total_cost_to_borrower !== undefined && result.total_cost_to_borrower !== null) doc.text(`  Total Cost to Borrower: ${formatCurrency(result.total_cost_to_borrower)}`);
+          if (result.total_loan_term !== undefined && result.total_loan_term !== null) doc.text(`  Total Loan Term: ${formatNumber(result.total_loan_term, 0)} months`);
           if (result.product_name) doc.text(`  Product: ${result.product_name}`);
           
-          doc.moveDown(0.8);
+          doc.moveDown(1);
         });
         doc.moveDown(0.5);
       }

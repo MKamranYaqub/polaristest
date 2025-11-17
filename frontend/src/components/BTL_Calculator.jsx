@@ -247,6 +247,7 @@ export default function BTLcalculator({ initialQuote = null }) {
       if (quote.commercial_or_main_residence || quote.dip_date || quote.dip_expiry_date) {
         setDipData({
           commercial_or_main_residence: quote.commercial_or_main_residence,
+          funding_line: quote.funding_line,
           dip_date: quote.dip_date,
           dip_expiry_date: quote.dip_expiry_date,
           guarantor_name: quote.guarantor_name,
@@ -913,6 +914,7 @@ export default function BTLcalculator({ initialQuote = null }) {
           nbp: result.nbp,
           total_cost_to_borrower: result.totalCostToBorrower,
           total_loan_term: result.totalLoanTerm,
+          titleInsuranceCost: result.titleInsuranceCost,
           product_name: result.productName,
         });
       }
