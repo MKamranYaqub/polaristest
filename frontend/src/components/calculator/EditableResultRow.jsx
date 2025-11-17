@@ -9,16 +9,18 @@ import React, { useState } from 'react';
  * @param {array} columns - Column headers
  * @param {object} columnValues - Current values for each column
  * @param {object} originalValues - Original values for each column (for reset)
+ * @param {object} columnSuffixes - Optional per-column suffixes (e.g., {col1: "%", col2: " + BBR"})
  * @param {function} onValueChange - Callback when a value changes (newValue, columnKey)
  * @param {function} onReset - Callback when reset is clicked (columnKey)
  * @param {boolean} disabled - Whether editing is disabled
- * @param {string} suffix - Optional suffix (e.g., "%")
+ * @param {string} suffix - Optional default suffix (e.g., "%") - overridden by columnSuffixes
  */
 export default function EditableResultRow({
   label,
   columns,
   columnValues,
   originalValues,
+  columnSuffixes,
   onValueChange,
   onReset,
   disabled = false,
@@ -28,13 +30,16 @@ export default function EditableResultRow({
   const [localValues, setLocalValues] = useState({});
 
   const handleInputChange = (columnKey, value, inputElement) => {
+    // Get the suffix for this column
+    const colSuffix = columnSuffixes?.[columnKey] || suffix;
+    
     // If user is editing and there's a suffix, ensure we're only editing the numeric part
     let rawValue = value;
     
-    if (suffix) {
+    if (colSuffix) {
       // If value ends with suffix, extract the raw value
-      if (value.endsWith(suffix)) {
-        rawValue = value.slice(0, -suffix.length);
+      if (value.endsWith(colSuffix)) {
+        rawValue = value.slice(0, -colSuffix.length);
       } else {
         // User might have deleted the suffix, so use the value as-is
         rawValue = value;
@@ -51,6 +56,7 @@ export default function EditableResultRow({
   };
 
   const handleBlur = (columnKey) => {
+    const colSuffix = columnSuffixes?.[columnKey] || suffix;
     const localValue = localValues[columnKey];
     // If field is empty on blur, reset to original value
     if (localValue !== undefined && localValue.trim() === '') {
@@ -62,7 +68,7 @@ export default function EditableResultRow({
       });
     } else if (localValue !== undefined && localValue.trim() !== '') {
       // Apply the value with suffix if it's not empty
-      const valueWithSuffix = localValue.trim() + suffix;
+      const valueWithSuffix = localValue.trim() + colSuffix;
       onValueChange(valueWithSuffix, columnKey);
     }
   };
