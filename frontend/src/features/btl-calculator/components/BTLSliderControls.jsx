@@ -21,16 +21,19 @@ export default function BTLSliderControls({
   maxDeferredPercent = 100
 }) {
   const handleRolledChange = (e) => {
-    const value = Number(e.target.value);
+    if (isReadOnly) return;
+    const value = Math.max(0, Number(e.target.value));
     onRolledChange(columnKey, value);
   };
 
   const handleDeferredChange = (e) => {
-    const value = Number(e.target.value);
+    if (isReadOnly) return;
+    const value = Math.max(0, Number(e.target.value));
     onDeferredChange(columnKey, value);
   };
 
   const handleReset = () => {
+    if (isReadOnly) return;
     onReset(columnKey);
   };
 

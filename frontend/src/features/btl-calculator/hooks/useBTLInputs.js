@@ -179,12 +179,27 @@ export function useBTLInputs() {
     // Load criteria answers
     if (quote.criteria_answers) setAnswers(quote.criteria_answers);
     
-    // Load client details
+    // Load client details - support both nested object and flat format
     if (quote.client_details) {
       setClientDetails(prev => ({
         ...prev,
         ...quote.client_details
       }));
+    } else {
+      // Load from flat format (database columns)
+      const clientUpdates = {};
+      if (quote.client_first_name) clientUpdates.firstName = quote.client_first_name;
+      if (quote.client_last_name) clientUpdates.lastName = quote.client_last_name;
+      if (quote.client_email) clientUpdates.email = quote.client_email;
+      if (quote.client_phone) clientUpdates.phone = quote.client_phone;
+      if (quote.client_address) clientUpdates.address = quote.client_address;
+      
+      if (Object.keys(clientUpdates).length > 0) {
+        setClientDetails(prev => ({
+          ...prev,
+          ...clientUpdates
+        }));
+      }
     }
   }, []);
 
@@ -237,7 +252,12 @@ export function useBTLInputs() {
       interest_payment_type: interestPaymentType,
       retention_choice: retentionChoice,
       criteria_answers: answers,
-      client_details: clientDetails
+      // Map client details to flat database format
+      client_first_name: clientDetails.firstName,
+      client_last_name: clientDetails.lastName,
+      client_email: clientDetails.email,
+      client_phone: clientDetails.phone,
+      client_address: clientDetails.address
     };
   }, [
     propertyValue,

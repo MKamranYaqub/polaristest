@@ -443,10 +443,10 @@ describe('BTLSliderControls', () => {
       );
 
       const slider = screen.getByLabelText(/rolled months/i);
-      // Sliders typically don't allow negative, but test type conversion
+      // Sliders typically don't allow negative - component clamps to 0
       fireEvent.change(slider, { target: { value: '-5' } });
 
-      expect(onRolledChange).toHaveBeenCalledWith('Fee: 2%', -5);
+      expect(onRolledChange).toHaveBeenCalledWith('Fee: 2%', 0);
     });
   });
 

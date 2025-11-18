@@ -16,11 +16,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useBTLCalculation } from '../../hooks/useBTLCalculation';
-import * as btlEngine from '../../../utils/btlCalculationEngine';
-import * as rateFiltering from '../../../utils/calculator/rateFiltering';
+import * as btlEngine from '../../../../utils/btlCalculationEngine';
+import * as rateFiltering from '../../../../utils/calculator/rateFiltering';
 
 // Mock the calculation engine
-vi.mock('../../../utils/btlCalculationEngine', () => ({
+vi.mock('../../../../utils/btlCalculationEngine', () => ({
   computeBTLLoan: vi.fn()
 }));
 

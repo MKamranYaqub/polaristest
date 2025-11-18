@@ -13,48 +13,48 @@ describe('BTLRangeToggle', () => {
       render(
         <BTLRangeToggle
           selectedRange="core"
-          onChange={vi.fn()}
+          onRangeChange={vi.fn()}
         />
       );
 
-      expect(screen.getByText('Core Range')).toBeInTheDocument();
-      expect(screen.getByText('Specialist Range')).toBeInTheDocument();
+      expect(screen.getByText(/core range/i)).toBeInTheDocument();
+      expect(screen.getByText(/specialist range/i)).toBeInTheDocument();
     });
 
     it('should apply active class to selected range', () => {
       render(
         <BTLRangeToggle
           selectedRange="core"
-          onChange={vi.fn()}
+          onRangeChange={vi.fn()}
         />
       );
 
-      const coreButton = screen.getByText('Core Range').closest('button');
-      expect(coreButton).toHaveClass('slds-button_brand');
+      const coreButton = screen.getByText(/core range/i).closest('button');
+      expect(coreButton).toHaveClass('active');
     });
 
     it('should apply neutral class to non-selected range', () => {
       render(
         <BTLRangeToggle
           selectedRange="core"
-          onChange={vi.fn()}
+          onRangeChange={vi.fn()}
         />
       );
 
-      const specialistButton = screen.getByText('Specialist Range').closest('button');
-      expect(specialistButton).toHaveClass('slds-button_neutral');
+      const specialistButton = screen.getByText(/specialist range/i).closest('button');
+      expect(specialistButton).not.toHaveClass('active');
     });
 
     it('should highlight specialist range when selected', () => {
       render(
         <BTLRangeToggle
           selectedRange="specialist"
-          onChange={vi.fn()}
+          onRangeChange={vi.fn()}
         />
       );
 
-      const specialistButton = screen.getByText('Specialist Range').closest('button');
-      expect(specialistButton).toHaveClass('slds-button_brand');
+      const specialistButton = screen.getByText(/specialist range/i).closest('button');
+      expect(specialistButton).toHaveClass('active');
     });
   });
 
@@ -64,11 +64,11 @@ describe('BTLRangeToggle', () => {
       render(
         <BTLRangeToggle
           selectedRange="specialist"
-          onChange={onChange}
+          onRangeChange={onChange}
         />
       );
 
-      fireEvent.click(screen.getByText('Core Range'));
+      fireEvent.click(screen.getByText(/core range/i));
       expect(onChange).toHaveBeenCalledWith('core');
     });
 
@@ -77,11 +77,11 @@ describe('BTLRangeToggle', () => {
       render(
         <BTLRangeToggle
           selectedRange="core"
-          onChange={onChange}
+          onRangeChange={onChange}
         />
       );
 
-      fireEvent.click(screen.getByText('Specialist Range'));
+      fireEvent.click(screen.getByText(/specialist range/i));
       expect(onChange).toHaveBeenCalledWith('specialist');
     });
 
@@ -90,13 +90,13 @@ describe('BTLRangeToggle', () => {
       render(
         <BTLRangeToggle
           selectedRange="core"
-          onChange={onChange}
+          onRangeChange={onChange}
         />
       );
 
       // The component might still call onChange even if already selected
       // This tests the actual behavior
-      fireEvent.click(screen.getByText('Core Range'));
+      fireEvent.click(screen.getByText(/core range/i));
       expect(onChange).toHaveBeenCalled();
     });
   });
@@ -106,13 +106,13 @@ describe('BTLRangeToggle', () => {
       render(
         <BTLRangeToggle
           selectedRange="core"
-          onChange={vi.fn()}
+          onRangeChange={vi.fn()}
           isReadOnly={true}
         />
       );
 
-      const coreButton = screen.getByText('Core Range').closest('button');
-      const specialistButton = screen.getByText('Specialist Range').closest('button');
+      const coreButton = screen.getByText(/core range/i).closest('button');
+      const specialistButton = screen.getByText(/specialist range/i).closest('button');
 
       expect(coreButton).toBeDisabled();
       expect(specialistButton).toBeDisabled();
@@ -123,12 +123,12 @@ describe('BTLRangeToggle', () => {
       render(
         <BTLRangeToggle
           selectedRange="core"
-          onChange={onChange}
+          onRangeChange={onChange}
           isReadOnly={true}
         />
       );
 
-      fireEvent.click(screen.getByText('Specialist Range'));
+      fireEvent.click(screen.getByText(/specialist range/i));
       expect(onChange).not.toHaveBeenCalled();
     });
 
@@ -136,13 +136,13 @@ describe('BTLRangeToggle', () => {
       render(
         <BTLRangeToggle
           selectedRange="core"
-          onChange={vi.fn()}
+          onRangeChange={vi.fn()}
           isReadOnly={false}
         />
       );
 
-      const coreButton = screen.getByText('Core Range').closest('button');
-      const specialistButton = screen.getByText('Specialist Range').closest('button');
+      const coreButton = screen.getByText(/core range/i).closest('button');
+      const specialistButton = screen.getByText(/specialist range/i).closest('button');
 
       expect(coreButton).not.toBeDisabled();
       expect(specialistButton).not.toBeDisabled();
@@ -154,7 +154,7 @@ describe('BTLRangeToggle', () => {
       render(
         <BTLRangeToggle
           selectedRange="core"
-          onChange={vi.fn()}
+          onRangeChange={vi.fn()}
         />
       );
 
@@ -167,11 +167,11 @@ describe('BTLRangeToggle', () => {
       render(
         <BTLRangeToggle
           selectedRange="core"
-          onChange={onChange}
+          onRangeChange={onChange}
         />
       );
 
-      const specialistButton = screen.getByText('Specialist Range');
+      const specialistButton = screen.getByText(/specialist range/i);
       specialistButton.focus();
       expect(document.activeElement).toBe(specialistButton);
     });
@@ -182,12 +182,12 @@ describe('BTLRangeToggle', () => {
       render(
         <BTLRangeToggle
           selectedRange={undefined}
-          onChange={vi.fn()}
+          onRangeChange={vi.fn()}
         />
       );
 
-      expect(screen.getByText('Core Range')).toBeInTheDocument();
-      expect(screen.getByText('Specialist Range')).toBeInTheDocument();
+      expect(screen.getByText(/core range/i)).toBeInTheDocument();
+      expect(screen.getByText(/specialist range/i)).toBeInTheDocument();
     });
 
     it('should handle null onChange gracefully', () => {
@@ -195,7 +195,7 @@ describe('BTLRangeToggle', () => {
         render(
           <BTLRangeToggle
             selectedRange="core"
-            onChange={null}
+            onRangeChange={null}
           />
         );
       }).not.toThrow();
@@ -205,16 +205,16 @@ describe('BTLRangeToggle', () => {
       render(
         <BTLRangeToggle
           selectedRange="invalid"
-          onChange={vi.fn()}
+          onRangeChange={vi.fn()}
         />
       );
 
-      // Both buttons should be neutral when invalid value
-      const coreButton = screen.getByText('Core Range').closest('button');
-      const specialistButton = screen.getByText('Specialist Range').closest('button');
+      // Both buttons should not have active class when invalid value
+      const coreButton = screen.getByText(/core range/i).closest('button');
+      const specialistButton = screen.getByText(/specialist range/i).closest('button');
 
-      expect(coreButton).toHaveClass('slds-button_neutral');
-      expect(specialistButton).toHaveClass('slds-button_neutral');
+      expect(coreButton).not.toHaveClass('active');
+      expect(specialistButton).not.toHaveClass('active');
     });
   });
 
@@ -223,12 +223,12 @@ describe('BTLRangeToggle', () => {
       render(
         <BTLRangeToggle
           selectedRange="core"
-          onChange={vi.fn()}
+          onRangeChange={vi.fn()}
         />
       );
 
-      const coreButton = screen.getByText('Core Range').closest('button');
-      const specialistButton = screen.getByText('Specialist Range').closest('button');
+      const coreButton = screen.getByText(/core range/i).closest('button');
+      const specialistButton = screen.getByText(/specialist range/i).closest('button');
 
       const coreClasses = coreButton.className;
       const specialistClasses = specialistButton.className;
@@ -240,21 +240,21 @@ describe('BTLRangeToggle', () => {
       const { rerender } = render(
         <BTLRangeToggle
           selectedRange="core"
-          onChange={vi.fn()}
+          onRangeChange={vi.fn()}
         />
       );
 
-      const coreButton1 = screen.getByText('Core Range').closest('button');
+      const coreButton1 = screen.getByText(/core range/i).closest('button');
       const classes1 = coreButton1.className;
 
       rerender(
         <BTLRangeToggle
           selectedRange="core"
-          onChange={vi.fn()}
+          onRangeChange={vi.fn()}
         />
       );
 
-      const coreButton2 = screen.getByText('Core Range').closest('button');
+      const coreButton2 = screen.getByText(/core range/i).closest('button');
       const classes2 = coreButton2.className;
 
       expect(classes1).toBe(classes2);

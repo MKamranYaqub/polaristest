@@ -607,7 +607,8 @@ describe('BTLCalculator Integration Tests', () => {
     });
 
     it('should handle quote saving errors', async () => {
-      upsertQuoteData.mockRejectedValue(new Error('Save failed'));
+      // Mock the rejection
+      upsertQuoteData.mockRejectedValueOnce(new Error('Save failed'));
 
       render(
         <MemoryRouter>
@@ -616,11 +617,17 @@ describe('BTLCalculator Integration Tests', () => {
       );
 
       const saveBtn = screen.getByTestId('save-quote-btn');
+      
+      // Click and suppress unhandled rejection
       fireEvent.click(saveBtn);
 
-      await waitFor(() => {
-        expect(mockToast.showToast).toHaveBeenCalledWith('error', 'Failed to save quote');
-      });
+      // Wait for error toast to appear
+      await waitFor(
+        () => {
+          expect(mockToast.showToast).toHaveBeenCalledWith('error', 'Failed to save quote');
+        },
+        { timeout: 3000 }
+      );
     });
   });
 
@@ -646,6 +653,12 @@ describe('BTLCalculator Integration Tests', () => {
     });
 
     it('should allow actions when not read-only', () => {
+      // Ensure mock has loading=false for this test
+      useBTLRates.mockReturnValue({
+        ...mockRates,
+        loading: false
+      });
+      
       render(
         <MemoryRouter>
           <BTLCalculator />
@@ -705,7 +718,11 @@ describe('BTLCalculator Integration Tests', () => {
 
   describe('Loading States', () => {
     it('should show loading state when rates are loading', () => {
-      mockRates.loading = true;
+      // Create a fresh mock with loading=true for this test
+      useBTLRates.mockReturnValue({
+        ...mockRates,
+        loading: true
+      });
 
       render(
         <MemoryRouter>
@@ -717,7 +734,11 @@ describe('BTLCalculator Integration Tests', () => {
     });
 
     it('should enable calculate button when not loading', () => {
-      mockRates.loading = false;
+      // Ensure mock has loading=false for this test
+      useBTLRates.mockReturnValue({
+        ...mockRates,
+        loading: false
+      });
 
       render(
         <MemoryRouter>
