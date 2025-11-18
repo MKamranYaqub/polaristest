@@ -15,12 +15,13 @@ Refactor BTL_Calculator.jsx (2,046 lines) and BridgingCalculator.jsx (1,829 line
   - [x] `useBTLRates.js` - Data fetching
 
 **Phase 2: Component Extraction** 🔄 IN PROGRESS
-- [x] `BTLInputForm.jsx` - Property value, rent, top slicing
-- [ ] `BTLProductSelector.jsx` - Product scope, range, type selection
-- [ ] `BTLLoanControls.jsx` - Loan type, specific loan inputs
+- [x] `BTLInputForm.jsx` - Property value, rent, top slicing ✅
+- [x] `BTLProductSelector.jsx` - Product scope, retention, tier display ✅
+- [x] `BTLRangeToggle.jsx` - Core/Specialist range toggle ✅
 - [ ] `BTLAdditionalFees.jsx` - Fee toggle and inputs
 - [ ] `BTLResultsTable.jsx` - Results display with sliders
 - [ ] `BTLResultsRow.jsx` - Individual result row component
+- [ ] Note: BTLLoanDetailsSection already exists and can be reused
 
 **Phase 3: Integration** 🔜 NOT STARTED
 - [ ] Create main `BTLCalculator.jsx` orchestrator (~250 lines)
@@ -227,14 +228,15 @@ export default function BTLCalculator({ initialQuote }) {
 
 ### BTL Components
 
-- [x] **BTLInputForm** - Property value, rent, top slicing
-- [ ] **BTLProductSelector** - Product scope, range, type
-- [ ] **BTLLoanControls** - Loan type, specific inputs
+- [x] **BTLInputForm** - Property value, rent, top slicing ✅
+- [x] **BTLProductSelector** - Product scope, retention, tier ✅
+- [x] **BTLRangeToggle** - Core/Specialist toggle ✅
 - [ ] **BTLAdditionalFees** - Fee toggle and inputs
 - [ ] **BTLResultsTable** - Results table wrapper
 - [ ] **BTLResultsRow** - Individual result row
-- [ ] **BTLSliderControls** - Rolled months, deferred interest
 - [ ] **BTLCalculator** - Main orchestrator
+- [x] **BTLLoanDetailsSection** - Already exists (reuse) ✅
+- [x] **BTLCriteriaSection** - Already exists (reuse) ✅
 
 ### Bridging Components
 
@@ -315,4 +317,5 @@ Get-ChildItem *.jsx | ForEach-Object { "$($_.Name): $($_.Length) bytes" }
 ---
 
 **Last Updated**: November 18, 2025  
-**Status**: Week 2 - BTL Refactoring In Progress
+**Status**: Week 2 - BTL Refactoring Phase 2 In Progress  
+**Progress**: 7/10 components complete (70%)
