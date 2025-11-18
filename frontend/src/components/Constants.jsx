@@ -440,12 +440,10 @@ export default function Constants() {
           const { data: inserted, error: insertErr } = await supabase.from('app_constants').insert([insertRow]).select('*');
           setSaving(false);
           if (insertErr) {
-            
             setMessage('Saved locally, but failed to persist structured constants to Supabase. See console.');
             // fallback to storing as `value`
             const { error: fallbackErr } = await saveToSupabase(payload);
             setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Save failed: could not persist structured constants to Supabase. Falling back to legacy storage.' });
-            if (fallbackErr) 
           } else {
             setMessage('Saved to localStorage and persisted structured constants to Supabase.');
             setNotification({ show: true, type: 'success', title: 'Success', message: 'Save successful — structured constants persisted.' });
@@ -486,7 +484,6 @@ export default function Constants() {
           
           const { error: fallbackErr } = await saveToSupabase(payload);
           setNotification({ show: true, type: 'error', title: 'Error', message: 'Save failed with exception — falling back to legacy save.' });
-          if (fallbackErr) 
         }
         return;
       }
@@ -584,7 +581,6 @@ export default function Constants() {
       // fallback
       const { error } = await saveToSupabase(payload);
       setSaving(false);
-      if (error) 
     } catch (e) {
       setSaving(false);
       
@@ -941,7 +937,6 @@ export default function Constants() {
       const { error } = await saveToSupabase(currentOverrides);
       setSaving(false);
       if (error) {
-        ', error);
         setMessage('Saved locally but failed to persist BTL funding lines to database.');
       } else {
         setMessage('BTL funding lines saved locally and persisted to Supabase.');
@@ -1007,7 +1002,6 @@ export default function Constants() {
       const { error } = await saveToSupabase(currentOverrides);
       setSaving(false);
       if (error) {
-        ', error);
         setMessage('Saved locally but failed to persist Bridge funding lines to database.');
       } else {
         setMessage('Bridge funding lines saved locally and persisted to Supabase.');
@@ -1077,7 +1071,6 @@ export default function Constants() {
         // Fallback to value column
         const { error } = await saveToSupabase(currentOverrides);
         if (error) {
-          ', error);
           setMessage('UI preferences saved locally but failed to sync to database.');
         } else {
           setMessage('UI preferences saved and synced to database.');
@@ -1241,7 +1234,6 @@ export default function Constants() {
           const { error } = await supabase.from('app_constants').upsert([newRow], { returning: 'minimal' });
           
           if (!error) {
-            ');
             return { error: null };
           }
           
