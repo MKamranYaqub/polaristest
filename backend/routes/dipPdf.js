@@ -44,7 +44,6 @@ router.post('/:id', async (req, res) => {
       .order('created_at', { ascending: true });
     
     if (resultsError) {
-      console.error('Error fetching quote results:', resultsError);
     }
     
     const results = resultsData || [];
@@ -161,29 +160,20 @@ router.post('/:id', async (req, res) => {
     if (results && results.length > 0) {
       doc.fontSize(16).text('Rate Calculation Results', { underline: true });
       doc.moveDown(0.5);
-      
-      console.log('DIP PDF - Total results:', results.length);
-      console.log('DIP PDF - Fee type selection:', quote.fee_type_selection);
-      console.log('DIP PDF - Is Bridge:', isBridge);
-      
       // Log all result product names for debugging
       if (results.length > 0) {
-        console.log('DIP PDF - Result product names:', results.map(r => r.product_name));
       }
       
       // Filter results by selected fee type if specified
       let displayResults = results;
       
       if (quote.fee_type_selection) {
-        console.log('Filtering results by fee type selection');
-        
         if (isBridge) {
           // For Bridging: filter by product name (Fusion, Variable Bridge, Fixed Bridge)
           displayResults = results.filter(result => {
             const productName = (result.product_name || '').toString().toLowerCase().trim();
             const selectedType = (quote.fee_type_selection || '').toString().toLowerCase().trim();
             const match = productName === selectedType || productName.includes(selectedType) || selectedType.includes(productName);
-            console.log(`Comparing product_name "${result.product_name}" with fee_type_selection "${quote.fee_type_selection}": ${match}`);
             return match;
           });
         } else {
@@ -191,14 +181,10 @@ router.post('/:id', async (req, res) => {
           displayResults = results.filter(result => {
             const feeCol = (result.fee_column || '').toString();
             const match = quote.fee_type_selection.includes(feeCol) || quote.fee_type_selection.includes(`${feeCol}%`);
-            console.log(`Comparing fee_column "${result.fee_column}" with fee_type_selection "${quote.fee_type_selection}": ${match}`);
             return match;
           });
         }
-        
-        console.log('Filtered results count:', displayResults.length);
       } else {
-        console.log('No fee type selection - showing all results');
       }
       
       if (displayResults.length > 0) {
@@ -328,7 +314,6 @@ router.post('/:id', async (req, res) => {
     // Finalize PDF
     doc.end();
   } catch (err) {
-    console.error('Error generating DIP PDF:', err);
     return res.status(500).json({ error: err.message ?? String(err) });
   }
 });

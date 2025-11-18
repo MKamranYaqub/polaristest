@@ -181,22 +181,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   // Calculate available term range from bridge rates (exclude Fusion products)
   const termRange = useMemo(() => {
-    console.log('=== TERM RANGE CALCULATION ===');
-    console.log('Total rates loaded:', rates?.length || 0);
-    
     if (!rates || rates.length === 0) {
-      console.log('No rates loaded, using default fallback');
       return { min: 3, max: 18 }; // Default fallback
     }
-    
-    // Debug: Show first few rates with their set_key values
-    console.log('Sample rates (first 3):', rates.slice(0, 3).map(r => ({
-      set_key: r.set_key,
-      property: r.property,
-      product: r.product,
-      min_term: r.min_term,
-      max_term: r.max_term
-    })));
     
     // Filter for Bridge products only (exclude Fusion)
     // Check both set_key and property fields for "bridge" or "bridging"
@@ -205,15 +192,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
       const property = (r.property || '').toLowerCase();
       const isBridge = setKey.includes('bridge') || setKey.includes('bridging') || property.includes('bridge') || property.includes('bridging');
       const isFusion = setKey.includes('fusion') || property.includes('fusion');
-      console.log(`Rate: set_key="${r.set_key}", property="${r.property}", isBridge=${isBridge}, isFusion=${isFusion}, include=${isBridge && !isFusion}`);
       return isBridge && !isFusion;
     });
     
-    console.log('Bridge rates found (filtered):', bridgeRates.length);
-    console.log('Sample bridge rate:', bridgeRates[0]);
-    
     if (bridgeRates.length === 0) {
-      console.log('No bridge rates found after filtering, using fallback');
       return { min: 3, max: 18 }; // Fallback if no bridge rates found
     }
     
@@ -221,15 +203,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
     const minTerms = bridgeRates.map(r => r.min_term).filter(t => t != null && !isNaN(t));
     const maxTerms = bridgeRates.map(r => r.max_term).filter(t => t != null && !isNaN(t));
     
-    console.log('Min terms found:', minTerms.slice(0, 5), '(showing first 5)');
-    console.log('Max terms found:', maxTerms.slice(0, 10), '(showing first 10)');
-    console.log('Unique max terms:', [...new Set(maxTerms)].sort((a, b) => a - b));
-    
     const minTerm = minTerms.length > 0 ? Math.min(...minTerms) : 3;
     const maxTerm = maxTerms.length > 0 ? Math.max(...maxTerms) : 18;
-    
-    console.log('Term range calculated:', { min: minTerm, max: maxTerm });
-    console.log('=== END TERM RANGE CALCULATION ===');
     
     return { min: minTerm, max: maxTerm };
   }, [rates]);
@@ -544,12 +519,11 @@ export default function BridgingCalculator({ initialQuote = null }) {
             : quote.criteria_answers;
           if (answersData) setAnswers(answersData);
         } catch (e) {
-          console.debug('Failed to parse criteria_answers', e);
+          // Failed to parse criteria_answers
         }
       }
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.debug('Bridging: failed to apply initial quote', e);
+      // Failed to apply initial quote
     }
   }, [effectiveInitialQuote]);
 
@@ -643,8 +617,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
         });
         setSubProductLimits(limits);
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Bridging: failed to load rates', err);
+        // Failed to load rates
       }
     }
     loadRates();
@@ -692,9 +665,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
         setSubProduct(prev => (prev === derivedSub ? prev : derivedSub || ''));
       }
     } catch (e) {
-      // swallow errors silently to avoid breaking UI
-      // eslint-disable-next-line no-console
-      console.debug('Bridging: criteria-derive effect error', e);
+      // Swallow errors silently to avoid breaking UI
     }
   }, [answers]);
 
@@ -707,8 +678,19 @@ export default function BridgingCalculator({ initialQuote = null }) {
     const parsedSub = (subProduct || '').toString().toLowerCase();
     const parsedCharge = (chargeType || 'All').toString().toLowerCase();
 
+    // Calculate combined LTV for second charge (matching engine logic)
+    const pv = parseNumber(propertyValue);
+    const fcv = parseNumber(firstChargeValue) || 0;
+    const grossInput = parseNumber(grossLoan);
+    let combinedLtv = loanLtv;
+    
+    if (parsedCharge === 'second' && Number.isFinite(pv) && pv > 0 && Number.isFinite(grossInput)) {
+      // This matches engine's exposureForBucket calculation
+      combinedLtv = ((grossInput + fcv) / pv) * 100;
+    }
+
     // Bridge: productScope + (Charge type filtered to Bridge-style rows) + sub-product + LTV
-    const bridgeOut = raw.filter((r) => {
+    const bridgeFilter = (r, requireSecondCharge = false) => {
       if (productScope) {
         const ps = (r.product_scope || r.property || r.set_key || '').toString().toLowerCase();
         if (!ps.includes(productScope.toString().toLowerCase())) return false;
@@ -724,32 +706,63 @@ export default function BridgingCalculator({ initialQuote = null }) {
       
       // charge type handling: allow All/First/Second. Detect second-charge deterministically by checking
       // the product/type fields (CSV uses product="Second Charge"). Fall back to legacy boolean flags.
-  const isSecondFlag = (r.second_charge === true) || (r.is_second === true);
-  // Prefer explicit `charge_type` column when present; fall back to product/type/other heuristics
-  const looksLikeSecond = /second/i.test(String(r.charge_type || r.product || r.type || r.charge || r.tier || ''));
-  const isSecond = isSecondFlag || looksLikeSecond;
+      const isSecondFlag = (r.second_charge === true) || (r.is_second === true);
+      // Prefer explicit `charge_type` column when present; fall back to product/type/other heuristics
+      const looksLikeSecond = /second/i.test(String(r.charge_type || r.product || r.type || r.charge || r.tier || ''));
+      const isSecond = isSecondFlag || looksLikeSecond;
+      
+      // Charge type selection logic:
+      // When 'Second' is selected, prioritize second-charge specific rates
       if (parsedCharge === 'second') {
-        if (!isSecond) return false;
+        // If requireSecondCharge is true, only include second-charge rates
+        if (requireSecondCharge && !isSecond) return false;
+        // If requireSecondCharge is false (fallback pass), exclude second-charge rates
+        if (!requireSecondCharge && isSecond) return false;
+      } else if (parsedCharge === 'first' && isSecond) {
+        // When 'First' is selected, exclude second-charge rates
+        return false;
       }
-      if (parsedCharge === 'first') {
-        if (isSecond) return false;
-      }
+      
       // sub-product: skip sub-product filtering when Second charge is selected (second-charge rates should not be restricted by sub-product)
       if (parsedCharge !== 'second' && parsedSub) {
         const s = (r.subproduct || r.sub_product || r.sub_product_type || r.property_type || r.product || '').toString().toLowerCase();
         if (!s.includes(parsedSub)) return false;
       }
-      // LTV filtering
+      
+      // LTV filtering: Use appropriate LTV value
       const rowMin = parseNumber(r.min_ltv ?? r.minltv ?? r.min_LTV ?? r.minLTV ?? r.min_loan_ltv);
       const rowMax = parseNumber(r.max_ltv ?? r.maxltv ?? r.max_LTV ?? r.maxLTV ?? r.max_loan_ltv);
-      if (Number.isFinite(loanLtv)) {
-        if (Number.isFinite(rowMin) && loanLtv < rowMin) return false;
-        if (Number.isFinite(rowMax) && loanLtv > rowMax) return false;
+      
+      if (Number.isFinite(combinedLtv)) {
+        // For second charge, use actual combined LTV to match rate buckets
+        // For standard bridge, use the original loanLtv
+        const ltvForSelection = parsedCharge === 'second' ? combinedLtv : loanLtv;
+        
+        // Cap the LTV for rate selection at the row's max LTV
+        // This allows the engine to cap the gross loan while still showing results
+        const cappedLtvForSelection = Number.isFinite(rowMax) 
+          ? Math.min(ltvForSelection, rowMax)
+          : ltvForSelection;
+        
+        // Enforce minimum LTV using the capped value
+        if (Number.isFinite(rowMin) && cappedLtvForSelection < rowMin) return false;
+        
+        // Check if the capped LTV falls within this rate's bracket
+        // This allows showing rates even when user's requested loan exceeds max LTV
+        if (Number.isFinite(rowMax) && cappedLtvForSelection > rowMax + 0.01) return false;
       }
       return true;
-    });
+    };
 
-    // Fusion: productScope + loan size range
+    // First pass: Try to get second-charge specific rates when second charge is selected
+    let bridgeOut = raw.filter(r => bridgeFilter(r, parsedCharge === 'second'));
+    
+    // Second pass: If no second-charge specific rates found, fall back to standard rates
+    if (parsedCharge === 'second' && bridgeOut.length === 0) {
+      bridgeOut = raw.filter(r => bridgeFilter(r, false));
+    }
+
+    // Fusion: productScope + loan size range (LTV will be capped by engine, not filtered out)
     const fusionOut = raw.filter((r) => {
       // if user requested second-charge only, do not show any Fusion products
       if (parsedCharge === 'second') return false;
@@ -760,20 +773,37 @@ export default function BridgingCalculator({ initialQuote = null }) {
       // Only include rows that belong to Fusion sets: require set_key === 'Fusion' for determinism.
       const setKeyStr2 = (r.set_key || '').toString().toLowerCase();
       if (setKeyStr2 !== 'fusion') return false;
-      // Fusion rates are based on loan size and should NOT be restricted by sub-product selection.
+      
+      // Loan size filtering based on the capped loan amount, not the raw input
+      // Calculate what the loan would be after LTV cap is applied
       const rowMinLoan = parseNumber(r.min_loan ?? r.minloan ?? r.min_loan_amt ?? r.min_loan_amount);
       const rowMaxLoan = parseNumber(r.max_loan ?? r.maxloan ?? r.max_loan_amt ?? r.max_loan_amount);
-      if (Number.isFinite(loanSize)) {
-        if (Number.isFinite(rowMinLoan) && loanSize < rowMinLoan) return false;
-        if (Number.isFinite(rowMaxLoan) && loanSize > rowMaxLoan) return false;
+      const rowMaxLtv = parseNumber(r.max_ltv ?? r.maxltv ?? r.max_LTV ?? r.maxLTV ?? r.max_loan_ltv);
+      
+      // Determine the capped loan size for filtering purposes
+      // If property value is available and there's an LTV limit, calculate max possible loan
+      const pv = parseNumber(propertyValue);
+      let effectiveLoanSize = loanSize;
+      if (Number.isFinite(pv) && Number.isFinite(rowMaxLtv) && Number.isFinite(loanLtv) && loanLtv > rowMaxLtv) {
+        // User requested loan exceeds LTV limit, so calculate capped loan
+        effectiveLoanSize = pv * (rowMaxLtv / 100);
       }
+      
+      if (Number.isFinite(effectiveLoanSize)) {
+        if (Number.isFinite(rowMinLoan) && effectiveLoanSize < rowMinLoan) return false;
+        if (Number.isFinite(rowMaxLoan) && effectiveLoanSize > rowMaxLoan) return false;
+      }
+      
+      // Do NOT filter by LTV here - let the engine cap the loan and still show Fusion
+      // The engine will apply the LTV cap and adjust gross loan accordingly
+      
       return true;
     });
 
     setBridgeMatched(bridgeOut);
     setFusionMatched(fusionOut);
     setRelevantRates([...bridgeOut, ...fusionOut]);
-  }, [rates, productScope, subProduct, propertyValue, grossLoan, specificNetLoan, answers, chargeType]);
+  }, [rates, productScope, subProduct, propertyValue, grossLoan, specificNetLoan, answers, chargeType, firstChargeValue]);
 
   // Compute calculated rates using Bridge & Fusion calculation engine
   const calculatedRates = useMemo(() => {
@@ -792,21 +822,11 @@ export default function BridgingCalculator({ initialQuote = null }) {
     
     // If neither gross nor specific net is provided, return empty results
     if (!hasGrossLoan && !hasSpecificNet) {
-      console.log('⚠️ Bridge Calculator: No gross loan or specific net loan provided');
       return [];
     }
 
     // Get BBR from constants
     const bbrAnnual = MARKET_RATES?.STANDARD_BBR || 0.04;
-
-    console.log('🔍 Bridge Calculator Inputs:', {
-      hasGrossLoan,
-      grossInput,
-      hasSpecificNet,
-      specificNet,
-      propertyValue: pv,
-      relevantRatesCount: relevantRates.length
-    });
 
     return relevantRates.map(rate => {
       try {
@@ -853,33 +873,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
             clientType: brokerSettings.clientType,
             brokerCommissionPercent: brokerSettings.brokerCommissionPercent,
           },
+          // Second charge context
+          chargeType,
+          firstChargeValue: getNumericValue(firstChargeValue),
         });
-
-        // Debug log first calculation
-        if (rate === relevantRates[0]) {
-          console.log('🔍 Bridge Calculation Debug:', {
-            inputs: {
-              grossLoan: grossInput,
-              propertyValue: pv,
-              useSpecificNet: useSpecificNet === 'Yes',
-              specificNetLoan: specificNet,
-              term: term,
-            },
-            rate: {
-              product: rate.product,
-              set_key: rate.set_key,
-              rate: rate.rate,
-              product_fee: rate.product_fee,
-            },
-            calculated: {
-              gross: calculated.gross,
-              netLoanGBP: calculated.netLoanGBP,
-              fullAnnualRate: calculated.fullAnnualRate,
-              rolledInterestGBP: calculated.rolledInterestGBP,
-              productKind: calculated.productKind,
-            }
-          });
-        }
 
         // Determine product name for display
         let productName = 'Bridge';
@@ -929,10 +926,20 @@ export default function BridgingCalculator({ initialQuote = null }) {
           property_value: calculated.propertyValue?.toFixed(0) || null,
           
           // LTV metrics
-          ltv: calculated.grossLTV?.toFixed(2) || null,
-          ltv_percentage: calculated.grossLTV?.toFixed(2) || null,
+          // For second charge, display combined exposure LTV (gross + first charge)
+          ltv: (calculated.isSecondCharge ? calculated.combinedGrossLTV : calculated.grossLTV)?.toFixed(2) || null,
+          ltv_percentage: (calculated.isSecondCharge ? calculated.combinedGrossLTV : calculated.grossLTV)?.toFixed(2) || null,
           net_ltv: calculated.netLTV?.toFixed(2) || null,
           ltv_bucket: calculated.ltv,
+          second_charge_cap_gross: calculated.isSecondCharge && calculated.maxSecondChargeGross != null ? calculated.maxSecondChargeGross.toFixed(0) : null,
+          second_charge_cap_applied: calculated.capped ? 'Yes' : 'No',
+          requested_net_loan: calculated.requestedNetLoan != null ? calculated.requestedNetLoan.toFixed(0) : null,
+          net_target_met: calculated.netTargetMet ? 'Yes' : 'No',
+          net_clipped_by_cap: calculated.requestedNetLoan != null && !calculated.netTargetMet ? 'Yes' : 'No',
+          bridge_primary_cap_gross: calculated.bridgePrimaryCapGross != null ? calculated.bridgePrimaryCapGross.toFixed(0) : null,
+          bridge_primary_cap_applied: calculated.bridgePrimaryCapApplied ? 'Yes' : 'No',
+          fusion_cap_gross: calculated.fusionCapGross != null ? calculated.fusionCapGross.toFixed(0) : null,
+          fusion_cap_applied: calculated.fusionCapApplied ? 'Yes' : 'No',
           
           // Rate metrics
           initial_rate: calculated.fullAnnualRate?.toFixed(2) || null,
@@ -1004,7 +1011,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
           total_cost_to_borrower: null,
         };
       } catch (error) {
-        console.error('Error calculating rate:', error, rate);
         // Return rate with null values if calculation fails
         return {
           ...rate,
@@ -1014,7 +1020,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
         };
       }
     });
-  }, [relevantRates, propertyValue, grossLoan, specificNetLoan, monthlyRent, topSlicing, useSpecificNet, bridgingTerm, commitmentFee, exitFeePercent, rolledMonthsPerColumn, deferredInterestPerColumn, ratesOverrides, productFeeOverrides, brokerSettings.clientType, brokerSettings.brokerCommissionPercent, brokerSettings.addFeesToggle, brokerSettings.feeCalculationType, brokerSettings.additionalFeeAmount]);
+  }, [relevantRates, propertyValue, grossLoan, specificNetLoan, monthlyRent, topSlicing, useSpecificNet, bridgingTerm, commitmentFee, exitFeePercent, rolledMonthsPerColumn, deferredInterestPerColumn, ratesOverrides, productFeeOverrides, brokerSettings.clientType, brokerSettings.brokerCommissionPercent, brokerSettings.addFeesToggle, brokerSettings.feeCalculationType, brokerSettings.additionalFeeAmount, firstChargeValue, chargeType]);
 
   const loanLtv = computeLoanLtv(propertyValue, specificNetLoan, grossLoan, firstChargeValue);
   const loanSize = computeLoanSize(specificNetLoan, grossLoan);
@@ -1028,22 +1034,43 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
     const fusionRows = calculatedRates.filter(r => lower(r.set_key) === 'fusion');
     const variableRows = calculatedRates.filter(r => {
+      // Exclude Fusion rows explicitly
+      if (lower(r.set_key) === 'fusion') return false;
       const type = lower(r.type);
       const product = lower(r.product_name || r.product);
       return type.includes('variable') || product.includes('variable');
     });
     const fixedRows = calculatedRates.filter(r => {
+      // Exclude Fusion rows explicitly
+      if (lower(r.set_key) === 'fusion') return false;
       const type = lower(r.type);
       const product = lower(r.product_name || r.product);
       return type.includes('fixed') || product.includes('fixed');
     });
 
+    // Determine selection cap from rate data
+    const isSecondCharge = (chargeType || '').toString().toLowerCase() === 'second';
+    
+    // Find max LTV from available variable/fixed rows (they should all have the same max for a given product type)
+    const getMaxLtvFromRows = (rows) => {
+      if (!rows || rows.length === 0) return 75; // Default fallback
+      const maxLtvValues = rows.map(r => {
+        const val = parseNumber(r.max_ltv ?? r.maxltv ?? r.max_LTV ?? r.maxLTV ?? r.max_loan_ltv);
+        return Number.isFinite(val) ? val : 75;
+      });
+      return Math.max(...maxLtvValues); // Use the highest max_ltv found
+    };
+    
+    const bridgeMaxLtv = getMaxLtvFromRows([...variableRows, ...fixedRows]);
+    const selectionCap = isSecondCharge ? 70 : bridgeMaxLtv;
+    const cappedLtvForSelection = Number.isFinite(loanLtv) ? Math.min(loanLtv, selectionCap) : loanLtv;
+    
     return {
       fusion: pickBestRate(fusionRows, loanSize, 'min_loan', 'max_loan'),
-      variable: pickBestRate(variableRows, loanLtv, 'min_ltv', 'max_ltv'),
-      fixed: pickBestRate(fixedRows, loanLtv, 'min_ltv', 'max_ltv'),
+      variable: pickBestRate(variableRows, cappedLtvForSelection, 'min_ltv', 'max_ltv'),
+      fixed: pickBestRate(fixedRows, cappedLtvForSelection, 'min_ltv', 'max_ltv'),
     };
-  }, [calculatedRates, loanLtv, loanSize]);
+  }, [calculatedRates, loanLtv, loanSize, chargeType]);
 
   const bestBridgeRatesArray = useMemo(() => (
     ['fusion', 'variable', 'fixed']
@@ -1062,7 +1089,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
       });
       setDipData(dipData);
     } catch (err) {
-      console.error('Error saving DIP data:', err);
       throw err;
     }
   };
@@ -1084,7 +1110,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
       
       // Note: Success toast is shown by IssueDIPModal
     } catch (err) {
-      console.error('Error creating PDF:', err);
       showToast({ kind: 'error', title: 'Failed to create DIP PDF', subtitle: err.message });
       throw err;
     }
@@ -1149,7 +1174,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
         }
       }
     } catch (error) {
-      console.error('Error fetching quote data:', error);
       // Continue anyway - use existing data
     }
     
@@ -1167,7 +1191,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
       // Note: Success toast is shown by IssueQuoteModal
     } catch (err) {
-      console.error('Error saving quote data:', err);
       showToast({ kind: 'error', title: 'Failed to save quote data', subtitle: err.message });
       throw err;
     }
@@ -1190,7 +1213,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
       
       // Note: Success toast is shown by IssueQuoteModal
     } catch (err) {
-      console.error('Error creating Quote PDF:', err);
       showToast({ kind: 'error', title: 'Failed to create Quote PDF', subtitle: err.message });
       throw err;
     }
@@ -1321,7 +1343,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
                     .from('bridge_multi_property_details')
                     .insert(rowsToInsert);
                 } catch (error) {
-                  console.error('Error saving multi-property details:', error);
+                  // Error saving multi-property details
                 }
               }
               
@@ -1635,7 +1657,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
                               // Direct Debit
                               if (best.direct_debit && values['Direct Debit']) {
                                 const directDebitAmount = Number(best.direct_debit);
-                                const rolledMonths = rolledMonthsPerColumn?.[col] || 0;
+                                // Use actual rolled months from the calculation result
+                                const rolledMonths = Number(best.rolled_months) || 0;
                                 const directFromMonth = rolledMonths + 1;
                                 
                                 let displayValue = `£${directDebitAmount.toLocaleString('en-GB')}`;

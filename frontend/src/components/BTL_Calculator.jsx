@@ -332,7 +332,6 @@ export default function BTLcalculator({ initialQuote = null }) {
             : quote.criteria_answers;
           if (answersData) setAnswers(answersData);
         } catch (e) {
-          console.debug('Failed to parse criteria_answers', e);
         }
       }
       
@@ -344,7 +343,6 @@ export default function BTLcalculator({ initialQuote = null }) {
             : quote.rates_overrides;
           if (overridesData) setRatesOverrides(overridesData);
         } catch (e) {
-          console.debug('Failed to parse rates_overrides', e);
         }
       }
       
@@ -355,7 +353,6 @@ export default function BTLcalculator({ initialQuote = null }) {
             : quote.product_fee_overrides;
           if (overridesData) setProductFeeOverrides(overridesData);
         } catch (e) {
-          console.debug('Failed to parse product_fee_overrides', e);
         }
       }
       
@@ -366,7 +363,6 @@ export default function BTLcalculator({ initialQuote = null }) {
             : quote.rolled_months_per_column;
           if (columnData) setRolledMonthsPerColumn(columnData);
         } catch (e) {
-          console.debug('Failed to parse rolled_months_per_column', e);
         }
       }
       
@@ -377,13 +373,11 @@ export default function BTLcalculator({ initialQuote = null }) {
             : quote.deferred_interest_per_column;
           if (columnData) setDeferredInterestPerColumn(columnData);
         } catch (e) {
-          console.debug('Failed to parse deferred_interest_per_column', e);
         }
       }
     } catch (e) {
       // ignore load errors
       // eslint-disable-next-line no-console
-      console.debug('BTL: failed to apply initial quote', e);
     }
   }, [effectiveInitialQuote]);
 
@@ -665,7 +659,6 @@ export default function BTLcalculator({ initialQuote = null }) {
         setRelevantRates(feeFiltered);
       } catch (err) {
         // eslint-disable-next-line no-console
-        console.error('Failed to fetch relevant rates', err);
       }
     }
     fetchRelevant();
@@ -855,8 +848,6 @@ export default function BTLcalculator({ initialQuote = null }) {
     </select>
   );
 
-
-
   // Build unique product_scope values for top control; criteria_set is fixed to BTL
   const productScopes = Array.from(new Set(allCriteria.map((r) => r.product_scope).filter(Boolean)));
 
@@ -872,7 +863,6 @@ export default function BTLcalculator({ initialQuote = null }) {
       });
       setDipData(dipData);
     } catch (err) {
-      console.error('Error saving DIP data:', err);
       throw err;
     }
   };
@@ -894,7 +884,6 @@ export default function BTLcalculator({ initialQuote = null }) {
       
       // Note: Success toast is shown by IssueDIPModal
     } catch (err) {
-      console.error('Error creating PDF:', err);
       showToast({ kind: 'error', title: 'Failed to create DIP PDF', subtitle: err.message });
       throw err;
     }
@@ -958,7 +947,6 @@ export default function BTLcalculator({ initialQuote = null }) {
         }
       }
     } catch (error) {
-      console.error('Error fetching quote data:', error);
       // Continue anyway - use existing data
     }
     
@@ -976,7 +964,6 @@ export default function BTLcalculator({ initialQuote = null }) {
 
       // Don't close modal or show alert here - let the modal handle it
     } catch (error) {
-      console.error('Error saving quote data:', error);
       throw error; // Re-throw so modal can handle the error
     }
   };
@@ -999,7 +986,6 @@ export default function BTLcalculator({ initialQuote = null }) {
       // Note: Success toast is shown by IssueQuoteModal
       setQuoteModalOpen(false);
     } catch (error) {
-      console.error('Error generating quote PDF:', error);
       showToast({ kind: 'error', title: 'Failed to create Quote PDF', subtitle: error.message });
       throw error; // Re-throw so modal can handle the error
     }
@@ -1125,7 +1111,6 @@ export default function BTLcalculator({ initialQuote = null }) {
     }
 
     // Default fallback
-    console.log('Using default fallback LTV: 75');
     return 75;
   };
 

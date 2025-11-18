@@ -23,9 +23,6 @@ const mockRate = {
   product_fee: 2,
 };
 
-console.log('Testing BTL Loan Type Normalization:');
-console.log('=====================================\n');
-
 testLoanTypes.forEach(loanType => {
   const result = computeBTLLoan({
     colKey: 'Fee: 2%',
@@ -44,12 +41,6 @@ testLoanTypes.forEach(loanType => {
     retentionChoice: 'No',
     productFeePercent: 2,
   });
-  
-  console.log(`Loan Type: "${loanType}"`);
-  console.log(`  Gross Loan: £${result?.grossLoan?.toLocaleString() || 'N/A'}`);
-  console.log(`  Net Loan: £${result?.netLoan?.toLocaleString() || 'N/A'}`);
-  console.log(`  LTV: ${result?.ltv ? (result.ltv * 100).toFixed(2) + '%' : 'N/A'}`);
-  console.log('');
 });
 
 export { testLoanTypes };

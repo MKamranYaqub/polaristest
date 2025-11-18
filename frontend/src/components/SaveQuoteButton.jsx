@@ -155,11 +155,6 @@ export default function SaveQuoteButton({
       };
 
       // Debug: Log user info being saved
-      console.log('💾 Saving quote with user info:', {
-        created_by: quoteData.created_by,
-        created_by_id: quoteData.created_by_id,
-        user: user
-      });
 
       // Add BTL-specific fields
       if (normalizedCalculatorType === 'btl') {
@@ -213,7 +208,6 @@ export default function SaveQuoteButton({
         
         // Prepare all rate results for saving to quote_results table (filtered by product range)
         if (ratesToSave && Array.isArray(ratesToSave)) {
-          console.log('🔍 BTL - Preparing results to save, count:', ratesToSave.length);
           
           quoteData.results = ratesToSave.map(rate => ({
             fee_column: rate.product_fee !== undefined && rate.product_fee !== null && rate.product_fee !== '' 
@@ -260,13 +254,6 @@ export default function SaveQuoteButton({
           
           // Log sample result for debugging
           if (quoteData.results.length > 0) {
-            console.log('📋 BTL Sample result being saved:', {
-              fee_column: quoteData.results[0].fee_column,
-              title_insurance_cost: quoteData.results[0].title_insurance_cost,
-              has_title_insurance: 'title_insurance_cost' in quoteData.results[0],
-              raw_titleInsuranceCost: ratesToSave[0].titleInsuranceCost,
-              raw_title_insurance_cost: ratesToSave[0].title_insurance_cost
-            });
           }
         }
       }
@@ -291,7 +278,6 @@ export default function SaveQuoteButton({
         
         // Prepare all rate results for saving to bridge_quote_results table
         if (calculationData.results && Array.isArray(calculationData.results)) {
-          console.log('🔍 Bridge - Preparing results to save, count:', calculationData.results.length);
           
           quoteData.results = calculationData.results.map(rate => ({
             fee_column: rate.product_fee !== undefined && rate.product_fee !== null && rate.product_fee !== '' 
@@ -366,17 +352,6 @@ export default function SaveQuoteButton({
           
           // Log sample result for debugging
           if (quoteData.results.length > 0) {
-            console.log('📋 Bridge Sample result being saved:', {
-              fee_column: quoteData.results[0].fee_column,
-              title_insurance_cost: quoteData.results[0].title_insurance_cost,
-              has_title_insurance: 'title_insurance_cost' in quoteData.results[0],
-              product_kind: quoteData.results[0].product_kind,
-              tier_name: quoteData.results[0].tier_name,
-              rolled_interest_coupon: quoteData.results[0].rolled_interest_coupon,
-              aprc_annual: quoteData.results[0].aprc_annual,
-              raw_titleInsuranceCost: calculationData.results[0].titleInsuranceCost,
-              raw_title_insurance_cost: calculationData.results[0].title_insurance_cost
-            });
           }
         }
       }
@@ -416,7 +391,6 @@ export default function SaveQuoteButton({
       
       closeForm();
     } catch (e) {
-      console.error('Save failed', e);
       setError(e.message || String(e));
       setSaving(false);
     }

@@ -26,7 +26,6 @@ export const AccessibilityProvider = ({ children }) => {
       try {
         return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
       } catch (e) {
-        console.error('Failed to parse accessibility settings:', e);
         return DEFAULT_SETTINGS;
       }
     }

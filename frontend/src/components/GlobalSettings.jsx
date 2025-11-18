@@ -207,7 +207,6 @@ export default function GlobalSettings() {
         }
       }
     } catch (err) {
-      console.error('Error loading settings:', err);
       setNotification({
         show: true,
         type: 'error',
@@ -279,7 +278,6 @@ export default function GlobalSettings() {
       }));
       
     } catch (err) {
-      console.error('Error saving settings:', err);
       setNotification({
         show: true,
         type: 'error',

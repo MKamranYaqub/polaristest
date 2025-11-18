@@ -48,7 +48,6 @@ function RatesTable() {
     setLoading(true);
     setError(null);
     try {
-      console.log('Fetching rates from Supabase...');
       
       // First, fetch all data to populate filter options
       const { data: allData, error: allDataError } = await supabase
@@ -113,7 +112,6 @@ function RatesTable() {
       
       if (error) throw error;
 
-      console.log(`Fetched ${data.length} rates from Supabase`);
       setRates(data);
       
       if (error) throw error;
@@ -486,19 +484,16 @@ function RatesTable() {
             .upsert(chunk, { onConflict: 'set_key,property,tier,product,term' });
 
           if (error) {
-            console.error('Supabase upsert error:', error);
             setError(error.message || JSON.stringify(error));
             return;
           }
 
           // Optionally log progress
-          console.log(`Imported ${Math.min(i + chunkSize, cleanedRecords.length)} / ${cleanedRecords.length}`);
         }
 
         // Refresh table after import
         fetchRates();
       } catch (err) {
-        console.error('Import failed:', err);
         setError(err.message || String(err));
       }
     };

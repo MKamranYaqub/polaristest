@@ -49,7 +49,7 @@ export function useResultsRowOrder(calculatorType) {
           }
         }
       } catch (err) {
-        console.error('Error loading results row order settings:', err);
+        // Error loading settings
       } finally {
         setLoading(false);
       }
@@ -69,7 +69,7 @@ export function useResultsRowOrder(calculatorType) {
             setRowOrder(calcSettings);
           }
         } catch (err) {
-          console.error('Error parsing storage event:', err);
+          // Error parsing storage event
         }
       }
     };

@@ -20,7 +20,7 @@ export function useUiPreferences() {
           }
         }
       } catch (e) {
-        console.warn('Failed to load UI preferences from localStorage:', e);
+        // Failed to load preferences
       }
     };
 

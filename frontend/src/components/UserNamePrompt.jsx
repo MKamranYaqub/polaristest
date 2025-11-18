@@ -49,7 +49,6 @@ const UserNamePrompt = () => {
       // On success the context hides the modal (setShowNamePrompt(false)).
       // Still clear submitting state so the UI doesn't get stuck if the modal stays open unexpectedly.
     } catch (err) {
-      console.error('UserNamePrompt: saveUserProfile threw', err);
       setError(err?.message || 'Failed to save profile');
     } finally {
       setIsSubmitting(false);

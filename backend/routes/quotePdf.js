@@ -10,12 +10,8 @@ router.use(authenticateToken);
 // Generate Quote PDF (different from DIP PDF - shows multiple fee ranges)
 // UPDATED: Now shows ALL fields per fee range in organized sections
 router.post('/:id', async (req, res) => {
-  console.log('🚀🚀🚀 QUOTE PDF ROUTE HIT - ID:', req.params.id);
   try {
     const { id } = req.params;
-    
-    console.log('📥 Fetching quote with ID:', id);
-    
     // Fetch the quote from either table
     let quote = null;
     let isBridge = false;
@@ -48,13 +44,8 @@ router.post('/:id', async (req, res) => {
       .order('created_at', { ascending: true });
     
     if (resultsError) {
-      console.error('Error fetching quote results:', resultsError);
     }
-    
-    console.log(`Fetching from ${resultsTable} for quote_id ${id}`);
-    console.log(`Found ${resultsData?.length || 0} results`);
     if (resultsData && resultsData.length > 0) {
-      console.log('First result:', JSON.stringify(resultsData[0], null, 2));
     }
     
     // Attach results to quote object
@@ -187,7 +178,6 @@ router.post('/:id', async (req, res) => {
           doc.moveDown(1);
         }
       } catch (e) {
-        console.error('Error parsing criteria_answers:', e);
       }
     }
     
@@ -208,11 +198,6 @@ router.post('/:id', async (req, res) => {
 
     // Rate Calculation Details for Selected Fee Ranges
     if (quote.results && Array.isArray(quote.results) && quote.results.length > 0) {
-      
-      console.log('Selected fee ranges:', quote.quote_selected_fee_ranges);
-      console.log('Total results available:', quote.results.length);
-      console.log('Is Bridge:', isBridge);
-      
       doc.fontSize(16).text('Rate Details', { underline: true });
       doc.moveDown(0.5);
       
@@ -224,7 +209,6 @@ router.post('/:id', async (req, res) => {
           // BRIDGING: Filter results to only show selected products (Fusion, Variable Bridge, Fixed Bridge)
           selectedResults = quote.results.filter(result => {
             if (!result.product_name) {
-              console.log('Skipping result with no product_name');
               return false;
             }
             const matches = quote.quote_selected_fee_ranges.some(selectedProduct => {
@@ -232,7 +216,6 @@ router.post('/:id', async (req, res) => {
               const productName = result.product_name.toString().toLowerCase().trim();
               const selected = selectedProduct.toString().toLowerCase().trim();
               const match = productName === selected || productName.includes(selected) || selected.includes(productName);
-              console.log(`Comparing selected "${selectedProduct}" with product_name "${result.product_name}": ${match}`);
               return match;
             });
             return matches;
@@ -241,35 +224,20 @@ router.post('/:id', async (req, res) => {
           // BTL: Filter results to only show selected fee ranges
           selectedResults = quote.results.filter(result => {
             if (!result.fee_column) {
-              console.log('Skipping result with no fee_column');
               return false;
             }
             const matches = quote.quote_selected_fee_ranges.some(selectedFee => {
               // Match fee ranges like "2%", "2.00", "Fee: 2%", etc.
               const feeValue = result.fee_column.toString();
               const match = selectedFee.includes(feeValue) || selectedFee.includes(`${feeValue}%`);
-              console.log(`Comparing "${selectedFee}" with fee_column "${feeValue}": ${match}`);
               return match;
             });
             return matches;
           });
         }
       }
-      
-      console.log('📊 QUOTE PDF - Filtered results:', selectedResults.length);
-      console.log('📊 QUOTE PDF - Sample result keys:', selectedResults.length > 0 ? Object.keys(selectedResults[0]).join(', ') : 'none');
-      
       if (selectedResults.length > 0) {
-        console.log('🎯 QUOTE PDF - Starting detailed rendering loop for', selectedResults.length, 'results');
         selectedResults.forEach((result, idx) => {
-          console.log(`📝 QUOTE PDF - Rendering result ${idx + 1}:`, {
-            fee_column: result.fee_column,
-            product_name: result.product_name,
-            gross_loan: result.gross_loan,
-            title_insurance_cost: result.title_insurance_cost,
-            total_cost_to_borrower: result.total_cost_to_borrower
-          });
-          
           // For Bridging, show product name (Fusion, Variable Bridge, Fixed Bridge)
           // For BTL, show fee percentage
           const optionLabel = isBridge && result.product_name 
@@ -440,7 +408,6 @@ router.post('/:id', async (req, res) => {
     // Finalize PDF
     doc.end();
   } catch (err) {
-    console.error('Error generating quote PDF:', err);
     if (!res.headersSent) {
       return res.status(500).json({ error: err.message ?? String(err) });
     }

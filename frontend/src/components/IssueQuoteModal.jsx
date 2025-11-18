@@ -192,7 +192,6 @@ export default function IssueQuoteModal({
       });
       onClose(); // Close modal on success
     } catch (err) {
-      console.error('Error saving quote data:', err);
       setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to save quote data: ' + (err.message || String(err)) });
     } finally {
       setIsSaving(false);
@@ -213,11 +212,9 @@ export default function IssueQuoteModal({
 
     try {
       // Save first
-      console.log('Saving quote data before generating PDF...');
       await handleSave();
       
       // Then generate PDF
-      console.log('Generating Quote PDF...');
       await onCreatePDF(quoteId);
       showToast({ 
         kind: 'success', 
@@ -226,7 +223,6 @@ export default function IssueQuoteModal({
       });
       onClose(); // Close modal on success
     } catch (err) {
-      console.error('Error creating quote PDF:', err);
       setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to create quote PDF: ' + (err.message || String(err)) });
     } finally {
       setIsSaving(false);

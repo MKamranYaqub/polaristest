@@ -47,7 +47,7 @@ export function useResultsVisibility(calculatorType) {
           }
         }
       } catch (err) {
-        console.error('Error loading results visibility settings:', err);
+        // Error loading settings
       } finally {
         setLoading(false);
       }
@@ -67,7 +67,7 @@ export function useResultsVisibility(calculatorType) {
             setVisibleRows(calcSettings);
           }
         } catch (err) {
-          console.error('Error parsing storage event:', err);
+          // Error parsing storage event
         }
       }
     };

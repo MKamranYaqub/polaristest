@@ -81,7 +81,7 @@ app.get('/api/rates', async (req, res) => {
 
     res.json(result);
   } catch (err) {
-    console.error('Error fetching rates from Supabase:', err);
+
     res.status(500).json({ error: err.message ?? String(err) });
   }
 });

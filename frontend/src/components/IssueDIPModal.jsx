@@ -159,21 +159,16 @@ export default function IssueDIPModal({
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
       const fullUrl = `${apiUrl}/api/postcode-lookup/${encodeURIComponent(postcode)}`;
       
-      console.log('🔍 Postcode lookup - API URL:', apiUrl);
-      console.log('🔍 Postcode lookup - Full URL:', fullUrl);
       
       const response = await fetch(fullUrl);
       
-      console.log('📡 Response status:', response.status);
       
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('❌ Error response:', errorData);
         throw new Error(errorData.message || 'Postcode not found');
       }
       
       const data = await response.json();
-      console.log('✅ Success response:', data);
       
       if (!data.success || !data.addresses || data.addresses.length === 0) {
         throw new Error('No addresses found for this postcode');
@@ -183,7 +178,6 @@ export default function IssueDIPModal({
       setAddressLookup({ ...addressLookup, [index]: data.addresses });
       
     } catch (err) {
-      console.error('Postcode lookup error:', err);
       setNotification({ 
         show: true, 
         type: 'error', 
@@ -342,7 +336,6 @@ export default function IssueDIPModal({
       });
       onClose(); // Close modal on success
     } catch (err) {
-      console.error('Error saving DIP data:', err);
       setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to save DIP data: ' + (err.message || 'Unknown error') });
     } finally {
       setSaving(false);
@@ -356,7 +349,6 @@ export default function IssueDIPModal({
 
     try {
       // First save the data
-      console.log('Saving DIP data before generating PDF...');
       const dipData = {
         ...formData,
         security_properties: securityProperties,
@@ -364,7 +356,6 @@ export default function IssueDIPModal({
       };
 
       await onSave(quoteId, dipData);
-      console.log('DIP data saved successfully, now generating PDF...');
       
       // Then generate PDF
       await onCreatePDF(quoteId);
@@ -376,7 +367,6 @@ export default function IssueDIPModal({
       });
       onClose(); // Close modal on success
     } catch (err) {
-      console.error('Error creating DIP PDF:', err);
       setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to create DIP PDF: ' + (err.message || 'Unknown error') });
     } finally {
       setSaving(false);

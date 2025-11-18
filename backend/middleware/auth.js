@@ -4,8 +4,6 @@ import { ErrorTypes } from './errorHandler.js';
 const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
-  console.error('FATAL ERROR: JWT_SECRET environment variable is not set!');
-  console.error('Server cannot start without a secure JWT secret.');
   process.exit(1);
 }
 

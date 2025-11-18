@@ -7,6 +7,6 @@ export const FALLBACK_RATES = {
 
 export async function getRates() {
   // Archived fallback - original implementation was to fetch /api/rates and fall back.
-  console.warn('getRates() in archive called - original rates were moved to archive.');
+
   return {};
 }

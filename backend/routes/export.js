@@ -1,46 +1,33 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateToken } from '../middleware/auth.js';
-
 const router = express.Router();
-
 router.use(authenticateToken);
-
 // Export all quotes with their results
 router.get('/quotes', async (req, res) => {
   try {
     const { calculator_type } = req.query;
-    console.log('Export request received for calculator_type:', calculator_type);
-
     let allData = [];
-
     // Determine which tables to query
     const shouldQueryBTL = !calculator_type || calculator_type.toLowerCase() === 'btl';
     const shouldQueryBridge = !calculator_type || calculator_type.toLowerCase() === 'bridging' || calculator_type.toLowerCase() === 'bridge';
-
     // Fetch BTL quotes with results
     if (shouldQueryBTL) {
       const { data: btlQuotes, error: btlError } = await supabase
         .from('quotes')
         .select('*')
         .order('created_at', { ascending: false });
-
       if (btlError) {
-        console.error('Error fetching BTL quotes:', btlError);
         throw btlError;
       }
-
       // Fetch results for each BTL quote
       for (const quote of btlQuotes || []) {
         const { data: results, error: resultsError } = await supabase
           .from('quote_results')
           .select('*')
           .eq('quote_id', quote.id);
-
         if (resultsError) {
-          console.error(`Error fetching results for quote ${quote.id}:`, resultsError);
         }
-
         if (results && results.length > 0) {
           // Create one row per result
           results.forEach((result, index) => {
@@ -57,11 +44,9 @@ router.get('/quotes', async (req, res) => {
               company_name: extractFromPayload(quote.payload, 'company_name'),
               created_at: quote.created_at,
               updated_at: quote.updated_at,
-              
               // Result index to identify multiple results for same quote
               result_number: index + 1,
               total_results: results.length,
-              
               // Result fields
               fee_column: result.fee_column,
               product_name: result.product_name,
@@ -120,30 +105,23 @@ router.get('/quotes', async (req, res) => {
         }
       }
     }
-
     // Fetch Bridge quotes with results
     if (shouldQueryBridge) {
       const { data: bridgeQuotes, error: bridgeError } = await supabase
         .from('bridge_quotes')
         .select('*')
         .order('created_at', { ascending: false });
-
       if (bridgeError) {
-        console.error('Error fetching Bridge quotes:', bridgeError);
         throw bridgeError;
       }
-
       // Fetch results for each Bridge quote
       for (const quote of bridgeQuotes || []) {
         const { data: results, error: resultsError } = await supabase
           .from('bridge_quote_results')
           .select('*')
           .eq('quote_id', quote.id);
-
         if (resultsError) {
-          console.error(`Error fetching results for bridge quote ${quote.id}:`, resultsError);
         }
-
         if (results && results.length > 0) {
           // Create one row per result
           results.forEach((result, index) => {
@@ -160,11 +138,9 @@ router.get('/quotes', async (req, res) => {
               company_name: extractFromPayload(quote.payload, 'company_name'),
               created_at: quote.created_at,
               updated_at: quote.updated_at,
-              
               // Result index to identify multiple results for same quote
               result_number: index + 1,
               total_results: results.length,
-              
               // Result fields (Bridge has some additional fields)
               fee_column: result.fee_column,
               product_name: result.product_name,
@@ -225,15 +201,11 @@ router.get('/quotes', async (req, res) => {
         }
       }
     }
-
-    console.log(`Export complete: ${allData.length} rows`);
     return res.status(200).json({ data: allData });
   } catch (err) {
-    console.error('Error exporting quotes:', err);
     return res.status(500).json({ error: err.message ?? String(err) });
   }
 });
-
 // Helper function to extract values from JSONB payload
 function extractFromPayload(payload, key) {
   if (!payload) return null;
@@ -247,5 +219,4 @@ function extractFromPayload(payload, key) {
   }
   return payload[key] || null;
 }
-
 export default router;

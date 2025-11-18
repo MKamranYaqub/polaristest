@@ -88,21 +88,7 @@ export const errorHandler = (err, req, res, next) => {
 
   // Log error for debugging (but not to client)
   if (error.statusCode >= 500) {
-    console.error('❌ Server Error:', {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-      url: req.originalUrl,
-      method: req.method,
-      ip: req.ip
-    });
   } else if (process.env.NODE_ENV === 'development') {
-    console.log('⚠️  Client Error:', {
-      message: error.message,
-      code: error.code,
-      url: req.originalUrl,
-      method: req.method
-    });
   }
 
   // Build error response

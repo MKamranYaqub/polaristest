@@ -56,16 +56,6 @@ const CriteriaSection = ({
           const isChargeTypeQuestion = /charge[-_ ]?type|chargetype/i.test(q.label || qk || '');
           const isNonResidential = productScope && productScope.toLowerCase() !== 'residential';
           
-          if (isChargeTypeQuestion) {
-            console.log('Charge Type Question Found:', {
-              label: q.label,
-              key: qk,
-              productScope,
-              isNonResidential,
-              shouldDisable: isNonResidential
-            });
-          }
-          
           // Hide sub-product field if Second charge is selected
           if (hideForSecond) return null;
           

@@ -116,7 +116,6 @@ function CriteriaTable() {
       
       if (error) throw error;
 
-      console.log(`Fetched ${data.length} criteria from Supabase`);
       setCriteria(data);
     } catch (err) {
       setError(err.message);
@@ -204,7 +203,6 @@ function CriteriaTable() {
         setImportPreview(preview);
         setShowImportPreview(true);
       } catch (err) {
-        console.error('Import error:', err);
         setError(err.message);
       }
     };
@@ -279,7 +277,6 @@ function CriteriaTable() {
       if (fileEl) fileEl.value = '';
       await fetchCriteria();
     } catch (err) {
-      console.error('Import error:', err);
       setError(err.message || String(err));
       // keep preview open so user can cancel or inspect
     } finally {

@@ -10,7 +10,6 @@ function readJson(filePath) {
     const raw = fs.readFileSync(filePath, 'utf8');
     return JSON.parse(raw);
   } catch (err) {
-    console.error('Failed to read tokens map JSON:', filePath, err.message);
     process.exit(1);
   }
 }
@@ -53,9 +52,7 @@ function main() {
   const updated = updateCssVariables(css, map);
   if (updated !== css) {
     fs.writeFileSync(tokensFile, updated, 'utf8');
-    console.log('Updated tokens.scss from tokens.map.json');
   } else {
-    console.log('No changes applied (variables already match map).');
   }
 }
 

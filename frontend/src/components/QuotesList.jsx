@@ -185,7 +185,6 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         message: `Exported ${data.length} rows to ${filename}` 
       });
     } catch (e) {
-      console.error('Export failed:', e.message);
       setNotification({ 
         show: true, 
         type: 'error', 

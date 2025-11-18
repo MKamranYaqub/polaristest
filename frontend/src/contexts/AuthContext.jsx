@@ -75,7 +75,6 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       return data.user;
     } catch (err) {
-      console.error('Fetch user error:', err);
       setError(err.message);
       logout();
       return null;
@@ -106,7 +105,6 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       return { success: true, user: data.user };
     } catch (err) {
-      console.error('Login error:', err);
       setError(err.message);
       return { success: false, error: err.message };
     }
@@ -144,7 +142,6 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true };
     } catch (err) {
-      console.error('Change password error:', err);
       setError(err.message);
       return { success: false, error: err.message };
     }

@@ -18,7 +18,6 @@ function readJson(filePath, fallback = null) {
 function ensureEnv(name) {
   const v = process.env[name];
   if (!v) {
-    console.error(`Missing required environment variable: ${name}`);
     process.exit(1);
   }
   return v;
@@ -123,7 +122,6 @@ async function main() {
   const fileKey = process.env.FIGMA_FILE_KEY || cfg.fileKey;
   const preferredMode = process.env.FIGMA_MODE || cfg.mode || 'Default';
   if (!token || !fileKey) {
-    console.error('Configure Figma access via env or figma.config.json. Required: FIGMA_TOKEN and FIGMA_FILE_KEY (or figmaToken/fileKey in config).');
     process.exit(1);
   }
   const aliases = readJson(aliasesFile, {});
@@ -131,22 +129,17 @@ async function main() {
   const raw = await fetchFigmaVariables({ token, fileKey });
   const flat = flattenVariables(raw);
   fs.writeFileSync(reportFile, JSON.stringify(flat, null, 2), 'utf8');
-  console.log(`Wrote variable report: ${path.relative(projectRoot, reportFile)}`);
-
   const mapped = buildTokenMap(flat, preferredMode, aliases);
   if (!Object.keys(mapped).length) {
-    console.warn('No variables matched aliases. Update src/styles/token-aliases.json to map Figma variable names to your CSS variables.');
   } else {
     // Merge with existing map to preserve unspecified tokens
     const existing = readJson(outputMapFile, {});
     const merged = { ...existing, ...mapped };
     fs.writeFileSync(outputMapFile, JSON.stringify(merged, null, 2), 'utf8');
-    console.log(`Updated tokens map: ${path.relative(projectRoot, outputMapFile)}`);
   }
 }
 
 main().catch((err) => {
-  console.error(err.stack || err.message || String(err));
   process.exit(1);
 });
 

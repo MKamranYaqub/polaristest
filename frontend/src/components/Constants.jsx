@@ -22,7 +22,6 @@ function readOverrides() {
     if (!raw) return null;
     return JSON.parse(raw);
   } catch (e) {
-    console.warn('Failed to parse constants overrides', e);
     return null;
   }
 }
@@ -153,7 +152,7 @@ export default function Constants() {
         tv2['fundingLinesBridge'] = (newVal.fundingLinesBridge || FUNDING_LINES_BRIDGE).join(', ');
         setTempValues(tv2);
       } catch (err) {
-        console.debug('Ignored storage event for constants', err);
+        // Ignored storage event error
       }
     };
     window.addEventListener('storage', onStorage);
@@ -209,7 +208,7 @@ export default function Constants() {
         await updateFundingLinesBridge(tempValues[key] || '');
       }
     } catch (e) {
-      console.error('Failed to save field', key, e);
+      // Failed to save field
     } finally {
       setEditingFields(prev => ({ ...prev, [key]: false }));
     }
@@ -255,14 +254,12 @@ export default function Constants() {
       // Select any row and inspect whether structured keys are present (safer than selecting a missing column)
       const { data, error } = await supabase.from('app_constants').select('*').limit(1);
       if (error) {
-        console.debug('Schema detection: could not read app_constants', error.message || error);
         return false;
       }
       if (!data || data.length === 0) return false;
       const sample = data[0];
       return Object.prototype.hasOwnProperty.call(sample, 'product_lists');
     } catch (e) {
-      console.debug('Schema detection error', e);
       return false;
     }
   };
@@ -277,14 +274,12 @@ export default function Constants() {
       try {
         const { data, error } = await supabase.from('app_constants').select('*').limit(1);
         if (error) {
-          console.debug('Schema detection: could not read app_constants for value column check', error.message || error);
           if (mounted) setHasValueColumn(false);
         } else {
           const sample = (data && data.length) ? data[0] : null;
           if (mounted) setHasValueColumn(!!(sample && Object.prototype.hasOwnProperty.call(sample, 'value')));
         }
       } catch (e) {
-        console.debug('Schema detection error checking value column', e);
         if (mounted) setHasValueColumn(false);
       }
     })();
@@ -367,7 +362,7 @@ export default function Constants() {
           }
         }
       } catch (e) {
-        console.debug('Could not load latest constants', e);
+        
       }
     })();
     return () => { mounted = false; };
@@ -445,12 +440,12 @@ export default function Constants() {
           const { data: inserted, error: insertErr } = await supabase.from('app_constants').insert([insertRow]).select('*');
           setSaving(false);
           if (insertErr) {
-            console.warn('Failed to insert structured constants to Supabase', insertErr);
+            
             setMessage('Saved locally, but failed to persist structured constants to Supabase. See console.');
             // fallback to storing as `value`
             const { error: fallbackErr } = await saveToSupabase(payload);
             setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Save failed: could not persist structured constants to Supabase. Falling back to legacy storage.' });
-            if (fallbackErr) console.warn('Fallback saveToSupabase also failed', fallbackErr);
+            if (fallbackErr) 
           } else {
             setMessage('Saved to localStorage and persisted structured constants to Supabase.');
             setNotification({ show: true, type: 'success', title: 'Success', message: 'Save successful — structured constants persisted.' });
@@ -488,10 +483,10 @@ export default function Constants() {
           }
         } catch (e) {
           setSaving(false);
-          console.error('Exception inserting structured constants', e);
+          
           const { error: fallbackErr } = await saveToSupabase(payload);
           setNotification({ show: true, type: 'error', title: 'Error', message: 'Save failed with exception — falling back to legacy save.' });
-          if (fallbackErr) console.warn('Fallback saveToSupabase also failed', fallbackErr);
+          if (fallbackErr) 
         }
         return;
       }
@@ -500,7 +495,7 @@ export default function Constants() {
       const { error } = await saveToSupabase(payload);
       setSaving(false);
       if (error) {
-        console.warn('Failed to save constants to Supabase', error);
+        
         setMessage('Saved locally, but failed to persist to Supabase. See console for details.');
       } else {
         setMessage('Saved to localStorage and persisted to Supabase.');
@@ -515,7 +510,7 @@ export default function Constants() {
       }
     } catch (e) {
       setSaving(false);
-      console.error('Unexpected error saving constants', e);
+      
       setMessage('Saved locally, but an unexpected error occurred while persisting to Supabase. See console.');
     }
   };
@@ -579,7 +574,7 @@ export default function Constants() {
         const { error: upsertErr } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
         setSaving(false);
         if (upsertErr) {
-          console.warn('Failed to reset structured constants in Supabase', upsertErr);
+          
           // fallback to value column
           await saveToSupabase(payload);
         }
@@ -589,10 +584,10 @@ export default function Constants() {
       // fallback
       const { error } = await saveToSupabase(payload);
       setSaving(false);
-      if (error) console.warn('Failed to reset constants in Supabase', error);
+      if (error) 
     } catch (e) {
       setSaving(false);
-      console.error('Unexpected error during resetToDefaults', e);
+      
     }
   };
 
@@ -633,7 +628,7 @@ export default function Constants() {
         setSaving(false);
         
         if (error) {
-          console.warn('Failed to save product_lists to Supabase', error);
+          
           setMessage('Saved locally but failed to persist product lists to database. See console.');
         } else {
           setMessage('Product list saved locally and persisted to Supabase.');
@@ -645,7 +640,7 @@ export default function Constants() {
       const { error } = await saveToSupabase(currentOverrides);
       setSaving(false);
       if (error) {
-        console.warn('Failed to save product_lists to Supabase', error);
+        
         setMessage('Saved locally but failed to persist product lists to database. See console.');
       } else {
         setMessage('Product list saved locally and persisted to Supabase.');
@@ -653,7 +648,7 @@ export default function Constants() {
       return { error };
     } catch (e) {
       setSaving(false);
-      console.error('Unexpected error saving product_lists', e);
+      
       setMessage('Saved locally but unexpected error persisting to database.');
       return { error: e };
     }
@@ -695,7 +690,7 @@ export default function Constants() {
         setSaving(false);
         
         if (error) {
-          console.warn('Failed to save fee_columns to Supabase', error);
+          
           setMessage('Saved locally but failed to persist fee columns to database. See console.');
         } else {
           setMessage('Fee columns saved locally and persisted to Supabase.');
@@ -707,7 +702,7 @@ export default function Constants() {
       const { error } = await saveToSupabase(currentOverrides);
       setSaving(false);
       if (error) {
-        console.warn('Failed to save fee_columns to Supabase', error);
+        
         setMessage('Saved locally but failed to persist fee columns to database. See console.');
       } else {
         setMessage('Fee columns saved locally and persisted to Supabase.');
@@ -715,7 +710,7 @@ export default function Constants() {
       return { error };
     } catch (e) {
       setSaving(false);
-      console.error('Unexpected error saving fee_columns', e);
+      
       setMessage('Saved locally but unexpected error persisting to database.');
       return { error: e };
     }
@@ -756,7 +751,7 @@ export default function Constants() {
         setSaving(false);
         
         if (error) {
-          console.warn('Failed to save flat_above_commercial_rule to Supabase', error);
+          
           setMessage('Saved locally but failed to persist flat-above-commercial rule to database. See console.');
         } else {
           setMessage('Flat-above-commercial rule saved locally and persisted to Supabase.');
@@ -768,7 +763,7 @@ export default function Constants() {
       const { error } = await saveToSupabase(currentOverrides);
       setSaving(false);
       if (error) {
-        console.warn('Failed to save flat_above_commercial_rule to Supabase', error);
+        
         setMessage('Saved locally but failed to persist flat-above-commercial rule to database. See console.');
       } else {
         setMessage('Flat-above-commercial rule saved locally and persisted to Supabase.');
@@ -776,7 +771,7 @@ export default function Constants() {
       return { error };
     } catch (e) {
       setSaving(false);
-      console.error('Unexpected error saving flat_above_commercial_rule', e);
+      
       setMessage('Saved locally but unexpected error persisting to database.');
       return { error: e };
     }
@@ -820,7 +815,7 @@ export default function Constants() {
         setSaving(false);
         
         if (error) {
-          console.warn('Failed to save market_rates to Supabase', error);
+          
           setMessage('Saved locally but failed to persist market rates to database. See console.');
         } else {
           setMessage('Market rates saved locally and persisted to Supabase.');
@@ -832,7 +827,7 @@ export default function Constants() {
       const { error } = await saveToSupabase(currentOverrides);
       setSaving(false);
       if (error) {
-        console.warn('Failed to save market_rates to Supabase', error);
+        
         setMessage('Saved locally but failed to persist market rates to database. See console.');
       } else {
         setMessage('Market rates saved locally and persisted to Supabase.');
@@ -840,7 +835,7 @@ export default function Constants() {
       return { error };
     } catch (e) {
       setSaving(false);
-      console.error('Unexpected error saving market_rates', e);
+      
       setMessage('Saved locally but unexpected error persisting to database.');
       return { error: e };
     }
@@ -934,7 +929,7 @@ export default function Constants() {
         const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
         setSaving(false);
         if (error) {
-          console.warn('Failed to save funding_lines_btl to Supabase', error);
+          
           setMessage('Saved locally but failed to persist BTL funding lines to database. See console.');
         } else {
           setMessage('BTL funding lines saved locally and persisted to Supabase.');
@@ -946,7 +941,7 @@ export default function Constants() {
       const { error } = await saveToSupabase(currentOverrides);
       setSaving(false);
       if (error) {
-        console.warn('Failed to save funding_lines_btl to Supabase (fallback)', error);
+        ', error);
         setMessage('Saved locally but failed to persist BTL funding lines to database.');
       } else {
         setMessage('BTL funding lines saved locally and persisted to Supabase.');
@@ -954,7 +949,7 @@ export default function Constants() {
       return { error };
     } catch (e) {
       setSaving(false);
-      console.error('Unexpected error saving funding_lines_btl', e);
+      
       setMessage('Saved locally but unexpected error persisting to database.');
       return { error: e };
     }
@@ -1000,7 +995,7 @@ export default function Constants() {
         const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
         setSaving(false);
         if (error) {
-          console.warn('Failed to save funding_lines_bridge to Supabase', error);
+          
           setMessage('Saved locally but failed to persist Bridge funding lines to database. See console.');
         } else {
           setMessage('Bridge funding lines saved locally and persisted to Supabase.');
@@ -1012,7 +1007,7 @@ export default function Constants() {
       const { error } = await saveToSupabase(currentOverrides);
       setSaving(false);
       if (error) {
-        console.warn('Failed to save funding_lines_bridge to Supabase (fallback)', error);
+        ', error);
         setMessage('Saved locally but failed to persist Bridge funding lines to database.');
       } else {
         setMessage('Bridge funding lines saved locally and persisted to Supabase.');
@@ -1020,7 +1015,7 @@ export default function Constants() {
       return { error };
     } catch (e) {
       setSaving(false);
-      console.error('Unexpected error saving funding_lines_bridge', e);
+      
       setMessage('Saved locally but unexpected error persisting to database.');
       return { error: e };
     }
@@ -1073,7 +1068,7 @@ export default function Constants() {
         });
         
         if (error) {
-          console.warn('Failed to save UI preferences to Supabase', error);
+          
           setMessage('UI preferences saved locally but failed to sync to database.');
         } else {
           setMessage('UI preferences saved and synced to database.');
@@ -1082,14 +1077,14 @@ export default function Constants() {
         // Fallback to value column
         const { error } = await saveToSupabase(currentOverrides);
         if (error) {
-          console.warn('Failed to save UI preferences to Supabase (fallback)', error);
+          ', error);
           setMessage('UI preferences saved locally but failed to sync to database.');
         } else {
           setMessage('UI preferences saved and synced to database.');
         }
       }
     } catch (e) {
-      console.error('Error saving UI preferences to database', e);
+      
       setMessage('UI preferences saved locally but error syncing to database.');
     }
   };
@@ -1190,35 +1185,35 @@ export default function Constants() {
   // Column names used: product_lists, fee_columns, flat_above_commercial_rule, market_rates
   const saveFieldToSupabase = async (column, value) => {
     if (!supabase) {
-      console.warn('Supabase client unavailable');
+      
       return { error: 'Supabase client unavailable' };
     }
     
-    console.log(`saveFieldToSupabase called: column=${column}`, value);
+    
     
     try {
       // If structured columns supported, try a structured-column upsert first
       let tryStructured = structuredSupported;
       if (tryStructured === null) {
-        console.log('Detecting structured support...');
+        
         tryStructured = await detectStructuredSupport();
         setStructuredSupported(tryStructured);
       }
       
-      console.log(`tryStructured: ${tryStructured}`);
+      
       
       if (tryStructured) {
         try {
           // Fetch existing structured row and merge to avoid overwriting other structured columns with NULL
-          console.log('Fetching existing row from app_constants...');
+          
           const { data: existingStruct, error: fetchErr } = await supabase.from('app_constants').select('*').eq('key', 'app.constants').single();
           
           if (fetchErr && fetchErr.code !== 'PGRST116') {
-            console.warn('Error fetching existing row:', fetchErr);
+            
           }
           
           const currentStruct = existingStruct || {};
-          console.log('Existing data:', currentStruct);
+          
           
           const mapStruct = {
             product_lists: 'product_lists',
@@ -1242,18 +1237,18 @@ export default function Constants() {
           // set the changed column
           newRow[targetCol] = value;
           
-          console.log('Upserting to app_constants:', newRow);
+          
           const { error } = await supabase.from('app_constants').upsert([newRow], { returning: 'minimal' });
           
           if (!error) {
-            console.log('Successfully saved to Supabase (structured)');
+            ');
             return { error: null };
           }
           
           // if structured upsert failed, we'll attempt alternatives below
-          console.warn('Structured upsert returned error, will try fallbacks', error);
+          
         } catch (e) {
-          console.debug('Structured upsert exception, will try fallbacks', e);
+          
         }
 
         // If structured columns exist but `value` column does not, try merging/upserting structured columns instead of value
@@ -1281,9 +1276,9 @@ export default function Constants() {
             newRow[targetCol] = value;
             const { error: upsertStructErr } = await supabase.from('app_constants').upsert([newRow], { returning: 'minimal' });
             if (!upsertStructErr) return { error: null };
-            console.warn('Structured-column upsert fallback failed', upsertStructErr);
+            
           } catch (e) {
-            console.warn('Structured-column merge/upsert fallback exception', e);
+            
           }
         }
       }
@@ -1292,7 +1287,7 @@ export default function Constants() {
         if (hasValueColumn !== false) {
         const { data: existing, error: fetchErr } = await supabase.from('app_constants').select('*').eq('key', 'app.constants').single();
         if (fetchErr && fetchErr.code !== 'PGRST116') {
-          console.debug('Fetch existing app_constants row warning', fetchErr);
+          
         }
         const current = (existing && existing.value) ? existing.value : (readOverrides() || { productLists, feeColumns, flatAboveCommercialRule, marketRates });
         // map incoming column names to JSON keys used in localStorage
@@ -1309,7 +1304,7 @@ export default function Constants() {
         const row = { key: 'app.constants', value: newValue };
         const { error: upsertErr } = await supabase.from('app_constants').upsert([row], { returning: 'minimal' });
         if (upsertErr) {
-          console.warn('Upsert to app_constants failed', upsertErr);
+          
           return { error: upsertErr };
         }
         return { error: null };
@@ -1317,7 +1312,7 @@ export default function Constants() {
 
       return { error: 'No available upsert strategy (structured-only table without value column failed)' };
     } catch (e) {
-      console.error('Unexpected error saving field to Supabase', e);
+      
       return { error: e };
     }
   };

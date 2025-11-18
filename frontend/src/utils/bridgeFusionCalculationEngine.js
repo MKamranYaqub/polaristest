@@ -121,6 +121,11 @@ export class BridgeFusionCalculator {
       specificNetLoan = 0,
       commitmentFeePounds = 0,
       exitFeePercent = 0,
+      // Optional broker settings so percentage-based fees can be calculated from final gross
+      brokerSettings = null,
+      // Second charge context
+      isSecondCharge = false,
+      firstChargeValue = 0,
     } = params;
 
     let gross = parseNumber(grossLoan);
@@ -133,6 +138,8 @@ export class BridgeFusionCalculator {
     const targetNet = parseNumber(specificNetLoan);
     const commitmentFee = parseNumber(commitmentFeePounds) || 0;
     const exitFeePct = parseNumber(exitFeePercent) || 0;
+  const firstChargeValNum = parseNumber(firstChargeValue) || 0;
+  const secondChargeFlag = !!isSecondCharge;
 
     // Validate inputs
     if (isNaN(gross) || gross <= 0) {
@@ -140,7 +147,6 @@ export class BridgeFusionCalculator {
         // We'll calculate gross from net below
         gross = 0; // Placeholder
       } else {
-        console.error('Invalid gross loan and no specific net provided');
         // Return empty result
         return {
           gross: 0,
@@ -261,8 +267,144 @@ export class BridgeFusionCalculator {
       }
     }
 
-    // Calculate LTV bucket
-    const ltvBucket = this.getLtvBucket(gross, pv);
+    // === SECOND CHARGE MAX EXPOSURE CAP ===
+    // Business rule: combined exposure (first charge + new gross loan) must not exceed 70% LTV.
+    // If user supplied a gross above cap, we reduce (cap) it before any fee/interest calculations.
+    // If first charge already exceeds 70%, the loan amount must be zero.
+    let capApplied = false;
+    let maxSecondChargeGross = null;
+    if (secondChargeFlag && pv > 0) {
+      const seventyPctPv = pv * 0.70;
+      maxSecondChargeGross = Math.max(0, seventyPctPv - firstChargeValNum);
+      if (gross > maxSecondChargeGross) {
+        gross = maxSecondChargeGross; // Cap
+        capApplied = true;
+      }
+      if (useSpecificNet && targetNet > 0 && gross === 0) {
+        // Cannot meet requested specific net due to cap, gross forced to zero
+      }
+    }
+
+    // === PRECISION ADJUSTMENT FOR SPECIFIC NET (1000 increments) ===
+    // After initial solve & cap, if requested net not achieved, increase gross in £1,000 steps
+    // until net >= targetNet or cap reached. This ensures monotonic increments and avoids under-delivery.
+    let requestedNetLoan = useSpecificNet && targetNet > 0 ? targetNet : null;
+    let netTargetMet = false;
+    let safetyIterations = 0;
+    if (useSpecificNet && targetNet > 0 && gross > 0) {
+      const computeNetForGross = (gCandidate) => {
+        // Recompute bucket & rates for candidate gross
+        const ltvBucketCandidate = this.getLtvBucket(gCandidate + (secondChargeFlag ? firstChargeValNum : 0), pv);
+        let couponMonthlyCand = 0;
+        let marginMonthlyCand = 0;
+        let bbrMonthlyCand = bbrAnnual / 12;
+        let marginAnnualCand = 0;
+        switch (productKind) {
+          case 'bridge-var':
+            marginMonthlyCand = this.getBridgeVarMargin(ltvBucketCandidate, rateRecord);
+            couponMonthlyCand = marginMonthlyCand;
+            break;
+          case 'bridge-fix':
+            couponMonthlyCand = this.getBridgeFixCoupon(ltvBucketCandidate, rateRecord);
+            marginMonthlyCand = couponMonthlyCand;
+            bbrMonthlyCand = 0;
+            break;
+          case 'fusion': {
+            const tierInfo = this.getFusionTierInfo(gCandidate, rateRecord, bbrAnnual);
+            marginAnnualCand = tierInfo.marginAnnual;
+            marginMonthlyCand = tierInfo.marginAnnual / 12;
+            couponMonthlyCand = marginMonthlyCand;
+            bbrMonthlyCand = bbrAnnual / 12;
+            break;
+          }
+        }
+        // Rolled & deferred interest approximations for candidate
+        const deferredMonthlyRateCand = deferredAnnualRate / 12;
+        const rolledIntCouponCand = gCandidate * (couponMonthlyCand - deferredMonthlyRateCand) * rolled;
+        const rolledIntBBRCand = ['bridge-var', 'fusion'].includes(productKind) ? gCandidate * bbrMonthlyCand * rolled : 0;
+        const rolledInterestCand = rolledIntCouponCand + rolledIntBBRCand;
+        const deferredCand = productKind === 'fusion' ? gCandidate * deferredMonthlyRateCand * term : 0;
+        const arrangementFeeCand = gCandidate * arrangementPct;
+        const procFeeCand = gCandidate * (procFeePct / 100);
+        // Broker client fee from brokerSettings if percentage
+        let brokerClientFeeCand = parseNumber(brokerClientFee) || 0;
+        if (brokerSettings?.addFeesToggle && brokerSettings?.additionalFeeAmount) {
+          const feeAmount = parseNumber(brokerSettings.additionalFeeAmount);
+          if (brokerSettings.feeCalculationType === 'percentage' && gCandidate > 0) {
+            brokerClientFeeCand = gCandidate * (feeAmount / 100);
+          } else {
+            brokerClientFeeCand = feeAmount;
+          }
+        }
+        let titleInsuranceCand = null;
+        if (gCandidate > 0 && gCandidate <= 3000000) {
+          const base = gCandidate * 0.0013;
+          titleInsuranceCand = Math.max(392, base * 1.12);
+        }
+        const netCand = Math.max(0, gCandidate - arrangementFeeCand - rolledInterestCand - deferredCand - procFeeCand - (parseNumber(brokerFeeFlat) || 0) - brokerClientFeeCand - adminFeeAmt - (titleInsuranceCand || 0));
+        return { netCand };
+      };
+
+      // Evaluate current gross first
+      let { netCand: currentNet } = computeNetForGross(gross);
+      if (currentNet >= targetNet - 0.5) {
+        netTargetMet = true;
+      } else {
+        // Increment in 1000 steps
+        while (currentNet < targetNet - 0.5) {
+          // Respect second charge cap
+          if (secondChargeFlag && maxSecondChargeGross != null && gross + 1000 > maxSecondChargeGross) {
+            gross = maxSecondChargeGross; // final cap adjustment
+            capApplied = true;
+            ({ netCand: currentNet } = computeNetForGross(gross));
+            break; // cannot go further
+          }
+          gross += 1000;
+          ({ netCand: currentNet } = computeNetForGross(gross));
+          safetyIterations++;
+          if (safetyIterations > 200) break; // guardrail
+        }
+        if (currentNet >= targetNet - 0.5) netTargetMet = true;
+      }
+    }
+
+    // === PRIMARY BRIDGE MAX LTV CAP (Non-second charge) ===
+    // For standard bridge products (variable/fixed, not fusion and not second charge) read max LTV from rate record.
+    // If user enters a gross above the max LTV of property value, reduce and flag.
+    let bridgePrimaryCapApplied = false;
+    let bridgePrimaryCapGross = null;
+    if (!secondChargeFlag && pv > 0 && ['bridge-var','bridge-fix'].includes(productKind)) {
+      const maxLtvFromRate = parseNumber(rateRecord?.max_ltv ?? rateRecord?.maxltv ?? rateRecord?.max_LTV);
+      // Default to 75% if not specified in rate record
+      const maxLtvPercent = Number.isFinite(maxLtvFromRate) && maxLtvFromRate > 0 ? maxLtvFromRate : 75;
+      const maxBridgeGross = pv * (maxLtvPercent / 100);
+      bridgePrimaryCapGross = maxBridgeGross;
+      if (gross > maxBridgeGross) {
+        gross = maxBridgeGross;
+        bridgePrimaryCapApplied = true;
+      }
+    }
+
+    // === FUSION MAX LTV CAP ===
+    // Fusion products have LTV limits based on property type (from rate record max_ltv)
+    // Residential: 75%, Commercial/Semi-Commercial: 70%
+    let fusionCapApplied = false;
+    let fusionCapGross = null;
+    if (!secondChargeFlag && pv > 0 && productKind === 'fusion') {
+      const maxLtvFromRate = parseNumber(rateRecord?.max_ltv ?? rateRecord?.maxltv ?? rateRecord?.max_LTV);
+      if (Number.isFinite(maxLtvFromRate) && maxLtvFromRate > 0) {
+        const maxFusionGross = pv * (maxLtvFromRate / 100);
+        fusionCapGross = maxFusionGross;
+        if (gross > maxFusionGross) {
+          gross = maxFusionGross;
+          fusionCapApplied = true;
+        }
+      }
+    }
+
+  // Calculate LTV bucket. For second charge products the bucket is determined on the combined exposure
+  const exposureForBucket = gross + (secondChargeFlag ? firstChargeValNum : 0);
+  const ltvBucket = this.getLtvBucket(exposureForBucket, pv);
 
     // Determine rates based on product kind
     let fullAnnualRate = 0; // Full annual rate (including BBR for variable)
@@ -310,7 +452,16 @@ export class BridgeFusionCalculator {
     const arrangementFeeGBP = gross * arrangementPct;
     const procFeeGBP = gross * (procFeePct / 100);
     const brokerFeeGBP = parseNumber(brokerFeeFlat) || 0;
-    const brokerClientFeeGBP = parseNumber(brokerClientFee) || 0;
+    // Broker Client Fee: compute from final gross if broker settings are provided
+    let brokerClientFeeGBP = parseNumber(brokerClientFee) || 0;
+    if (brokerSettings?.addFeesToggle && brokerSettings?.additionalFeeAmount) {
+      const feeAmount = parseNumber(brokerSettings.additionalFeeAmount);
+      if (brokerSettings.feeCalculationType === 'percentage' && gross > 0) {
+        brokerClientFeeGBP = gross * (feeAmount / 100);
+      } else {
+        brokerClientFeeGBP = feeAmount;
+      }
+    }
 
     // === TITLE INSURANCE COST (same formula as BTL) ===
     let titleInsuranceCost = null;
@@ -376,7 +527,8 @@ export class BridgeFusionCalculator {
       : 0;
 
     // === LTV CALCULATIONS ===
-    const grossLTV = pv > 0 ? (gross / pv) * 100 : 0;
+  const grossLTV = pv > 0 ? (gross / pv) * 100 : 0;
+  const combinedGrossLTV = secondChargeFlag && pv > 0 ? (exposureForBucket / pv) * 100 : grossLTV;
     const netLTV = pv > 0 ? (netLoanGBP / pv) * 100 : 0;
 
     // === APR/APRC CALCULATION ===
@@ -417,11 +569,22 @@ export class BridgeFusionCalculator {
     return {
       // Basic loan metrics
       gross,
+      capped: capApplied,
+      maxSecondChargeGross,
+      bridgePrimaryCapGross,
+      bridgePrimaryCapApplied,
+      fusionCapGross,
+      fusionCapApplied,
       netLoanGBP,
       npb: nbp, // Net Proceeds to Borrower
       grossLTV,
       netLTV,
       ltv: ltvBucket,
+  combinedGrossLTV,
+  isSecondCharge: secondChargeFlag,
+  firstChargeValue: firstChargeValNum,
+      requestedNetLoan,
+      netTargetMet,
 
       // Rates
       fullAnnualRate: fullAnnualRate * 100, // As percentage
@@ -462,8 +625,8 @@ export class BridgeFusionCalculator {
       // ERC (Early Repayment Charges) - Fusion only (pulled from rate record, not hardcoded)
       erc1Percent: productKind === 'fusion' ? (parseNumber(rateRecord.erc_1) || 0) : 0,
       erc2Percent: productKind === 'fusion' ? (parseNumber(rateRecord.erc_2) || 0) : 0,
-      erc1Pounds: productKind === 'fusion' ? grossLoan * ((parseNumber(rateRecord.erc_1) || 0) / 100) : 0,
-      erc2Pounds: productKind === 'fusion' ? grossLoan * ((parseNumber(rateRecord.erc_2) || 0) / 100) : 0,
+  erc1Pounds: productKind === 'fusion' ? gross * ((parseNumber(rateRecord.erc_1) || 0) / 100) : 0,
+  erc2Pounds: productKind === 'fusion' ? gross * ((parseNumber(rateRecord.erc_2) || 0) / 100) : 0,
 
       // Interest components
       termMonths: term,
@@ -526,6 +689,9 @@ export class BridgeFusionCalculator {
       productFeeOverridePercent = null,
       // Broker settings for automatic fee calculation
       brokerSettings = null,
+      // Second charge inputs
+      chargeType = '',
+      firstChargeValue = 0,
     } = inputs;
 
     // Normalize override inputs
@@ -652,6 +818,9 @@ export class BridgeFusionCalculator {
       specificNetLoan,
       commitmentFeePounds,
       exitFeePercent,
+      brokerSettings,
+      isSecondCharge: (chargeType || normalizedRateRecord.charge_type || '').toString().toLowerCase().includes('second'),
+      firstChargeValue,
     });
 
     return {

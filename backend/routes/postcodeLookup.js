@@ -27,17 +27,9 @@ router.get('/:postcode', async (req, res) => {
     }
     
     const apiUrl = `https://ws.postcoder.com/pcw/${apiKey}/address/uk/${encodeURIComponent(postcode.trim())}`;
-    
-    console.log('📍 Calling Postcoder API');
-    
     const response = await fetch(apiUrl);
-    
-    console.log('📡 Postcoder response status:', response.status);
-    
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error('❌ Postcoder error body:', errorBody);
-      
       if (response.status === 404) {
         return res.status(404).json({ 
           success: false, 
@@ -51,8 +43,6 @@ router.get('/:postcode', async (req, res) => {
     }
     
     const data = await response.json();
-    console.log('✅ Postcoder found', data.length || 0, 'addresses');
-    
     if (!Array.isArray(data) || data.length === 0) {
       return res.status(404).json({ 
         success: false, 
@@ -94,8 +84,6 @@ router.get('/:postcode', async (req, res) => {
     
   } catch (error) {
     // Log full error for diagnostics
-    console.error('Postcode lookup error:', error);
-
     // In non-production or when debug=1 is provided, return the error details
     if (process.env.NODE_ENV !== 'production' || req.query.debug === '1') {
       return res.status(500).json({

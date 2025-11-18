@@ -31,17 +31,14 @@ export function UserProvider({ children }) {
       
       if (stored) {
         const profile = JSON.parse(stored);
-        console.log('✅ User profile loaded:', profile);
         setUser(profile);
         setIsLoading(false);
       } else {
-        console.log('⚠️ No user profile found - will show prompt');
         // No profile exists - show name prompt
         setShowNamePrompt(true);
         setIsLoading(false);
       }
     } catch (error) {
-      console.error('❌ Error loading user profile:', error);
       setShowNamePrompt(true);
       setIsLoading(false);
     }
@@ -60,10 +57,8 @@ export function UserProvider({ children }) {
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(profile));
       setUser(profile);
       setShowNamePrompt(false);
-      console.log('✅ User profile saved:', profile);
       return { success: true };
     } catch (error) {
-      console.error('❌ Error saving user profile:', error);
       return { success: false, error: error.message };
     }
   };
@@ -82,7 +77,6 @@ export function UserProvider({ children }) {
       setUser(updatedProfile);
       return { success: true };
     } catch (error) {
-      console.error('Error updating user profile:', error);
       return { success: false, error: error.message };
     }
   };
