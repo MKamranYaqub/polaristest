@@ -1,187 +1,290 @@
 /**
- * Custom hook for managing BTL Calculator input state
- * Centralizes all input-related state management
+ * useBTLInputs Hook
+ * 
+ * Manages all input state for the BTL Calculator including:
+ * - Property and loan details (property value, rent, loan type)
+ * - Product selection (scope, range, tier)
+ * - Additional fees
+ * - Criteria answers
+ * - Client details
+ * - Quote loading/saving
  */
 
 import { useState, useCallback } from 'react';
 
-const DEFAULT_INPUTS = {
-  // Property & Product inputs
-  propertyValue: '',
-  monthlyRent: '',
-  topSlicing: '',
+/**
+ * Custom hook for managing BTL calculator inputs
+ * @returns {Object} Input state and update functions
+ */
+export function useBTLInputs() {
+  // Basic property inputs
+  const [propertyValue, setPropertyValue] = useState('');
+  const [monthlyRent, setMonthlyRent] = useState('');
+  const [loanType, setLoanType] = useState('');
+  const [specificLoanAmount, setSpecificLoanAmount] = useState('');
   
-  // Product configuration
-  productScope: '',
-  retentionChoice: 'No',
-  retentionLtv: '75',
-  productType: '',
-  selectedRange: 'specialist',
-  
-  // Loan calculation inputs
-  loanType: '',
-  specificGrossLoan: '',
-  specificNetLoan: '',
-  maxLtvInput: 75,
+  // Product selection
+  const [productScope, setProductScope] = useState('');
+  const [selectedRange, setSelectedRange] = useState('specialist');
+  const [tier, setTier] = useState(null);
+  const [maxLtvInput, setMaxLtvInput] = useState(75);
   
   // Additional fees
-  addFeesToggle: false,
-  feeCalculationType: 'pound',
-  additionalFeeAmount: '',
+  const [addFeesToggle, setAddFeesToggle] = useState(false);
+  const [feeCalculationType, setFeeCalculationType] = useState('pound');
+  const [additionalFeeAmount, setAdditionalFeeAmount] = useState('');
   
-  // Criteria and answers
-  answers: {},
+  // Loan details
+  const [loanTerm, setLoanTerm] = useState('');
+  const [interestPaymentType, setInterestPaymentType] = useState('');
+  const [retentionChoice, setRetentionChoice] = useState('no');
   
-  // Slider controls (per-column state)
-  rolledMonthsPerColumn: {},
-  deferredInterestPerColumn: {},
-  manualModeActivePerColumn: {},
-  optimizedRolledPerColumn: {},
-  optimizedDeferredPerColumn: {},
+  // Criteria answers
+  const [answers, setAnswers] = useState({});
   
   // Client details
-  clientDetails: {
-    clientType: 'Direct',
-    applicant1FirstName: '',
-    applicant1LastName: '',
-    applicant2FirstName: '',
-    applicant2LastName: '',
-    applicant3FirstName: '',
-    applicant3LastName: '',
-    applicant4FirstName: '',
-    applicant4LastName: '',
+  const [clientDetails, setClientDetails] = useState({
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
-    notes: ''
-  },
-  
-  // Quote tracking
-  currentQuoteId: null,
-  currentQuoteRef: null
-};
-
-export function useBTLInputs(initialInputs = {}) {
-  const [inputs, setInputs] = useState({
-    ...DEFAULT_INPUTS,
-    ...initialInputs
+    address: ''
   });
 
   /**
-   * Update a single input field
+   * Update a single input value
+   * @param {string} field - Field name to update
+   * @param {*} value - New value
    */
   const updateInput = useCallback((field, value) => {
-    setInputs(prev => ({
+    switch (field) {
+      case 'propertyValue':
+        setPropertyValue(value);
+        break;
+      case 'monthlyRent':
+        setMonthlyRent(value);
+        break;
+      case 'loanType':
+        setLoanType(value);
+        break;
+      case 'specificLoanAmount':
+        setSpecificLoanAmount(value);
+        break;
+      case 'productScope':
+        setProductScope(value);
+        break;
+      case 'selectedRange':
+        setSelectedRange(value);
+        break;
+      case 'tier':
+        setTier(value);
+        break;
+      case 'maxLtvInput':
+        setMaxLtvInput(value);
+        break;
+      case 'addFeesToggle':
+        setAddFeesToggle(value);
+        break;
+      case 'feeCalculationType':
+        setFeeCalculationType(value);
+        break;
+      case 'additionalFeeAmount':
+        setAdditionalFeeAmount(value);
+        break;
+      case 'loanTerm':
+        setLoanTerm(value);
+        break;
+      case 'interestPaymentType':
+        setInterestPaymentType(value);
+        break;
+      case 'retentionChoice':
+        setRetentionChoice(value);
+        break;
+      default:
+        console.warn(`Unknown field: ${field}`);
+    }
+  }, []);
+
+  /**
+   * Update multiple inputs at once
+   * @param {Object} updates - Object with field-value pairs
+   */
+  const updateMultipleInputs = useCallback((updates) => {
+    Object.entries(updates).forEach(([field, value]) => {
+      updateInput(field, value);
+    });
+  }, [updateInput]);
+
+  /**
+   * Update a criteria answer
+   * @param {string} questionId - Question ID
+   * @param {string} answer - Answer value
+   */
+  const updateAnswer = useCallback((questionId, answer) => {
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: answer
+    }));
+  }, []);
+
+  /**
+   * Update tier value
+   * @param {number} newTier - New tier value
+   */
+  const updateTier = useCallback((newTier) => {
+    setTier(newTier);
+  }, []);
+
+  /**
+   * Update a client detail field
+   * @param {string} field - Field name
+   * @param {string} value - Field value
+   */
+  const updateClientDetails = useCallback((field, value) => {
+    setClientDetails(prev => ({
       ...prev,
       [field]: value
     }));
   }, []);
 
   /**
-   * Update multiple input fields at once
-   */
-  const updateMultipleInputs = useCallback((updates) => {
-    setInputs(prev => ({
-      ...prev,
-      ...updates
-    }));
-  }, []);
-
-  /**
-   * Update a nested field (e.g., clientDetails.firstName)
-   */
-  const updateNestedInput = useCallback((parent, field, value) => {
-    setInputs(prev => ({
-      ...prev,
-      [parent]: {
-        ...prev[parent],
-        [field]: value
-      }
-    }));
-  }, []);
-
-  /**
-   * Update per-column slider state
-   */
-  const updateColumnState = useCallback((stateKey, column, value) => {
-    setInputs(prev => ({
-      ...prev,
-      [stateKey]: {
-        ...prev[stateKey],
-        [column]: value
-      }
-    }));
-  }, []);
-
-  /**
-   * Reset all inputs to defaults
-   */
-  const resetInputs = useCallback(() => {
-    setInputs(DEFAULT_INPUTS);
-  }, []);
-
-  /**
-   * Reset per-column slider states
-   */
-  const resetSliderStates = useCallback(() => {
-    setInputs(prev => ({
-      ...prev,
-      rolledMonthsPerColumn: {},
-      deferredInterestPerColumn: {},
-      manualModeActivePerColumn: {},
-      optimizedRolledPerColumn: {},
-      optimizedDeferredPerColumn: {}
-    }));
-  }, []);
-
-  /**
    * Load inputs from a saved quote
+   * @param {Object} quote - Quote data from database
    */
   const loadFromQuote = useCallback((quote) => {
     if (!quote) return;
 
-    const loadedInputs = {
-      propertyValue: quote.property_value || '',
-      monthlyRent: quote.monthly_rent || '',
-      topSlicing: quote.top_slicing || '',
-      productScope: quote.product_scope || '',
-      retentionChoice: quote.retention_choice || 'No',
-      retentionLtv: quote.retention_ltv || '75',
-      productType: quote.product_type || '',
-      selectedRange: quote.selected_range || 'specialist',
-      loanType: quote.loan_calculation_requested || '',
-      specificGrossLoan: quote.specific_gross_loan || '',
-      specificNetLoan: quote.specific_net_loan || '',
-      maxLtvInput: quote.target_ltv || 75,
-      addFeesToggle: quote.add_fees_toggle || false,
-      feeCalculationType: quote.fee_calculation_type || 'pound',
-      additionalFeeAmount: quote.additional_fee_amount || '',
-      answers: quote.criteria_answers || {},
-      currentQuoteId: quote.id,
-      currentQuoteRef: quote.reference_number
-    };
-
-    // Load client details if present
+    // Load basic inputs
+    if (quote.property_value) setPropertyValue(quote.property_value);
+    if (quote.monthly_rent) setMonthlyRent(quote.monthly_rent);
+    if (quote.loan_type) setLoanType(quote.loan_type);
+    if (quote.specific_loan_amount) setSpecificLoanAmount(quote.specific_loan_amount);
+    
+    // Load product selection
+    if (quote.product_scope) setProductScope(quote.product_scope);
+    if (quote.selected_range) setSelectedRange(quote.selected_range);
+    if (quote.tier !== undefined) setTier(quote.tier);
+    if (quote.max_ltv_input !== undefined) setMaxLtvInput(quote.max_ltv_input);
+    
+    // Load additional fees
+    if (quote.add_fees_toggle !== undefined) setAddFeesToggle(quote.add_fees_toggle);
+    if (quote.fee_calculation_type) setFeeCalculationType(quote.fee_calculation_type);
+    if (quote.additional_fee_amount) setAdditionalFeeAmount(quote.additional_fee_amount);
+    
+    // Load loan details
+    if (quote.loan_term) setLoanTerm(quote.loan_term);
+    if (quote.interest_payment_type) setInterestPaymentType(quote.interest_payment_type);
+    if (quote.retention_choice) setRetentionChoice(quote.retention_choice);
+    
+    // Load criteria answers
+    if (quote.criteria_answers) setAnswers(quote.criteria_answers);
+    
+    // Load client details
     if (quote.client_details) {
-      loadedInputs.clientDetails = {
-        ...DEFAULT_INPUTS.clientDetails,
+      setClientDetails(prev => ({
+        ...prev,
         ...quote.client_details
-      };
+      }));
     }
-
-    setInputs(prev => ({
-      ...prev,
-      ...loadedInputs
-    }));
   }, []);
 
+  /**
+   * Reset all inputs to default values
+   */
+  const resetInputs = useCallback(() => {
+    setPropertyValue('');
+    setMonthlyRent('');
+    setLoanType('');
+    setSpecificLoanAmount('');
+    setProductScope('');
+    setSelectedRange('specialist');
+    setTier(null);
+    setMaxLtvInput(75);
+    setAddFeesToggle(false);
+    setFeeCalculationType('pound');
+    setAdditionalFeeAmount('');
+    setLoanTerm('');
+    setInterestPaymentType('');
+    setRetentionChoice('no');
+    setAnswers({});
+    setClientDetails({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      address: ''
+    });
+  }, []);
+
+  /**
+   * Get inputs in format for saving to database
+   * @returns {Object} Inputs in database-compatible format
+   */
+  const getInputsForSave = useCallback(() => {
+    return {
+      property_value: propertyValue,
+      monthly_rent: monthlyRent,
+      loan_type: loanType,
+      specific_loan_amount: specificLoanAmount,
+      product_scope: productScope,
+      selected_range: selectedRange,
+      tier: tier,
+      max_ltv_input: maxLtvInput,
+      add_fees_toggle: addFeesToggle,
+      fee_calculation_type: feeCalculationType,
+      additional_fee_amount: additionalFeeAmount,
+      loan_term: loanTerm,
+      interest_payment_type: interestPaymentType,
+      retention_choice: retentionChoice,
+      criteria_answers: answers,
+      client_details: clientDetails
+    };
+  }, [
+    propertyValue,
+    monthlyRent,
+    loanType,
+    specificLoanAmount,
+    productScope,
+    selectedRange,
+    tier,
+    maxLtvInput,
+    addFeesToggle,
+    feeCalculationType,
+    additionalFeeAmount,
+    loanTerm,
+    interestPaymentType,
+    retentionChoice,
+    answers,
+    clientDetails
+  ]);
+
   return {
-    inputs,
+    // State
+    propertyValue,
+    monthlyRent,
+    loanType,
+    specificLoanAmount,
+    productScope,
+    selectedRange,
+    tier,
+    maxLtvInput,
+    addFeesToggle,
+    feeCalculationType,
+    additionalFeeAmount,
+    loanTerm,
+    interestPaymentType,
+    retentionChoice,
+    answers,
+    clientDetails,
+    
+    // Update functions
     updateInput,
     updateMultipleInputs,
-    updateNestedInput,
-    updateColumnState,
+    updateAnswer,
+    updateTier,
+    updateClientDetails,
+    loadFromQuote,
     resetInputs,
-    resetSliderStates,
-    loadFromQuote
+    getInputsForSave
   };
 }
