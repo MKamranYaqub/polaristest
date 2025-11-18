@@ -105,13 +105,7 @@ export default function LoginPage() {
           </div>
         </form>
 
-        <div className="slds-m-top_medium slds-p-around_small auth-demo-box">
-          <p className="slds-text-body_small text-color-gray margin-0">
-            <strong>Demo Credentials:</strong><br />
-            Email: admin@polaris.local<br />
-            Password: admin123
-          </p>
-        </div>
+        
       </div>
     </div>
   );
