@@ -8,6 +8,7 @@ import {
   changePasswordSchema,
   resetPasswordRequestSchema,
   resetPasswordSchema,
+  adminResetPasswordSchema,
   createUserSchema,
   updateUserSchema,
   validate 
@@ -319,7 +320,8 @@ router.delete('/users/:id', authenticateToken, requireAccessLevel(1), asyncHandl
 }));
 
 // POST /api/auth/users/:id/reset-password - Admin reset user password
-router.post('/users/:id/reset-password', authenticateToken, requireAccessLevel(1), validate(resetPasswordSchema), asyncHandler(async (req, res) => {
+// Use adminResetPasswordSchema (no token required)
+router.post('/users/:id/reset-password', authenticateToken, requireAccessLevel(1), validate(adminResetPasswordSchema), asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { new_password } = req.body;
 

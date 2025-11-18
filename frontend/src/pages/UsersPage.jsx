@@ -79,7 +79,8 @@ const UsersPage = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create user');
+        const message = (data && data.error && (data.error.message || (typeof data.error === 'string' && data.error))) || 'Failed to create user';
+        throw new Error(message);
       }
 
       setSuccess('User created successfully');
@@ -113,7 +114,8 @@ const UsersPage = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to update user');
+        const message = (data && data.error && (data.error.message || (typeof data.error === 'string' && data.error))) || 'Failed to update user';
+        throw new Error(message);
       }
 
       setSuccess('User updated successfully');
@@ -143,7 +145,8 @@ const UsersPage = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to reset password');
+        const message = (data && data.error && (data.error.message || (typeof data.error === 'string' && data.error))) || 'Failed to reset password';
+        throw new Error(message);
       }
 
       setSuccess('Password reset successfully');
@@ -170,7 +173,8 @@ const UsersPage = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete user');
+        const message = (data && data.error && (data.error.message || (typeof data.error === 'string' && data.error))) || 'Failed to delete user';
+        throw new Error(message);
       }
 
       setSuccess('User deleted successfully');

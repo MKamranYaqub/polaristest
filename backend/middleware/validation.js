@@ -102,6 +102,19 @@ export const resetPasswordSchema = Joi.object({
     })
 });
 
+// Admin password reset (no token required, only new password)
+export const adminResetPasswordSchema = Joi.object({
+  new_password: Joi.string()
+    .min(8)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .required()
+    .messages({
+      'string.min': 'Password must be at least 8 characters',
+      'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+      'any.required': 'New password is required'
+    })
+});
+
 // User Management Schemas
 export const createUserSchema = Joi.object({
   email: Joi.string()

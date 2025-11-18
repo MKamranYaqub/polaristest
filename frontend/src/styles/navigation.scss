@@ -75,11 +75,8 @@
 
 /* Backdrop overlay for mobile */
 .nav-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1040;
-  cursor: pointer;
+  /* Backdrop removed per request: prevent full-screen dark overlay on mobile */
+  display: none !important;
 }
 
 /* Mobile/Tablet behaviour: hide the inline sidenav and use an overlay drawer */
@@ -110,6 +107,20 @@
   .app-sidenav .cds--side-nav__link {
     padding: 1rem 1.5rem;
     font-size: 1rem;
+  }
+}
+
+/* Override Carbon side nav overlay to prevent full-screen dark layer on mobile */
+@media (max-width: 900px) {
+  .cds--side-nav__overlay,
+  .cds--side-nav__overlay-active {
+    /* Disable visual and interaction coverage */
+    display: none !important;
+    pointer-events: none !important;
+    background: transparent !important;
+    inline-size: 0 !important;
+    block-size: 0 !important;
+    opacity: 0 !important;
   }
 }
 
