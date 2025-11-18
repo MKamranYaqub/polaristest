@@ -3,7 +3,10 @@ Seeding rates into Supabase
 Steps to create the table and seed the rates data from this project.
 
 1) Create the `rates` table
-   - Open your Supabase project, go to "SQL" > "New query" and paste the contents of `create_rates_table.sql` then run it.
+   - Open your Supabase project, go to "SQL" > "New query"
+   - Run the schema creation scripts from `../database/schema/` in order
+   - Run migrations from `../database/migrations/` sequentially (001 → 028)
+   - See `../database/README.md` for detailed migration instructions
 
 2) Ensure your local `backend/.env` contains the following (do NOT commit):
 

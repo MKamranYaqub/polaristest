@@ -73,7 +73,11 @@ A full-stack mortgage calculation platform for BTL (Buy-to-Let) and Bridging loa
 │   ├── utils/             # Utility functions
 │   ├── config/            # Configuration
 │   └── scripts/           # Database seed scripts
-├── migrations/            # Database migration SQL files
+├── database/              # 🗄️ Database files (organized)
+│   ├── schema/            # Initial table creation scripts
+│   ├── migrations/        # Sequential migrations (001-028)
+│   ├── utilities/         # Verification scripts
+│   └── seeds/             # CSV seed data files
 └── docs/                  # 📚 Documentation (organized)
     ├── architecture/      # System design & calculations
     ├── features/          # Feature documentation
@@ -154,6 +158,7 @@ All project documentation is now organized in the [`docs/`](docs/) directory:
 - [Features](docs/features/) - Feature-specific documentation
 - [Guides](docs/guides/) - How-to guides and tutorials
 - [Improvements](docs/improvements/) - Project improvement plans
+- [Database](database/) - SQL schema, migrations, and database documentation
 
 **Full index:** [docs/README.md](docs/README.md)
 
