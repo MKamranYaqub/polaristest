@@ -11,9 +11,9 @@ import KeyboardHint from './KeyboardHint';
 // SaveQuoteButton shows a small modal to collect { name, borrowerName, applicantNames, notes }
 // If `existingQuote` prop provided (object with id), the button will perform an update instead of create.
 export default function SaveQuoteButton({
-  calculatorType = 'BTL',
-  calculationData = {},
-  allColumnData = [],
+  calculatorType,
+  calculationData,
+  allColumnData,
   bestSummary = null,
   existingQuote = null,
   showProductRangeSelection = false,
@@ -549,11 +549,4 @@ SaveQuoteButton.propTypes = {
   }),
   showProductRangeSelection: PropTypes.bool,
   onSaved: PropTypes.func,
-};
-
-SaveQuoteButton.defaultProps = {
-  bestSummary: null,
-  existingQuote: null,
-  showProductRangeSelection: false,
-  onSaved: null,
 };
