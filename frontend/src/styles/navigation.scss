@@ -37,7 +37,8 @@
   display: none;
   position: fixed;
   left: 1rem;
-  top: 5.5rem;
+  /* Place inside header area on small screens */
+  top: 1rem;
   background: var(--token-interactive);
   border: none;
   width: 44px;
@@ -110,8 +111,9 @@
   }
 }
 
-/* Override Carbon side nav overlay to prevent full-screen dark layer on mobile */
-@media (max-width: 900px) {
+/* Override Carbon side nav overlay to prevent full-screen dark layer on small screens */
+/* Carbon enables the overlay under ~65.98rem. Match and slightly exceed that breakpoint. */
+@media (max-width: 66rem), (max-width: 1100px) {
   .cds--side-nav__overlay,
   .cds--side-nav__overlay-active {
     /* Disable visual and interaction coverage */
