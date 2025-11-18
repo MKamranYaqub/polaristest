@@ -119,6 +119,46 @@ Tests range selection UI:
 - Accessibility compliance
 - Edge case handling
 
+### ✅ BTLAdditionalFees Component (35+ tests)
+Tests additional broker fees functionality:
+- Rendering: toggle, conditional inputs, labels
+- Toggle interaction: on/off, checked state
+- Calculation type selection: pound/percentage
+- Fee amount input: value display, changes, placeholders
+- Help text: contextual messages for pound vs percentage
+- Read-only mode: disabled state, no callbacks
+- Conditional rendering: show/hide based on toggle
+- Edge cases: empty, large numbers, null values
+- Accessibility: labels, roles, keyboard navigation
+
+**Key Test Areas**:
+- Fee toggle (enable/disable)
+- Calculation type (fixed £ vs %)
+- Amount input validation
+- Contextual help text
+- Conditional UI rendering
+- Accessibility compliance
+
+### ✅ BTLSliderControls Component (40+ tests)
+Tests slider interactions for rolled months and deferred interest:
+- Rendering: both sliders, value display, badges
+- Rolled months slider: range (0-18), onChange, custom max
+- Deferred interest slider: range (0-100), onChange, custom max
+- Reset functionality: button click, manual mode
+- Read-only mode: disabled sliders, no callbacks
+- Value display priority: manual > optimized > zero
+- Edge cases: undefined columnKey, null callbacks, negative values
+- Accessibility: labels, keyboard, roles
+- Visual feedback: badges, consistent styling
+
+**Key Test Areas**:
+- Dual slider controls
+- Manual vs optimized values
+- Reset to optimized functionality
+- Manual mode badge display
+- Range constraints (0-18, 0-100)
+- Accessibility compliance
+
 ## Test Patterns
 
 ### Hook Testing Pattern
@@ -173,21 +213,17 @@ describe('MyComponent', () => {
 
 ## Next Steps
 
-### Priority 1: Critical Hooks
-- [ ] `useBTLCalculation.test.js` - Calculation logic
-- [ ] `useBTLRates.test.js` - Data fetching
+### Priority 1: Remaining Components
+- [ ] `BTLInputForm.test.jsx` - Property value, rent, top slicing inputs
+- [ ] `BTLProductSelector.test.jsx` - Product scope, retention, LTV, tier display
+- [ ] `BTLResultsSummary.test.jsx` - Results table, action buttons
 
-### Priority 2: Input Components
-- [ ] `BTLInputForm.test.jsx` - Basic inputs
-- [ ] `BTLProductSelector.test.jsx` - Product selection
-- [ ] `BTLAdditionalFees.test.jsx` - Fee inputs
+### Priority 2: Critical Hooks
+- [ ] `useBTLCalculation.test.js` - validateInputs, calculate, recalculate
+- [ ] `useBTLRates.test.js` - fetchCriteria, fetchRates (with Supabase mocks)
 
-### Priority 3: Results Components
-- [ ] `BTLSliderControls.test.jsx` - Slider interactions
-- [ ] `BTLResultsSummary.test.jsx` - Results display
-
-### Priority 4: Integration
-- [ ] `BTLCalculator.test.jsx` - Full calculator integration
+### Priority 3: Integration
+- [ ] `BTLCalculator.test.jsx` - Full workflow (load → calculate → save)
 
 ## Coverage Metrics (Current)
 
@@ -199,14 +235,14 @@ describe('MyComponent', () => {
 
 ### Components
 - ✅ BTLRangeToggle: ~85% coverage (20 tests)
+- ✅ BTLAdditionalFees: ~90% coverage (35 tests)
+- ✅ BTLSliderControls: ~90% coverage (40 tests)
 - ⬜ BTLInputForm: 0% coverage
 - ⬜ BTLProductSelector: 0% coverage
-- ⬜ BTLAdditionalFees: 0% coverage
-- ⬜ BTLSliderControls: 0% coverage
 - ⬜ BTLResultsSummary: 0% coverage
 - ⬜ BTLCalculator: 0% coverage
 
-**Overall Progress**: ~25% of target test suite complete (95+ tests written)
+**Overall Progress**: ~45% of target test suite complete (145+ tests written)
 
 ## Continuous Integration
 
