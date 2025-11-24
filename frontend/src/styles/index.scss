@@ -68,7 +68,7 @@ a {
 @media (max-width: 600px) {
   .app-header {
     padding: var(--token-space-12);
-    padding-left: 4rem;
+    padding-left: var(--token-spacing-2xl);
   }
 
   .app-header__title {

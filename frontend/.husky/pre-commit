@@ -1,0 +1,13 @@
+#!/bin/sh
+# Run stylelint on staged CSS/SCSS files
+echo "🔍 Checking design token usage in CSS/SCSS files..."
+cd frontend
+npx stylelint "src/**/*.{css,scss}" --allow-empty-input
+
+if [ $? -ne 0 ]; then
+  echo "❌ Stylelint failed. Please fix design token violations before committing."
+  echo "   Run 'npm run lint:styles:fix' to auto-fix some issues."
+  exit 1
+fi
+
+echo "✅ All design token checks passed!"

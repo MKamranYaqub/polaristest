@@ -62,7 +62,7 @@
   
   .range-button {
     flex: 1;
-    padding: 0.875rem 1.5rem;
+    padding: var(--token-spacing-md) var(--token-spacing-xl);
     background: $token-color-surface;
     border: none;
     border-right: 1px solid $token-color-border-subtle;

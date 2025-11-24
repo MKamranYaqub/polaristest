@@ -100,7 +100,7 @@ input[type="range"] {
     .tier-label {
       font-size: 0.75rem;
       color: $token-text-secondary;
-      margin-bottom: 0.25rem;
+      margin-bottom: var(--token-spacing-xs);
     }
     
     .tier-value {
@@ -123,7 +123,7 @@ input[type="range"] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem $spacing-md;
+  padding: var(--token-spacing-md) $spacing-md;
   background: $token-color-surface;
   cursor: pointer;
   user-select: none;
@@ -255,7 +255,7 @@ input[type="range"] {
 // Styling for first-charge warning: remove outer border and color input border only
 .first-charge-warning {
   background: $token-warning-bg;
-  padding: 0.5rem;
+  padding: var(--token-spacing-sm);
   border-radius: 4px;
   border: none; /* remove outside border as requested */
   display: flex;
@@ -271,7 +271,7 @@ input[type="range"] {
 .first-charge-warning .first-charge-hint {
   font-size: 0.8em;
   color: $token-text-helper;
-  margin-left: 0.25rem;
+  margin-left: var(--token-spacing-xs);
 }
 
 /* Only change the input's border color; do not add an outer wrapper border */
@@ -355,7 +355,7 @@ input[type="range"] {
   }
 
   .rate-item {
-    padding: 0.5rem 0;
+    padding: var(--token-spacing-sm) 0;
     border-bottom: 1px solid $token-color-border-subtle;
     font-size: 0.9375rem;
 
@@ -387,7 +387,7 @@ input[type="range"] {
   position: relative;
   display: inline-flex;
   align-items: center;
-  margin-left: 0.5rem;
+  margin-left: var(--token-spacing-sm);
   
   .info-icon-button {
     border: none;
@@ -421,7 +421,7 @@ input[type="range"] {
     color: $token-text-primary;
     border: 1px solid $token-color-interactive;
     border-radius: $token-radius-sm;
-    padding: 0.5rem 0.75rem;
+    padding: var(--token-spacing-sm) var(--token-spacing-md);
     box-shadow: $token-shadow-strong;
     z-index: 1100;
     white-space: normal;
@@ -441,7 +441,7 @@ input[type="range"] {
 
 // Helper text below inputs
 .helper-text {
-  margin-top: 0.25rem;
+  margin-top: var(--token-spacing-xs);
   font-size: var(--token-font-size-sm);
   color: $token-text-secondary;
   line-height: 1.4;
@@ -452,7 +452,7 @@ input[type="range"] {
   display: flex;
   align-items: center;
   gap: $spacing-md;
-  margin-top: 0.5rem;
+  margin-top: var(--token-spacing-sm);
   flex-wrap: wrap;
 }
 
@@ -465,7 +465,7 @@ input[type="range"] {
 // Required asterisk
 .required-asterisk {
   color: $token-color-critical;
-  margin-right: 0.25rem;
+  margin-right: var(--token-spacing-xs);
   font-weight: 600;
 }
 
@@ -487,12 +487,12 @@ input[type="range"] {
   }
 
   .range-toggle-buttons .range-button {
-    padding: 0.75rem 1rem;
+    padding: var(--token-spacing-md) var(--token-spacing-lg);
     font-size: 0.95rem;
   }
 
   .collapsible-header {
-    padding: 0.65rem $spacing-sm;
+    padding: var(--token-spacing-sm) $spacing-sm;
     
     .header-title {
       font-size: 0.95rem;
@@ -542,7 +542,7 @@ input[type="range"] {
   }
 
   .collapsible-header {
-    padding: 0.6rem $spacing-xs;
+    padding: var(--token-spacing-sm) $spacing-xs;
     
     .header-title {
       font-size: 0.9rem;
@@ -568,19 +568,19 @@ input[type="range"] {
 
   .slds-input, .slds-select {
     font-size: 0.95rem;
-    padding: 0.5rem 0.75rem;
+    padding: var(--token-spacing-sm) var(--token-spacing-md);
   }
 
   .slds-table {
     font-size: 0.9rem;
     
     td, th {
-      padding: 0.5rem 0.5rem;
+      padding: var(--token-spacing-sm) var(--token-spacing-sm);
     }
   }
 
   .range-toggle-buttons .range-button {
-    padding: 0.65rem 0.75rem;
+    padding: var(--token-spacing-sm) var(--token-spacing-md);
     font-size: 0.9rem;
   }
 

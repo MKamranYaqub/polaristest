@@ -114,7 +114,10 @@ const UserProfileButton = () => {
             backgroundColor: '#0176d3',
             color: 'white',
             fontSize: '14px',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}
         >
           {getUserInitials()}
@@ -152,11 +155,11 @@ const UserProfileButton = () => {
               {/* Profile Info */}
               <div className="slds-p-around_medium slds-border_bottom">
                 <div className="slds-text-heading_small slds-m-bottom_xx-small" style={{ color: 'var(--token-ui-text-dark)', fontWeight: '600' }}>
-                  {userName}
+                  {getUserName()}
                 </div>
                 {user.email && (
                   <div className="slds-text-body_small slds-m-bottom_xx-small" style={{ color: 'var(--token-text-muted)' }}>
-                    {userEmail}
+                    {user.email}
                   </div>
                 )}
                 <div className="slds-text-body_small" style={{ color: '#706e6b', fontSize: '12px' }}>

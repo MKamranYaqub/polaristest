@@ -19,7 +19,7 @@
   .app-content {
     /* Maximize content area */
     max-width: 100%;
-    padding: 1rem;
+    padding: var(--token-spacing-lg);
   }
 }
 
@@ -27,7 +27,7 @@
 @media (max-width: 900px) {
   .app-shell--embedded {
     .app-content {
-      padding: 0.5rem;
+      padding: var(--token-spacing-sm);
     }
   }
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { Asleep, Light } from '@carbon/icons-react';
+import SalesforceIcon from './shared/SalesforceIcon';
 
 /**
  * ThemeToggle - Quick toggle button for light/dark theme
@@ -21,11 +21,11 @@ const ThemeToggle = () => {
 
   const getIcon = () => {
     if (themeMode === 'dark') {
-      return <Asleep size={20} />;
+      return <SalesforceIcon category="utility" name="moon" size="small" />;
     } else if (themeMode === 'system') {
-      return <span style={{ fontSize: '20px' }}>🖥️</span>;
+      return <SalesforceIcon category="utility" name="settings" size="small" />;
     } else {
-      return <Light size={20} />;
+      return <SalesforceIcon category="utility" name="dayview" size="small" />;
     }
   };
 

@@ -43,7 +43,7 @@
   border: none;
   width: 44px;
   height: 44px;
-  padding: 8px;
+  padding: var(--token-spacing-sm);
   cursor: pointer;
   border-radius: 4px;
   z-index: 1100;
@@ -107,7 +107,7 @@
 
   /* Make side nav items touch-friendly */
   .app-sidenav .cds--side-nav__link {
-    padding: 1rem 1.5rem;
+    padding: var(--token-spacing-lg) var(--token-spacing-xl);
     font-size: 1rem;
   }
 }
