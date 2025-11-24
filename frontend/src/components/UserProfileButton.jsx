@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import SalesforceIcon from './shared/SalesforceIcon';
 import ModalShell from './ModalShell';
 import '../styles/Modal.css';
 
@@ -238,8 +239,8 @@ const UserProfileButton = () => {
                   className="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
                   onClick={() => setShowPasswordModal(false)}
                 >
+                  <SalesforceIcon category="utility" name="close" size="x-small" className="slds-button__icon slds-button__icon_inverse" />
                   <span className="slds-assistive-text">Close</span>
-                  ×
                 </button>
                 <h2 className="slds-text-heading_medium">Change Password</h2>
               </header>

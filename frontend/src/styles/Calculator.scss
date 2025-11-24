@@ -400,6 +400,13 @@ input[type="range"] {
     svg {
       width: 14px;
       height: 14px;
+      fill: #0176d3; // Salesforce blue
+      color: #0176d3;
+    }
+    
+    &:hover svg {
+      fill: #014486;
+      color: #014486;
     }
   }
   

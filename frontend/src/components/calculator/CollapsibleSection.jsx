@@ -1,4 +1,5 @@
 import React from 'react';
+import SalesforceIcon from '../shared/SalesforceIcon';
 import '../../styles/Calculator.scss';
 
 /**
@@ -15,13 +16,12 @@ export default function CollapsibleSection({ title, expanded, onToggle, children
     <section className="collapsible-section">
       <header className="collapsible-header" onClick={onToggle}>
         <h2 className="header-title">{title}</h2>
-        <svg 
-          className={`chevron-icon ${expanded ? 'expanded' : ''}`} 
-          xmlns="http://www.w3.org/2000/svg" 
-          viewBox="0 0 24 24"
-        >
-          <path d="M7 10l5 5 5-5z"/>
-        </svg>
+        <SalesforceIcon
+          category="utility"
+          name={expanded ? "chevronup" : "chevrondown"}
+          size="x-small"
+          className={`chevron-icon ${expanded ? 'expanded' : ''}`}
+        />
       </header>
       <div className={`collapsible-body ${!expanded ? 'collapsed' : ''}`}>
         {children}

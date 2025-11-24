@@ -1,5 +1,6 @@
 import React from 'react';
 import CollapsibleSection from '../CollapsibleSection';
+import SalesforceIcon from '../../shared/SalesforceIcon';
 import { formatCurrencyInput } from '../../../utils/calculator/numberFormatting';
 
 /**
@@ -119,10 +120,12 @@ const MultiPropertyDetailsSection = ({
                     disabled={rows.length <= 1 || isReadOnly}
                     title="Delete row"
                   >
-                    <svg className="slds-button__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="3 6 5 6 21 6"></polyline>
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
+                    <SalesforceIcon
+                      category="utility"
+                      name="delete"
+                      size="x-small"
+                      className="slds-button__icon"
+                    />
                   </button>
                 </td>
               </tr>
@@ -153,10 +156,12 @@ const MultiPropertyDetailsSection = ({
           onClick={onAddRow}
           disabled={isReadOnly}
         >
-          <svg className="slds-button__icon slds-button__icon_left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
+          <SalesforceIcon
+            category="utility"
+            name="add"
+            size="x-small"
+            className="slds-button__icon slds-button__icon_left"
+          />
           Add Property
         </button>
         <button
@@ -165,9 +170,12 @@ const MultiPropertyDetailsSection = ({
           title="Transfer total gross loan to main Loan Details section"
           disabled={isReadOnly}
         >
-          <svg className="slds-button__icon slds-button__icon_left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
+          <SalesforceIcon
+            category="utility"
+            name="forward"
+            size="x-small"
+            className="slds-button__icon slds-button__icon_left"
+          />
           Use Total Gross Loan
         </button>
       </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
+import SalesforceIcon from '../components/shared/SalesforceIcon';
 import ModalShell from '../components/ModalShell';
 import '../styles/Modal.css';
 
@@ -248,8 +249,8 @@ const UsersPage = () => {
           <span className="slds-assistive-text">Error</span>
           <h2>{error}</h2>
           <button className="slds-button slds-button_icon slds-notify__close" onClick={() => setError('')}>
+            <SalesforceIcon category="utility" name="close" size="x-small" className="slds-button__icon" />
             <span className="slds-assistive-text">Close</span>
-            ×
           </button>
         </div>
       )}
@@ -259,8 +260,8 @@ const UsersPage = () => {
           <span className="slds-assistive-text">Success</span>
           <h2>{success}</h2>
           <button className="slds-button slds-button_icon slds-notify__close" onClick={() => setSuccess('')}>
+            <SalesforceIcon category="utility" name="close" size="x-small" className="slds-button__icon" />
             <span className="slds-assistive-text">Close</span>
-            ×
           </button>
         </div>
       )}
@@ -325,7 +326,7 @@ const UsersPage = () => {
                           setShowEditModal(true);
                         }}
                       >
-                        ✏️
+                        <SalesforceIcon category="utility" name="edit" size="x-small" className="slds-button__icon" />
                       </button>
                       <button
                         className="slds-button slds-button_icon slds-button_icon-border-filled"
@@ -335,7 +336,7 @@ const UsersPage = () => {
                           setShowResetModal(true);
                         }}
                       >
-                        🔑
+                        <SalesforceIcon category="utility" name="lock" size="x-small" className="slds-button__icon" />
                       </button>
                       <button
                         className="slds-button slds-button_icon slds-button_icon-border-filled"
@@ -345,7 +346,7 @@ const UsersPage = () => {
                           setShowDeleteModal(true);
                         }}
                       >
-                        🗑️
+                        <SalesforceIcon category="utility" name="delete" size="x-small" className="slds-button__icon" />
                       </button>
                     </div>
                   </td>
@@ -372,8 +373,8 @@ const UsersPage = () => {
                   className="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
                   onClick={() => setShowCreateModal(false)}
                 >
+                  <SalesforceIcon category="utility" name="close" size="x-small" className="slds-button__icon slds-button__icon_inverse" />
                   <span className="slds-assistive-text">Close</span>
-                  ×
                 </button>
                 <h2 className="slds-text-heading_medium">Create New User</h2>
               </header>
@@ -483,8 +484,8 @@ const UsersPage = () => {
                   className="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
                   onClick={() => setShowEditModal(false)}
                 >
+                  <SalesforceIcon category="utility" name="close" size="x-small" className="slds-button__icon slds-button__icon_inverse" />
                   <span className="slds-assistive-text">Close</span>
-                  ×
                 </button>
                 <h2 className="slds-text-heading_medium">Edit User</h2>
               </header>
@@ -584,8 +585,8 @@ const UsersPage = () => {
                   className="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
                   onClick={() => setShowResetModal(false)}
                 >
+                  <SalesforceIcon category="utility" name="close" size="x-small" className="slds-button__icon slds-button__icon_inverse" />
                   <span className="slds-assistive-text">Close</span>
-                  ×
                 </button>
                 <h2 className="slds-text-heading_medium">Reset User Password</h2>
               </header>

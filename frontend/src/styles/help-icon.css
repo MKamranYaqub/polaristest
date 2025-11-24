@@ -35,6 +35,11 @@
   display: block;
   width: 100%;
   height: 100%;
+  fill: currentColor;
+}
+
+.help-icon svg path {
+  fill: inherit;
 }
 
 /* Dark mode */
@@ -51,8 +56,45 @@
   margin-left: 0.25rem;
 }
 
-/* Tooltip content styling */
-.cds--tooltip__label {
-  font-size: 0.875rem;
-  line-height: 1.4;
+
+.cds--tooltip__body,
+.cds--popover__body {
+  padding: 0 !important;
 }
+
+/* Ensure tooltip portals render with high z-index and proper positioning */
+.cds--popover-container {
+  z-index: 10000 !important;
+}
+
+.cds--tooltip,
+.cds--popover {
+  z-index: 10000 !important;
+  position: absolute !important;
+}
+
+/* Allow modal content to show tooltips outside boundaries */
+.modal-content {
+  overflow: visible !important;
+}
+
+.modal-overlay {
+  overflow: visible !important;
+}
+/* Custom portal tooltip */
+.app-tooltip { position: absolute; top:0; left:0; z-index:10000; pointer-events:none; transition: opacity .12s ease; }
+.app-tooltip__content {
+  background:#2f2f2f;
+  color:#fff;
+  padding:8px 10px;
+  border-radius:4px;
+  font-size:0.8125rem;
+  line-height:1.3;
+  max-width:320px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  position:relative;
+  word-break:break-word;
+}
+.app-tooltip__arrow { position:absolute; width:12px; height:12px; left:50%; transform:translateX(-50%) rotate(45deg); background:#2f2f2f; }
+.app-tooltip[data-placement='top'] .app-tooltip__arrow { bottom:-6px; }
+.app-tooltip[data-placement='bottom'] .app-tooltip__arrow { top:-6px; }

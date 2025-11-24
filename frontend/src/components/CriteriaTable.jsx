@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSupabase } from '../contexts/SupabaseContext';
+import SalesforceIcon from './shared/SalesforceIcon';
 import CriteriaEditModal from './CriteriaEditModal';
 import NotificationModal from './NotificationModal';
 import '../styles/slds.css';
@@ -616,6 +617,7 @@ function CriteriaTable() {
                   onClick={cancelImport}
                   title="Close"
                 >
+                  <SalesforceIcon category="utility" name="close" size="x-small" className="slds-button__icon slds-button__icon_inverse" />
                   <span className="slds-assistive-text">Close</span>
                 </button>
                 <h2 className="slds-text-heading_medium">Import Preview</h2>

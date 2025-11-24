@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import SalesforceIcon from './shared/SalesforceIcon';
 import '../styles/slds.css';
 import '../styles/Calculator.scss';
 import SaveQuoteButton from './SaveQuoteButton';
@@ -69,9 +70,6 @@ export default function BTLcalculator({ initialQuote = null }) {
   const [error, setError] = useState(null);
   const [tipOpen, setTipOpen] = useState(false);
   const [tipContent, setTipContent] = useState('');
-  const [hoveredTip, setHoveredTip] = useState(null);
-  const showTimerRef = useRef(null);
-  const hideTimerRef = useRef(null);
 
   // Collapsible section states
   const [criteriaExpanded, setCriteriaExpanded] = useState(false);
@@ -82,13 +80,6 @@ export default function BTLcalculator({ initialQuote = null }) {
   const [currentQuoteId, setCurrentQuoteId] = useState(effectiveInitialQuote?.id || null);
   const [currentQuoteRef, setCurrentQuoteRef] = useState(effectiveInitialQuote?.reference_number || null);
 
-  // clear timers on unmount
-  useEffect(() => {
-    return () => {
-      if (showTimerRef.current) clearTimeout(showTimerRef.current);
-      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-    };
-  }, []);
   // Property & Product inputs
   const [propertyValue, setPropertyValue] = useState('');
   const [monthlyRent, setMonthlyRent] = useState('');
@@ -1323,6 +1314,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                   onClick={() => setTipOpen(false)}
                   title="Close"
                 >
+                  <SalesforceIcon category="utility" name="close" size="x-small" className="slds-button__icon slds-button__icon_inverse" />
                   <span className="slds-assistive-text">Close</span>
                 </button>
                 <h2 className="slds-text-heading_medium">Info</h2>
@@ -1351,27 +1343,6 @@ export default function BTLcalculator({ initialQuote = null }) {
         answers={answers}
         orderedQuestionKeys={orderedQuestionKeys}
         onAnswerChange={handleAnswerChange}
-        hoveredTip={hoveredTip}
-        onTipHover={(qk) => {
-          if (hideTimerRef.current) {
-            clearTimeout(hideTimerRef.current);
-            hideTimerRef.current = null;
-          }
-          if (showTimerRef.current) clearTimeout(showTimerRef.current);
-          showTimerRef.current = setTimeout(() => setHoveredTip(qk), 150);
-        }}
-        onTipLeave={() => {
-          if (showTimerRef.current) {
-            clearTimeout(showTimerRef.current);
-            showTimerRef.current = null;
-          }
-          if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-          hideTimerRef.current = setTimeout(() => setHoveredTip(null), 200);
-        }}
-        onTipClick={(tip) => {
-          setTipContent(tip);
-          setTipOpen(true);
-        }}
         isReadOnly={isReadOnly}
       />
       

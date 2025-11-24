@@ -1,0 +1,33 @@
+/* AppShell styles - main layout wrapper with embedding support */
+
+.app-shell {
+  /* Base shell - inherits layout from index.scss */
+  min-height: 100vh;
+}
+
+/* Standalone mode - full navigation visible */
+.app-shell--standalone {
+  /* Default layout with header and sidebar - uses existing app-layout styles */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Embedded mode - no navigation, optimized for iframe */
+.app-shell--embedded {
+  /* Remove any fixed positioning or headers that might conflict with host */
+  
+  .app-content {
+    /* Maximize content area */
+    max-width: 100%;
+    padding: 1rem;
+  }
+}
+
+/* Mobile responsiveness for embedded mode */
+@media (max-width: 900px) {
+  .app-shell--embedded {
+    .app-content {
+      padding: 0.5rem;
+    }
+  }
+}

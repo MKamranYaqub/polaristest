@@ -616,3 +616,56 @@ body,
   border-color: #1072d8;
   box-shadow: 0 0 0 3px rgba(16,114,216,0.08);
 }
+
+/* Salesforce Icon Styles */
+.slds-button__icon {
+  fill: currentColor;
+  pointer-events: none;
+}
+
+.slds-button_icon .slds-button__icon,
+.slds-button_icon-border .slds-button__icon,
+.slds-button_icon-border-filled .slds-button__icon {
+  fill: #050505;
+}
+
+.slds-button_icon:hover .slds-button__icon,
+.slds-button_icon-border:hover .slds-button__icon,
+.slds-button_icon-border-filled:hover .slds-button__icon {
+  fill: #0176d3;
+}
+
+.slds-button__icon_inverse,
+.slds-button_icon-inverse .slds-button__icon {
+  fill: white;
+}
+
+/* Icon sizing */
+.slds-icon {
+  fill: currentColor;
+}
+
+.slds-icon_xx-small {
+  width: 1rem;
+  height: 1rem;
+}
+
+.slds-icon_x-small {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.slds-icon_small {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.slds-icon_medium {
+  width: 2rem;
+  height: 2rem;
+}
+
+.slds-icon_large {
+  width: 3rem;
+  height: 3rem;
+}
