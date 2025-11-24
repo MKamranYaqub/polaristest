@@ -90,7 +90,8 @@
     display: none;
     position: fixed;
     left: 0;
-    top: 0;
+    /* Offset below the header so the drawer starts under the nav button */
+    top: calc(var(--cds-header-height, 56px));
     bottom: 0;
     width: 280px;
     max-width: 80vw;

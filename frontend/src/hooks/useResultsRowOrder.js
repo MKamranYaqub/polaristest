@@ -3,7 +3,7 @@ import { useSupabase } from '../contexts/SupabaseContext';
 
 /**
  * Custom hook to manage results table row ordering
- * @param {string} calculatorType - 'btl' or 'bridge'
+ * @param {string} calculatorType - 'btl', 'bridge', or 'core'
  * @returns {Object} - { rowOrder: Array, getOrderedRows: Function, loading: boolean }
  */
 export function useResultsRowOrder(calculatorType) {
@@ -19,7 +19,9 @@ export function useResultsRowOrder(calculatorType) {
         const localData = localStorage.getItem('results_table_row_order');
         if (localData) {
           const settings = JSON.parse(localData);
-          const calcSettings = calculatorType === 'btl' ? settings.btl : settings.bridge;
+          const calcSettings = calculatorType === 'btl' ? settings.btl : 
+                              calculatorType === 'bridge' ? settings.bridge :
+                              calculatorType === 'core' ? settings.core : null;
           if (calcSettings && Array.isArray(calcSettings)) {
             setRowOrder(calcSettings);
             setLoading(false);
@@ -39,7 +41,9 @@ export function useResultsRowOrder(calculatorType) {
             const settings = typeof data.results_row_order === 'string' 
               ? JSON.parse(data.results_row_order) 
               : data.results_row_order;
-            const calcSettings = calculatorType === 'btl' ? settings.btl : settings.bridge;
+            const calcSettings = calculatorType === 'btl' ? settings.btl : 
+                                calculatorType === 'bridge' ? settings.bridge :
+                                calculatorType === 'core' ? settings.core : null;
             
             if (calcSettings && Array.isArray(calcSettings)) {
               setRowOrder(calcSettings);
@@ -64,7 +68,9 @@ export function useResultsRowOrder(calculatorType) {
       if (e.key === 'results_table_row_order' && e.newValue) {
         try {
           const settings = JSON.parse(e.newValue);
-          const calcSettings = calculatorType === 'btl' ? settings.btl : settings.bridge;
+          const calcSettings = calculatorType === 'btl' ? settings.btl : 
+                              calculatorType === 'bridge' ? settings.bridge :
+                              calculatorType === 'core' ? settings.core : null;
           if (calcSettings && Array.isArray(calcSettings)) {
             setRowOrder(calcSettings);
           }

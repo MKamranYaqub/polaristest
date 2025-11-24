@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "@carbon/icons-react": "^11.70.0",
     "@carbon/layout": "^11.43.0",
-    "@carbon/react": "^1.94.2",
-    "@carbon/styles": "^1.93.1",
+    "@carbon/react": "^1.96.0",
+    "@carbon/styles": "^1.95.0",
     "@carbon/themes": "^11.62.0",
     "@carbon/type": "^11.49.0",
     "@supabase/supabase-js": "^2.39.0",

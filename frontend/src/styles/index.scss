@@ -56,6 +56,12 @@ a {
   .app-header__title {
     font-size: 1.1rem;
     color: var(--token-text-primary);
+    /* Center the title in mobile/tablet view */
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    width: max-content;
   }
 }
 
@@ -68,6 +74,12 @@ a {
   .app-header__title {
     font-size: 1rem;
     color: var(--token-text-primary);
+    /* Ensure centering persists on very small screens */
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    width: max-content;
   }
 }
 

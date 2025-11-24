@@ -47,6 +47,19 @@ function Navigation() {
   const toggleMobile = () => setMobileOpen(v => !v);
   const closeMobile = () => setMobileOpen(false);
 
+  
+  useEffect(() => {
+    const fixInertFalse = () => {
+      const navs = document.querySelectorAll('nav[class*="--side-nav__navigation"]');
+      navs.forEach((el) => {
+        if (el.getAttribute('inert') === 'false') {
+          el.removeAttribute('inert');
+        }
+      });
+    };
+    fixInertFalse();
+  }, [isDesktop, mobileOpen]);
+
   return (
     <>
       {/* Mobile toggle button - visible via CSS on small screens */}
@@ -62,7 +75,8 @@ function Navigation() {
       <SideNav
         aria-label="Primary navigation"
         expanded={isDesktop || mobileOpen}
-        isChildOfHeader={false}
+        /* Offset below header only on mobile */
+        isChildOfHeader={!isDesktop}
         className={`app-sidenav ${mobileOpen ? 'mobile-open' : 'mobile-closed'}`}
       >
         <SideNavItems>

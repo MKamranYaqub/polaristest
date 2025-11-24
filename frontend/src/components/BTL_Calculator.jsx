@@ -46,11 +46,15 @@ export default function BTLcalculator({ initialQuote = null }) {
   // Use custom hook for broker settings
   const brokerSettings = useBrokerSettings(effectiveInitialQuote);
   
-  // Use custom hook for results table visibility
-  const { isRowVisible } = useResultsVisibility('btl');
+  // Range toggle state (Core or Specialist) - moved before hooks that depend on it
+  const [selectedRange, setSelectedRange] = useState('specialist');
   
-  // Use custom hook for results table row ordering
-  const { getOrderedRows } = useResultsRowOrder('btl');
+  // Use custom hook for results table visibility - dynamically switch based on selected range
+  const calculatorTypeForSettings = selectedRange === 'core' ? 'core' : 'btl';
+  const { isRowVisible } = useResultsVisibility(calculatorTypeForSettings);
+  
+  // Use custom hook for results table row ordering - dynamically switch based on selected range
+  const { getOrderedRows } = useResultsRowOrder(calculatorTypeForSettings);
   
   const [allCriteria, setAllCriteria] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -73,9 +77,6 @@ export default function BTLcalculator({ initialQuote = null }) {
   const [criteriaExpanded, setCriteriaExpanded] = useState(false);
   const [loanDetailsExpanded, setLoanDetailsExpanded] = useState(false);
   const [clientDetailsExpanded, setClientDetailsExpanded] = useState(true);
-  
-  // Range toggle state (Core or Specialist)
-  const [selectedRange, setSelectedRange] = useState('specialist');
   
   // Quote id/ref for UI
   const [currentQuoteId, setCurrentQuoteId] = useState(effectiveInitialQuote?.id || null);
@@ -901,12 +902,14 @@ export default function BTLcalculator({ initialQuote = null }) {
     
     // Sort: numeric values first, then 'none' last
     const feeBuckets = Array.from(feeBucketsSet).sort((a, b) => {
-      if (a === 'none') return 1;
+      if (a === 'none') return 1; // keep 'none' last
       if (b === 'none') return -1;
       const na = Number(a);
       const nb = Number(b);
-      if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
-      return a.localeCompare(b);
+      // Descending numeric order (e.g., 6,4,3,2) for fee columns
+      if (!Number.isNaN(na) && !Number.isNaN(nb)) return nb - na;
+      // Fallback to reverse alpha to approximate descending
+      return b.localeCompare(a);
     });
     
     // Format as displayed in results: "Fee: 2%" or "Fee: —" for none
@@ -1450,12 +1453,14 @@ export default function BTLcalculator({ initialQuote = null }) {
             }));
             // prefer numeric sort for numeric buckets, keep 'none' last
             const feeBuckets = Array.from(feeBucketsSet).sort((a, b) => {
-              if (a === 'none') return 1;
+              if (a === 'none') return 1; // keep 'none' last
               if (b === 'none') return -1;
               const na = Number(a);
               const nb = Number(b);
-              if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
-              return a.localeCompare(b);
+              // Descending numeric order (e.g., 6,4,3,2) for fee columns
+              if (!Number.isNaN(na) && !Number.isNaN(nb)) return nb - na;
+              // Fallback to reverse alpha to approximate descending
+              return b.localeCompare(a);
             });
 
                     return (
@@ -1678,8 +1683,17 @@ export default function BTLcalculator({ initialQuote = null }) {
                                         }
 
                                         // ICR
-                                        if (values['ICR'] && result.icr) {
-                                          values['ICR'][colKey] = `${result.icr.toFixed(2)}%`;
+                                        if (values['ICR'] && result.icr != null) {
+                                          // Convert coverage ratio to percentage; do NOT round up to avoid masking below-min cases
+                                          const icrPct = result.icr * 100;
+                                          const minIcr = result.minimumIcr != null ? Number(result.minimumIcr) : null;
+                                          // Floor to whole percent (e.g. 124.9 -> 124) so we never show 125 when actual <125
+                                          const wholeActual = Math.floor(icrPct + 1e-9);
+                                          let display = `${wholeActual}%`;
+                                          if (minIcr != null && icrPct + 1e-9 < minIcr) {
+                                            display = `${wholeActual}% (min ${Math.round(minIcr)}%)`;
+                                          }
+                                          values['ICR'][colKey] = display;
                                         }
 
                                         // Monthly Interest Cost

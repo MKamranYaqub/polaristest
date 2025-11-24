@@ -486,6 +486,9 @@ export class BTLCalculationEngine {
     } = this;
 
     let bestLoan = null;
+    // Will collect candidates when auto-optimizing so we can select
+    // based on scenario-specific cost objectives rather than just max net
+    const candidates = [];
 
     // --- Core & Residential: no rolled/deferred allowed (direct evaluation)
     if (isCore && isResidential) {
@@ -513,16 +516,96 @@ export class BTLCalculationEngine {
         for (let i = 0; i <= deferredSteps; i++) {
           const deferredVal = minDeferredRate + (i * step);
           const candidate = this.evaluateLoan(r, deferredVal);
-          
-          // Select combination that maximizes net loan
-          if (!bestLoan || candidate.netLoan > bestLoan.netLoan) {
-            bestLoan = candidate;
+
+          // Compute a proxy for total borrower cost for objective selection.
+          // This mirrors later totalCostToBorrower (excluding admin/exit/title which
+          // are either constant or minor across scenarios) so we can compare.
+          const procFeeValueTmp = candidate.grossLoan * (procFeePct / 100);
+          const brokerFeeValueTmp = brokerFeeFlat > 0 ? brokerFeeFlat : candidate.grossLoan * (brokerFeePct / 100);
+          const servicedInterestTmp = candidate.directDebit * (this.termMonths - candidate.rolledMonths);
+          const titleInsuranceTmp = (candidate.grossLoan > 0 && candidate.grossLoan <= 3000000)
+            ? Math.max(392, candidate.grossLoan * 0.0013 * 1.12)
+            : 0;
+          const costProxy = candidate.productFeeAmount + candidate.rolledInterestAmount + candidate.deferredInterestAmount + servicedInterestTmp + procFeeValueTmp + brokerFeeValueTmp + titleInsuranceTmp;
+
+          candidates.push({
+            ...candidate,
+            costProxy,
+            procFeeValueTmp,
+            brokerFeeValueTmp,
+            servicedInterestTmp,
+            titleInsuranceTmp,
+          });
+        }
+      }
+
+      // Scenario-driven selection rules
+      const tolerance = 0.5; // currency rounding tolerance
+      const loanType = this.loanType;
+
+      if (loanType === LOAN_TYPES.SPECIFIC_NET && this.specificNetLoan > 0) {
+        // Prefer meeting target net with minimal cost; tie-breaker lower deferred then rolled
+        const meeting = candidates.filter(c => c.netLoan >= this.specificNetLoan - tolerance);
+        if (meeting.length > 0) {
+          meeting.sort((a, b) => {
+            if (a.costProxy !== b.costProxy) return a.costProxy - b.costProxy;
+            if (a.deferredRate !== b.deferredRate) return a.deferredRate - b.deferredRate;
+            if (a.rolledMonths !== b.rolledMonths) return a.rolledMonths - b.rolledMonths;
+            return 0;
+          });
+          bestLoan = meeting[0];
+        } else {
+          // Fallback: maximize net then minimize cost among those within 1 of max net
+          const maxNet = Math.max(...candidates.map(c => c.netLoan));
+            const top = candidates.filter(c => Math.abs(c.netLoan - maxNet) < 1);
+            top.sort((a,b)=> a.costProxy - b.costProxy);
+            bestLoan = top[0];
+        }
+      }
+      else if (loanType === LOAN_TYPES.SPECIFIC_GROSS && this.specificGrossLoan > 0) {
+        const meeting = candidates.filter(c => Math.abs(c.grossLoan - this.specificGrossLoan) <= tolerance || c.grossLoan >= this.specificGrossLoan - tolerance);
+        if (meeting.length > 0) {
+          meeting.sort((a, b) => {
+            if (a.costProxy !== b.costProxy) return a.costProxy - b.costProxy;
+            if (a.deferredRate !== b.deferredRate) return a.deferredRate - b.deferredRate;
+            if (a.rolledMonths !== b.rolledMonths) return a.rolledMonths - b.rolledMonths;
+            return 0;
+          });
+          bestLoan = meeting[0];
+        } else {
+          // Fallback choose closest gross below target then minimal cost
+          const below = candidates.filter(c => c.grossLoan < this.specificGrossLoan);
+          if (below.length > 0) {
+            const maxBelow = Math.max(...below.map(c => c.grossLoan));
+            const near = below.filter(c => Math.abs(c.grossLoan - maxBelow) < 1);
+            near.sort((a,b)=> a.costProxy - b.costProxy);
+            bestLoan = near[0];
+          } else {
+            // absolute fallback minimal cost
+            candidates.sort((a,b)=> a.costProxy - b.costProxy);
+            bestLoan = candidates[0];
           }
         }
+      }
+      else { // MAX_LTV and other types: maximize gross then minimize cost among near-max
+        const maxGross = Math.max(...candidates.map(c => c.grossLoan));
+        const top = candidates.filter(c => Math.abs(c.grossLoan - maxGross) < 1);
+        top.sort((a,b)=> {
+          if (a.costProxy !== b.costProxy) return a.costProxy - b.costProxy;
+          if (a.deferredRate !== b.deferredRate) return a.deferredRate - b.deferredRate;
+          if (a.rolledMonths !== b.rolledMonths) return a.rolledMonths - b.rolledMonths;
+          return 0;
+        });
+        bestLoan = top[0];
       }
     }
 
     if (!bestLoan) return null;
+    // If bestLoan contains costProxy meta (auto mode) strip extras silently
+    if (bestLoan.costProxy !== undefined) {
+      const { costProxy, procFeeValueTmp, brokerFeeValueTmp, servicedInterestTmp, titleInsuranceTmp, ...clean } = bestLoan;
+      bestLoan = clean; // retain original evaluated loan shape
+    }
 
     // --- Format output rates
     const displayRate = isTracker ? actualRate + standardBBR : actualRate;
@@ -705,6 +788,8 @@ export class BTLCalculationEngine {
       titleInsuranceCost,
       totalCostToBorrower,
       totalLoanTerm: this.termMonths,
+      // Min ICR requirement (raw percent e.g. 125)
+      minimumIcr: this.minimumICR,
     };
   }
 }

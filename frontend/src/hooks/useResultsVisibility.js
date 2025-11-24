@@ -3,7 +3,7 @@ import { useSupabase } from '../contexts/SupabaseContext';
 
 /**
  * Custom hook to manage results table row visibility settings
- * @param {string} calculatorType - 'btl' or 'bridge'
+ * @param {string} calculatorType - 'btl', 'bridge', or 'core'
  * @returns {Object} - { visibleRows: Object, isRowVisible: Function, loading: boolean }
  */
 export function useResultsVisibility(calculatorType) {
@@ -19,7 +19,9 @@ export function useResultsVisibility(calculatorType) {
         const localData = localStorage.getItem('results_table_visibility');
         if (localData) {
           const settings = JSON.parse(localData);
-          const calcSettings = calculatorType === 'btl' ? settings.btl : settings.bridge;
+          const calcSettings = calculatorType === 'btl' ? settings.btl : 
+                              calculatorType === 'bridge' ? settings.bridge :
+                              calculatorType === 'core' ? settings.core : null;
           if (calcSettings) {
             setVisibleRows(calcSettings);
             setLoading(false);
@@ -37,7 +39,9 @@ export function useResultsVisibility(calculatorType) {
 
           if (data && data.value) {
             const settings = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
-            const calcSettings = calculatorType === 'btl' ? settings.btl : settings.bridge;
+            const calcSettings = calculatorType === 'btl' ? settings.btl : 
+                                calculatorType === 'bridge' ? settings.bridge :
+                                calculatorType === 'core' ? settings.core : null;
             
             if (calcSettings) {
               setVisibleRows(calcSettings);
@@ -62,7 +66,9 @@ export function useResultsVisibility(calculatorType) {
       if (e.key === 'results_table_visibility' && e.newValue) {
         try {
           const settings = JSON.parse(e.newValue);
-          const calcSettings = calculatorType === 'btl' ? settings.btl : settings.bridge;
+          const calcSettings = calculatorType === 'btl' ? settings.btl : 
+                              calculatorType === 'bridge' ? settings.bridge :
+                              calculatorType === 'core' ? settings.core : null;
           if (calcSettings) {
             setVisibleRows(calcSettings);
           }
