@@ -47,7 +47,7 @@ const ThemeToggle = () => {
         background: 'transparent',
         border: '1px solid var(--cds-border-subtle)',
         borderRadius: '4px',
-        padding: '0.5rem',
+        padding: 'var(--token-spacing-sm)',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',

@@ -71,7 +71,7 @@ export default function SliderResultRow({
           };
 
           return (
-            <td key={col} className="vertical-align-middle" style={{ padding: '0.5rem' }}>
+            <td key={col} className="vertical-align-middle" style={{ padding: 'var(--token-spacing-sm)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <input
                   type="range"
@@ -151,7 +151,7 @@ export default function SliderResultRow({
   return (
     <tr>
       <td className="vertical-align-middle font-weight-600">{label}</td>
-      <td className="vertical-align-middle" style={{ padding: '0.5rem' }}>
+      <td className="vertical-align-middle" style={{ padding: 'var(--token-spacing-sm)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <input
             type="range"

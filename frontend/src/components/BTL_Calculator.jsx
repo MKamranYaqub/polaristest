@@ -1218,14 +1218,14 @@ export default function BTLcalculator({ initialQuote = null }) {
               <button 
                 className="slds-button slds-button_neutral"
                 onClick={() => setDipModalOpen(true)}
-                style={{ marginRight: '0.5rem' }}
+                style={{ marginRight: 'var(--token-spacing-sm)' }}
               >
                 Issue DIP
               </button>
               <button 
                 className="slds-button slds-button_brand"
                 onClick={handleIssueQuote}
-                style={{ marginRight: '0.5rem' }}
+                style={{ marginRight: 'var(--token-spacing-sm)' }}
               >
                 Issue Quote
               </button>
@@ -1399,24 +1399,24 @@ export default function BTLcalculator({ initialQuote = null }) {
             // Check if loan type is selected
             if (!loanType || loanType === '') {
               return (
-                <div className="no-rates" style={{ padding: '2rem', textAlign: 'center', color: '#706e6b' }}>
-                  <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Please select a loan calculation type above to view rates and results.</p>
+                <div className="no-rates" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
+                  <p style={{ fontSize: '1.1rem', marginBottom: 'var(--token-spacing-sm)' }}>Please select a loan calculation type above to view rates and results.</p>
                   <p style={{ fontSize: '0.9rem' }}>Choose from Max Gross Loan, Net loan required, Specific LTV Required, or Specific Gross Loan.</p>
                 </div>
               );
             }
             if (loanType === 'Net loan required' && !specificNetLoan) {
                 return (
-                  <div className="no-rates" style={{ padding: '2rem', textAlign: 'center', color: '#706e6b' }}>
-                    <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Please enter a required net loan amount to view rates and results.</p>
+                  <div className="no-rates" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
+                    <p style={{ fontSize: '1.1rem', marginBottom: 'var(--token-spacing-sm)' }}>Please enter a required net loan amount to view rates and results.</p>
                   </div>
                 );
               }
   
               if (loanType === 'Specific gross loan' && !specificGrossLoan) {
                 return (
-                  <div className="no-rates" style={{ padding: '2rem', textAlign: 'center', color: '#706e6b' }}>
-                    <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Please enter a specific gross loan amount to view rates and results.</p>
+                  <div className="no-rates" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
+                    <p style={{ fontSize: '1.1rem', marginBottom: 'var(--token-spacing-sm)' }}>Please enter a specific gross loan amount to view rates and results.</p>
                   </div>
                 );
               }
@@ -1456,7 +1456,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                         {feeBuckets.length === 0 ? (
                           <div className="no-rates">No {selectedRange} range rates available for the selected criteria.</div>
                         ) : (
-                          <div style={{ marginTop: '1rem', overflowX: 'auto' }}>
+                          <div style={{ marginTop: 'var(--token-spacing-lg)', overflowX: 'auto' }}>
                             <table className="slds-table slds-table_cell-buffer slds-table_bordered" style={{ minWidth: Math.max(600, feeBuckets.length * 220) }}>
                               <thead>
                                 <tr>
@@ -1999,7 +1999,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                               </tbody>
                             </table>
                             {/* Note shown below the table */}
-                            <div style={{ marginTop: '0.5rem', color: '#666', fontSize: '0.9rem' }}>Placeholders: ERC (Fusion only) and Exit Fee are not shown in the BTL calculator.</div>
+                            <div style={{ marginTop: 'var(--token-spacing-sm)', color: '#666', fontSize: '0.9rem' }}>Placeholders: ERC (Fusion only) and Exit Fee are not shown in the BTL calculator.</div>
                           </div>
                         )}
                       </>

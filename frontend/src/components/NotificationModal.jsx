@@ -22,14 +22,14 @@ export default function NotificationModal({
   const getTypeStyle = () => {
     switch (type) {
       case 'success':
-        return { icon: '✓', color: '#04844B', bgColor: '#E8F5E9' };
+        return { icon: '✓', color: 'var(--token-success)', bgColor: 'var(--token-success-bg)' };
       case 'error':
-        return { icon: '✕', color: '#C23934', bgColor: '#FFEBEE' };
+        return { icon: '✕', color: 'var(--token-error)', bgColor: 'var(--token-error-bg)' };
       case 'warning':
-        return { icon: '⚠', color: '#F59E0B', bgColor: '#FFF3CD' };
+        return { icon: '⚠', color: 'var(--token-warning)', bgColor: 'var(--token-warning-bg)' };
       case 'info':
       default:
-        return { icon: 'ℹ', color: '#0176d3', bgColor: '#E3F3FF' };
+        return { icon: 'ℹ', color: 'var(--token-info)', bgColor: 'var(--token-info-bg)' };
     }
   };
 

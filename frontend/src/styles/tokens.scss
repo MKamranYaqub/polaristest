@@ -27,6 +27,14 @@
   --token-space-24: 1.5rem;
   --token-space-32: 2rem;
   --token-space-48: 3rem;
+  
+  /* Spacing semantic aliases for common use cases */
+  --token-spacing-xs: 0.25rem;
+  --token-spacing-sm: 0.5rem;
+  --token-spacing-md: 0.75rem;
+  --token-spacing-lg: 1rem;
+  --token-spacing-xl: 1.5rem;
+  --token-spacing-2xl: 2rem;
 
   /* Radii */
   --token-radius-sm: 0.25rem;
@@ -41,21 +49,56 @@
   --token-layer-background: #f3f3f3;
   --token-layer-surface: #ffffff;
   --token-layer-hover: #e5e5e5;
+  --token-layer-elevated: #4c4c4c; /* For dark elevated surfaces */
   --token-border-subtle: #c9c9c9;
   --token-border-strong: #5c5c5c;
+  --token-border-danger: #a2191f; /* For error/critical borders */
   --token-text-primary: #2e2e2e;
   --token-text-secondary: #5c5c5c;
   --token-text-helper: #5c5c5c;
   --token-text-error: #b60554;
+  --token-text-inverse: #ffffff; /* White text on dark backgrounds */
+  --token-text-muted: #706e6b; /* Muted/disabled text */
   --token-interactive: #0250d9;
   --token-interactive-hover: #022ac0;
+  --token-interactive-disabled: #a6c8ff; /* Disabled interactive elements */
   --token-focus: #0250d9;
-  --token-critical: #b60554;
-  --token-success: #28a745;
-  --token-warning-bg: #fff4e5;
+  --token-critical: #c23934;
+  --token-critical-hover: #a61a14;
+  --token-success: #04844B;
+  --token-success-bg: #E8F5E9;
+  --token-error: #C23934;
+  --token-error-bg: #FFEBEE;
+  --token-warning: #F59E0B;
+  --token-warning-bg: #FFF3CD;
   --token-warning-text: #856404;
+  --token-info: #0176d3;
+  --token-info-bg: #E3F3FF;
   --token-color-accent: #fe9339;
   --token-focus-ring: rgba(2, 80, 217, 0.3);
+  
+  /* UI element colors */
+  --token-ui-background-subtle: #fafafa;
+  --token-ui-background-light: #fafaf9;
+  --token-ui-background-disabled: #f3f2f2;
+  --token-ui-border-light: #c9c7c5;
+  --token-ui-border-medium: #dddbda;
+  --token-ui-border-subtle: #e0e6ed;
+  --token-ui-text-dark: #181818;
+  --token-ui-text-medium: #666;
+  --token-ui-text-disabled: #999;
+  --token-brand-primary: #0176d3;
+  --token-brand-header: #2e5aac;
+  --token-ui-background-neutral: #f4f6f9;
+  
+  /* Z-index scale */
+  --token-z-base: 1;
+  --token-z-dropdown: 1000;
+  --token-z-sticky: 1020;
+  --token-z-modal: 1050;
+  --token-z-popover: 1060;
+  --token-z-tooltip: 1070;
+  --token-z-toast: 9999;
 }
 
 [data-carbon-theme='g90'] { @include theme.theme(themes.$g90); }

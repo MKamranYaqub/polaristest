@@ -46,7 +46,7 @@ body,
 
 .slds-table th {
   background: $slds-color-gray-2;
-  padding: 0.5rem;
+  padding: var(--token-spacing-sm);
   font-weight: 600;
   text-align: left;
   line-height: 2;
@@ -55,7 +55,7 @@ body,
 }
 
 .slds-table td {
-  padding: 0.5rem;
+  padding: var(--token-spacing-sm);
   line-height: 1.5;
   color: $slds-color-text-default;
   border-bottom: 0.5px solid $slds-color-gray-3;
@@ -70,7 +70,7 @@ body,
   position: relative;
   display: inline-flex;
   align-items: center;
-  padding: 0 1rem;
+  padding: 0 var(--token-spacing-lg);
   border: 1px solid transparent;
   border-radius: $slds-border-radius;
   font-size: 0.8125rem;
@@ -83,7 +83,7 @@ body,
 }
 
 .slds-button_brand {
-  padding: 0 1rem;
+  padding: 0 var(--token-spacing-lg);
   background-color: $slds-color-blue-50;
   border-color: $slds-color-blue-50;
   color: white;
@@ -95,7 +95,7 @@ body,
 }
 
 .slds-button_neutral {
-  padding: 0 1rem;
+  padding: 0 var(--token-spacing-lg);
   background-color: white;
   border: 1px solid $slds-color-gray-4;
   color: $slds-color-text-weak;
@@ -106,22 +106,22 @@ body,
 }
 
 .slds-button_destructive {
-  padding: 0 1rem;
-  background-color: #c23934;
+  padding: 0 var(--token-spacing-lg);
+  background-color: var(--token-critical);
   border-color: #c23934;
   color: white;
 }
 
 .slds-button_destructive:hover {
-  background-color: #a61a14;
-  border-color: #a61a14;
+  background-color: var(--token-critical-hover);
+  border-color: var(--token-critical-hover);
 }
 
 /* Form Elements */
 .slds-form-element {
   position: relative;
   min-width: 0;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--token-spacing-sm);
   /* Prevent form elements from shrinking and overlapping when wrapped */
   flex: 0 0 auto;
 }
@@ -154,13 +154,13 @@ body,
   color: $slds-color-text-weak;
   font-size: 0.75rem;
   line-height: 1.5;
-  margin-right: 0.5rem;
-  margin-bottom: 0.25rem;
+  margin-right: var(--token-spacing-sm);
+  margin-bottom: var(--token-spacing-xs);
 }
 
 .slds-input {
   width: 100%;
-  padding: 0 1rem 0 0.75rem;
+  padding: 0 var(--token-spacing-lg) 0 var(--token-spacing-md);
   line-height: 1.875rem;
   min-height: calc(1.875rem + (1px * 2));
   border: 1px solid $slds-color-gray-4;
@@ -178,7 +178,7 @@ body,
 
 .slds-select {
   width: 100%;
-  padding: 0 1rem 0 0.75rem;
+  padding: 0 var(--token-spacing-lg) 0 var(--token-spacing-md);
   line-height: 1.875rem;
   min-height: calc(1.875rem + (1px * 2));
   border: 1px solid $slds-color-gray-4;
@@ -193,7 +193,7 @@ body,
    Use this on inputs/selects that must visually match the main control height/spacing
    (Monthly Rent, Property Value, Product select, Fee controls, etc.) */
 .fixed-control {
-  padding: 0 1rem 0 0.75rem !important;
+  padding: 0 var(--token-spacing-lg) 0 var(--token-spacing-md) !important;
   line-height: 1.875rem !important;
   min-height: calc(1.875rem + (1px * 2)) !important;
   font-size: 1rem !important;
@@ -215,7 +215,7 @@ body,
 
 .slds-textarea {
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  padding: var(--token-spacing-sm) var(--token-spacing-md);
   border: 1px solid $slds-color-gray-4;
   border-radius: $slds-border-radius;
   background-color: white;
@@ -254,7 +254,7 @@ input[type="range"]::-webkit-slider-thumb {
   height: 20px;
   margin-top: -5px; /* center the thumb on the track */
   border-radius: 50%;
-  background: #0f62fe; /* filled color */
+  background: var(--token-interactive); /* filled color */
   box-shadow: 0 2px 6px rgba(15,98,254,0.18);
   cursor: pointer;
 }
@@ -269,7 +269,7 @@ input[type="range"]::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #0f62fe;
+  background: var(--token-interactive);
   box-shadow: 0 2px 6px rgba(15,98,254,0.18);
   cursor: pointer;
 }
@@ -298,8 +298,8 @@ input[type="range"]:focus::-moz-range-thumb {
   max-width: 360px;
   background: white;
   color: $slds-color-text-default;
-  border: 1px solid #0f62fe;
-  border-radius: 0.25rem;
+  border: 1px solid var(--token-interactive);
+  border-radius: var(--token-spacing-xs);
   padding: 0.4rem 0.6rem;
   box-shadow: 0 6px 18px rgba(15,98,254,0.08);
   z-index: 1100;
@@ -330,7 +330,7 @@ input[type="range"]:focus::-moz-range-thumb {
 }
 
 .slds-form_stacked .slds-form-element {
-  margin-bottom: 1rem;
+  margin-bottom: var(--token-spacing-lg);
 }
 
 /* Modal/Dialog */
@@ -349,7 +349,7 @@ input[type="range"]:focus::-moz-range-thumb {
 .slds-modal__container {
   position: relative;
   background: white;
-  border-radius: 0.25rem;
+  border-radius: var(--token-spacing-xs);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
   width: 50%;
   max-width: 40rem;
@@ -358,25 +358,25 @@ input[type="range"]:focus::-moz-range-thumb {
 
 .slds-modal__header {
   position: relative;
-  border-top-right-radius: 0.25rem;
-  border-top-left-radius: 0.25rem;
+  border-top-right-radius: var(--token-spacing-xs);
+  border-top-left-radius: var(--token-spacing-xs);
   border-bottom: 2px solid $slds-color-gray-3;
-  padding: 1rem;
+  padding: var(--token-spacing-lg);
   text-align: center;
 }
 
 .slds-modal__content {
-  padding: 1rem;
+  padding: var(--token-spacing-lg);
   overflow: auto;
   max-height: 70vh;
 }
 
 .slds-modal__footer {
   border-top: 2px solid $slds-color-gray-3;
-  padding: 0.75rem 1rem;
+  padding: var(--token-spacing-md) var(--token-spacing-lg);
   background-color: $slds-color-gray-1;
-  border-bottom-right-radius: 0.25rem;
-  border-bottom-left-radius: 0.25rem;
+  border-bottom-right-radius: var(--token-spacing-xs);
+  border-bottom-left-radius: var(--token-spacing-xs);
   text-align: right;
 }
 
@@ -404,7 +404,7 @@ input[type="range"]:focus::-moz-range-thumb {
 }
 
 .slds-nav-vertical__action {
-  padding: 0.5rem 1rem 0.5rem 2rem;
+  padding: var(--token-spacing-sm) var(--token-spacing-lg) var(--token-spacing-sm) 2rem;
   color: $slds-color-text-weak;
   text-decoration: none;
   display: flex;
@@ -456,36 +456,36 @@ input[type="range"]:focus::-moz-range-thumb {
 }
 
 .slds-p-around_medium {
-  padding: 1rem;
+  padding: var(--token-spacing-lg);
 }
 
 .slds-m-bottom_small {
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--token-spacing-md);
 }
 
 .slds-m-bottom_medium {
-  margin-bottom: 1rem;
+  margin-bottom: var(--token-spacing-lg);
 }
 
 .slds-m-top_small {
-  margin-top: 0.75rem;
+  margin-top: var(--token-spacing-md);
 }
 
 .slds-m-top_medium {
-  margin-top: 1rem;
+  margin-top: var(--token-spacing-lg);
 }
 
 .slds-m-right_small {
-  margin-right: 0.75rem;
+  margin-right: var(--token-spacing-md);
 }
 
 .slds-m-horizontal_small {
-  margin-left: 0.75rem;
-  margin-right: 0.75rem;
+  margin-left: var(--token-spacing-md);
+  margin-right: var(--token-spacing-md);
 }
 
 .slds-m-around_medium {
-  margin: 1rem;
+  margin: var(--token-spacing-lg);
 }
 
 /* Table enhancements */
@@ -495,17 +495,17 @@ input[type="range"]:focus::-moz-range-thumb {
 
 .slds-table_cell-buffer th,
 .slds-table_cell-buffer td {
-  padding: 0.5rem 0.75rem;
+  padding: var(--token-spacing-sm) var(--token-spacing-md);
 }
 
 .slds-table_cell-buffer th:first-child,
 .slds-table_cell-buffer td:first-child {
-  padding-left: 1rem;
+  padding-left: var(--token-spacing-lg);
 }
 
 .slds-table_cell-buffer th:last-child,
 .slds-table_cell-buffer td:last-child {
-  padding-right: 1rem;
+  padding-right: var(--token-spacing-lg);
 }
 
 /* Checkbox styling */
@@ -531,7 +531,7 @@ input[type="range"]:focus::-moz-range-thumb {
 
 .slds-card__header {
   /* reduced vertical padding to make header thinner */
-  padding: 0.5rem 1rem;
+  padding: var(--token-spacing-sm) var(--token-spacing-lg);
   background: $slds-color-blue-50;
   color: white;
   display: flex;
@@ -547,7 +547,7 @@ input[type="range"]:focus::-moz-range-thumb {
 }
 
 .slds-card__body {
-  padding: 0.75rem 1rem;
+  padding: var(--token-spacing-md) var(--token-spacing-lg);
 }
 
 /* Calculator grid helper: used by Calculator.jsx for multi-column form rows
@@ -562,7 +562,7 @@ input[type="range"]:focus::-moz-range-thumb {
   }
   .calculator-grid > .slds-form-element {
     width: 100% !important;
-    margin-bottom: 0.75rem;
+    margin-bottom: var(--token-spacing-md);
   }
 }
 

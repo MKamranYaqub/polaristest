@@ -151,12 +151,12 @@ const UserProfileButton = () => {
             >
               {/* Profile Info */}
               <div className="slds-p-around_medium slds-border_bottom">
-                <div className="slds-text-heading_small slds-m-bottom_xx-small" style={{ color: '#181818', fontWeight: '600' }}>
-                  {user.name}
+                <div className="slds-text-heading_small slds-m-bottom_xx-small" style={{ color: 'var(--token-ui-text-dark)', fontWeight: '600' }}>
+                  {userName}
                 </div>
                 {user.email && (
-                  <div className="slds-text-body_small slds-m-bottom_xx-small" style={{ color: '#706e6b' }}>
-                    {user.email}
+                  <div className="slds-text-body_small slds-m-bottom_xx-small" style={{ color: 'var(--token-text-muted)' }}>
+                    {userEmail}
                   </div>
                 )}
                 <div className="slds-text-body_small" style={{ color: '#706e6b', fontSize: '12px' }}>
@@ -181,7 +181,7 @@ const UserProfileButton = () => {
                       cursor: 'pointer'
                     }}
                   >
-                    <span style={{ marginRight: '0.5rem', fontSize: '16px' }}>⚙️</span>
+                    <span style={{ marginRight: 'var(--token-spacing-sm)', fontSize: '16px' }}>⚙️</span>
                     <span>Settings</span>
                   </a>
                 </li>
@@ -194,13 +194,13 @@ const UserProfileButton = () => {
                     style={{ 
                       display: 'flex',
                       alignItems: 'center',
-                      padding: '0.75rem 1rem',
-                      color: '#181818',
+                      padding: 'var(--token-spacing-md) var(--token-spacing-lg)',
+                      color: 'var(--token-ui-text-dark)',
                       textDecoration: 'none',
                       cursor: 'pointer'
                     }}
                   >
-                    <span style={{ marginRight: '0.5rem', fontSize: '16px' }}>🔑</span>
+                    <span style={{ marginRight: 'var(--token-spacing-sm)', fontSize: '16px' }}>🔑</span>
                     <span>Change Password</span>
                   </a>
                 </li>

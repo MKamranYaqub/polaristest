@@ -21,7 +21,7 @@ export function CalculatorErrorFallback({ error, reset }) {
           Calculator Error
         </h2>
         
-        <p className="slds-text-body_regular slds-m-top_small slds-m-bottom_medium" style={{ color: '#706e6b' }}>
+        <p className="slds-text-body_regular slds-m-top_small slds-m-bottom_medium" style={{ color: 'var(--token-text-muted)' }}>
           We encountered an error while calculating your results.
           <br />
           Don't worry - your data is safe.
@@ -58,7 +58,7 @@ export function CalculatorErrorFallback({ error, reset }) {
             fontFamily: 'monospace'
           }}>
             <strong>Error Details (Dev Only):</strong>
-            <pre style={{ color: '#c23934', marginTop: '0.5rem' }}>
+            <pre style={{ color: 'var(--token-critical)', marginTop: '0.5rem' }}>
               {error.toString()}
             </pre>
           </div>
@@ -97,7 +97,7 @@ export function RatesErrorFallback({ error, reset }) {
 
       <div className="slds-box slds-m-around_medium">
         <h3 className="slds-text-heading_small">Rates Management</h3>
-        <p className="slds-m-top_small" style={{ color: '#706e6b' }}>
+        <p className="slds-m-top_small" style={{ color: 'var(--token-text-muted)' }}>
           An error occurred while loading the rates data. This could be due to a connection issue or invalid data format.
         </p>
         

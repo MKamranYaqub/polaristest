@@ -1468,7 +1468,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
                       if (!hasPropertyValue || (!hasGrossLoan && !hasSpecificNet)) {
                         return (
                           <tr>
-                            <td colSpan={4} className="slds-text-body_small" style={{ padding: '2rem', textAlign: 'center', color: '#706e6b' }}>
+                            <td colSpan={4} className="slds-text-body_small" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
                               Please enter Property Value and Gross Loan (or Net Loan if using specific net) to see results.
                             </td>
                           </tr>
@@ -1477,7 +1477,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
                       if (useSpecificNet === 'Yes' && !specificNetLoan) {
                         return (
                             <tr>
-                                <td colSpan={4} className="slds-text-body_small" style={{ padding: '2rem', textAlign: 'center', color: '#706e6b' }}>
+                                <td colSpan={4} className="slds-text-body_small" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
                                     Please enter a specific net loan amount to view rates and results.
                                 </td>
                             </tr>
@@ -1486,7 +1486,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
                       
                       return (
                         <tr>
-                          <td colSpan={4} className="slds-text-body_small" style={{ padding: '2rem', textAlign: 'center', color: '#706e6b' }}>
+                          <td colSpan={4} className="slds-text-body_small" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
                             No results match the selected criteria. Please adjust your loan details or criteria answers.
                           </td>
                         </tr>

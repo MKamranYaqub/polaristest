@@ -377,16 +377,16 @@ export default function GlobalSettings() {
   const renderVisibilitySection = (rows, visibleRows, toggleHandler, selectAllHandler, deselectAllHandler) => (
     <div className="slds-m-bottom_x-large">
       <div className="slds-box">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--token-spacing-lg)' }}>
           <h4 className="slds-text-heading_small" style={{ fontWeight: '600', margin: 0 }}>
             Row Visibility
           </h4>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: 'var(--token-spacing-sm)' }}>
             <button
               className="slds-button slds-button_brand"
               onClick={selectAllHandler}
               disabled={saving}
-              style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}
+              style={{ fontSize: '0.75rem', padding: 'var(--token-spacing-xs) var(--token-spacing-md)' }}
             >
               Select All
             </button>
@@ -394,7 +394,7 @@ export default function GlobalSettings() {
               className="slds-button slds-button_neutral"
               onClick={deselectAllHandler}
               disabled={saving}
-              style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem' }}
+              style={{ fontSize: '0.75rem', padding: 'var(--token-spacing-xs) var(--token-spacing-md)' }}
             >
               Deselect All
             </button>
@@ -405,17 +405,17 @@ export default function GlobalSettings() {
           style={{ 
             maxHeight: '350px', 
             overflowY: 'auto',
-            border: '1px solid #c9c7c5',
-            borderRadius: '0.25rem',
-            padding: '0.75rem',
-            backgroundColor: '#fafafa'
+            border: '1px solid var(--token-ui-border-light)',
+            borderRadius: 'var(--token-spacing-xs)',
+            padding: 'var(--token-spacing-md)',
+            backgroundColor: 'var(--token-ui-background-subtle)'
           }}
         >
           <div 
             style={{ 
               display: 'grid',
               gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: '0.5rem'
+              gap: 'var(--token-spacing-sm)'
             }}
           >
             {rows.map(row => (
@@ -428,7 +428,7 @@ export default function GlobalSettings() {
                   disabled={saving}
                 />
                 <label className="slds-checkbox__label" htmlFor={`${activeTab}-${row}`}>
-                  <span className="slds-checkbox_faux" style={{ marginRight: '0.5rem' }}></span>
+                  <span className="slds-checkbox_faux" style={{ marginRight: 'var(--token-spacing-sm)' }}></span>
                   <span className="slds-form-element__label" style={{ fontSize: '0.8125rem' }}>{row}</span>
                 </label>
               </div>
@@ -452,10 +452,10 @@ export default function GlobalSettings() {
           style={{ 
             maxHeight: '500px', 
             overflowY: 'auto',
-            border: '1px solid #dddbda',
-            borderRadius: '0.25rem',
-            padding: '0.5rem',
-            backgroundColor: '#fafaf9'
+            border: '1px solid var(--token-ui-border-medium)',
+            borderRadius: 'var(--token-spacing-xs)',
+            padding: 'var(--token-spacing-sm)',
+            backgroundColor: 'var(--token-ui-background-light)'
           }}
         >
           {rowOrder.map((row, index) => (
@@ -465,24 +465,24 @@ export default function GlobalSettings() {
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'center',
-                padding: '0.5rem 0.75rem',
-                marginBottom: '0.25rem',
-                backgroundColor: visibleRows[row] === false ? '#f3f2f2' : 'white',
-                border: '1px solid #dddbda',
-                borderRadius: '0.25rem',
+                padding: 'var(--token-spacing-sm) var(--token-spacing-md)',
+                marginBottom: 'var(--token-spacing-xs)',
+                backgroundColor: visibleRows[row] === false ? 'var(--token-ui-background-disabled)' : 'white',
+                border: '1px solid var(--token-ui-border-medium)',
+                borderRadius: 'var(--token-spacing-xs)',
                 transition: 'all 0.1s ease'
               }}
             >
               <span style={{ 
                 flex: 1,
-                color: visibleRows[row] === false ? '#999' : '#080707',
+                color: visibleRows[row] === false ? 'var(--token-ui-text-disabled)' : '#080707',
                 fontSize: '0.8125rem',
                 fontWeight: '400'
               }}>
                 <span style={{ 
                   display: 'inline-block',
                   width: '2rem',
-                  color: '#706e6b',
+                  color: 'var(--token-text-muted)',
                   fontWeight: '500'
                 }}>
                   {index + 1}.
@@ -490,16 +490,16 @@ export default function GlobalSettings() {
                 {row}
                 {visibleRows[row] === false && (
                   <span style={{ 
-                    marginLeft: '0.5rem', 
+                    marginLeft: 'var(--token-spacing-sm)', 
                     fontSize: '0.75rem',
-                    color: '#999',
+                    color: 'var(--token-ui-text-disabled)',
                     fontStyle: 'italic'
                   }}>
                     (Hidden)
                   </span>
                 )}
               </span>
-              <div style={{ display: 'flex', gap: '0.25rem' }}>
+              <div style={{ display: 'flex', gap: 'var(--token-spacing-xs)' }}>
                 <button
                   className="slds-button slds-button_neutral"
                   onClick={() => handleMoveRowUp(index, type)}
@@ -557,25 +557,25 @@ export default function GlobalSettings() {
       <h4 className="slds-text-heading_large slds-m-bottom_medium">Results Table Configuration</h4>
       
       {/* Tab Buttons */}
-      <div className="slds-m-bottom_large" style={{ display: 'flex', gap: '0.5rem', borderBottom: '2px solid #e5e5e5', paddingBottom: '0.5rem' }}>
+      <div className="slds-m-bottom_large" style={{ display: 'flex', gap: 'var(--token-spacing-sm)', borderBottom: '2px solid #e5e5e5', paddingBottom: 'var(--token-spacing-sm)' }}>
         <button
           className={`slds-button ${activeTab === 'btl' ? 'slds-button_brand' : 'slds-button_neutral'}`}
           onClick={() => setActiveTab('btl')}
-          style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+          style={{ fontSize: '0.875rem', padding: 'var(--token-spacing-sm) var(--token-spacing-lg)' }}
         >
           BTL Calculator
         </button>
         <button
           className={`slds-button ${activeTab === 'bridge' ? 'slds-button_brand' : 'slds-button_neutral'}`}
           onClick={() => setActiveTab('bridge')}
-          style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+          style={{ fontSize: '0.875rem', padding: 'var(--token-spacing-sm) var(--token-spacing-lg)' }}
         >
           Bridging Calculator
         </button>
         <button
           className={`slds-button ${activeTab === 'core' ? 'slds-button_brand' : 'slds-button_neutral'}`}
           onClick={() => setActiveTab('core')}
-          style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+          style={{ fontSize: '0.875rem', padding: 'var(--token-spacing-sm) var(--token-spacing-lg)' }}
         >
           Core Range
         </button>

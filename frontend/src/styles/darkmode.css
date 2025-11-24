@@ -12,15 +12,19 @@
   --token-layer-surface: #262626;
   --token-layer-surface-hover: #333333;
   --token-layer-active: #4b4b4b;
+  --token-layer-elevated: #4c4c4c; /* Elevated surfaces, buttons on hover */
   
   /* Border Colors */
   --token-border-subtle: #393939;
   --token-border-strong: #525252;
+  --token-border-danger: #a2191f; /* For error/critical borders */
   
   /* Text Colors */
   --token-text-primary: #f4f4f4;
   --token-text-secondary: #c6c6c6;
   --token-text-placeholder: #6f6f6f;
+  --token-text-inverse: #ffffff; /* White text on dark backgrounds */
+  --token-text-muted: #706e6b; /* Muted/disabled text */
   
   /* Interactive Colors */
   --token-interactive: #78a9ff;
@@ -39,6 +43,31 @@
   --token-warning-text: #ffd9b3;
   --token-danger: #da1e28;
   --token-danger-hover: #ba1b23;
+  --token-critical: #ff8389;
+  --token-critical-hover: #ba1b23;
+  --token-success: #42be65;
+  --token-success-bg: #1f3a1f;
+  --token-error: #ff8389;
+  --token-error-bg: #3a1f1f;
+  --token-warning: #F59E0B;
+  --token-warning-bg: #3a321f;
+  --token-warning-text: #ffd9b3;
+  --token-info: #78a9ff;
+  --token-info-bg: #1e3a5f;
+  
+  /* UI element colors for dark mode */
+  --token-ui-background-subtle: #2a2a2a;
+  --token-ui-background-light: #2e2e2e;
+  --token-ui-background-disabled: #3a3a3a;
+  --token-ui-border-light: #4a4a4a;
+  --token-ui-border-medium: #525252;
+  --token-ui-border-subtle: #3a3a3a;
+  --token-ui-text-dark: #f4f4f4;
+  --token-ui-text-medium: #c6c6c6;
+  --token-ui-text-disabled: #6f6f6f;
+  --token-brand-primary: #78a9ff;
+  --token-brand-header: #4a7ac7;
+  --token-ui-background-neutral: #2a2a2a;
   
   /* Special Purpose */
   --token-first-charge-warning: #3d2e00;
@@ -254,13 +283,13 @@ body.dark-mode #root {
 
 .dark-mode .slds-button_neutral:hover,
 .dark-mode button[type="button"]:not(.slds-button_brand):not(.slds-button_icon):hover {
-  background-color: #4c4c4c !important;
+  background-color: var(--token-layer-elevated) !important;
 }
 
 .dark-mode .slds-button_brand {
   background-color: var(--token-interactive-brand) !important;
   border-color: var(--token-interactive-brand) !important;
-  color: #ffffff !important;
+  color: var(--token-text-inverse) !important;
 }
 
 .dark-mode .slds-button_brand:hover {
@@ -281,8 +310,8 @@ body.dark-mode #root {
 .dark-mode .slds-button_icon-border:hover,
 .dark-mode .slds-button_icon-border-filled:hover,
 .dark-mode .slds-button_icon-container:hover {
-  background-color: #4c4c4c !important;
-  border-color: #6f6f6f !important;
+  background-color: var(--token-layer-elevated) !important;
+  border-color: var(--token-text-placeholder) !important;
 }
 
 .dark-mode .slds-button_icon svg,
@@ -314,13 +343,13 @@ body.dark-mode #root {
 }
 
 .dark-mode .load-button:hover {
-  background-color: #4c4c4c !important;
+  background-color: var(--token-layer-elevated) !important;
 }
 
 .dark-mode .delete-button {
   background-color: var(--token-danger) !important;
-  border: 1px solid #a2191f !important;
-  color: #ffffff !important;
+  border: 1px solid var(--token-border-danger) !important;
+  color: var(--token-text-inverse) !important;
 }
 
 .dark-mode .delete-button:hover {
@@ -346,7 +375,7 @@ body.dark-mode #root {
 .dark-mode .slds-button-group .slds-button_brand {
   background: var(--token-interactive-brand) !important;
   border-color: var(--token-interactive-brand) !important;
-  color: #ffffff !important;
+  color: var(--token-text-inverse) !important;
 }
 
 .dark-mode .slds-button-group .slds-button_brand:hover {

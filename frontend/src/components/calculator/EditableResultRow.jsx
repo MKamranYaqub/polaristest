@@ -139,8 +139,8 @@ export default function EditableResultRow({
                 <button
                   onClick={() => handleReset(col)}
                   style={{
-                    padding: '0.25rem 0.5rem',
-                    border: '1px solid #c6c6c6',
+                    padding: 'var(--token-spacing-xs) var(--token-spacing-sm)',
+                    border: '1px solid #ddd',
                     borderRadius: '4px',
                     backgroundColor: 'white',
                     cursor: 'pointer',
