@@ -754,9 +754,9 @@ export class BridgeFusionCalculator {
     const property = (normalizedRateRecord.property || '').toString().toLowerCase();
     const isCommercial = property.includes('commercial') && !property.includes('semi');
 
-    // Get term: Fusion always uses 24 months, Bridge uses provided term or rate record
+    // Get term: Use max_term from rate record (Bridge/Fusion use min_term/max_term, not initial_term)
     const term = productKind === 'fusion' 
-      ? 24 
+      ? (termMonths || parseNumber(normalizedRateRecord.max_term) || 24)
       : (termMonths || parseNumber(normalizedRateRecord.max_term) || 12);
 
     // Get arrangement fee from rate record (allow override)

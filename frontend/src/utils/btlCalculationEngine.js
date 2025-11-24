@@ -145,10 +145,10 @@ export class BTLCalculationEngine {
     // --- Limits and constraints from rate record (prioritize rate table values)
     this.minLoan = selectedRate?.min_loan ?? limits.MIN_LOAN ?? 50000;
     this.maxLoan = selectedRate?.max_loan ?? limits.MAX_LOAN ?? 25000000;
-    this.termMonths = selectedRate?.term_months ?? limits.TERM_MONTHS ?? 24;
+    this.termMonths = selectedRate?.initial_term ?? selectedRate?.term_months ?? limits.TERM_MONTHS ?? 24;
     
     // ICR requirements from rate table (primary source)
-    this.minimumICR = selectedRate?.min_icr ?? (this.isTracker ? 125 : 145);
+    this.minimumICR = selectedRate?.min_icr ?? (this.isTracker ? 130 : 145);
     
     // Rolled and deferred limits from rate table
     this.maxRolledMonths = selectedRate?.max_rolled_months ?? limits.MAX_ROLLED_MONTHS ?? 24;
