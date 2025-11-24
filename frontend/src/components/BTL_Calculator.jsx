@@ -1124,14 +1124,28 @@ export default function BTLcalculator({ initialQuote = null }) {
   const ltvMax = dynamicMaxLtv;
   const ltvPercent = Math.round(((maxLtvInput - ltvMin) / (ltvMax - ltvMin)) * 100);
 
-  // Clamp maxLtvInput when dynamicMaxLtv changes (ensure between 1% and dynamicMaxLtv)
+  // Track previous max LTV to detect when it changes
+  const prevMaxLtvRef = useRef(dynamicMaxLtv);
+  
+  // Clamp or adjust maxLtvInput when dynamicMaxLtv changes
   useEffect(() => {
+    const prevMax = prevMaxLtvRef.current;
+    
+    // Always clamp down if current input exceeds new max
     if (maxLtvInput > dynamicMaxLtv) {
       setMaxLtvInput(dynamicMaxLtv);
-    } else if (maxLtvInput < 1) {
+    } 
+    // If max increased and user was at the old max, update to new max
+    else if (dynamicMaxLtv > prevMax && Math.abs(maxLtvInput - prevMax) < 0.1) {
+      setMaxLtvInput(dynamicMaxLtv);
+    }
+    // Ensure minimum
+    else if (maxLtvInput < 1) {
       setMaxLtvInput(1);
     }
-  }, [dynamicMaxLtv, maxLtvInput]);
+    
+    prevMaxLtvRef.current = dynamicMaxLtv;
+  }, [dynamicMaxLtv, maxLtvInput, retentionChoice, retentionLtv, answers, currentTier]);
 
   // Determine display order for questions: prefer numeric `displayOrder` (from DB) then fall back to label
   const orderedQuestionKeys = Object.keys(questions).sort((a, b) => {
