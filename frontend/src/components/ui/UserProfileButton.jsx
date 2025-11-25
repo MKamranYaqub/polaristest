@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import SalesforceIcon from './shared/SalesforceIcon';
-import ModalShell from './ModalShell';
-import '../styles/Modal.css';
+import SalesforceIcon from '../shared/SalesforceIcon';
+import ModalShell from '../modals/ModalShell';
+import '../../styles/Modal.css';
 
 /**
  * UserProfileButton - Shows current user from authentication

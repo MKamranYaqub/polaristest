@@ -1,39 +1,39 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useSupabase } from '../contexts/SupabaseContext';
-import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
-import SalesforceIcon from './shared/SalesforceIcon';
-import '../styles/slds.css';
-import '../styles/Calculator.scss';
+import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
+import SalesforceIcon from '../shared/SalesforceIcon';
+import '../../styles/slds.css';
+import '../../styles/Calculator.scss';
 import SaveQuoteButton from './SaveQuoteButton';
-import IssueDIPModal from './IssueDIPModal';
-import IssueQuoteModal from './IssueQuoteModal';
+import IssueDIPModal from '../modals/IssueDIPModal';
+import IssueQuoteModal from '../modals/IssueQuoteModal';
 import CalculatorResultsPlaceholders from './CalculatorResultsPlaceholders';
-import SliderResultRow from './calculator/SliderResultRow';
-import EditableResultRow from './calculator/EditableResultRow';
-import QuoteReferenceHeader from './calculator/shared/QuoteReferenceHeader';
-import ClientDetailsSection from './calculator/shared/ClientDetailsSection';
-import ActionButtons from './calculator/ActionButtons';
-import RangeToggle from './calculator/RangeToggle';
-import TopFiltersSection from './calculator/btl/TopFiltersSection';
-import Breadcrumbs from './Breadcrumbs';
-import useBrokerSettings from '../hooks/calculator/useBrokerSettings';
-import { useResultsVisibility } from '../hooks/useResultsVisibility';
-import { useResultsRowOrder } from '../hooks/useResultsRowOrder';
-import { getQuote, upsertQuoteData, requestDipPdf, requestQuotePdf } from '../utils/quotes';
-import { parseNumber, formatCurrency, formatPercent } from '../utils/calculator/numberFormatting';
-import { computeTierFromAnswers } from '../utils/calculator/rateFiltering';
-import { computeBTLLoan } from '../utils/btlCalculationEngine';
-import CollapsibleSection from './calculator/CollapsibleSection';
-import BTLCriteriaSection from './calculator/btl/BTLCriteriaSection';
-import BTLLoanDetailsSection from './calculator/btl/BTLLoanDetailsSection';
+import SliderResultRow from '../calculator/SliderResultRow';
+import EditableResultRow from '../calculator/EditableResultRow';
+import QuoteReferenceHeader from '../calculator/shared/QuoteReferenceHeader';
+import ClientDetailsSection from '../calculator/shared/ClientDetailsSection';
+import ActionButtons from '../calculator/ActionButtons';
+import RangeToggle from '../calculator/RangeToggle';
+import TopFiltersSection from '../calculator/btl/TopFiltersSection';
+import Breadcrumbs from '../layout/Breadcrumbs';
+import useBrokerSettings from '../../hooks/calculator/useBrokerSettings';
+import { useResultsVisibility } from '../../hooks/useResultsVisibility';
+import { useResultsRowOrder } from '../../hooks/useResultsRowOrder';
+import { getQuote, upsertQuoteData, requestDipPdf, requestQuotePdf } from '../../utils/quotes';
+import { parseNumber, formatCurrency, formatPercent } from '../../utils/calculator/numberFormatting';
+import { computeTierFromAnswers } from '../../utils/calculator/rateFiltering';
+import { computeBTLLoan } from '../../utils/btlCalculationEngine';
+import CollapsibleSection from '../calculator/CollapsibleSection';
+import BTLCriteriaSection from '../calculator/btl/BTLCriteriaSection';
+import BTLLoanDetailsSection from '../calculator/btl/BTLLoanDetailsSection';
 import { 
   PRODUCT_TYPES_LIST as DEFAULT_PRODUCT_TYPES_LIST, 
   FEE_COLUMNS as DEFAULT_FEE_COLUMNS, 
   LOCALSTORAGE_CONSTANTS_KEY, 
   FLAT_ABOVE_COMMERCIAL_RULE as DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE
-} from '../config/constants';
+} from '../../config/constants';
 
 export default function BTLcalculator({ initialQuote = null }) {
   const { supabase } = useSupabase();

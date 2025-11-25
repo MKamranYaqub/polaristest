@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { useSupabase } from '../contexts/SupabaseContext';
-import SalesforceIcon from './shared/SalesforceIcon';
+import React, { useEffect, useState } from "react";
+import { useSupabase } from "../../contexts/SupabaseContext";
+import SalesforceIcon from "../shared/SalesforceIcon";
 import CriteriaEditModal from './CriteriaEditModal';
-import NotificationModal from './NotificationModal';
-import '../styles/slds.css';
+import NotificationModal from '../modals/NotificationModal';
+import '../../styles/slds.css';
+import '../../styles/admin-tables.css';
 
 function CriteriaTable() {
   const [criteria, setCriteria] = useState([]);
@@ -524,23 +525,20 @@ function CriteriaTable() {
 
   if (loading) {
     return (
-      <div className="slds-spinner_container">
-        <div className="slds-spinner slds-spinner_medium">
-          <div className="slds-spinner__dot-a"></div>
-          <div className="slds-spinner__dot-b"></div>
-        </div>
-        <div className="slds-text-heading_small slds-m-top_medium">Loading criteria from Supabase...</div>
+      <div className="loading-overlay">
+        <div className="loading-spinner"></div>
+        <div className="loading-text">Loading criteria from Supabase...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="slds-box slds-theme_error slds-m-around_medium">
-        <div>
-          <h3 className="slds-text-heading_medium">Error Loading Criteria</h3>
-          <p className="slds-m-top_small">{error}</p>
-          <button className="slds-button slds-button_brand slds-m-top_medium" onClick={fetchCriteria}>
+      <div className="error-state">
+        <div className="error-box">
+          <h3>Error Loading Criteria</h3>
+          <p>{error}</p>
+          <button className="btn-primary" onClick={fetchCriteria}>
             Try Again
           </button>
         </div>
@@ -549,10 +547,10 @@ function CriteriaTable() {
   }
 
   return (
-    <div className="slds-p-around_medium">
-      <div className="slds-grid slds-grid_vertical-align-center slds-m-bottom_medium">
-        <div className="slds-col">
-          <button className="slds-button slds-button_brand slds-m-right_small" onClick={handleAdd}>
+    <div className="admin-table-container">
+      <div className="table-header">
+        <div className="table-actions-left">
+          <button className="btn-primary" onClick={handleAdd}>
             Add New Criteria
           </button>
           <input
@@ -562,40 +560,40 @@ function CriteriaTable() {
             style={{ display: 'none' }}
             id="criteria-csv-import"
           />
-          <button className="slds-button slds-button_neutral slds-m-right_small" 
+          <button className="btn-secondary" 
             onClick={() => document.getElementById('criteria-csv-import').click()}>
             Import CSV
           </button>
-          <button className="slds-button slds-button_neutral slds-m-right_small" onClick={handleExport}>
+          <button className="btn-secondary" onClick={handleExport}>
             Export CSV
           </button>
           {selectedRows.size > 0 && (
-            <button className="slds-button slds-button_destructive" onClick={handleBulkDelete}>
+            <button className="btn-danger" onClick={handleBulkDelete}>
               Delete Selected ({selectedRows.size})
             </button>
           )}
-          <span className="slds-m-left_small slds-text-title">Total rows: {criteria.length}</span>
+          <span className="total-count">Total: {criteria.length}</span>
         </div>
-        <div className="slds-col_bump-left">
-          <div className="slds-grid slds-grid_vertical-align-center">
+        <div className="table-actions-right">
+          <div className="pagination-controls">
             <button
-              className="slds-button slds-button_neutral"
+              className="btn-neutral"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
             >
               Previous
             </button>
-            <span className="slds-m-horizontal_small">Page {currentPage} of {totalPages}</span>
+            <span className="pagination-info">Page {currentPage} of {totalPages}</span>
             <button
-              className="slds-button slds-button_neutral"
+              className="btn-neutral"
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
             >
               Next
             </button>
-            <div className="slds-m-left_small" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.85rem' }}>Rows:</label>
-              <select className="slds-select" value={itemsPerPage} onChange={(e) => { const v = Number(e.target.value); setItemsPerPage(v); setCurrentPage(1); }}>
+            <div className="rows-per-page">
+              <label>Rows:</label>
+              <select value={itemsPerPage} onChange={(e) => { const v = Number(e.target.value); setItemsPerPage(v); setCurrentPage(1); }}>
                 <option value={10}>10</option>
                 <option value={25}>25</option>
                 <option value={50}>50</option>
@@ -633,7 +631,7 @@ function CriteriaTable() {
                   <div className="slds-text-color_weak">Note: <code>created_at</code>, <code>updated_at</code> and <code>id</code> will be ignored. <code>display_order</code> will be coerced to an integer or set to null if empty/invalid.</div>
                 </div>
                 <div style={{ maxHeight: '300px', overflow: 'auto' }}>
-                  <table className="slds-table slds-table_bordered slds-table_cell-buffer">
+                  <table className="professional-table">
                     <thead>
                       <tr>
                         {importPreview.previewHeaders.map(h => <th key={h}>{h}</th>)}
@@ -652,89 +650,82 @@ function CriteriaTable() {
                 </div>
               </div>
               <div className="slds-modal__footer">
-                <button className="slds-button slds-button_neutral" onClick={cancelImport} disabled={importLoading}>Cancel</button>
-                <button className="slds-button slds-button_brand" onClick={confirmImport} disabled={importLoading}>{importLoading ? 'Importing...' : 'Import'}</button>
+                <button className="btn-neutral" onClick={cancelImport} disabled={importLoading}>Cancel</button>
+                <button className="btn-primary" onClick={confirmImport} disabled={importLoading}>{importLoading ? 'Importing...' : 'Import'}</button>
               </div>
             </div>
           </div>
         </>
       )}
 
-      <div className="slds-grid slds-wrap slds-m-bottom_medium" style={{ gap: '0.5rem' }}>
-        <div className="slds-form-element" style={{ minWidth: '200px' }}>
-          <label className="slds-form-element__label">Criteria Set:</label>
-          <div className="slds-form-element__control">
-            <select
-              className="slds-select"
-              value={filters.criteria_set}
-              onChange={(e) => handleFilterChange('criteria_set', e.target.value)}
-            >
-              <option value="">All Sets</option>
-              {Array.from(filterOptions.criteriaSets).sort().map(set => (
-                <option key={set} value={set}>{set}</option>
-              ))}
-            </select>
-          </div>
+      <div className="filters-section">
+        <div className="filter-field">
+          <label>Criteria Set</label>
+          <select
+            value={filters.criteria_set}
+            onChange={(e) => handleFilterChange('criteria_set', e.target.value)}
+          >
+            <option value="">All Sets</option>
+            {Array.from(filterOptions.criteriaSets).sort().map(set => (
+              <option key={set} value={set}>{set}</option>
+            ))}
+          </select>
         </div>
 
-        <div className="slds-form-element" style={{ minWidth: '200px' }}>
-          <label className="slds-form-element__label">Product Scope:</label>
-          <div className="slds-form-element__control">
-            <select
-              className="slds-select"
-              value={filters.product_scope}
-              onChange={(e) => handleFilterChange('product_scope', e.target.value)}
-            >
-              <option value="">All Scopes</option>
-              {Array.from(filterOptions.productScopes).sort().map(scope => (
-                <option key={scope} value={scope}>{scope}</option>
-              ))}
-            </select>
-          </div>
+        <div className="filter-field">
+          <label>Product Scope</label>
+          <select
+            value={filters.product_scope}
+            onChange={(e) => handleFilterChange('product_scope', e.target.value)}
+          >
+            <option value="">All Scopes</option>
+            {Array.from(filterOptions.productScopes).sort().map(scope => (
+              <option key={scope} value={scope}>{scope}</option>
+            ))}
+          </select>
         </div>
 
-        <div className="slds-form-element" style={{ minWidth: '200px' }}>
-          <label className="slds-form-element__label">Question Group:</label>
-          <div className="slds-form-element__control">
-            <select
-              className="slds-select"
-              value={filters.question_group}
-              onChange={(e) => handleFilterChange('question_group', e.target.value)}
-            >
-              <option value="">All Groups</option>
-              {Array.from(filterOptions.questionGroups).sort().map(group => (
-                <option key={group} value={group}>{group}</option>
-              ))}
-            </select>
-          </div>
+        <div className="filter-field">
+          <label>Question Group</label>
+          <select
+            value={filters.question_group}
+            onChange={(e) => handleFilterChange('question_group', e.target.value)}
+          >
+            <option value="">All Groups</option>
+            {Array.from(filterOptions.questionGroups).sort().map(group => (
+              <option key={group} value={group}>{group}</option>
+            ))}
+          </select>
         </div>
       </div>
 
-      <div style={{ overflowX: 'auto' }}>
-        <table className="slds-table slds-table_bordered slds-table_cell-buffer">
+      <div className="table-wrapper">
+        <table className="professional-table">
           <thead>
             <tr>
               <th>
-                <div className="slds-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={selectAll}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      setSelectAll(checked);
-                      const currentPageItems = getCurrentPageCriteria();
-                      if (checked) {
-                        setSelectedRows(new Set(currentPageItems.map(getItemKey)));
-                      } else {
-                        setSelectedRows(new Set());
-                      }
-                    }}
-                  />
-                </div>
+                <input
+                  type="checkbox"
+                  checked={selectAll}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setSelectAll(checked);
+                    const currentPageItems = getCurrentPageCriteria();
+                    if (checked) {
+                      setSelectedRows(new Set(currentPageItems.map(getItemKey)));
+                    } else {
+                      setSelectedRows(new Set());
+                    }
+                  }}
+                />
               </th>
               {columns.map((col) => (
-                <th key={col} onClick={() => changeSort(col)} style={{ cursor: 'pointer' }}>
-                  { (columnLabels[col] || humanize(col)) } {sortField === col ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                <th 
+                  key={col} 
+                  onClick={() => changeSort(col)} 
+                  className={`sortable ${sortField === col ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}
+                >
+                  {columnLabels[col] || humanize(col)}
                 </th>
               ))}
               <th className="sticky-action">Actions</th>
@@ -769,15 +760,15 @@ function CriteriaTable() {
                     <td key={col}>{(item[col] === null || item[col] === undefined) ? '' : String(item[col])}</td>
                   ))}
                   <td className="sticky-action">
-                    <div className="slds-grid slds-grid_align-center" style={{ gap: '0.25rem' }}>
+                    <div className="row-actions">
                       <button
-                        className="slds-button slds-button_neutral"
+                        className="btn-neutral"
                         onClick={() => handleEdit(item)}
                       >
                         Edit
                       </button>
                       <button
-                        className="slds-button slds-button_destructive"
+                        className="btn-danger"
                         onClick={() => handleDelete(item)}
                       >
                         Delete

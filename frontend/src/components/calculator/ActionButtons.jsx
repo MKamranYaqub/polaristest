@@ -1,5 +1,5 @@
 import React from 'react';
-import SaveQuoteButton from '../SaveQuoteButton';
+import SaveQuoteButton from '../calculators/SaveQuoteButton';
 
 /**
  * ActionButtons - Reusable button group for calculator actions

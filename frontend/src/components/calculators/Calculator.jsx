@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import BTLcalculator from './BTL_Calculator';
 import BridgingCalculator from './BridgingCalculator';
-import '../styles/Calculator.scss';
+import '../../styles/Calculator.scss';
 
 export default function Calculator() {
   const location = useLocation();

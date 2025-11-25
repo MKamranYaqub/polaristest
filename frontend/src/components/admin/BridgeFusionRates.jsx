@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useSupabase } from '../contexts/SupabaseContext';
+import { useSupabase } from '../../contexts/SupabaseContext';
 import BridgeRateEditModal from './BridgeRateEditModal';
-import NotificationModal from './NotificationModal';
-import '../styles/slds.css';
+import NotificationModal from '../modals/NotificationModal';
+import '../../styles/slds.css';
+import '../../styles/admin-tables.css';
 
 function BridgeFusionRates() {
   const { supabase } = useSupabase();
@@ -324,30 +325,30 @@ function BridgeFusionRates() {
   const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; const date = new Date().toISOString().split('T')[0]; a.download = `bridge_fusion_rates_full_${date}.csv`; a.click(); window.URL.revokeObjectURL(url);
   };
 
-  if (loading) return (<div className="slds-spinner_container"><div className="slds-spinner slds-spinner_medium"><div className="slds-spinner__dot-a"></div><div className="slds-spinner__dot-b"></div></div><div className="slds-text-heading_small slds-m-top_medium">Loading bridge & fusion rates...</div></div>);
-  if (error) return (<div className="slds-box slds-theme_error">Error: {String(error)}</div>);
+  if (loading) return (<div className="loading-overlay"><div className="loading-spinner"></div><div className="loading-text">Loading bridge & fusion rates...</div></div>);
+  if (error) return (<div className="error-state"><div className="error-box"><h3>Error Loading Rates</h3><p>{String(error)}</p><button className="btn-primary" onClick={() => fetch()}>Try Again</button></div></div>);
 
   return (
-    <div>
-      <div className="slds-grid slds-grid_vertical-align-center slds-m-bottom_medium">
-        <div className="slds-col">
-          <button className="slds-button slds-button_brand slds-m-right_small" onClick={handleAdd}>Add Bridge/Fusion Rate</button>
+    <div className="admin-table-container">
+      <div className="table-header">
+        <div className="table-actions-left">
+          <button className="btn-primary" onClick={handleAdd}>Add Bridge/Fusion Rate</button>
           <input type="file" accept=".csv" onChange={handleImport} style={{ display: 'none' }} id="bridge-csv-import" />
-          <button className="slds-button slds-button_neutral slds-m-right_small" onClick={() => document.getElementById('bridge-csv-import').click()}>Import CSV</button>
-          <button className="slds-button slds-button_neutral slds-m-right_small" onClick={handleExport}>Export CSV</button>
+          <button className="btn-secondary" onClick={() => document.getElementById('bridge-csv-import').click()}>Import CSV</button>
+          <button className="btn-secondary" onClick={handleExport}>Export CSV</button>
           {selectedRows.size > 0 && (
-            <button className="slds-button slds-button_destructive slds-m-left_small" onClick={handleBulkDelete}>Delete Selected ({selectedRows.size})</button>
+            <button className="btn-danger" onClick={handleBulkDelete}>Delete Selected ({selectedRows.size})</button>
           )}
-          <span className="slds-m-left_small slds-text-title">Total rows: {getFilteredRowsCount()}</span>
+          <span className="total-count">Total: {getFilteredRowsCount()}</span>
         </div>
-        <div className="slds-col_bump-left">
-          <div className="slds-grid slds-grid_vertical-align-center">
-            <button className="slds-button slds-button_neutral" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</button>
-            <span className="slds-m-horizontal_small">Page {currentPage} of {totalPages}</span>
-            <button className="slds-button slds-button_neutral" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
-            <div className="slds-m-left_small" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.85rem' }}>Rows:</label>
-              <select className="slds-select" value={itemsPerPage} onChange={(e) => { const v = Number(e.target.value); setItemsPerPage(v); setCurrentPage(1); }}>
+        <div className="table-actions-right">
+          <div className="pagination-controls">
+            <button className="btn-neutral" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</button>
+            <span className="pagination-info">Page {currentPage} of {totalPages}</span>
+            <button className="btn-neutral" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
+            <div className="rows-per-page">
+              <label>Rows:</label>
+              <select value={itemsPerPage} onChange={(e) => { const v = Number(e.target.value); setItemsPerPage(v); setCurrentPage(1); }}>
                 <option value={10}>10</option>
                 <option value={25}>25</option>
                 <option value={50}>50</option>
@@ -358,88 +359,78 @@ function BridgeFusionRates() {
         </div>
       </div>
 
-      <div className="slds-grid slds-wrap slds-m-bottom_medium" style={{ gap: '0.5rem' }}>
-        <div className="slds-form-element min-width-200">
-          <label className="slds-form-element__label">Set Key:</label>
-          <div className="slds-form-element__control">
-            <select className="slds-select" value={filters.set_key} onChange={(e) => setFilters(prev => ({ ...prev, set_key: e.target.value }))}>
-              <option value="">All Set Keys</option>
-              {Array.from(filterOptions.setKeys).sort().map(sk => (<option key={sk} value={sk}>{sk}</option>))}
-            </select>
-          </div>
+      <div className="filters-section">
+        <div className="filter-field">
+          <label>Set Key:</label>
+          <select value={filters.set_key} onChange={(e) => setFilters(prev => ({ ...prev, set_key: e.target.value }))}>
+            <option value="">All Set Keys</option>
+            {Array.from(filterOptions.setKeys).sort().map(sk => (<option key={sk} value={sk}>{sk}</option>))}
+          </select>
         </div>
 
-        <div className="slds-form-element min-width-150">
-          <label className="slds-form-element__label">Property:</label>
-          <div className="slds-form-element__control">
-            <select className="slds-select" value={filters.property} onChange={(e) => setFilters(prev => ({ ...prev, property: e.target.value }))}>
-              <option value="">All Properties</option>
-              {Array.from(filterOptions.properties).sort().map(prop => (<option key={prop} value={prop}>{prop}</option>))}
-            </select>
-          </div>
+        <div className="filter-field">
+          <label>Property:</label>
+          <select value={filters.property} onChange={(e) => setFilters(prev => ({ ...prev, property: e.target.value }))}>
+            <option value="">All Properties</option>
+            {Array.from(filterOptions.properties).sort().map(prop => (<option key={prop} value={prop}>{prop}</option>))}
+          </select>
         </div>
 
         {/* Tier filter removed: `tier` column does not exist in bridge_fusion_rates_full table */}
 
-        <div className="slds-form-element min-width-150">
-          <label className="slds-form-element__label">Product:</label>
-          <div className="slds-form-element__control">
-            <select className="slds-select" value={filters.product} onChange={(e) => setFilters(prev => ({ ...prev, product: e.target.value }))}>
-              <option value="">All Products</option>
-              {Array.from(filterOptions.products).sort().map(product => (<option key={product} value={product}>{product}</option>))}
-            </select>
-          </div>
+        <div className="filter-field">
+          <label>Product:</label>
+          <select value={filters.product} onChange={(e) => setFilters(prev => ({ ...prev, product: e.target.value }))}>
+            <option value="">All Products</option>
+            {Array.from(filterOptions.products).sort().map(product => (<option key={product} value={product}>{product}</option>))}
+          </select>
         </div>
 
-        <div className="slds-form-element min-width-150">
-          <label className="slds-form-element__label">Type:</label>
-          <div className="slds-form-element__control">
-            <select className="slds-select" value={filters.type} onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}>
-              <option value="">All Types</option>
-              {Array.from(filterOptions.types).sort().map(t => (<option key={t} value={t}>{t}</option>))}
-            </select>
-          </div>
+        <div className="filter-field">
+          <label>Type:</label>
+          <select value={filters.type} onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}>
+            <option value="">All Types</option>
+            {Array.from(filterOptions.types).sort().map(t => (<option key={t} value={t}>{t}</option>))}
+          </select>
         </div>
 
-        <div className="slds-form-element min-width-150">
-          <label className="slds-form-element__label">Charge Type:</label>
-          <div className="slds-form-element__control">
-            <select className="slds-select" value={filters.charge_type} onChange={(e) => setFilters(prev => ({ ...prev, charge_type: e.target.value }))}>
-              <option value="">All Charge Types</option>
-              {Array.from(filterOptions.chargeTypes || []).sort().map(ct => (<option key={ct} value={ct}>{ct}</option>))}
-            </select>
-          </div>
+        <div className="filter-field">
+          <label>Charge Type:</label>
+          <select value={filters.charge_type} onChange={(e) => setFilters(prev => ({ ...prev, charge_type: e.target.value }))}>
+            <option value="">All Charge Types</option>
+            {Array.from(filterOptions.chargeTypes || []).sort().map(ct => (<option key={ct} value={ct}>{ct}</option>))}
+          </select>
         </div>
 
         {/* initial_term/full_term filters removed: not present in bridge_fusion_rates_full schema */}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="slds-table slds-table_bordered slds-table_cell-buffer">
+      <div className="table-wrapper">
+        <table className="professional-table">
           <thead>
             <tr>
               <th>
                 <input type="checkbox" checked={selectAll} onChange={(e) => toggleSelectAll(e.target.checked)} />
               </th>
-              <th onClick={() => changeSort('set_key')} className="cursor-pointer">Set Key {sortField === 'set_key' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('property')} className="cursor-pointer">Property {sortField === 'property' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('product')} className="cursor-pointer">Product {sortField === 'product' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('type')} className="cursor-pointer">Type {sortField === 'type' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('charge_type')} className="cursor-pointer">Charge Type {sortField === 'charge_type' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('product_fee')} className="cursor-pointer text-align-center">Product Fee {sortField === 'product_fee' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('rate')} className="cursor-pointer text-align-center">Rate (%) {sortField === 'rate' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th className="text-align-center">Min Term</th>
-              <th className="text-align-center">Max Term</th>
-              <th className="text-align-center">Min Rolled</th>
-              <th className="text-align-center">Max Rolled</th>
-              <th className="text-align-center">Min Loan</th>
-              <th className="text-align-center">Max Loan</th>
-              <th className="text-align-center">Min LTV</th>
-              <th className="text-align-center">Max LTV</th>
-              <th className="text-align-center">Min ICR</th>
-              <th className="text-align-center">Max Defer</th>
-              <th className="text-align-center">ERC 1 (%)</th>
-              <th className="text-align-center">ERC 2 (%)</th>
+              <th onClick={() => changeSort('set_key')} className={`sortable ${sortField === 'set_key' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Set Key</th>
+              <th onClick={() => changeSort('property')} className={`sortable ${sortField === 'property' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Property</th>
+              <th onClick={() => changeSort('product')} className={`sortable ${sortField === 'product' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Product</th>
+              <th onClick={() => changeSort('type')} className={`sortable ${sortField === 'type' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Type</th>
+              <th onClick={() => changeSort('charge_type')} className={`sortable ${sortField === 'charge_type' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Charge Type</th>
+              <th onClick={() => changeSort('product_fee')} className={`sortable text-center ${sortField === 'product_fee' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Product Fee</th>
+              <th onClick={() => changeSort('rate')} className={`sortable text-center ${sortField === 'rate' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Rate (%)</th>
+              <th className="text-center">Min Term</th>
+              <th className="text-center">Max Term</th>
+              <th className="text-center">Min Rolled</th>
+              <th className="text-center">Max Rolled</th>
+              <th className="text-center">Min Loan</th>
+              <th className="text-center">Max Loan</th>
+              <th className="text-center">Min LTV</th>
+              <th className="text-center">Max LTV</th>
+              <th className="text-center">Min ICR</th>
+              <th className="text-center">Max Defer</th>
+              <th className="text-center">ERC 1 (%)</th>
+              <th className="text-center">ERC 2 (%)</th>
               <th className="sticky-action">Actions</th>
             </tr>
           </thead>
@@ -453,24 +444,24 @@ function BridgeFusionRates() {
                 <td>{r.product}</td>
                 <td>{r.type}</td>
                 <td>{r.charge_type}</td>
-                <td className="text-align-center">{r.product_fee}</td>
-                <td className="text-align-center">{r.rate}</td>
-                <td className="text-align-center">{r.min_term}</td>
-                <td className="text-align-center">{r.max_term}</td>
-                <td className="text-align-center">{r.min_rolled_months}</td>
-                <td className="text-align-center">{r.max_rolled_months}</td>
-                <td className="text-align-center">£{r.min_loan?.toLocaleString()}</td>
-                <td className="text-align-center">£{r.max_loan?.toLocaleString()}</td>
-                <td className="text-align-center">{r.min_ltv}%</td>
-                <td className="text-align-center">{r.max_ltv}%</td>
-                <td className="text-align-center">{r.min_icr}%</td>
-                <td className="text-align-center">{r.max_defer_int}</td>
-                <td className="text-align-center">{r.erc_1 || '—'}</td>
-                <td className="text-align-center">{r.erc_2 || '—'}</td>
+                <td className="text-center">{r.product_fee}</td>
+                <td className="text-center">{r.rate}</td>
+                <td className="text-center">{r.min_term}</td>
+                <td className="text-center">{r.max_term}</td>
+                <td className="text-center">{r.min_rolled_months}</td>
+                <td className="text-center">{r.max_rolled_months}</td>
+                <td className="text-center">£{r.min_loan?.toLocaleString()}</td>
+                <td className="text-center">£{r.max_loan?.toLocaleString()}</td>
+                <td className="text-center">{r.min_ltv}%</td>
+                <td className="text-center">{r.max_ltv}%</td>
+                <td className="text-center">{r.min_icr}%</td>
+                <td className="text-center">{r.max_defer_int}</td>
+                <td className="text-center">{r.erc_1 || '—'}</td>
+                <td className="text-center">{r.erc_2 || '—'}</td>
                 <td className="sticky-action">
-                  <div className="slds-grid flex-gap-025">
-                    <button className="slds-button slds-button_neutral" onClick={() => setEditing(r)}>Edit</button>
-                    <button className="slds-button slds-button_destructive" onClick={() => handleDelete(r.id)}>Delete</button>
+                  <div className="row-actions">
+                    <button className="btn-neutral" onClick={() => setEditing(r)}>Edit</button>
+                    <button className="btn-danger" onClick={() => handleDelete(r.id)}>Delete</button>
                   </div>
                 </td>
               </tr>

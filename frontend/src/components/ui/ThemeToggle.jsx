@@ -1,6 +1,6 @@
 import React from 'react';
-import { useTheme } from '../contexts/ThemeContext';
-import SalesforceIcon from './shared/SalesforceIcon';
+import { useTheme } from '../../contexts/ThemeContext';
+import SalesforceIcon from '../shared/SalesforceIcon';
 
 /**
  * ThemeToggle - Quick toggle button for light/dark theme

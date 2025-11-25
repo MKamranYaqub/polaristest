@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import ModalShell from './ModalShell';
-import '../styles/slds.css';
+import ModalShell from '../modals/ModalShell';
+import '../../styles/slds.css';
 
 function BridgeRateEditModal({ rate, onSave, onCancel }) {
   const [formData, setFormData] = useState({ ...rate });

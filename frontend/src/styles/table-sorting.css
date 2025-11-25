@@ -17,7 +17,7 @@
 }
 
 .slds-th__action:hover {
-  background-color: var(--slds-color-background-row-hover, rgba(0, 0, 0, 0.05));
+  background-color: var(--slds-color-background-row-hover, var(--token-layer-hover, rgba(0, 0, 0, 0.05)));
 }
 
 .slds-th__action:focus {
@@ -47,7 +47,7 @@
 
 /* Dark mode overrides */
 [data-carbon-theme='g100'] .slds-th__action:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--token-layer-hover, rgba(255, 255, 255, 0.1));
 }
 
 [data-carbon-theme='g100'] .slds-th__sort-icon {

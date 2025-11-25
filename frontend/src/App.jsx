@@ -2,17 +2,17 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Content, Theme } from '@carbon/react';
 import '@carbon/styles/css/styles.css';
-import Calculator from './components/Calculator';
-import BTLCalculator from './components/BTL_Calculator';
-import BridgingCalculator from './components/BridgingCalculator';
-import QuotesList from './components/QuotesList';
-import AppShell from './components/AppShell';
-import Navigation from './components/Navigation';
-import ErrorBoundary from './components/ErrorBoundary';
+import Calculator from './components/calculators/Calculator';
+import BTLCalculator from './components/calculators/BTL_Calculator';
+import BridgingCalculator from './components/calculators/BridgingCalculator';
+import QuotesList from './components/calculators/QuotesList';
+import AppShell from './components/layout/AppShell';
+import Navigation from './components/layout/Navigation';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 import { 
   CalculatorErrorFallback, 
   QuotesErrorFallback 
-} from './components/ErrorFallbacks';
+} from './components/ui/ErrorFallbacks';
 import { UserProvider } from './contexts/UserContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';

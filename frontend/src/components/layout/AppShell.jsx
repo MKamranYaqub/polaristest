@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AppNav from './AppNav';
-import { isEmbeddedMode, sendMessageToHost } from '../utils/embedding';
-import '../styles/app-shell.scss';
+import { isEmbeddedMode, sendMessageToHost } from '../../utils/embedding';
+import '../../styles/app-shell.scss';
 
 /**
  * AppShell - Main layout wrapper component

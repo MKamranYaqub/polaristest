@@ -89,7 +89,7 @@
 
 .edit-button {
   background-color: var(--token-interactive);
-  color: #fff;
+  color: var(--token-text-inverse, #fff);
   border: none;
   padding: var(--token-space-8) var(--token-space-16);
   border-radius: var(--token-radius-sm);
@@ -123,18 +123,18 @@
 
 .table-container::before {
   left: 0;
-  background: linear-gradient(to right, var(--token-layer-surface), rgba(255, 255, 255, 0));
+  background: linear-gradient(to right, var(--token-layer-surface), var(--token-layer-overlay-subtle, rgba(255, 255, 255, 0)));
 }
 
 .table-container::after {
   right: 0;
-  background: linear-gradient(to left, var(--token-layer-surface), rgba(255, 255, 255, 0));
+  background: linear-gradient(to left, var(--token-layer-surface), var(--token-layer-overlay-subtle, rgba(255, 255, 255, 0)));
 }
 
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(11, 20, 26, 0.45);
+  background-color: var(--token-layer-overlay, rgba(11, 20, 26, 0.45));
   display: flex;
   justify-content: center;
   align-items: center;
@@ -187,10 +187,10 @@
 
 .button-group button[type='submit'] {
   background-color: var(--token-interactive);
-  color: #fff;
+  color: var(--token-text-inverse, #fff);
 }
 
 .button-group button[type='button'] {
   background-color: var(--token-critical);
-  color: #fff;
+  color: var(--token-text-inverse, #fff);
 }

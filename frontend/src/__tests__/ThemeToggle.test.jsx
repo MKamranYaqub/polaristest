@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import ThemeToggle from '../components/ThemeToggle';
+import ThemeToggle from '../components/ui/ThemeToggle';
 import { ThemeProvider } from '../contexts/ThemeContext';
 
 describe('ThemeToggle Component', () => {

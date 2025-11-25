@@ -30,22 +30,22 @@
 .position-absolute { position: absolute; }
 
 /* Color Classes */
-.text-color-primary { color: #0176d3; }
-.text-color-dark { color: #333; }
-.text-color-heading { color: #181818; }
-.text-color-body { color: #3e3e3c; }
-.text-color-warning { color: #826f00; }
-.text-color-error { color: red; }
-.text-color-muted { color: #666; }
-.text-color-gray { color: #706e6b; }
-.text-color-link { color: #0176d3; }
-.text-color-white { color: white; }
-.text-color-white-semi { color: rgba(255, 255, 255, 0.9); }
+.text-color-primary { color: var(--token-interactive, #0176d3); }
+.text-color-dark { color: var(--token-text-primary, #333); }
+.text-color-heading { color: var(--token-text-primary, #181818); }
+.text-color-body { color: var(--token-text-primary, #3e3e3c); }
+.text-color-warning { color: var(--token-warning, #826f00); }
+.text-color-error { color: var(--token-danger, red); }
+.text-color-muted { color: var(--token-text-secondary, #666); }
+.text-color-gray { color: var(--token-text-secondary, #706e6b); }
+.text-color-link { color: var(--token-interactive, #0176d3); }
+.text-color-white { color: var(--token-text-inverse, white); }
+.text-color-white-semi { color: var(--token-text-inverse-subtle, rgba(255, 255, 255, 0.9)); }
 .text-italic { font-style: italic; }
-.background-gray-light { background-color: #f3f2f2; }
-.background-gray-medium { background-color: #f3f3f3; }
-.background-white { background-color: white; }
-.background-warning-light { background-color: #fdf6e3; }
+.background-gray-light { background-color: var(--token-layer-surface, #f3f2f2); }
+.background-gray-medium { background-color: var(--token-layer-surface, #f3f3f3); }
+.background-white { background-color: var(--token-layer-background, white); }
+.background-warning-light { background-color: var(--token-warning-bg, #fdf6e3); }
 .z-index-1 { z-index: 1; }
 
 /* Font Sizes */
@@ -183,8 +183,8 @@ table.slds-table.max-width-1200 {
 .border-radius-025 { border-radius: 0.25rem; }
 
 /* Border */
-.border-top-gray { border-top: 1px solid #dddbda; }
-.border-warning { border: 1px solid #f4d875; }
+.border-top-gray { border-top: 1px solid var(--token-border-subtle, #dddbda); }
+.border-warning { border: 1px solid var(--token-warning-border, #f4d875); }
 
 /* Word Break */
 .word-break-all { word-break: break-all; }
@@ -219,7 +219,7 @@ table.slds-table.max-width-1200 {
 }
 
 .auth-demo-box {
-  background-color: #f3f3f3;
+  background-color: var(--token-layer-surface, #f3f3f3);
   border-radius: 4px;
 }
 
@@ -228,23 +228,23 @@ table.slds-table.max-width-1200 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f3f3f3;
+  background-color: var(--token-layer-surface, #f3f3f3);
   padding: 1rem;
 }
 
 .reset-password-card {
   width: 100%;
   max-width: 450px;
-  background-color: white;
+  background-color: var(--token-layer-background, white);
   border-radius: 0.25rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: var(--token-shadow-soft, 0 2px 8px rgba(0,0,0,0.1));
   padding: 2rem;
 }
 
 .dev-mode-box {
   padding: 1rem;
-  background-color: #fef8e7;
-  border: 1px solid #f4d875;
+  background-color: var(--token-warning-bg, #fef8e7);
+  border: 1px solid var(--token-warning-border, #f4d875);
   border-radius: 0.25rem;
   margin-bottom: 1.5rem;
 }
@@ -253,46 +253,46 @@ table.slds-table.max-width-1200 {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  background: #0176d3;
+  background: var(--token-interactive-brand, #0176d3);
   padding: 0.75rem 1.25rem;
   border-radius: 0.25rem;
-  border: 1px solid #014486;
+  border: 1px solid var(--token-interactive-brand-hover, #014486);
   font-size: 0.875rem;
-  box-shadow: 0 2px 4px rgba(1, 118, 211, 0.2);
+  box-shadow: var(--token-shadow-soft, 0 2px 4px rgba(1, 118, 211, 0.2));
 }
 
 .quote-reference-copy-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--token-layer-overlay-subtle, rgba(255, 255, 255, 0.2));
+  border: 1px solid var(--token-layer-overlay, rgba(255, 255, 255, 0.3));
   border-radius: 0.25rem;
   cursor: pointer;
   padding: 0.375rem 0.5rem;
   display: flex;
   align-items: center;
-  color: white;
+  color: var(--token-text-inverse, white);
   transition: background 0.2s;
 }
 
 .quote-reference-copy-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--token-layer-overlay, rgba(255, 255, 255, 0.3));
 }
 
 .sticky-table-header {
   position: sticky;
   right: 0;
-  background: white;
+  background: var(--token-layer-background, white);
   z-index: 1;
 }
 
 .sticky-table-cell {
   position: sticky;
   right: 0;
-  background: white;
+  background: var(--token-layer-background, white);
   z-index: 1;
 }
 
 .quotes-filter-section {
-  background: #f3f3f3;
+  background: var(--token-layer-surface, #f3f3f3);
   padding: 1rem;
   margin-bottom: 1rem;
   border-radius: 4px;
@@ -302,7 +302,7 @@ table.slds-table.max-width-1200 {
 }
 
 .property-card {
-  border: 1px solid #d8dde6;
+  border: 1px solid var(--token-border-subtle, #d8dde6);
   padding: 1rem;
   margin-bottom: 0.5rem;
   border-radius: 4px;
@@ -313,8 +313,8 @@ table.slds-table.max-width-1200 {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  background: #c23934;
-  color: white;
+  background: var(--token-danger, #c23934);
+  color: var(--token-text-inverse, white);
   border: none;
   border-radius: 4px;
   padding: 0.25rem 0.5rem;
@@ -324,8 +324,8 @@ table.slds-table.max-width-1200 {
 
 .postcode-find-btn {
   white-space: nowrap;
-  background-color: #2e5aac;
-  color: #ffffff;
+  background-color: var(--token-interactive-brand, #2e5aac);
+  color: var(--token-text-inverse, #ffffff);
   border: none;
   font-weight: 500;
 }
@@ -450,12 +450,12 @@ table.slds-table.max-width-1200 {
 
 /* Field Validation Error Styles */
 .error-border {
-  border: 2px solid #d32f2f !important;
-  background-color: #fff5f5 !important;
+  border: 2px solid var(--token-danger, #d32f2f) !important;
+  background-color: var(--token-error-bg, #fff5f5) !important;
 }
 
 .field-error-message {
-  color: #d32f2f;
+  color: var(--token-danger, #d32f2f);
   font-size: 12px;
   margin-top: 4px;
   font-weight: 600;

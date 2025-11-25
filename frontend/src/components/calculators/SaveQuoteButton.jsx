@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { saveQuote, updateQuote } from '../utils/quotes';
-import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
-import { useSaveShortcut, useEscapeKey } from '../hooks/useKeyboardShortcut';
-import { useUiPreferences } from '../hooks/useUiPreferences';
-import ModalShell from './ModalShell';
-import KeyboardHint from './KeyboardHint';
+import { saveQuote, updateQuote } from '../../utils/quotes';
+import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
+import { useSaveShortcut, useEscapeKey } from '../../hooks/useKeyboardShortcut';
+import { useUiPreferences } from '../../hooks/useUiPreferences';
+import ModalShell from '../modals/ModalShell';
+import KeyboardHint from '../ui/KeyboardHint';
 
 // SaveQuoteButton shows a small modal to collect { name, borrowerName, applicantNames, notes }
 // If `existingQuote` prop provided (object with id), the button will perform an update instead of create.

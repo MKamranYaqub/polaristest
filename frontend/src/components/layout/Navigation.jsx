@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SideNav, SideNavItems, SideNavLink, SideNavMenu, SideNavMenuItem } from '@carbon/react';
-import { useAuth } from '../contexts/AuthContext';
-import '../styles/navigation.scss';
+import { useAuth } from '../../contexts/AuthContext';
+import '../../styles/navigation.scss';
 
 function Navigation() {
   const location = useLocation();

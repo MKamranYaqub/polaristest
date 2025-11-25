@@ -1,9 +1,9 @@
 import React from 'react';
-import Constants from '../components/Constants';
-import CriteriaTable from '../components/CriteriaTable';
-import RatesTable from '../components/RatesTable';
-import BridgeFusionRates from '../components/BridgeFusionRates';
-import GlobalSettings from '../components/GlobalSettings';
+import Constants from '../components/admin/Constants';
+import CriteriaTable from '../components/admin/CriteriaTable';
+import RatesTable from '../components/admin/RatesTable';
+import BridgeFusionRates from '../components/admin/BridgeFusionRates';
+import GlobalSettings from '../components/admin/GlobalSettings';
 
 const AdminPage = ({ tab = 'constants' }) => {
   return (

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import '../styles/Modal.css';
+import '../../styles/Modal.css';
 
 // ModalShell: reusable modal framing component
 // Props:

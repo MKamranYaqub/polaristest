@@ -1,6 +1,6 @@
 import React from 'react';
-import { useEscapeKey } from '../hooks/useKeyboardShortcut';
-import { useUiPreferences } from '../hooks/useUiPreferences';
+import { useEscapeKey } from '../../hooks/useKeyboardShortcut';
+import { useUiPreferences } from '../../hooks/useUiPreferences';
 import ModalShell from './ModalShell';
 
 /**

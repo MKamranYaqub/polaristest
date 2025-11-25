@@ -1,6 +1,6 @@
 import React from 'react';
 import CollapsibleSection from '../CollapsibleSection';
-import HelpIcon from '../../HelpIcon';
+import HelpIcon from '../../ui/HelpIcon';
 
 /**
  * BTLCriteriaSection - Handles criteria questions/answers for BTL Calculator

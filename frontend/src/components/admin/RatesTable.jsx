@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useSupabase } from '../contexts/SupabaseContext';
+import { useSupabase } from '../../contexts/SupabaseContext';
 import RateEditModal from './RateEditModal';
 // Bridge & Fusion rates tab removed - keep BTL rates only
-import NotificationModal from './NotificationModal';
-import '../styles/slds.css';
+import NotificationModal from '../modals/NotificationModal';
+import '../../styles/slds.css';
+import '../../styles/admin-tables.css';
 
 function RatesTable() {
   const [rates, setRates] = useState([]);
@@ -160,23 +161,20 @@ function RatesTable() {
 
   if (loading) {
     return (
-      <div className="slds-spinner_container">
-        <div className="slds-spinner slds-spinner_medium">
-          <div className="slds-spinner__dot-a"></div>
-          <div className="slds-spinner__dot-b"></div>
-        </div>
-        <div className="slds-text-heading_small slds-m-top_medium">Loading rates from Supabase...</div>
+      <div className="loading-overlay">
+        <div className="loading-spinner"></div>
+        <div className="loading-text">Loading rates from Supabase...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="slds-box slds-theme_error slds-m-around_medium">
-        <div>
-          <h3 className="slds-text-heading_medium">Error Loading Rates</h3>
-          <p className="slds-m-top_small">{error.message || error}</p>
-          <button className="slds-button slds-button_brand slds-m-top_medium" onClick={() => fetchRates()}>
+      <div className="error-state">
+        <div className="error-box">
+          <h3>Error Loading Rates</h3>
+          <p>{error.message || error}</p>
+          <button className="btn-primary" onClick={() => fetchRates()}>
             Try Again
           </button>
         </div>
@@ -581,12 +579,12 @@ function RatesTable() {
 
   
   return (
-    <div className="slds-p-around_medium">
+    <div className="admin-table-container">
       {/* Tabs removed - always showing BTL Rates */}
       <>
-      <div className="slds-grid slds-grid_vertical-align-center slds-m-bottom_medium">
-        <div className="slds-col">
-          <button className="slds-button slds-button_brand slds-m-right_small" onClick={handleAdd}>
+      <div className="table-header">
+        <div className="table-actions-left">
+          <button className="btn-primary" onClick={handleAdd}>
             Add New Product
           </button>
           <input
@@ -596,39 +594,39 @@ function RatesTable() {
             style={{ display: 'none' }}
             id="csv-import"
           />
-          <button className="slds-button slds-button_neutral slds-m-right_small" onClick={() => document.getElementById('csv-import').click()}>
+          <button className="btn-secondary" onClick={() => document.getElementById('csv-import').click()}>
             Import CSV
           </button>
-          <button className="slds-button slds-button_neutral slds-m-right_small" onClick={handleExport}>
+          <button className="btn-secondary" onClick={handleExport}>
             Export CSV
           </button>
           {selectedRows.size > 0 && (
-            <button className="slds-button slds-button_destructive" onClick={handleBulkDelete}>
+            <button className="btn-danger" onClick={handleBulkDelete}>
               Delete Selected ({selectedRows.size})
             </button>
           )}
-          <span className="slds-m-left_small slds-text-title">Total rows: {rates.length}</span>
+          <span className="total-count">Total: {rates.length}</span>
         </div>
-        <div className="slds-col_bump-left">
-          <div className="slds-grid slds-grid_vertical-align-center">
+        <div className="table-actions-right">
+          <div className="pagination-controls">
             <button 
-              className="slds-button slds-button_neutral"
+              className="btn-neutral"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
             >
               Previous
             </button>
-            <span className="slds-m-horizontal_small">Page {currentPage} of {totalPages}</span>
+            <span className="pagination-info">Page {currentPage} of {totalPages}</span>
             <button 
-              className="slds-button slds-button_neutral"
+              className="btn-neutral"
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
             >
               Next
             </button>
-            <div className="slds-m-left_small" style={{ display: 'flex', alignItems: 'center', gap: 'var(--token-spacing-sm)' }}>
-              <label style={{ fontSize: 'var(--token-font-size-sm)' }}>Rows:</label>
-              <select className="slds-select" value={itemsPerPage} onChange={(e) => { const v = Number(e.target.value); setItemsPerPage(v); setCurrentPage(1); }}>
+            <div className="rows-per-page">
+              <label>Rows:</label>
+              <select value={itemsPerPage} onChange={(e) => { const v = Number(e.target.value); setItemsPerPage(v); setCurrentPage(1); }}>
                 <option value={10}>10</option>
                 <option value={25}>25</option>
                 <option value={50}>50</option>
@@ -639,154 +637,112 @@ function RatesTable() {
         </div>
       </div>
 
-      <div className="slds-grid slds-wrap slds-m-bottom_medium" style={{ gap: 'var(--token-spacing-sm)' }}>
-          <div className="slds-form-element" style={{ minWidth: '200px' }}>
-            <label className="slds-form-element__label">Set Key:</label>
-            <div className="slds-form-element__control">
-              <select
-                className="slds-select"
-                value={filters.set_key}
-                onChange={(e) => handleFilterChange('set_key', e.target.value)}
-              >
-                <option value="">All Set Keys</option>
-                {Array.from(filterOptions.setKeys).sort().map(sk => (
-                  <option key={sk} value={sk}>{sk}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-        <div className="slds-form-element" style={{ minWidth: '150px' }}>
-          <label className="slds-form-element__label">Property:</label>
-          <div className="slds-form-element__control">
-            <select 
-              className="slds-select"
-              value={filters.property}
-              onChange={(e) => handleFilterChange('property', e.target.value)}
+      <div className="filters-section">
+        <div className="filter-field">
+          <label>Set Key</label>
+            <select
+              value={filters.set_key}
+              onChange={(e) => handleFilterChange('set_key', e.target.value)}
             >
-              <option value="">All Properties</option>
-              {Array.from(filterOptions.properties).sort().map(prop => (
-                <option key={prop} value={prop}>{prop}</option>
+              <option value="">All Set Keys</option>
+              {Array.from(filterOptions.setKeys).sort().map(sk => (
+                <option key={sk} value={sk}>{sk}</option>
               ))}
             </select>
           </div>
+
+        <div className="filter-field">
+          <label>Property</label>
+          <select 
+            value={filters.property}
+            onChange={(e) => handleFilterChange('property', e.target.value)}
+          >
+            <option value="">All Properties</option>
+            {Array.from(filterOptions.properties).sort().map(prop => (
+              <option key={prop} value={prop}>{prop}</option>
+            ))}
+          </select>
         </div>
 
-        <div className="slds-form-element" style={{ minWidth: '150px' }}>
-          <label className="slds-form-element__label">Rate Type:</label>
-          <div className="slds-form-element__control">
-            <select
-              className="slds-select"
-              value={filters.rate_type}
-              onChange={(e) => handleFilterChange('rate_type', e.target.value)}
-            >
-              <option value="">All Rate Types</option>
-              {Array.from(filterOptions.rateTypes).sort().map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
-          </div>
+        <div className="filter-field">
+          <label>Rate Type</label>
+          <select
+            value={filters.rate_type}
+            onChange={(e) => handleFilterChange('rate_type', e.target.value)}
+          >
+            <option value="">All Rate Types</option>
+            {Array.from(filterOptions.rateTypes).sort().map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
         </div>
 
-        <div className="slds-form-element" style={{ minWidth: '120px' }}>
-          <label className="slds-form-element__label">Retention?</label>
-          <div className="slds-form-element__control">
-            <select
-              className="slds-select"
-              value={filters.is_retention}
-              onChange={(e) => handleFilterChange('is_retention', e.target.value)}
-            >
-              <option value="">All</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </div>
+        <div className="filter-field">
+          <label>Retention</label>
+          <select
+            value={filters.is_retention}
+            onChange={(e) => handleFilterChange('is_retention', e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
         </div>
 
-        <div className="slds-form-element" style={{ minWidth: '150px' }}>
-          <label className="slds-form-element__label">Tier:</label>
-          <div className="slds-form-element__control">
-            <select
-              className="slds-select"
-              value={filters.tier}
-              onChange={(e) => handleFilterChange('tier', e.target.value)}
-            >
-              <option value="">All Tiers</option>
-              {Array.from(filterOptions.tiers).sort().map(tier => (
-                <option key={tier} value={tier}>{tier}</option>
-              ))}
-            </select>
-          </div>
+        <div className="filter-field">
+          <label>Tier</label>
+          <select
+            value={filters.tier}
+            onChange={(e) => handleFilterChange('tier', e.target.value)}
+          >
+            <option value="">All Tiers</option>
+            {Array.from(filterOptions.tiers).sort().map(tier => (
+              <option key={tier} value={tier}>{tier}</option>
+            ))}
+          </select>
         </div>
 
-        <div className="slds-form-element" style={{ minWidth: '150px' }}>
-          <label className="slds-form-element__label">Product:</label>
-          <div className="slds-form-element__control">
-            <select
-              className="slds-select"
-              value={filters.product}
-              onChange={(e) => handleFilterChange('product', e.target.value)}
-            >
-              <option value="">All Products</option>
-              {Array.from(filterOptions.products).sort().map(product => (
-                <option key={product} value={product}>{product}</option>
-              ))}
-            </select>
-          </div>
+        <div className="filter-field">
+          <label>Product</label>
+          <select
+            value={filters.product}
+            onChange={(e) => handleFilterChange('product', e.target.value)}
+          >
+            <option value="">All Products</option>
+            {Array.from(filterOptions.products).sort().map(product => (
+              <option key={product} value={product}>{product}</option>
+            ))}
+          </select>
         </div>
 
-        <div className="slds-form-element" style={{ minWidth: '150px' }}>
-          <label className="slds-form-element__label">Product Fee:</label>
-          <div className="slds-form-element__control">
-            <select
-              className="slds-select"
-              value={filters.product_fee}
-              onChange={(e) => handleFilterChange('product_fee', e.target.value)}
-            >
-              <option value="">All Product Fees</option>
-              {Array.from(filterOptions.productFees).sort((a, b) => a - b).map(fee => (
-                <option key={fee} value={fee}>{fee}</option>
-              ))}
-            </select>
-          </div>
+        <div className="filter-field">
+          <label>Product Fee</label>
+          <select
+            value={filters.product_fee}
+            onChange={(e) => handleFilterChange('product_fee', e.target.value)}
+          >
+            <option value="">All Product Fees</option>
+            {Array.from(filterOptions.productFees).sort((a, b) => a - b).map(fee => (
+              <option key={fee} value={fee}>{fee}</option>
+            ))}
+          </select>
         </div>
-        <div className="slds-form-element" style={{ minWidth: '150px' }}>
-          <label className="slds-form-element__label">Initial Term (months):</label>
-          <div className="slds-form-element__control">
-            <select
-              className="slds-select"
-              value={filters.initial_term}
-              onChange={(e) => handleFilterChange('initial_term', e.target.value)}
-            >
-              <option value="">All</option>
-              {Array.from(filterOptions.initialTerms).sort((a, b) => a - b).map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="slds-form-element" style={{ minWidth: '150px' }}>
-          <label className="slds-form-element__label">Full Term (months):</label>
-          <div className="slds-form-element__control">
-            <select
-              className="slds-select"
-              value={filters.full_term}
-              onChange={(e) => handleFilterChange('full_term', e.target.value)}
-            >
-              <option value="">All</option>
-              {Array.from(filterOptions.fullTerms).sort((a, b) => a - b).map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
+        <div className="filter-field">
+          <label>Initial Term (months)</label>
+          <select
+            value={filters.initial_term}
+            onChange={(e) => handleFilterChange('initial_term', e.target.value)}
+          >
+            <option value="">All</option>
+            {Array.from(filterOptions.initialTerms).sort((a, b) => a - b).map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
         </div>
       </div>
 
-        
-
-      <div style={{ overflowX: 'auto' }}>
-        <table className="slds-table slds-table_bordered slds-table_cell-buffer">
+      <div className="table-wrapper">
+        <table className="professional-table">
           <thead>
             <tr>
               <th>
@@ -796,17 +752,17 @@ function RatesTable() {
                   onChange={(e) => toggleSelectAll(e.target.checked)}
                 />
               </th>
-              <th onClick={() => changeSort('set_key')} style={{ cursor: 'pointer' }}>Set Key {sortField === 'set_key' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('rate_type')} style={{ cursor: 'pointer' }}>Rate Type {sortField === 'rate_type' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('set_key')} className={`sortable ${sortField === 'set_key' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Set Key</th>
+              <th onClick={() => changeSort('rate_type')} className={`sortable ${sortField === 'rate_type' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Rate Type</th>
               <th>Retention?</th>
-              <th onClick={() => changeSort('property')} style={{ cursor: 'pointer' }}>Property {sortField === 'property' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('tier')} style={{ cursor: 'pointer' }}>Tier {sortField === 'tier' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('product')} style={{ cursor: 'pointer' }}>Product {sortField === 'product' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('property')} className={`sortable ${sortField === 'property' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Property</th>
+              <th onClick={() => changeSort('tier')} className={`sortable ${sortField === 'tier' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Tier</th>
+              <th onClick={() => changeSort('product')} className={`sortable ${sortField === 'product' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Product</th>
               <th>Product Fee</th>
-              <th onClick={() => changeSort('initial_term')} style={{ cursor: 'pointer' }}>Initial Term {sortField === 'initial_term' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('full_term')} style={{ cursor: 'pointer' }}>Full Term {sortField === 'full_term' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('rate')} style={{ cursor: 'pointer' }}>Rate (%) {sortField === 'rate' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              <th onClick={() => changeSort('max_ltv')} style={{ cursor: 'pointer' }}>Max LTV {sortField === 'max_ltv' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+              <th onClick={() => changeSort('initial_term')} className={`sortable ${sortField === 'initial_term' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Initial Term</th>
+              <th onClick={() => changeSort('full_term')} className={`sortable ${sortField === 'full_term' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Full Term</th>
+              <th onClick={() => changeSort('rate')} className={`sortable ${sortField === 'rate' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Rate (%)</th>
+              <th onClick={() => changeSort('max_ltv')} className={`sortable ${sortField === 'max_ltv' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Max LTV</th>
               <th>Revert Index</th>
               <th>Revert Margin</th>
               <th>Min Loan</th>
@@ -868,11 +824,11 @@ function RatesTable() {
                 <td>{rate.floor_rate ?? ''}</td>
                 <td>{rate.proc_fee ?? ''}</td>
                 <td className="sticky-action">
-                  <div className="slds-grid slds-grid_align-center" style={{ gap: '0.25rem' }}>
-                    <button className="slds-button slds-button_neutral" onClick={() => handleEdit(rate)}>
+                  <div className="row-actions">
+                    <button className="btn-neutral" onClick={() => handleEdit(rate)}>
                       Edit
                     </button>
-                    <button className="slds-button slds-button_destructive" onClick={() => handleDelete(rate.id)}>
+                    <button className="btn-danger" onClick={() => handleDelete(rate.id)}>
                       Delete
                     </button>
                   </div>

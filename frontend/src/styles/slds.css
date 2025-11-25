@@ -121,14 +121,27 @@ body,
 
 .slds-button_destructive {
   padding: 0 1rem;
-  background-color: #c23934;
-  border-color: #c23934;
-  color: white;
+  background-color: var(--token-danger, #c23934);
+  border-color: var(--token-danger, #c23934);
+  color: var(--token-text-inverse, white);
 }
 
 .slds-button_destructive:hover {
-  background-color: #a61a14;
-  border-color: #a61a14;
+  background-color: var(--token-danger-hover, #a61a14);
+  border-color: var(--token-danger-hover, #a61a14);
+}
+
+.slds-button_outline-brand {
+  padding: 0 1rem;
+  background-color: transparent;
+  border: 1px solid var(--token-interactive, #0250d9);
+  color: var(--token-interactive, #0250d9);
+}
+
+.slds-button_outline-brand:hover {
+  background-color: var(--token-interactive, #0250d9);
+  border-color: var(--token-interactive, #0250d9);
+  color: var(--token-text-inverse, white);
 }
 
 /* Form Elements */
@@ -246,9 +259,9 @@ body,
 
 .slds-modal__container {
   position: relative;
-  background: white;
+  background: var(--token-layer-surface, white);
   border-radius: 0.25rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--token-shadow-modal, 0 4px 8px rgba(0, 0, 0, 0.12));
   width: 50%;
   max-width: 40rem;
   min-width: 20rem;
@@ -284,14 +297,14 @@ body,
   right: 0;
   bottom: 0;
   left: 0;
-  background: rgba(43, 40, 38, 0.6);
+  background: var(--token-layer-overlay, rgba(43, 40, 38, 0.6));
   z-index: 9000;
 }
 
 /* Navigation */
 .slds-nav-vertical {
   width: 100%;
-  background: white;
+  background: var(--token-layer-surface, white);
   border: 1px solid var(--slds-color-gray-3);
   border-radius: var(--slds-border-radius);
 }
@@ -388,7 +401,7 @@ body,
 
 /* Helper / weak text: smaller and slightly grey to match design guidance */
 .slds-text-color_weak {
-  color: #6b6b6b; /* muted grey */
+  color: var(--token-text-secondary, #6b6b6b); /* muted grey */
   font-size: 0.8125rem; /* slightly smaller than normal label text */
 }
 
@@ -465,19 +478,19 @@ body,
 .slds-card__header--split .slds-card__meta {
   text-align: right;
   font-size: 0.95rem;
-  color: #333;
+  color: var(--token-text-primary, #333);
 }
 
 /* required star for required fields */
 .slds-required {
-  color: #c23934; /* Salesforce destructive/red */
+  color: var(--token-danger, #c23934); /* Salesforce destructive/red */
   margin-right: 0.35rem;
   font-weight: 600;
 }
 
 /* helper small text under section headers */
 .slds-section-help {
-  color: #6b6b6b;
+  color: var(--token-text-secondary, #6b6b6b);
   font-size: 0.875rem;
   margin-top: 0.25rem;
 }
@@ -498,10 +511,10 @@ body,
 .slds-toggle__track {
   width: 100%;
   height: 100%;
-  background: #e6e9ef;
+  background: var(--token-layer-surface, #e6e9ef);
   border-radius: 999px;
   transition: background 0.15s ease-in-out;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: var(--token-shadow-soft, inset 0 1px 2px rgba(0,0,0,0.05));
 }
 .slds-toggle__handle {
   position: absolute;
@@ -509,23 +522,23 @@ body,
   top: 4px;
   width: 20px;
   height: 20px;
-  background: white;
+  background: var(--token-layer-background, white);
   border-radius: 50%;
   transition: transform 0.15s ease-in-out;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+  box-shadow: var(--token-shadow-soft, 0 1px 2px rgba(0,0,0,0.12));
 }
 .slds-toggle input[type="checkbox"]:checked + .slds-toggle__track {
-  background: #1072d8 !important; /* SLDS brand blue */
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
+  background: var(--token-interactive-brand, #1072d8) !important; /* SLDS brand blue */
+  box-shadow: var(--token-shadow-soft, inset 0 1px 2px rgba(0,0,0,0.06));
 }
 .slds-toggle input[type="checkbox"]:checked + .slds-toggle__track .slds-toggle__handle {
   transform: translateX(20px);
-  background: #ffffff !important;
+  background: var(--token-layer-background, #ffffff) !important;
 }
 
 /* focus state to improve accessibility and visual feedback */
 .slds-toggle input[type="checkbox"]:focus + .slds-toggle__track {
-  box-shadow: 0 0 0 4px rgba(16,114,216,0.12);
+  box-shadow: 0 0 0 4px var(--token-focus-ring, rgba(16,114,216,0.12));
 }
 
 /* Larger, styled range input for LTV */
@@ -534,7 +547,7 @@ body,
   height: 8px;
   -webkit-appearance: none;
   appearance: none;
-  background: linear-gradient(90deg, #1072d8 0%, #1072d8 50%, #e6e9ef 50%);
+  background: linear-gradient(90deg, var(--token-interactive-brand, #1072d8) 0%, var(--token-interactive-brand, #1072d8) 50%, var(--token-layer-surface, #e6e9ef) 50%);
   border-radius: 999px;
   outline: none;
 }
@@ -544,16 +557,16 @@ body,
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #1072d8;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  background: var(--token-interactive-brand, #1072d8);
+  box-shadow: var(--token-shadow-soft, 0 2px 4px rgba(0,0,0,0.2));
   margin-top: -5px;
 }
 .calculator-grid input[type="range"]::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #1072d8;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  background: var(--token-interactive-brand, #1072d8);
+  box-shadow: var(--token-shadow-soft, 0 2px 4px rgba(0,0,0,0.2));
 }
 
 /* Compact fee inputs styling to match screenshot */
@@ -578,23 +591,23 @@ body,
   margin-bottom: 0.35rem;
 }
 .fee-compact .disabled-note {
-  color: #6b6b6b;
+  color: var(--token-text-secondary, #6b6b6b);
   font-size: 0.9rem;
   padding-left: 8px;
 }
 .fee-compact .slds-select:disabled,
 .fee-compact .slds-input:disabled {
-  background-color: #f5f6f8;
-  border-color: #e6e9ef;
+  background-color: var(--token-layer-surface, #f5f6f8);
+  border-color: var(--token-border-subtle, #e6e9ef);
   opacity: 1;
 }
 
 
 /* Visual style for constants inputs when disabled (editable per-field) */
 .constants-disabled {
-  background-color: #f5f6f8;
-  border-color: #e6e9ef;
-  color: #6b6b6b;
+  background-color: var(--token-layer-surface, #f5f6f8);
+  border-color: var(--token-border-subtle, #e6e9ef);
+  color: var(--token-text-secondary, #6b6b6b);
   cursor: not-allowed;
   opacity: 1;
 }
@@ -613,8 +626,8 @@ body,
   border: 1px solid #d8dbe0;
 }
 .slds-input:focus, .slds-select:focus {
-  border-color: #1072d8;
-  box-shadow: 0 0 0 3px rgba(16,114,216,0.08);
+  border-color: var(--token-interactive-brand, #1072d8);
+  box-shadow: 0 0 0 3px var(--token-focus-ring, rgba(16,114,216,0.08));
 }
 
 /* Salesforce Icon Styles */
@@ -632,7 +645,7 @@ body,
 .slds-button_icon:hover .slds-button__icon,
 .slds-button_icon-border:hover .slds-button__icon,
 .slds-button_icon-border-filled:hover .slds-button__icon {
-  fill: #0176d3;
+  fill: var(--token-interactive, #0176d3);
 }
 
 .slds-button__icon_inverse,

@@ -38,7 +38,7 @@
 }
 
 .slds-button:hover:not(:disabled) {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--token-shadow-soft, 0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 /* Range toggle buttons */
@@ -48,7 +48,7 @@
 
 .range-button:hover:not(.active) {
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--token-shadow-soft, 0 2px 4px rgba(0, 0, 0, 0.08));
 }
 
 /* Modal transitions */
@@ -90,7 +90,7 @@
 .slds-input:focus,
 .slds-select:focus,
 .slds-textarea:focus {
-  box-shadow: 0 0 0 3px var(--token-focus-ring, rgba(2, 80, 217, 0.3));
+  box-shadow: 0 0 0 3px var(--token-focus-ring, var(--token-focus-ring, rgba(2, 80, 217, 0.3)));
 }
 
 /* Table row hover */
@@ -104,7 +104,7 @@
 }
 
 .app-card:hover {
-  box-shadow: var(--token-shadow-strong, 0 6px 18px rgba(11, 20, 26, 0.14));
+  box-shadow: var(--token-shadow-strong, var(--token-shadow-strong, 0 6px 18px rgba(11, 20, 26, 0.14)));
 }
 
 /* Loading spinner fade in */

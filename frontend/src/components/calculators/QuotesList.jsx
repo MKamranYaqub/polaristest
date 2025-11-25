@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loading } from '@carbon/react';
-import { listQuotes, getQuote, deleteQuote } from '../utils/quotes';
-import { API_BASE_URL } from '../config/api';
-import SalesforceIcon from './shared/SalesforceIcon';
-import NotificationModal from './NotificationModal';
-import ConfirmationModal from './ConfirmationModal';
-import Breadcrumbs from './Breadcrumbs';
+import { listQuotes, getQuote, deleteQuote } from '../../utils/quotes';
+import { API_BASE_URL } from '../../config/api';
+import SalesforceIcon from '../shared/SalesforceIcon';
+import NotificationModal from '../modals/NotificationModal';
+import ConfirmationModal from '../modals/ConfirmationModal';
+import Breadcrumbs from '../layout/Breadcrumbs';
 
 export default function QuotesList({ calculatorType = null, onLoad = null }) {
   const [quotes, setQuotes] = useState([]);

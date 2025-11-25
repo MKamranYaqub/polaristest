@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { InlineLoading } from '@carbon/react';
-import { useSaveShortcut, useEscapeKey } from '../hooks/useKeyboardShortcut';
-import { useUiPreferences } from '../hooks/useUiPreferences';
-import { useToast } from '../contexts/ToastContext';
+import { useSaveShortcut, useEscapeKey } from '../../hooks/useKeyboardShortcut';
+import { useUiPreferences } from '../../hooks/useUiPreferences';
+import { useToast } from '../../contexts/ToastContext';
 import ModalShell from './ModalShell';
 import NotificationModal from './NotificationModal';
-import HelpIcon from './HelpIcon';
-import { FUNDING_LINES_BTL, FUNDING_LINES_BRIDGE, LOCALSTORAGE_CONSTANTS_KEY } from '../config/constants';
+import HelpIcon from '../ui/HelpIcon';
+import { FUNDING_LINES_BTL, FUNDING_LINES_BRIDGE, LOCALSTORAGE_CONSTANTS_KEY } from '../../config/constants';
 
 export default function IssueDIPModal({ 
   isOpen, 

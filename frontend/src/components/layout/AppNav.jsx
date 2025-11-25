@@ -1,8 +1,8 @@
 import React from 'react';
 import Navigation from './Navigation';
-import ThemeToggle from './ThemeToggle';
-import UserProfileButton from './UserProfileButton';
-import '../styles/app-nav.scss';
+import ThemeToggle from '../ui/ThemeToggle';
+import UserProfileButton from '../ui/UserProfileButton';
+import '../../styles/app-nav.scss';
 
 /**
  * AppNav - Consolidated navigation component

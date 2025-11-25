@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useSupabase } from '../contexts/SupabaseContext';
-import NotificationModal from './NotificationModal';
+import { useSupabase } from '../../contexts/SupabaseContext';
+import NotificationModal from '../modals/NotificationModal';
 import { InlineLoading } from '@carbon/react';
 
 /**

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import ReactDOM from 'react-dom';
-import SalesforceIcon from './shared/SalesforceIcon';
-import '../styles/help-icon.css';
+import SalesforceIcon from '../shared/SalesforceIcon';
+import '../../styles/help-icon.css';
 
 /**
  * HelpIcon - Contextual help icon with custom portal tooltip (Carbon tooltip replaced)

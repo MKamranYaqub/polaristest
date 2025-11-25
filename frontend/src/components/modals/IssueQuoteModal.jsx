@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { InlineLoading } from '@carbon/react';
-import { useSaveShortcut, useEscapeKey } from '../hooks/useKeyboardShortcut';
-import { useUiPreferences } from '../hooks/useUiPreferences';
-import { useToast } from '../contexts/ToastContext';
+import { useSaveShortcut, useEscapeKey } from '../../hooks/useKeyboardShortcut';
+import { useUiPreferences } from '../../hooks/useUiPreferences';
+import { useToast } from '../../contexts/ToastContext';
 import ModalShell from './ModalShell';
 import NotificationModal from './NotificationModal';
-import HelpIcon from './HelpIcon';
+import HelpIcon from '../ui/HelpIcon';
 
 const DEFAULT_ASSUMPTIONS = [
   'The borrower has a clean credit history.',

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useSupabase } from '../contexts/SupabaseContext';
-import NotificationModal from './NotificationModal';
+import { useSupabase } from '../../contexts/SupabaseContext';
+import NotificationModal from '../modals/NotificationModal';
 import {
   PRODUCT_TYPES_LIST as DEFAULT_PRODUCT_TYPES_LIST,
   FEE_COLUMNS as DEFAULT_FEE_COLUMNS,
@@ -13,8 +13,8 @@ import {
   FUNDING_LINES_BRIDGE,
   UI_PREFERENCES as DEFAULT_UI_PREFERENCES,
   LOCALSTORAGE_CONSTANTS_KEY,
-} from '../config/constants';
-import '../styles/slds.css';
+} from '../../config/constants';
+import '../../styles/slds.css';
 
 function readOverrides() {
   try {

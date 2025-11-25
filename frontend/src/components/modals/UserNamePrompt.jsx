@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useUser } from '../contexts/UserContext';
-import '../styles/Modal.css';
+import { useUser } from '../../contexts/UserContext';
+import '../../styles/Modal.css';
 
 /**
  * UserNamePrompt - One-time prompt to collect user name

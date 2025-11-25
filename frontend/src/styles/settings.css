@@ -6,7 +6,7 @@
 
 /* Tab Buttons */
 .settings-tabs {
-  border-bottom: 2px solid #e5e5e5;
+  border-bottom: 2px solid var(--token-border-subtle, #e5e5e5);
   margin-bottom: 2rem;
 }
 
@@ -17,26 +17,26 @@
   cursor: pointer;
   font-size: 1rem;
   font-weight: 500;
-  color: #706e6b;
+  color: var(--token-text-secondary, #706e6b);
   border-bottom: 3px solid transparent;
   margin-bottom: -2px;
   transition: all 0.2s ease;
 }
 
 .settings-tab-button:hover {
-  color: #0176d3;
+  color: var(--token-interactive, #0176d3);
 }
 
 .settings-tab-button.active {
-  color: #0176d3;
-  border-bottom-color: #0176d3;
+  color: var(--token-interactive, #0176d3);
+  border-bottom-color: var(--token-interactive, #0176d3);
   font-weight: 600;
 }
 
 /* Setting Items */
 .setting-item {
   padding: 1rem 0;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid var(--token-border-subtle, #e5e5e5);
 }
 
 .setting-item:last-child {
@@ -56,7 +56,7 @@
 .setting-label-text {
   font-size: 1rem;
   font-weight: 500;
-  color: #181818;
+  color: var(--token-text-primary, #181818);
 }
 
 .toggle-switch {
@@ -80,7 +80,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #c9c9c9;
+  background-color: var(--token-border-subtle, #c9c9c9);
   transition: 0.3s;
   border-radius: 28px;
 }
@@ -92,14 +92,14 @@
   width: 20px;
   left: 4px;
   bottom: 4px;
-  background-color: white;
+  background-color: var(--token-layer-background, white);
   transition: 0.3s;
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--token-shadow-soft, 0 1px 3px rgba(0, 0, 0, 0.3));
 }
 
 .toggle-switch input:checked + .toggle-slider {
-  background-color: #0176d3;
+  background-color: var(--token-interactive-brand, #0176d3);
 }
 
 .toggle-switch input:checked + .toggle-slider:before {
@@ -107,7 +107,7 @@
 }
 
 .toggle-switch input:focus + .toggle-slider {
-  box-shadow: 0 0 0 2px rgba(1, 118, 211, 0.3);
+  box-shadow: 0 0 0 2px var(--token-focus-ring, rgba(1, 118, 211, 0.3));
 }
 
 .toggle-switch input:disabled + .toggle-slider {
@@ -132,7 +132,7 @@
 }
 
 .radio-label:hover {
-  background-color: #f3f3f3;
+  background-color: var(--token-layer-surface, #f3f3f3);
 }
 
 .radio-label input[type="radio"] {
@@ -140,12 +140,12 @@
   height: 18px;
   margin-right: 0.75rem;
   cursor: pointer;
-  accent-color: #0176d3;
+  accent-color: var(--token-interactive-brand, #0176d3);
 }
 
 .radio-label span {
   font-size: 0.95rem;
-  color: #181818;
+  color: var(--token-text-primary, #181818);
 }
 
 /* Dark Mode Styles */

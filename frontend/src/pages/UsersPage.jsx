@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 import SalesforceIcon from '../components/shared/SalesforceIcon';
-import ModalShell from '../components/ModalShell';
+import ModalShell from '../components/modals/ModalShell';
 import '../styles/Modal.css';
 
 const UsersPage = () => {
