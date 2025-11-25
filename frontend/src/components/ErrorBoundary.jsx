@@ -71,18 +71,18 @@ export default class ErrorBoundary extends React.Component {
                   Error Details (Development Only)
                 </summary>
                 <div className="slds-box slds-box_small slds-m-top_small" style={{ 
-                  backgroundColor: '#f3f2f2',
+                  backgroundColor: 'var(--token-ui-background-disabled)',
                   fontFamily: 'monospace',
-                  fontSize: '12px',
+                  fontSize: 'var(--token-font-size-xs)',
                   whiteSpace: 'pre-wrap',
                   overflowX: 'auto'
                 }}>
                   <strong>Error:</strong>
-                  <div style={{ color: '#c23934', marginBottom: '1rem' }}>
+                  <div style={{ color: 'var(--token-critical)', marginBottom: 'var(--token-spacing-lg)' }}>
                     {this.state.error && this.state.error.toString()}
                   </div>
                   <strong>Component Stack:</strong>
-                  <div style={{ color: '#706e6b' }}>
+                  <div style={{ color: 'var(--token-text-muted)' }}>
                     {this.state.info && this.state.info.componentStack}
                   </div>
                 </div>

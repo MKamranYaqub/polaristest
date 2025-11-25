@@ -11,8 +11,8 @@ export function CalculatorErrorFallback({ error, reset }) {
         <div className="slds-illustration slds-illustration_large">
           <svg className="slds-illustration__svg" viewBox="0 0 470 230" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
             <g transform="translate(-53 -80)">
-              <circle cx="288" cy="200" r="120" fill="#f3f2f2"/>
-              <path d="M288,140 L288,260 M228,200 L348,200" stroke="#c23934" strokeWidth="8" strokeLinecap="round"/>
+              <circle cx="288" cy="200" r="120" fill="var(--token-ui-background-disabled)"/>
+              <path d="M288,140 L288,260 M228,200 L348,200" stroke="var(--token-critical)" strokeWidth="8" strokeLinecap="round"/>
             </g>
           </svg>
         </div>
@@ -52,9 +52,9 @@ export function CalculatorErrorFallback({ error, reset }) {
 
         {import.meta.env.DEV && error && (
           <div className="slds-box slds-box_small slds-m-top_large" style={{
-            backgroundColor: '#f3f2f2',
+            backgroundColor: 'var(--token-ui-background-disabled)',
             textAlign: 'left',
-            fontSize: '12px',
+            fontSize: 'var(--token-font-size-xs)',
             fontFamily: 'monospace'
           }}>
             <strong>Error Details (Dev Only):</strong>

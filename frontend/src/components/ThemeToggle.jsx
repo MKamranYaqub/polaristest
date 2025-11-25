@@ -43,15 +43,12 @@ const ThemeToggle = () => {
     <button
       onClick={cycleTheme}
       title={getTooltip()}
+      className="flex-center radius-sm hover-bg"
       style={{
         background: 'transparent',
         border: '1px solid var(--cds-border-subtle)',
-        borderRadius: '4px',
         padding: 'var(--token-spacing-sm)',
         cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         color: 'var(--cds-icon-primary)',
         transition: 'all 0.2s ease',
         width: '40px',

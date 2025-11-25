@@ -626,8 +626,8 @@ function RatesTable() {
             >
               Next
             </button>
-            <div className="slds-m-left_small" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.85rem' }}>Rows:</label>
+            <div className="slds-m-left_small" style={{ display: 'flex', alignItems: 'center', gap: 'var(--token-spacing-sm)' }}>
+              <label style={{ fontSize: 'var(--token-font-size-sm)' }}>Rows:</label>
               <select className="slds-select" value={itemsPerPage} onChange={(e) => { const v = Number(e.target.value); setItemsPerPage(v); setCurrentPage(1); }}>
                 <option value={10}>10</option>
                 <option value={25}>25</option>
@@ -639,7 +639,7 @@ function RatesTable() {
         </div>
       </div>
 
-      <div className="slds-grid slds-wrap slds-m-bottom_medium" style={{ gap: '0.5rem' }}>
+      <div className="slds-grid slds-wrap slds-m-bottom_medium" style={{ gap: 'var(--token-spacing-sm)' }}>
           <div className="slds-form-element" style={{ minWidth: '200px' }}>
             <label className="slds-form-element__label">Set Key:</label>
             <div className="slds-form-element__control">

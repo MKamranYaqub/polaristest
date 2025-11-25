@@ -111,9 +111,9 @@ const UserProfileButton = () => {
             width: '40px',
             height: '40px',
             borderRadius: '50%',
-            backgroundColor: '#0176d3',
-            color: 'white',
-            fontSize: '14px',
+            backgroundColor: 'var(--token-brand-primary)',
+            color: 'var(--token-text-inverse)',
+            fontSize: 'var(--token-font-size-sm)',
             fontWeight: 'bold',
             display: 'flex',
             alignItems: 'center',
@@ -135,7 +135,7 @@ const UserProfileButton = () => {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                zIndex: 998
+                zIndex: 'var(--token-z-dropdown)'
               }}
             />
             <div 
@@ -144,17 +144,17 @@ const UserProfileButton = () => {
                 position: 'absolute',
                 top: '48px',
                 right: '0',
-                zIndex: 999,
+                zIndex: 'calc(var(--token-z-dropdown) + 1)',
                 minWidth: '280px',
-                backgroundColor: 'white',
-                border: '1px solid #d8dde6',
-                borderRadius: '0.25rem',
-                boxShadow: '0 2px 12px 0 rgba(255, 56, 56, 0.16)'
+                backgroundColor: 'var(--token-layer-surface)',
+                border: '1px solid var(--token-border-subtle)',
+                borderRadius: 'var(--token-radius-sm)',
+                boxShadow: 'var(--token-shadow-modal)'
               }}
             >
               {/* Profile Info */}
               <div className="slds-p-around_medium slds-border_bottom">
-                <div className="slds-text-heading_small slds-m-bottom_xx-small" style={{ color: 'var(--token-ui-text-dark)', fontWeight: '600' }}>
+                <div className="slds-text-heading_small slds-m-bottom_xx-small" style={{ color: 'var(--token-text-primary)', fontWeight: '600' }}>
                   {getUserName()}
                 </div>
                 {user.email && (
@@ -162,7 +162,7 @@ const UserProfileButton = () => {
                     {user.email}
                   </div>
                 )}
-                <div className="slds-text-body_small" style={{ color: '#706e6b', fontSize: '12px' }}>
+                <div className="slds-text-body_small" style={{ color: 'var(--token-text-muted)', fontSize: 'var(--token-font-size-xs)' }}>
                   {getAccessLevelLabel()}
                 </div>
               </div>
@@ -178,8 +178,8 @@ const UserProfileButton = () => {
                     style={{ 
                       display: 'flex',
                       alignItems: 'center',
-                      padding: '0.75rem 1rem',
-                      color: '#181818',
+                      padding: 'var(--token-spacing-md) var(--token-spacing-lg)',
+                      color: 'var(--token-text-primary)',
                       textDecoration: 'none',
                       cursor: 'pointer'
                     }}
@@ -216,13 +216,13 @@ const UserProfileButton = () => {
                     style={{ 
                       display: 'flex',
                       alignItems: 'center',
-                      padding: '0.75rem 1rem',
-                      color: '#181818',
+                      padding: 'var(--token-spacing-md) var(--token-spacing-lg)',
+                      color: 'var(--token-text-primary)',
                       textDecoration: 'none',
                       cursor: 'pointer'
                     }}
                   >
-                    <span style={{ marginRight: '0.5rem', fontSize: '16px' }}>🚪</span>
+                    <span style={{ marginRight: 'var(--token-spacing-sm)', fontSize: '16px' }}>🚪</span>
                     <span>Logout</span>
                   </a>
                 </li>

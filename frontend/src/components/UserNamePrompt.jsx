@@ -63,7 +63,7 @@ const UserNamePrompt = () => {
   if (!showNamePrompt) return null;
 
   return (
-    <div className="modal-backdrop" style={{ zIndex: 9999 }}>
+    <div className="modal-backdrop z-toast">
       <div className="slds-modal slds-fade-in-open" role="dialog">
         <div className="slds-modal__container" style={{ maxWidth: '500px' }}>
           {/* Header */}

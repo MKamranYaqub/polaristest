@@ -14,6 +14,9 @@ import SliderResultRow from './calculator/SliderResultRow';
 import EditableResultRow from './calculator/EditableResultRow';
 import QuoteReferenceHeader from './calculator/shared/QuoteReferenceHeader';
 import ClientDetailsSection from './calculator/shared/ClientDetailsSection';
+import ActionButtons from './calculator/ActionButtons';
+import RangeToggle from './calculator/RangeToggle';
+import TopFiltersSection from './calculator/btl/TopFiltersSection';
 import Breadcrumbs from './Breadcrumbs';
 import useBrokerSettings from '../hooks/calculator/useBrokerSettings';
 import { useResultsVisibility } from '../hooks/useResultsVisibility';
@@ -1163,108 +1166,49 @@ export default function BTLcalculator({ initialQuote = null }) {
       <QuoteReferenceHeader reference={currentQuoteRef} />
       
       {/* Top filters inline - no card */}
-      <div className="top-filters">
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">Product Type</label>
-          <div className="slds-form-element__control">
-            <div><strong>BTL</strong></div>
-          </div>
-        </div>
-
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">Product Scope</label>
-          <div className="slds-form-element__control">
-            <select className="slds-select" value={productScope} onChange={(e) => setProductScope(e.target.value)} disabled={isReadOnly}>
-              {productScopes.map((ps) => (
-                <option key={ps} value={ps}>{ps}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">Retention?</label>
-          <div className="slds-form-element__control">
-            <select className="slds-select" value={retentionChoice} onChange={(e) => setRetentionChoice(e.target.value)} disabled={isReadOnly}>
-             <option value="No">No</option>
-              <option value="Yes">Yes</option>
-              
-            </select>
-          </div>
-        </div>
-
-        {retentionChoice === 'Yes' && (
-          <div className="slds-form-element">
-            <label className="slds-form-element__label">Retention LTV</label>
-            <div className="slds-form-element__control">
-              <select className="slds-select" value={retentionLtv} onChange={(e) => setRetentionLtv(e.target.value)} disabled={isReadOnly}>
-                <option value="65">65%</option>
-                <option value="75">75%</option>
-              </select>
-            </div>
-          </div>
-        )}
-
-        <div className="tier-display">
-          <span className="tier-label">Based on the criteria:</span>
-          <strong className="tier-value">Tier {currentTier}</strong>
-        </div>
-
-        
-
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-          {currentQuoteId && (
-            <>
-              <button 
-                className="slds-button slds-button_neutral"
-                onClick={() => setDipModalOpen(true)}
-                style={{ marginRight: 'var(--token-spacing-sm)' }}
-              >
-                Issue DIP
-              </button>
-              <button 
-                className="slds-button slds-button_brand"
-                onClick={handleIssueQuote}
-                style={{ marginRight: 'var(--token-spacing-sm)' }}
-              >
-                Issue Quote
-              </button>
-            </>
-          )}
-          <SaveQuoteButton
-            calculatorType="BTL"
-            calculationData={{
-              productScope,
-              retentionChoice,
-              retentionLtv,
-              tier: currentTier,
-              propertyValue,
-              monthlyRent,
-              topSlicing,
-              loanType,
-              specificGrossLoan,
-              specificNetLoan,
-              targetLtv: maxLtvInput,
-              productType,
-              selectedRange,
-              answers,
-              // Client details from broker settings
-              ...brokerSettings.getAllSettings(),
-              relevantRates: fullComputedResults,
-              selectedRate: (filteredRatesForDip && filteredRatesForDip.length > 0) 
-                ? filteredRatesForDip[0] 
-                : (fullComputedResults && fullComputedResults.length > 0 ? fullComputedResults[0] : null),
-              // Include overrides for saving
-              ratesOverrides,
-              productFeeOverrides,
-              rolledMonthsPerColumn,
-              deferredInterestPerColumn,
-            }}
-            allColumnData={[]}
-            bestSummary={null}
-            existingQuote={effectiveInitialQuote}
-            showProductRangeSelection={hasBothRanges()}
-            onSaved={(savedQuote) => {
+      <TopFiltersSection
+        productScope={productScope}
+        onProductScopeChange={setProductScope}
+        productScopes={productScopes}
+        retentionChoice={retentionChoice}
+        onRetentionChoiceChange={setRetentionChoice}
+        retentionLtv={retentionLtv}
+        onRetentionLtvChange={setRetentionLtv}
+        currentTier={currentTier}
+        isReadOnly={isReadOnly}
+        actionButtonsProps={{
+          calculatorType: "BTL",
+          calculationData: {
+            productScope,
+            retentionChoice,
+            retentionLtv,
+            tier: currentTier,
+            propertyValue,
+            monthlyRent,
+            topSlicing,
+            loanType,
+            specificGrossLoan,
+            specificNetLoan,
+            targetLtv: maxLtvInput,
+            productType,
+            selectedRange,
+            answers,
+            // Client details from broker settings
+            ...brokerSettings.getAllSettings(),
+            relevantRates: fullComputedResults,
+            selectedRate: (filteredRatesForDip && filteredRatesForDip.length > 0) 
+              ? filteredRatesForDip[0] 
+              : (fullComputedResults && fullComputedResults.length > 0 ? fullComputedResults[0] : null),
+            // Include overrides for saving
+            ratesOverrides,
+            productFeeOverrides,
+            rolledMonthsPerColumn,
+            deferredInterestPerColumn,
+          },
+          quoteId: currentQuoteId,
+          onIssueDip: () => setDipModalOpen(true),
+          onIssueQuote: handleIssueQuote,
+          onQuoteSaved: (savedQuote) => {
               // Update currentQuoteId when quote is saved for the first time
               if (savedQuote && savedQuote.id && !currentQuoteId) {
                 setCurrentQuoteId(savedQuote.id);
@@ -1290,10 +1234,12 @@ export default function BTLcalculator({ initialQuote = null }) {
                   });
                 }
               }
-            }}
-          />
-        </div>
-      </div>
+            },
+          onQuoteUpdated: (savedQuote) => {
+              // Already handled in onQuoteSaved
+            }
+        }}
+      />
 
       {/* Client details section */}
       <ClientDetailsSection
@@ -1375,24 +1321,12 @@ export default function BTLcalculator({ initialQuote = null }) {
       
 
       {/* Range toggle buttons - Core / Specialist */}
-      <div className="range-toggle-container">
-        <div className="range-toggle-buttons">
-          <button
-            className={`range-button ${selectedRange === 'specialist' ? 'active' : ''}`}
-            onClick={() => setSelectedRange('specialist')}
-            type="button"
-          >
-            Specialist range
-          </button>
-          <button
-            className={`range-button ${selectedRange === 'core' ? 'active' : ''}`}
-            onClick={() => setSelectedRange('core')}
-            type="button"
-          >
-            Core range
-          </button>
-        </div>
+      <RangeToggle
+        selectedRange={selectedRange}
+        onRangeChange={setSelectedRange}
+      />
 
+      <div className="range-toggle-container">
         {/* Rates display */}
         <div className="rates-display">
           {(() => {
@@ -1999,7 +1933,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                               </tbody>
                             </table>
                             {/* Note shown below the table */}
-                            <div style={{ marginTop: 'var(--token-spacing-sm)', color: '#666', fontSize: '0.9rem' }}>Placeholders: ERC (Fusion only) and Exit Fee are not shown in the BTL calculator.</div>
+                            <div style={{ marginTop: 'var(--token-spacing-sm)', color: 'var(--token-text-secondary)', fontSize: 'var(--token-font-size-sm)' }}>Placeholders: ERC (Fusion only) and Exit Fee are not shown in the BTL calculator.</div>
                           </div>
                         )}
                       </>

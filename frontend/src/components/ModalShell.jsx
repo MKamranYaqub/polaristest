@@ -32,15 +32,15 @@ export default function ModalShell({ isOpen, onClose, title, children, footer, m
         onClick={(e) => e.stopPropagation()}
         style={{ maxWidth, maxHeight, overflowY: 'auto' }}
       >
-        <div className="modal-header" style={{ background: '#2e5aac', padding: '1rem 1.25rem' }}>
-          <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#ffffffff' }}>{title}</h2>
+        <div className="modal-header" style={{ background: 'var(--token-brand-header)', padding: 'var(--token-spacing-lg) var(--token-spacing-xl)' }}>
+          <h2 style={{ margin: 0, fontSize: 'var(--token-font-size-lg)', fontWeight: 700, color: 'var(--token-text-inverse)' }}>{title}</h2>
         </div>
 
-        <div className="modal-body" style={{ padding: '1rem 1.25rem' }}>
+        <div className="modal-body" style={{ padding: 'var(--token-spacing-lg) var(--token-spacing-xl)' }}>
           {children}
         </div>
 
-        <div className="modal-footer" style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid #e0e6ed', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', background: '#f4f6f9' }}>
+        <div className="modal-footer" style={{ padding: 'var(--token-spacing-md) var(--token-spacing-xl)', borderTop: '1px solid var(--token-ui-border-subtle)', display: 'flex', justifyContent: 'flex-end', gap: 'var(--token-spacing-sm)', background: 'var(--token-ui-background-neutral)' }}>
           {footer}
         </div>
       </div>

@@ -55,11 +55,9 @@ export default function NotificationModal({
         </button>
       )}
     >
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'flex-start', 
-        gap: '1rem',
-        padding: '0.5rem 0'
+      <div className="flex gap-lg" style={{ 
+        alignItems: 'flex-start',
+        padding: 'var(--token-spacing-sm) 0'
       }}>
         <div style={{ 
           width: '40px',
@@ -67,19 +65,14 @@ export default function NotificationModal({
           borderRadius: '50%',
           backgroundColor: typeStyle.bgColor,
           color: typeStyle.color,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '1.5rem',
-          fontWeight: 'bold',
           flexShrink: 0
-        }}>
+        }} className="flex-center text-lg">
           {typeStyle.icon}
         </div>
         <div style={{ 
           flex: 1,
-          paddingTop: '0.5rem',
-          lineHeight: '1.5',
+          paddingTop: 'var(--token-spacing-sm)',
+          lineHeight: 'var(--token-line-height-base)',
           whiteSpace: 'pre-wrap'
         }} className="notification-message-text">
           {message}
