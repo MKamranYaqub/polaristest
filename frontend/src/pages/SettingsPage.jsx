@@ -16,13 +16,13 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="settings-page padding-2 max-width-1200 margin-0-auto">
+    <div className="settings-page">
       <h1>Settings</h1>
-      <p>Theme and accessibility preferences</p>
+      <p>Customize your theme and accessibility preferences</p>
       
-      <div className="settings-tabs margin-top-2">
+      <div className="settings-tabs">
         <button 
-          className={`settings-tab-button margin-right-1 ${activeTab === 'theme' ? 'active' : ''}`}
+          className={`settings-tab-button ${activeTab === 'theme' ? 'active' : ''}`}
           onClick={() => setActiveTab('theme')}
         >
           Theme
@@ -36,100 +36,150 @@ const SettingsPage = () => {
       </div>
       
       {activeTab === 'theme' && (
-        <div className="margin-top-2">
+        <div className="settings-content">
           <h2>Theme Preference</h2>
-          <div>
-            <label><input type="radio" name="theme" value="light" checked={themeMode === 'light'} onChange={(e) => setThemeMode(e.target.value)} /> Light</label><br/>
-            <label><input type="radio" name="theme" value="dark" checked={themeMode === 'dark'} onChange={(e) => setThemeMode(e.target.value)} /> Dark</label><br/>
-            <label><input type="radio" name="theme" value="system" checked={themeMode === 'system'} onChange={(e) => setThemeMode(e.target.value)} /> System</label>
+          <p>Choose how the application appears. Your selection will be saved automatically.</p>
+          <div className="radio-group">
+            <label className="radio-label">
+              <input 
+                type="radio" 
+                name="theme" 
+                value="light" 
+                checked={themeMode === 'light'} 
+                onChange={(e) => setThemeMode(e.target.value)} 
+              />
+              <span>Light Mode</span>
+            </label>
+            <label className="radio-label">
+              <input 
+                type="radio" 
+                name="theme" 
+                value="dark" 
+                checked={themeMode === 'dark'} 
+                onChange={(e) => setThemeMode(e.target.value)} 
+              />
+              <span>Dark Mode</span>
+            </label>
+            <label className="radio-label">
+              <input 
+                type="radio" 
+                name="theme" 
+                value="system" 
+                checked={themeMode === 'system'} 
+                onChange={(e) => setThemeMode(e.target.value)} 
+              />
+              <span>System Preference</span>
+            </label>
           </div>
         </div>
       )}
       
       {activeTab === 'accessibility' && (
-        <div className="margin-top-2">
+        <div className="settings-content">
           <h2>Accessibility Options</h2>
-          <button className="slds-button slds-button_neutral" onClick={handleResetAccessibility}>Reset to Defaults</button>
+          
+          <div className="settings-reset-button">
+            <button className="slds-button slds-button_neutral" onClick={handleResetAccessibility}>
+              Reset to Defaults
+            </button>
+          </div>
+          
           {resetMessage && (
-            <div className="slds-notify slds-notify_alert slds-theme_success margin-top-1 padding-075">
+            <div className="settings-success-message">
               {resetMessage}
             </div>
           )}
-          <div className="margin-top-2">
-            {/* Toggle switches for boolean settings */}
-            <div className="setting-item">
-              <label className="toggle-label">
-                <span className="setting-label-text">Reduce Motion</span>
-                <div className="toggle-switch">
-                  <input 
-                    type="checkbox" 
-                    checked={settings.reducedMotion} 
-                    onChange={(e) => updateSetting('reducedMotion', e.target.checked)}
-                  />
-                  <span className="toggle-slider"></span>
-                </div>
-              </label>
+
+          <div className="settings-sections-container">
+            <div className="settings-section">
+              <div className="setting-item">
+                <label className="toggle-label">
+                  <div>
+                    <span className="setting-label-text">Reduce Motion</span>
+                    <p className="setting-description">Minimize animations and transitions</p>
+                  </div>
+                  <div className="toggle-switch">
+                    <input 
+                      type="checkbox" 
+                      checked={settings.reducedMotion} 
+                      onChange={(e) => updateSetting('reducedMotion', e.target.checked)}
+                    />
+                    <span className="toggle-slider"></span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="setting-item">
+                <label className="toggle-label">
+                  <div>
+                    <span className="setting-label-text">High Contrast</span>
+                    <p className="setting-description">Increase contrast for better readability</p>
+                  </div>
+                  <div className="toggle-switch">
+                    <input 
+                      type="checkbox" 
+                      checked={settings.highContrast} 
+                      onChange={(e) => updateSetting('highContrast', e.target.checked)}
+                    />
+                    <span className="toggle-slider"></span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="setting-item">
+                <label className="toggle-label">
+                  <div>
+                    <span className="setting-label-text">Enhanced Focus Indicators</span>
+                    <p className="setting-description">Show prominent focus outlines for keyboard navigation</p>
+                  </div>
+                  <div className="toggle-switch">
+                    <input 
+                      type="checkbox" 
+                      checked={settings.focusIndicators} 
+                      onChange={(e) => updateSetting('focusIndicators', e.target.checked)}
+                    />
+                    <span className="toggle-slider"></span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="setting-item">
+                <label className="toggle-label">
+                  <div>
+                    <span className="setting-label-text">Text Spacing</span>
+                    <p className="setting-description">Increase spacing between lines and paragraphs</p>
+                  </div>
+                  <div className="toggle-switch">
+                    <input 
+                      type="checkbox" 
+                      checked={settings.textSpacing} 
+                      onChange={(e) => updateSetting('textSpacing', e.target.checked)}
+                    />
+                    <span className="toggle-slider"></span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="setting-item">
+                <label className="toggle-label">
+                  <div>
+                    <span className="setting-label-text">Link Underlines</span>
+                    <p className="setting-description">Always show underlines on links</p>
+                  </div>
+                  <div className="toggle-switch">
+                    <input 
+                      type="checkbox" 
+                      checked={settings.linkUnderlines} 
+                      onChange={(e) => updateSetting('linkUnderlines', e.target.checked)}
+                    />
+                    <span className="toggle-slider"></span>
+                  </div>
+                </label>
+              </div>
             </div>
 
-            <div className="setting-item">
-              <label className="toggle-label">
-                <span className="setting-label-text">High Contrast</span>
-                <div className="toggle-switch">
-                  <input 
-                    type="checkbox" 
-                    checked={settings.highContrast} 
-                    onChange={(e) => updateSetting('highContrast', e.target.checked)}
-                  />
-                  <span className="toggle-slider"></span>
-                </div>
-              </label>
-            </div>
-
-            <div className="setting-item">
-              <label className="toggle-label">
-                <span className="setting-label-text">Enhanced Focus Indicators</span>
-                <div className="toggle-switch">
-                  <input 
-                    type="checkbox" 
-                    checked={settings.focusIndicators} 
-                    onChange={(e) => updateSetting('focusIndicators', e.target.checked)}
-                  />
-                  <span className="toggle-slider"></span>
-                </div>
-              </label>
-            </div>
-
-            <div className="setting-item">
-              <label className="toggle-label">
-                <span className="setting-label-text">Text Spacing</span>
-                <div className="toggle-switch">
-                  <input 
-                    type="checkbox" 
-                    checked={settings.textSpacing} 
-                    onChange={(e) => updateSetting('textSpacing', e.target.checked)}
-                  />
-                  <span className="toggle-slider"></span>
-                </div>
-              </label>
-            </div>
-
-            <div className="setting-item">
-              <label className="toggle-label">
-                <span className="setting-label-text">Link Underlines</span>
-                <div className="toggle-switch">
-                  <input 
-                    type="checkbox" 
-                    checked={settings.linkUnderlines} 
-                    onChange={(e) => updateSetting('linkUnderlines', e.target.checked)}
-                  />
-                  <span className="toggle-slider"></span>
-                </div>
-              </label>
-            </div>
-
-            {/* Font size radio buttons */}
-            <div className="setting-item margin-top-2">
-              <div className="setting-label-text margin-bottom-075 font-weight-500">Font Size</div>
+            <div className="settings-section">
+              <div className="setting-section-header">Font Size</div>
               <div className="radio-group">
                 <label className="radio-label">
                   <input 
@@ -149,7 +199,7 @@ const SettingsPage = () => {
                     checked={settings.fontSize === 'medium'} 
                     onChange={(e) => updateSetting('fontSize', e.target.value)}
                   />
-                  <span>Medium</span>
+                  <span>Medium (Default)</span>
                 </label>
                 <label className="radio-label">
                   <input 
