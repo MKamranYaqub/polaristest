@@ -1,5 +1,5 @@
 import React from 'react';
-import ActionButtons from './ActionButtons';
+import ActionButtons from '../ActionButtons';
 
 /**
  * TopFiltersSection - Product type, scope, retention, and tier display
