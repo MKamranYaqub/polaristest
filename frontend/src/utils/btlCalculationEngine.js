@@ -193,7 +193,7 @@ export class BTLCalculationEngine {
 
   /** Compute display rate and stress rate with floor applied */
   computeRates() {
-    const { actualRate, isTracker, standardBBR, stressBBR } = this;
+    const { actualRate, isTracker, standardBBR, stressBBR, isCore } = this;
     
     // For tracker, add BBR to get display rate
     const baseDisplayRate = isTracker 
@@ -201,14 +201,17 @@ export class BTLCalculationEngine {
       : actualRate / 100;
     
     // For stress calculations, use stress BBR for trackers
+    // Stress BBR is used for BOTH core and specialist products
     const baseStressRate = isTracker 
       ? (actualRate / 100) + stressBBR 
       : baseDisplayRate;
 
-    // Apply floor rate from rate table (if specified)
+    // Apply floor rate ONLY for core products
+    // Floor rate is ONLY used for core products in gross loan calculation (ICR constraint)
     return {
-      displayRate: this.applyFloorRate(baseDisplayRate),
-      stressRate: this.applyFloorRate(baseStressRate),
+      displayRate: baseDisplayRate, // Actual rate for calculations
+      displayRateWithFloor: isCore ? this.applyFloorRate(baseDisplayRate) : baseDisplayRate, // Floor rate for core only
+      stressRateForICR: isCore ? this.applyFloorRate(baseStressRate) : baseStressRate, // Stress rate with floor for core, without floor for specialist
     };
   }
 
@@ -353,16 +356,17 @@ export class BTLCalculationEngine {
       minLoan,
     } = this;
 
-    const { displayRate, stressRate } = this.computeRates();
+    const { displayRate, displayRateWithFloor, stressRateForICR } = this.computeRates();
     
     // Calculate remaining months after rolled period
     const remainingMonths = Math.max(termMonths - rolledMonths, 1);
     
     // Adjust stress rate by deferred interest (deferred rate reduces payment burden)
     const deferredRateDecimal = deferredRate / 100;
-    const stressAdjRate = Math.max(stressRate - deferredRateDecimal, 1e-6);
+    const stressAdjRate = Math.max(stressRateForICR - deferredRateDecimal, 1e-6);
     
     // --- Calculate rental-based cap (ICR constraint)
+    // Use floor rate and stress BBR ONLY for gross loan calculation
     const effectiveRent = monthlyRent + (topSlicing || 0);
     const annualRent = effectiveRent * termMonths;
     
@@ -370,6 +374,7 @@ export class BTLCalculationEngine {
     if (effectiveRent > 0 && stressAdjRate > 0 && minimumICR > 0) {
       // ICR = (Annual Rent) / (Annual Interest)
       // Rearranging: Gross = (Annual Rent) / (ICR/100 * (Rate/12) * RemainingMonths)
+      // Use stressRateForICR (includes stress BBR and floor rate) for ICR constraint calculation
       maxFromRent = annualRent / ((minimumICR / 100) * (stressAdjRate / 12) * remainingMonths);
     }
     
@@ -403,7 +408,7 @@ export class BTLCalculationEngine {
       eligibleGross = 0;
     }
     
-    // --- Calculate loan components
+    // --- Calculate loan components using actual rate (no floor)
     const payRateAdj = Math.max(displayRate - deferredRateDecimal, 0);
     const productFeeAmt = eligibleGross * feePctDecimal;
     const rolledInterestAmt = eligibleGross * payRateAdj * rolledMonths / 12;
@@ -413,10 +418,10 @@ export class BTLCalculationEngine {
     // Calculate LTV
     const ltv = propertyValue > 0 ? eligibleGross / propertyValue : null;
     
-    // Calculate ICR
+    // Calculate ICR (uses actual rate, not floor)
     const icr = this.computeICR(eligibleGross, payRateAdj, rolledMonths, remainingMonths, effectiveRent);
     
-    // Calculate direct debit (monthly payment)
+    // Calculate direct debit (monthly payment) using actual rate
     const directDebit = eligibleGross > 0 ? eligibleGross * payRateAdj / 12 : 0;
     
     return {
@@ -610,7 +615,11 @@ export class BTLCalculationEngine {
     // --- Format output rates
     const displayRate = isTracker ? actualRate + standardBBR : actualRate;
     const fullRateText = `${displayRate.toFixed(2)}%${isTracker ? ' + BBR' : ''}`;
-    const payRateText = `${(bestLoan.paymentRateAdjusted * 100).toFixed(2)}%${isTracker ? ' + BBR' : ''}`;
+    
+    // For core products, pay rate display uses actual rate - deferred (without floor rate)
+    // This ensures display shows actual rates, while calculations use floor rate
+    const payRateForDisplay = Math.max(actualRate - (bestLoan.deferredRate || 0), 0);
+    const payRateText = `${payRateForDisplay.toFixed(2)}%${isTracker ? ' + BBR' : ''}`;
 
     // --- Calculate broker fees
     const procFeeValue = bestLoan.grossLoan * (procFeePct / 100);
