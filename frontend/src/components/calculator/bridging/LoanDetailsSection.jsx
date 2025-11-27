@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import CollapsibleSection from '../CollapsibleSection';
 import { formatCurrencyInput } from '../../../utils/calculator/numberFormatting';
+import HelpIcon from '../../ui/HelpIcon';
 
 /**
  * LoanDetailsSection - Handles loan input fields for Bridging calculator
@@ -31,14 +32,74 @@ const LoanDetailsSection = ({
   exitFeePercent,
   onExitFeePercentChange,
   termRange = { min: 1, max: 24 },
-  isReadOnly = false
+  isReadOnly = false,
+  loanCalculationRequested = 'Gross loan',
+  onLoanCalculationRequestedChange,
+  subProductLimits = {},
+  subProduct
 }) => {
-  // When 'Use specific net loan' is toggled, adjust gross loan
+  // When loan calculation type changes, handle field visibility
   useEffect(() => {
-    if (useSpecificNet === 'Yes') {
+    if (loanCalculationRequested === 'Net loan') {
       onGrossLoanChange('0');
+      if (useSpecificNet !== 'Yes') {
+        onUseSpecificNetChange('Yes');
+      }
+    } else {
+      // Gross loan selected
+      if (useSpecificNet !== 'No') {
+        onUseSpecificNetChange('No');
+      }
+      onSpecificNetLoanChange('');
     }
-  }, [useSpecificNet]);
+  }, [loanCalculationRequested]);
+
+  // Get info box content based on selected sub-product
+  const subProductInfo = useMemo(() => {
+    let info = { loanSize: null, ltv: null };
+    
+    if (!subProduct || !subProductLimits) return info;
+
+    // Normalize sub-product name for lookup
+    const normalizedSubProduct = subProduct.trim().toLowerCase();
+    
+    // Check for second charge
+    const isSecondCharge = chargeType && chargeType.toLowerCase().includes('second');
+    
+    // Find the matching limits
+    let lim = null;
+    for (const [key, limits] of Object.entries(subProductLimits)) {
+      const normalizedKey = key.trim().toLowerCase();
+      if (isSecondCharge) {
+        // For second charge, look for keys containing 'second'
+        if (normalizedKey.includes('second') && normalizedKey.includes(normalizedSubProduct)) {
+          lim = limits;
+          break;
+        }
+      } else {
+        // For first charge, match the sub-product name
+        if (normalizedKey === normalizedSubProduct || normalizedKey.includes(normalizedSubProduct)) {
+          lim = limits;
+          break;
+        }
+      }
+    }
+
+    if (lim) {
+      if (lim.minLoanSize !== null || lim.maxLoanSize !== null) {
+        const min = lim.minLoanSize != null ? `£${lim.minLoanSize.toLocaleString('en-GB')}` : '—';
+        const max = lim.maxLoanSize != null ? `£${lim.maxLoanSize.toLocaleString('en-GB')}` : '—';
+        info.loanSize = `Loan size: ${min} – ${max}`;
+      }
+      if (lim.minLtv !== null || lim.maxLtv !== null) {
+        const min = lim.minLtv != null ? `${lim.minLtv}%` : '—';
+        const max = lim.maxLtv != null ? `${lim.maxLtv}%` : '—';
+        info.ltv = `Loan to Value: ${min} – ${max}`;
+      }
+    }
+
+    return info;
+  }, [subProduct, subProductLimits, chargeType]);
 
   return (
     <CollapsibleSection 
@@ -47,36 +108,28 @@ const LoanDetailsSection = ({
       onToggle={onToggle}
     >
       <div className="loan-details-grid">
+        {/* Row 1: Loan calculation requested, First charge value, Info box (spans 2) */}
         <div className="slds-form-element">
-          <label className="slds-form-element__label">Property Value</label>
+          <label className="slds-form-element__label">
+            <span className="required-asterisk">*</span> Loan calculation requested
+          </label>
           <div className="slds-form-element__control">
-            <input 
-              className="slds-input" 
-              value={propertyValue} 
-              onChange={(e) => onPropertyValueChange(formatCurrencyInput(e.target.value))} 
-              placeholder="£1,200,000" 
-              disabled={isReadOnly} 
-            />
+            <select 
+              className="slds-select" 
+              value={loanCalculationRequested} 
+              onChange={(e) => onLoanCalculationRequestedChange(e.target.value)} 
+              disabled={isReadOnly}
+            >
+              <option value="Gross loan">Gross loan</option>
+              <option value="Net loan">Net loan</option>
+            </select>
           </div>
         </div>
 
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">Gross loan</label>
-          <div className="slds-form-element__control">
-            <input 
-              className="slds-input" 
-              value={grossLoan} 
-              onChange={(e) => onGrossLoanChange(formatCurrencyInput(e.target.value))} 
-              placeholder="£550,000" 
-              disabled={isReadOnly || useSpecificNet === 'Yes'} 
-            />
-          </div>
-        </div>
-
-        {chargeType === 'Second' && (
+        {chargeType === 'Second' ? (
           <div className="slds-form-element first-charge-warning">
             <label className="slds-form-element__label first-charge-label">
-              First charge value
+              <span className="required-asterisk">*</span> First charge value
               <span className="first-charge-hint"></span>
             </label>
             <div className="slds-form-element__control">
@@ -89,7 +142,53 @@ const LoanDetailsSection = ({
               />
             </div>
           </div>
+        ) : (
+          <div className="slds-form-element"></div>
         )}
+
+        {/* Info box - spans 2 columns */}
+        <div className="slds-form-element" style={{ gridColumn: 'span 2' }}>
+          <div className="loan-info-box" style={{
+            padding: 'var(--token-spacing-xs)',
+            backgroundColor: 'var(--token-info-bg)',
+            border: '1px solid var(--token-info-border, #b3d4fc)',
+            borderRadius: 'var(--token-radius-sm)',
+            display: 'flex',
+            gap: 'var(--token-spacing-xs)',
+            alignItems: 'center',
+            fontSize: 'var(--token-font-size-sm)',
+            lineHeight: 'var(--token-line-height-tight)',
+            color: 'var(--token-text-secondary)'
+          }}>
+            <svg style={{ width: '20px', height: '20px', flexShrink: 0, fill: 'var(--token-interactive)' }} viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+            </svg>
+            <div style={{ width: '100%' }}>
+              {subProductInfo.loanSize ? (
+                <div style={{ marginBottom: '4px' }}>{subProductInfo.loanSize}</div>
+              ) : (
+                <div style={{ marginBottom: '4px' }}>Choose a calculation type to begin. The selection determines which rules and fields the calculator uses to model the loan.</div>
+              )}
+              {subProductInfo.ltv && <div>{subProductInfo.ltv}</div>}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2: Property value, Monthly rent, Top slicing, Gross/Net loan required */}
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">
+            <span className="required-asterisk">*</span> Property value
+          </label>
+          <div className="slds-form-element__control">
+            <input 
+              className="slds-input" 
+              value={propertyValue} 
+              onChange={(e) => onPropertyValueChange(formatCurrencyInput(e.target.value))} 
+              placeholder="£" 
+              disabled={isReadOnly} 
+            />
+          </div>
+        </div>
 
         <div className="slds-form-element">
           <label className="slds-form-element__label">Monthly rent</label>
@@ -98,46 +197,51 @@ const LoanDetailsSection = ({
               className="slds-input" 
               value={monthlyRent} 
               onChange={(e) => onMonthlyRentChange(formatCurrencyInput(e.target.value))} 
-              placeholder="£3,000" 
+              placeholder="£" 
               disabled={isReadOnly} 
             />
           </div>
         </div>
 
         <div className="slds-form-element">
-          <label className="slds-form-element__label">Top slicing</label>
+          <label className="slds-form-element__label">
+            Top slicing
+            <HelpIcon 
+              content="Additional income used to top up rental income for affordability calculations."
+              align="right"
+            />
+          </label>
           <div className="slds-form-element__control">
             <input 
               className="slds-input" 
               value={topSlicing} 
               onChange={(e) => onTopSlicingChange(e.target.value)} 
-              placeholder="e.g. 600" 
+              placeholder="£" 
               disabled={isReadOnly} 
             />
           </div>
         </div>
 
-        {/* Force new row by adding a full-width spacer */}
-        <div className="grid-column-1-end height-0"></div>
-
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">Use specific net loan?</label>
-          <div className="slds-form-element__control">
-            <select 
-              className="slds-select" 
-              value={useSpecificNet} 
-              onChange={(e) => onUseSpecificNetChange(e.target.value)} 
-              disabled={isReadOnly}
-            >
-              <option value="No">No</option>
-              <option value="Yes">Yes</option>
-            </select>
-          </div>
-        </div>
-
-        {useSpecificNet === 'Yes' && (
+        {loanCalculationRequested === 'Gross loan' ? (
           <div className="slds-form-element">
-            <label className="slds-form-element__label">Specific net loan</label>
+            <label className="slds-form-element__label">
+              <span className="required-asterisk">*</span> Gross loan required
+            </label>
+            <div className="slds-form-element__control">
+              <input 
+                className="slds-input" 
+                value={grossLoan} 
+                onChange={(e) => onGrossLoanChange(formatCurrencyInput(e.target.value))} 
+                placeholder="£" 
+                disabled={isReadOnly} 
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="slds-form-element">
+            <label className="slds-form-element__label">
+              <span className="required-asterisk">*</span> Net loan required
+            </label>
             <div className="slds-form-element__control">
               <input 
                 className="slds-input" 
@@ -150,44 +254,61 @@ const LoanDetailsSection = ({
           </div>
         )}
 
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">Bridging loan term (months)</label>
+        {/* Row 3: Bridging loan term slider (spans 2), Commitment fee, Exit fee */}
+        <div className="slds-form-element" style={{ gridColumn: 'span 2' }}>
+          <label className="slds-form-element__label">
+            Bridging loan term
+            <span style={{ marginLeft: '8px', color: 'var(--token-text-secondary)' }}>
+              {termRange.min} months - {termRange.max} months
+            </span>
+          </label>
           <div className="slds-form-element__control">
-            <select 
-              className="slds-select" 
-              value={term} 
-              onChange={(e) => onTermChange(e.target.value)} 
+            <input 
+              type="range"
+              min={termRange.min}
+              max={termRange.max}
+              value={term || 12}
+              onChange={(e) => onTermChange(e.target.value)}
               disabled={isReadOnly}
-            >
-              <option value="">Select months</option>
-              {Array.from({ length: termRange.max - termRange.min + 1 }, (_, i) => termRange.min + i).map((m) => (
-                <option key={m} value={String(m)}>{m} months</option>
-              ))}
-            </select>
+              style={{ width: '100%' }}
+            />
+            <div style={{ 
+              textAlign: 'center', 
+              marginTop: '4px', 
+              fontSize: 'var(--token-font-size-sm)',
+              color: 'var(--token-text-secondary)'
+            }}>
+              {term || 12} months
+            </div>
           </div>
         </div>
 
+        {/* Row 3 continued: Commitment fee, Exit fee */}
         <div className="slds-form-element">
-          <label className="slds-form-element__label">Commitment Fee £</label>
+          <label className="slds-form-element__label">
+            <span className="required-asterisk">*</span> Commitment fee
+          </label>
           <div className="slds-form-element__control">
             <input 
               className="slds-input" 
               value={commitmentFee} 
               onChange={(e) => onCommitmentFeeChange(formatCurrencyInput(e.target.value))} 
-              placeholder="£0" 
+              placeholder="£" 
               disabled={isReadOnly} 
             />
           </div>
         </div>
 
         <div className="slds-form-element">
-          <label className="slds-form-element__label">Exit Fee %</label>
+          <label className="slds-form-element__label">
+            <span className="required-asterisk">*</span> Exit fee
+          </label>
           <div className="slds-form-element__control">
             <input 
               className="slds-input" 
               value={exitFeePercent} 
               onChange={(e) => onExitFeePercentChange(e.target.value)} 
-              placeholder="e.g. 1.5" 
+              placeholder="%" 
               disabled={isReadOnly} 
             />
           </div>

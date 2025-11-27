@@ -28,6 +28,7 @@ import { computeBTLLoan } from '../../utils/btlCalculationEngine';
 import CollapsibleSection from '../calculator/CollapsibleSection';
 import BTLCriteriaSection from '../calculator/btl/BTLCriteriaSection';
 import BTLLoanDetailsSection from '../calculator/btl/BTLLoanDetailsSection';
+import BTLProductSection from '../calculator/btl/BTLProductSection';
 import { 
   PRODUCT_TYPES_LIST as DEFAULT_PRODUCT_TYPES_LIST, 
   FEE_COLUMNS as DEFAULT_FEE_COLUMNS, 
@@ -77,6 +78,7 @@ export default function BTLcalculator({ initialQuote = null }) {
   // Collapsible section states
   const [criteriaExpanded, setCriteriaExpanded] = useState(false);
   const [loanDetailsExpanded, setLoanDetailsExpanded] = useState(false);
+  const [productConfigExpanded, setProductConfigExpanded] = useState(true);
   const [clientDetailsExpanded, setClientDetailsExpanded] = useState(true);
   
   // Quote id/ref for UI
@@ -799,6 +801,7 @@ export default function BTLcalculator({ initialQuote = null }) {
     if (newState) {
       setCriteriaExpanded(false);
       setLoanDetailsExpanded(false);
+      setProductConfigExpanded(false);
     }
   };
 
@@ -808,6 +811,7 @@ export default function BTLcalculator({ initialQuote = null }) {
     if (newState) {
       setClientDetailsExpanded(false);
       setLoanDetailsExpanded(false);
+      setProductConfigExpanded(false);
     }
   };
 
@@ -817,6 +821,17 @@ export default function BTLcalculator({ initialQuote = null }) {
     if (newState) {
       setClientDetailsExpanded(false);
       setCriteriaExpanded(false);
+      setProductConfigExpanded(false);
+    }
+  };
+
+  const handleProductConfigToggle = () => {
+    const newState = !productConfigExpanded;
+    setProductConfigExpanded(newState);
+    if (newState) {
+      setClientDetailsExpanded(false);
+      setCriteriaExpanded(false);
+      setLoanDetailsExpanded(false);
     }
   };
 
@@ -1216,62 +1231,57 @@ export default function BTLcalculator({ initialQuote = null }) {
         { label: 'Calculator', path: '/calculator/btl' },
         { label: 'Buy to Let', path: '/calculator/btl' }
       ]} />
-      
-      {/* Quote Reference Badge */}
-      <QuoteReferenceHeader reference={currentQuoteRef} />
-      
-      {/* Top filters inline - no card */}
-      <TopFiltersSection
+
+      {/* Product Configuration section */}
+      <BTLProductSection
         productScope={productScope}
         onProductScopeChange={setProductScope}
-        productScopes={productScopes}
         retentionChoice={retentionChoice}
         onRetentionChoiceChange={setRetentionChoice}
         retentionLtv={retentionLtv}
         onRetentionLtvChange={setRetentionLtv}
         currentTier={currentTier}
-        isReadOnly={isReadOnly}
-        actionButtonsProps={{
-          calculatorType: "BTL",
-          calculationData: {
-            productScope,
-            retentionChoice,
-            retentionLtv,
-            tier: currentTier,
-            propertyValue,
-            monthlyRent,
-            topSlicing,
-            loanType,
-            specificGrossLoan,
-            specificNetLoan,
-            targetLtv: maxLtvInput,
-            productType,
-            selectedRange,
-            answers,
-            // Client details from broker settings
-            ...brokerSettings.getAllSettings(),
-            relevantRates: fullComputedResults,
-            selectedRate: (filteredRatesForDip && filteredRatesForDip.length > 0) 
-              ? filteredRatesForDip[0] 
-              : (fullComputedResults && fullComputedResults.length > 0 ? fullComputedResults[0] : null),
-            // Include overrides for saving
-            ratesOverrides,
-            productFeeOverrides,
-            rolledMonthsPerColumn,
-            deferredInterestPerColumn,
-          },
-          quoteId: currentQuoteId,
-          onIssueDip: () => setDipModalOpen(true),
-          onIssueQuote: handleIssueQuote,
-          onQuoteSaved: (savedQuote) => {
-              // Update currentQuoteId when quote is saved for the first time
+        availableScopes={productScopes}
+        quoteId={currentQuoteId}
+        onIssueDip={() => setDipModalOpen(true)}
+        onIssueQuote={handleIssueQuote}
+        onCancelQuote={handleCancelQuote}
+        saveQuoteButton={
+          <SaveQuoteButton
+            calculatorType="BTL"
+            calculationData={{
+              productScope,
+              retentionChoice,
+              retentionLtv,
+              tier: currentTier,
+              propertyValue,
+              monthlyRent,
+              topSlicing,
+              loanType,
+              specificGrossLoan,
+              specificNetLoan,
+              targetLtv: maxLtvInput,
+              productType,
+              selectedRange,
+              answers,
+              ...brokerSettings.getAllSettings(),
+              relevantRates: fullComputedResults,
+              selectedRate: (filteredRatesForDip && filteredRatesForDip.length > 0) 
+                ? filteredRatesForDip[0] 
+                : (fullComputedResults && fullComputedResults.length > 0 ? fullComputedResults[0] : null),
+              ratesOverrides,
+              productFeeOverrides,
+              rolledMonthsPerColumn,
+              deferredInterestPerColumn,
+            }}
+            existingQuote={currentQuoteId ? { id: currentQuoteId } : null}
+            onQuoteSaved={(savedQuote) => {
               if (savedQuote && savedQuote.id && !currentQuoteId) {
                 setCurrentQuoteId(savedQuote.id);
               }
               if (savedQuote && savedQuote.reference_number) {
                 setCurrentQuoteRef(savedQuote.reference_number);
               }
-              // Update dipData if the saved quote has DIP information
               if (savedQuote && savedQuote.id) {
                 if (savedQuote.commercial_or_main_residence || savedQuote.dip_date || savedQuote.dip_expiry_date) {
                   setDipData({
@@ -1285,16 +1295,14 @@ export default function BTLcalculator({ initialQuote = null }) {
                     paying_network_club: savedQuote.paying_network_club,
                     security_properties: savedQuote.security_properties,
                     fee_type_selection: savedQuote.fee_type_selection,
-                    dip_status: savedQuote.dip_status
                   });
                 }
               }
-            },
-          onQuoteUpdated: (savedQuote) => {
-              // Already handled in onQuoteSaved
-            },
-          onCancel: handleCancelQuote
-        }}
+            }}
+            onCancel={handleCancelQuote}
+          />
+        }
+        isReadOnly={isReadOnly}
       />
 
       {/* Client details section */}

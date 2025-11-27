@@ -50,6 +50,15 @@ a {
   line-height: var(--token-line-height-tight);
   /* ensure header text is high-contrast against the header background */
   color: var(--token-text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--token-spacing-sm);
+}
+
+.app-header__logo {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
 }
 
 @media (max-width: 900px) {

@@ -15,7 +15,10 @@ import '../../styles/app-nav.scss';
 function AppNav() {
   return (
     <header className="app-header">
-      <h1 className="app-header__title">Project Polaris</h1>
+      <h1 className="app-header__title">
+        <img src="/assets/mfs-logo.png" alt="MFS Logo" className="app-header__logo" />
+        Project Polaris
+      </h1>
       <div className="margin-left-auto display-flex align-items-center flex-gap-5 margin-right-05">
         <ThemeToggle />
         <UserProfileButton />

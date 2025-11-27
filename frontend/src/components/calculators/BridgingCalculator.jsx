@@ -14,7 +14,7 @@ import CollapsibleSection from '../calculator/CollapsibleSection';
 import QuoteReferenceHeader from '../calculator/shared/QuoteReferenceHeader';
 import ClientDetailsSection from '../calculator/shared/ClientDetailsSection';
 import Breadcrumbs from '../layout/Breadcrumbs';
-import CriteriaSection from '../calculator/bridging/CriteriaSection';
+import BridgingProductSection from '../calculator/bridging/BridgingProductSection';
 import LoanDetailsSection from '../calculator/bridging/LoanDetailsSection';
 import MultiPropertyDetailsSection from '../calculator/bridging/MultiPropertyDetailsSection';
 import useBrokerSettings from '../../hooks/calculator/useBrokerSettings';
@@ -75,6 +75,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
   const [bridgingTerm, setBridgingTerm] = useState('12');
   const [commitmentFee, setCommitmentFee] = useState('');
   const [exitFeePercent, setExitFeePercent] = useState('');
+  const [loanCalculationRequested, setLoanCalculationRequested] = useState('Gross loan');
   const [rates, setRates] = useState([]);
   const [relevantRates, setRelevantRates] = useState([]);
   const [bridgeMatched, setBridgeMatched] = useState([]);
@@ -359,6 +360,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
       if (quote.bridging_loan_term != null) setBridgingTerm(String(quote.bridging_loan_term));
       if (quote.commitment_fee != null) setCommitmentFee(formatCurrencyInput(quote.commitment_fee));
       if (quote.exit_fee_percent != null) setExitFeePercent(String(quote.exit_fee_percent));
+      if (quote.loan_calculation_requested) setLoanCalculationRequested(quote.loan_calculation_requested);
       if (quote.product_scope) setProductScope(quote.product_scope);
       if (quote.charge_type) setChargeType(quote.charge_type);
       if (quote.sub_product) setSubProduct(quote.sub_product);
@@ -1299,45 +1301,30 @@ export default function BridgingCalculator({ initialQuote = null }) {
       {/* Quote Reference Badge */}
       <QuoteReferenceHeader reference={currentQuoteRef} />
 
-      <div className="top-filters">
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">Product Type</label>
-          <div className="slds-form-element__control"><strong>Bridge & Fusion</strong></div>
-        </div>
-
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">Product Scope</label>
-          <div className="slds-form-element__control">
-            <select className="slds-select" value={productScope} onChange={(e) => setProductScope(e.target.value)}>
-              {/* Derive available scopes from data but keep default if not present */}
-              {Array.from(new Set(allCriteria.map(r => r.product_scope).filter(Boolean))).map(ps => (
-                <option key={ps} value={ps}>{ps}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="margin-left-auto display-flex align-items-center flex-gap-8">
-          {currentQuoteId && (
-            <>
-              <button 
-                className="slds-button slds-button_neutral margin-right-05"
-                onClick={() => setDipModalOpen(true)}
-              >
-                Issue DIP
-              </button>
-              <button 
-                className="slds-button slds-button_brand margin-right-05"
-                onClick={handleIssueQuote}
-              >
-                Issue Quote
-              </button>
-            </>
-          )}
+      {/* Product Configuration section */}
+      <BridgingProductSection
+        productScope={productScope}
+        onProductScopeChange={setProductScope}
+        availableScopes={Array.from(new Set(allCriteria.map(r => r.product_scope).filter(Boolean)))}
+        questions={questions}
+        answers={answers}
+        onAnswerChange={handleAnswerChange}
+        allCriteria={allCriteria}
+        chargeType={chargeType}
+        productScope={productScope}
+        subProductLimits={subProductLimits}
+        quoteId={currentQuoteId}
+        onIssueDip={() => setDipModalOpen(true)}
+        onIssueQuote={handleIssueQuote}
+        onCancelQuote={handleCancelQuote}
+        saveQuoteButton={
           <SaveQuoteButton
-            calculatorType="BRIDGING"
+            calculatorType="Bridging"
             calculationData={{
               productScope,
+              chargeType,
+              subProduct,
+              answers,
               propertyValue,
               grossLoan,
               firstChargeValue,
@@ -1345,52 +1332,43 @@ export default function BridgingCalculator({ initialQuote = null }) {
               topSlicing,
               useSpecificNet,
               specificNetLoan,
-              bridgingTerm,
+              term: bridgingTerm,
               commitmentFee,
               exitFeePercent,
-              chargeType,
-              subProduct,
-              answers,
-              // Client details from broker settings hook
+              loanCalculationRequested,
               ...brokerSettings.getAllSettings(),
-              // Multi-property details
-              multiPropertyDetails: isMultiProperty ? multiPropertyRows : null,
-              results: bestBridgeRatesArray,
+              relevantRates,
               selectedRate: (filteredRatesForDip && filteredRatesForDip.length > 0) 
                 ? filteredRatesForDip[0] 
-                : (bestBridgeRatesArray && bestBridgeRatesArray.length > 0 ? bestBridgeRatesArray[0] : null),
+                : (relevantRates && relevantRates.length > 0 ? relevantRates[0] : null),
+              ratesOverrides,
+              productFeeOverrides,
+              rolledMonthsPerColumn,
+              deferredInterestPerColumn,
+              multiPropertyRows: isMultiProperty ? multiPropertyRows : null
             }}
-            allColumnData={[]}
-            bestSummary={null}
-            existingQuote={effectiveInitialQuote}
-            onSaved={async (savedQuote) => {
-              // Update currentQuoteId when quote is saved for the first time
+            existingQuote={currentQuoteId ? { id: currentQuoteId } : null}
+            onQuoteSaved={async (savedQuote) => {
               if (savedQuote && savedQuote.id && !currentQuoteId) {
                 setCurrentQuoteId(savedQuote.id);
               }
               if (savedQuote && savedQuote.reference_number) {
                 setCurrentQuoteRef(savedQuote.reference_number);
               }
-              
-              // Save multi-property details if Multi-property is Yes
-              if (savedQuote && savedQuote.id && isMultiProperty) {
+              if (isMultiProperty && multiPropertyRows.length > 0 && savedQuote && savedQuote.id) {
                 try {
-                  // Delete existing rows for this quote
                   await supabase
                     .from('bridge_multi_property_details')
                     .delete()
-                    .eq('bridge_quote_id', savedQuote.id);
+                    .eq('quote_id', savedQuote.id);
                   
-                  // Insert new rows
-                  const rowsToInsert = multiPropertyRows.map((row, index) => ({
-                    bridge_quote_id: savedQuote.id,
-                    property_address: row.property_address,
-                    property_type: row.property_type,
-                    property_value: Number(row.property_value) || 0,
-                    charge_type: row.charge_type,
-                    first_charge_amount: Number(row.first_charge_amount) || 0,
-                    gross_loan: Number(row.gross_loan) || 0,
-                    row_order: index
+                  const rowsToInsert = multiPropertyRows.map(row => ({
+                    quote_id: savedQuote.id,
+                    property_value: row.propertyValue || null,
+                    first_charge_value: row.firstChargeValue || null,
+                    gross_loan: row.grossLoan || null,
+                    monthly_rent: row.monthlyRent || null,
+                    top_slicing: row.topSlicing || null
                   }));
                   
                   await supabase
@@ -1401,7 +1379,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
                 }
               }
               
-              // Update dipData if the saved quote has DIP information
               if (savedQuote && savedQuote.id) {
                 if (savedQuote.commercial_or_main_residence || savedQuote.dip_date || savedQuote.dip_expiry_date) {
                   setDipData({
@@ -1422,27 +1399,15 @@ export default function BridgingCalculator({ initialQuote = null }) {
             }}
             onCancel={handleCancelQuote}
           />
-        </div>
-      </div>
+        }
+        isReadOnly={isReadOnly}
+      />
 
       {/* Client details section */}
       <ClientDetailsSection
         {...brokerSettings}
         expanded={clientDetailsExpanded}
         onToggle={handleClientDetailsToggle}
-        isReadOnly={isReadOnly}
-      />
-
-      <CriteriaSection
-        expanded={criteriaExpanded}
-        onToggle={handleCriteriaToggle}
-        questions={questions}
-        answers={answers}
-        onAnswerChange={handleAnswerChange}
-        allCriteria={allCriteria}
-        chargeType={chargeType}
-        productScope={productScope}
-        subProductLimits={subProductLimits}
         isReadOnly={isReadOnly}
       />
 
@@ -1487,6 +1452,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
         onExitFeePercentChange={setExitFeePercent}
         termRange={termRange}
         isReadOnly={isReadOnly}
+        loanCalculationRequested={loanCalculationRequested}
+        onLoanCalculationRequestedChange={setLoanCalculationRequested}
+        subProductLimits={subProductLimits}
+        subProduct={subProduct}
       />
 
       {/* Results section */}

@@ -36,6 +36,9 @@
   --token-spacing-xl: 1.5rem;
   --token-spacing-2xl: 2rem;
 
+  /* Form field spacing */
+  --token-form-field-gap: 2rem; /* 32px gap between form fields */
+
   /* Icon sizes */
   --token-icon-sm: 14px;
   --token-icon-md: 16px;
@@ -49,6 +52,7 @@
   --token-shadow-soft: 0 2px 6px rgba(11, 20, 26, 0.08);
   --token-shadow-strong: 0 6px 18px rgba(11, 20, 26, 0.14);
   --token-shadow-modal: 0 2px 12px 0 rgba(11, 20, 26, 0.2);
+  --token-shadow-card: 0 2px 4px rgba(0, 0, 0, 0.1);
 
   /* Color hooks map Carbon tokens so Figma updates can replace values later */
   --token-layer-background: #f3f3f3;

@@ -117,6 +117,7 @@ input[type="range"] {
   border-radius: $token-radius-sm;
   margin-bottom: $spacing-md;
   overflow: hidden;
+  box-shadow: var(--token-shadow-card);
 }
 
 .collapsible-header {
@@ -187,7 +188,7 @@ input[type="range"] {
 .loan-details-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: $spacing-md;
+  gap: var(--token-form-field-gap);
   margin-bottom: $spacing-md;
 
   .loan-info-box {
