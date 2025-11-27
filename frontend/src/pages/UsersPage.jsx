@@ -4,6 +4,7 @@ import { API_BASE_URL } from '../config/api';
 import SalesforceIcon from '../components/shared/SalesforceIcon';
 import ModalShell from '../components/modals/ModalShell';
 import '../styles/Modal.css';
+import '../styles/admin-tables.css';
 
 const UsersPage = () => {
   const { token, isAdmin } = useAuth();
@@ -193,20 +194,29 @@ const UsersPage = () => {
       2: 'UW Team Lead',
       3: 'Head of UW',
       4: 'Underwriter',
-      5: 'Product Team'
+      5: 'Broker'
     };
     return levels[level] || 'Unknown';
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Never';
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return new Date(dateString).toLocaleString();
+  };
+
+  const handleEditClick = (user) => {
+    setEditingUser({ ...user });
+    setShowEditModal(true);
+  };
+
+  const handleResetClick = (userId) => {
+    setResetUserId(userId);
+    setShowResetModal(true);
+  };
+
+  const handleDeleteClick = (userId) => {
+    setDeleteUserId(userId);
+    setShowDeleteModal(true);
   };
 
   if (loading) {
@@ -223,84 +233,63 @@ const UsersPage = () => {
 
   return (
     <div className="slds-p-around_large">
-      <div className="slds-page-header margin-bottom-15">
-        <div className="slds-grid slds-grid_vertical-align-center">
-          <div className="slds-col slds-has-flexi-truncate">
-            <h3 className="slds-text-heading_large">User Management</h3>
-            <p className="slds-text-body_small slds-m-top_xx-small text-color-gray">
-              Manage user accounts, access levels, and permissions
-            </p>
-          </div>
-          <div className="slds-col slds-no-flex slds-grid slds-grid_align-end">
+      <div className="admin-table-container">
+        <h1 style={{ marginBottom: '1.5rem', fontSize: '1.75rem', fontWeight: 'bold' }}>
+          User Management
+        </h1>
+        <p style={{ marginBottom: '1.5rem', color: '#706e6b' }}>
+          Manage user accounts, access levels, and permissions
+        </p>
+        
+        <div className="table-header">
+          <div className="table-actions-left">
             <button
-              className="slds-button slds-button_brand"
+              className="btn-primary"
               onClick={() => setShowCreateModal(true)}
             >
-              <span className="margin-right-05">➕</span>
               Create User
             </button>
+            <span className="total-count">Total: {users.length}</span>
           </div>
         </div>
-      </div>
 
-      {/* Success/Error Messages */}
-      {error && (
-        <div className="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-m-bottom_medium">
-          <span className="slds-assistive-text">Error</span>
-          <h2>{error}</h2>
-          <button className="slds-button slds-button_icon slds-notify__close" onClick={() => setError('')}>
-            <SalesforceIcon category="utility" name="close" size="x-small" className="slds-button__icon" />
-            <span className="slds-assistive-text">Close</span>
-          </button>
-        </div>
-      )}
+        {/* Success/Error Messages */}
+        {error && (
+          <div className="error-state">
+            <div className="error-box">
+              <h3>Error</h3>
+              <p>{error}</p>
+              <button className="btn-secondary" onClick={() => setError('')}>Dismiss</button>
+            </div>
+          </div>
+        )}
 
-      {success && (
-        <div className="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_success slds-m-bottom_medium">
-          <span className="slds-assistive-text">Success</span>
-          <h2>{success}</h2>
-          <button className="slds-button slds-button_icon slds-notify__close" onClick={() => setSuccess('')}>
-            <SalesforceIcon category="utility" name="close" size="x-small" className="slds-button__icon" />
-            <span className="slds-assistive-text">Close</span>
-          </button>
-        </div>
-      )}
+        {success && (
+          <div style={{ background: '#e8f5e9', border: '2px solid #4caf50', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem', textAlign: 'center' }}>
+            <h3 style={{ color: '#2e7d32', margin: '0 0 0.5rem 0' }}>Success</h3>
+            <p style={{ margin: '0 0 1rem 0' }}>{success}</p>
+            <button className="btn-secondary" onClick={() => setSuccess('')}>Dismiss</button>
+          </div>
+        )}
 
-      {/* Users Table */}
-      <div className="slds-card">
-        <div className="slds-card__body slds-card__body_inner">
-          <table className="slds-table slds-table_cell-buffer slds-table_bordered">
+        {/* Users Table */}
+        <div className="table-wrapper">
+          <table className="professional-table">
             <thead>
-              <tr className="slds-line-height_reset">
-                <th scope="col" className="width-25">
-                  <div className="slds-truncate" title="Name">Name</div>
-                </th>
-                <th scope="col" className="width-20">
-                  <div className="slds-truncate" title="Email">Email</div>
-                </th>
-                <th scope="col" className="width-15">
-                  <div className="slds-truncate" title="Access Level">Access Level</div>
-                </th>
-                <th scope="col" className="width-10">
-                  <div className="slds-truncate" title="Status">Status</div>
-                </th>
-                <th scope="col" className="width-15">
-                  <div className="slds-truncate" title="Last Login">Last Login</div>
-                </th>
-                <th scope="col" className="width-15">
-                  <div className="slds-truncate" title="Actions">Actions</div>
-                </th>
+              <tr>
+                <th>NAME</th>
+                <th>EMAIL</th>
+                <th>ACCESS LEVEL</th>
+                <th>STATUS</th>
+                <th>LAST LOGIN</th>
+                <th className="sticky-action">ACTIONS</th>
               </tr>
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user.id} className="slds-hint-parent">
-                  <td>
-                    <div className="slds-truncate" title={user.name}>{user.name}</div>
-                  </td>
-                  <td>
-                    <div className="slds-truncate" title={user.email}>{user.email}</div>
-                  </td>
+                <tr key={user.id}>
+                  <td>{user.name}</td>
+                  <td>{user.email}</td>
                   <td>
                     <span className={`slds-badge ${user.access_level === 1 ? 'slds-theme_success' : ''}`}>
                       {getAccessLevelLabel(user.access_level)}
@@ -311,42 +300,26 @@ const UsersPage = () => {
                       {user.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td>
-                    <div className="slds-truncate" title={formatDate(user.last_login)}>
-                      {formatDate(user.last_login)}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="slds-button-group" role="group">
+                  <td>{formatDate(user.last_login)}</td>
+                  <td className="sticky-action">
+                    <div className="row-actions">
                       <button
-                        className="slds-button slds-button_icon slds-button_icon-border-filled"
-                        title="Edit"
-                        onClick={() => {
-                          setEditingUser({ ...user });
-                          setShowEditModal(true);
-                        }}
+                        className="btn-neutral"
+                        onClick={() => handleEditClick(user)}
                       >
-                        <SalesforceIcon category="utility" name="edit" size="x-small" className="slds-button__icon" />
+                        Edit
                       </button>
                       <button
-                        className="slds-button slds-button_icon slds-button_icon-border-filled"
-                        title="Reset Password"
-                        onClick={() => {
-                          setResetUserId(user.id);
-                          setShowResetModal(true);
-                        }}
+                        className="btn-neutral"
+                        onClick={() => handleResetClick(user.id)}
                       >
-                        <SalesforceIcon category="utility" name="lock" size="x-small" className="slds-button__icon" />
+                        Reset Password
                       </button>
                       <button
-                        className="slds-button slds-button_icon slds-button_icon-border-filled"
-                        title="Delete"
-                        onClick={() => {
-                          setDeleteUserId(user.id);
-                          setShowDeleteModal(true);
-                        }}
+                        className="btn-danger"
+                        onClick={() => handleDeleteClick(user.id)}
                       >
-                        <SalesforceIcon category="utility" name="delete" size="x-small" className="slds-button__icon" />
+                        Delete
                       </button>
                     </div>
                   </td>
@@ -354,12 +327,6 @@ const UsersPage = () => {
               ))}
             </tbody>
           </table>
-
-          {users.length === 0 && (
-            <div className="slds-text-align_center slds-p-vertical_large text-color-gray">
-              No users found
-            </div>
-          )}
         </div>
       </div>
 

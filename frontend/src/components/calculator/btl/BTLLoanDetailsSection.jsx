@@ -1,6 +1,7 @@
 import React from 'react';
 import CollapsibleSection from '../CollapsibleSection';
 import { formatCurrencyInput } from '../../../utils/calculator/numberFormatting';
+import HelpIcon from '../../ui/HelpIcon';
 
 /**
  * BTLLoanDetailsSection - Handles loan calculation inputs for BTL Calculator
@@ -38,6 +39,22 @@ const BTLLoanDetailsSection = ({
     return `£${maxTopSlicingValue.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  // Get info box content based on loan type
+  const getInfoBoxContent = () => {
+    switch(loanType) {
+      case 'Net loan required':
+        return 'Used when the borrower needs a specific net loan after fees. The calculator checks if the requested amount fits within rental, stress rate, and LTV limits.';
+      case 'Max gross loan':
+        return 'Calculates the highest loan available based on property value, rent and policy rules. Gives an immediate view of maximum borrowing capacity, subject to valuation and underwriting.';
+      case 'Specific LTV required':
+        return 'Allows the user to set a target LTV. The calculator returns the maximum loan available at that LTV, ensuring it meets rental and policy requirements.';
+      case 'Specific gross loan':
+        return 'For cases where a borrower wants a specific gross loan before fees. The calculator validates if the request fits affordability, rent coverage, and lending policy.';
+      default:
+        return 'Choose a calculation type to begin. The selection determines which rules and fields the calculator uses to model the loan..';
+    }
+  };
+
   return (
     <CollapsibleSection 
       title="Loan details" 
@@ -45,53 +62,7 @@ const BTLLoanDetailsSection = ({
       onToggle={onToggle}
     >
       <div className="loan-details-grid">
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">
-            <span className="required-asterisk">*</span>Property value
-          </label>
-          <div className="slds-form-element__control">
-            <input 
-              className="slds-input" 
-              value={propertyValue} 
-              onChange={(e) => onPropertyValueChange(formatCurrencyInput(e.target.value))} 
-              placeholder="£1,200,000"
-              disabled={isReadOnly}
-            />
-            <div className="helper-text">Subject to valuation</div>
-          </div>
-        </div>
-
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">
-            <span className="required-asterisk">*</span>Monthly rent
-          </label>
-          <div className="slds-form-element__control">
-            <input 
-              className="slds-input" 
-              value={monthlyRent} 
-              onChange={(e) => onMonthlyRentChange(formatCurrencyInput(e.target.value))} 
-              placeholder="£3,000"
-              disabled={isReadOnly}
-            />
-          </div>
-        </div>
-
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">Top slicing</label>
-          <div className="slds-form-element__control">
-            <input 
-              className="slds-input" 
-              value={topSlicing} 
-              onChange={(e) => onTopSlicingChange(e.target.value)} 
-              placeholder="e.g. 600"
-              disabled={isReadOnly}
-            />
-            <div className="helper-text">
-              Maximum top slicing: {formatMaxTopSlicing()} ({maxTopSlicingPct}% of monthly rent)
-            </div>
-          </div>
-        </div>
-
+        {/* Row 1: Loan calculation dropdown, dynamic input, info box, empty */}
         <div className="slds-form-element">
           <label className="slds-form-element__label">
             <span className="required-asterisk">*</span>Loan calculation requested
@@ -112,16 +83,7 @@ const BTLLoanDetailsSection = ({
           </div>
         </div>
 
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">
-            <span className="required-asterisk">*</span>Select your product
-          </label>
-          <div className="slds-form-element__control">
-            {productSelectControl}
-            <div className="helper-text">Default is first product for the selected product scope</div>
-          </div>
-        </div>
-
+        {/* Dynamic input field based on loan type selection */}
         {loanType === 'Net loan required' && (
           <div className="slds-form-element">
             <label className="slds-form-element__label">
@@ -183,6 +145,91 @@ const BTLLoanDetailsSection = ({
             </div>
           </div>
         )}
+
+        {(loanType === 'Max gross loan' || !loanType) && (
+          <div className="slds-form-element">
+            {/* Empty placeholder when Max gross loan selected or no selection */}
+          </div>
+        )}
+
+        {/* Info box */}
+        <div className="slds-form-element" style={{ gridColumn: 'span 2' }}>
+          <div className="loan-info-box">
+            <HelpIcon 
+              content={getInfoBoxContent()} 
+              align="bottom"
+              label="Loan calculation information"
+            />
+            <div className="info-text">
+              {getInfoBoxContent()}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2: Property value, Monthly rent, Top slicing, Select your product */}
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">
+            <span className="required-asterisk">*</span>Property value
+          </label>
+          <div className="slds-form-element__control">
+            <input 
+              className="slds-input" 
+              value={propertyValue} 
+              onChange={(e) => onPropertyValueChange(formatCurrencyInput(e.target.value))} 
+              placeholder="£1,200,000"
+              disabled={isReadOnly}
+            />
+            <div className="helper-text">Subject to valuation</div>
+          </div>
+        </div>
+
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">
+            <span className="required-asterisk">*</span>Monthly rent
+          </label>
+          <div className="slds-form-element__control">
+            <input 
+              className="slds-input" 
+              value={monthlyRent} 
+              onChange={(e) => onMonthlyRentChange(formatCurrencyInput(e.target.value))} 
+              placeholder="£3,000"
+              disabled={isReadOnly}
+            />
+          </div>
+        </div>
+
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">
+            Top slicing
+            <HelpIcon 
+              content="Additional monthly income that can be used to supplement rental income for affordability calculations. Maximum top slicing is calculated as a percentage of the monthly rent." 
+              align="top"
+              label="Top slicing information"
+            />
+          </label>
+          <div className="slds-form-element__control">
+            <input 
+              className="slds-input" 
+              value={topSlicing} 
+              onChange={(e) => onTopSlicingChange(e.target.value)} 
+              placeholder="e.g. 600"
+              disabled={isReadOnly}
+            />
+            <div className="helper-text">
+              Maximum top slicing: {formatMaxTopSlicing()} ({maxTopSlicingPct}% of monthly rent)
+            </div>
+          </div>
+        </div>
+
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">
+            <span className="required-asterisk">*</span>Select your product
+          </label>
+          <div className="slds-form-element__control">
+            {productSelectControl}
+            <div className="helper-text">Default is first product for the selected product scope</div>
+          </div>
+        </div>
       </div>
     </CollapsibleSection>
   );

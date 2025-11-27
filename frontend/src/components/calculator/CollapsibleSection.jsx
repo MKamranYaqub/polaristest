@@ -14,13 +14,16 @@ import '../../styles/Calculator.scss';
 export default function CollapsibleSection({ title, expanded, onToggle, children }) {
   return (
     <section className="collapsible-section">
-      <header className="collapsible-header" onClick={onToggle}>
+      <header 
+        className={`collapsible-header ${expanded ? 'expanded' : ''}`}
+        onClick={onToggle}
+      >
         <h2 className="header-title">{title}</h2>
         <SalesforceIcon
           category="utility"
           name={expanded ? "chevronup" : "chevrondown"}
           size="x-small"
-          className={`chevron-icon ${expanded ? 'expanded' : ''}`}
+          className="chevron-icon"
         />
       </header>
       <div className={`collapsible-body ${!expanded ? 'collapsed' : ''}`}>

@@ -130,7 +130,12 @@ input[type="range"] {
   transition: background 0.15s ease;
   
   &:hover {
-    background: var(--token-layer-hover);
+    background: var(--token-layer-hover, #f3f2f2);
+  }
+  
+  // When section is expanded, use same color as hover state
+  &.expanded {
+    background: var(--token-layer-hover, #f3f2f2);
   }
   
   .header-title {
@@ -144,11 +149,9 @@ input[type="range"] {
     width: 1rem;
     height: 1rem;
     transition: transform 0.2s ease;
-    fill: $token-text-secondary;
-    
-    &.expanded {
-      transform: rotate(180deg);
-    }
+    fill: currentColor;
+    color: $token-text-secondary;
+    flex-shrink: 0;
   }
 }
 
@@ -183,9 +186,38 @@ input[type="range"] {
 // Loan details grid (responsive multi-column)
 .loan-details-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: $spacing-md;
   margin-bottom: $spacing-md;
+
+  .loan-info-box {
+    padding: var(--token-spacing-xs) var(--token-spacing-sm);
+    background-color: var(--token-info-bg);
+    border: 1px solid var(--token-info);
+    border-radius: var(--token-radius-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--token-spacing-xs);
+    min-height: 50px;
+
+    .help-icon {
+      flex-shrink: 0;
+      margin-left: 0;
+      width: var(--token-icon-lg);
+      height: var(--token-icon-lg);
+    }
+
+    .help-icon svg {
+      width: var(--token-icon-lg);
+      height: var(--token-icon-lg);
+    }
+
+    .info-text {
+      font-size: var(--token-font-size-sm);
+      line-height: var(--token-line-height-base);
+      color: var(--token-text-primary);
+    }
+  }
   
   .slds-form-element {
     min-width: 0; // Prevent grid items from overflowing

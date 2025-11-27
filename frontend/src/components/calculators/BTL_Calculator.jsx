@@ -89,7 +89,7 @@ export default function BTLcalculator({ initialQuote = null }) {
   // (Removed additional propertyType state - productScope drives product lists)
   // Additional fees UI
   const [addFeesToggle, setAddFeesToggle] = useState(false);
-  const [feeCalculationType, setFeeCalculationType] = useState('pound'); // 'pound' or 'percentage'
+  const [feeCalculationType, setFeeCalculationType] = useState(''); // '' = 'please select', 'pound' or 'percentage'
   const [additionalFeeAmount, setAdditionalFeeAmount] = useState('');
   // normalize loanType values to match select option values used in the JSX
   const [loanType, setLoanType] = useState(''); // Start with empty - user must select
@@ -950,6 +950,61 @@ export default function BTLcalculator({ initialQuote = null }) {
     setQuoteModalOpen(true);
   };
 
+  const handleCancelQuote = () => {
+    // Reset to initial state - clear currentQuoteId and reference
+    setCurrentQuoteId(null);
+    setCurrentQuoteRef(null);
+    
+    // Reset all input fields
+    setPropertyValue('');
+    setMonthlyRent('');
+    setTopSlicing('');
+    setProductScope('');
+    setProductType('');
+    setLoanType('');
+    setSpecificGrossLoan('');
+    setSpecificNetLoan('');
+    setMaxLtvInput(75);
+    setRetentionChoice('No');
+    setRetentionLtv('75');
+    
+    // Reset criteria answers
+    setAnswers({});
+    
+    // Reset results and overrides
+    setRelevantRates([]);
+    setRatesOverrides({});
+    setProductFeeOverrides({});
+    setRolledMonthsPerColumn({});
+    setDeferredInterestPerColumn({});
+    setManualModeActivePerColumn({});
+    setOptimizedRolledPerColumn({});
+    setOptimizedDeferredPerColumn({});
+    
+    // Reset DIP data
+    setDipData({});
+    setFilteredRatesForDip([]);
+    
+    // Reset broker settings using setters from hook
+    brokerSettings.setClientType('Direct');
+    brokerSettings.setClientFirstName('');
+    brokerSettings.setClientLastName('');
+    brokerSettings.setClientEmail('');
+    brokerSettings.setClientContact('');
+    brokerSettings.setBrokerCompanyName('');
+    brokerSettings.setBrokerRoute(BROKER_ROUTES.DIRECT_BROKER);
+    brokerSettings.setBrokerCommissionPercent(BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER]);
+    brokerSettings.setAddFeesToggle(false);
+    brokerSettings.setFeeCalculationType('pound');
+    brokerSettings.setAdditionalFeeAmount('');
+    
+    showToast({ 
+      kind: 'info', 
+      title: 'Quote Cancelled', 
+      subtitle: 'Calculator has been reset to start a new quote.' 
+    });
+  };
+
   const handleSaveQuoteData = async (quoteId, updatedQuoteData) => {
     try {
       await upsertQuoteData({
@@ -1237,7 +1292,8 @@ export default function BTLcalculator({ initialQuote = null }) {
             },
           onQuoteUpdated: (savedQuote) => {
               // Already handled in onQuoteSaved
-            }
+            },
+          onCancel: handleCancelQuote
         }}
       />
 
@@ -1339,6 +1395,17 @@ export default function BTLcalculator({ initialQuote = null }) {
                 </div>
               );
             }
+
+            // Check if property value and monthly rent are entered
+            if (!propertyValue || propertyValue <= 0 || !monthlyRent || monthlyRent <= 0) {
+              return (
+                <div className="no-rates" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
+                  <p style={{ fontSize: '1.1rem', marginBottom: 'var(--token-spacing-sm)' }}>Please enter property value and monthly rent to view rates and results.</p>
+                  <p style={{ fontSize: '0.9rem' }}>Both fields are required to calculate loan options.</p>
+                </div>
+              );
+            }
+
             if (loanType === 'Net loan required' && !specificNetLoan) {
                 return (
                   <div className="no-rates" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>

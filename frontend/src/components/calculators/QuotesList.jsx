@@ -7,6 +7,7 @@ import SalesforceIcon from '../shared/SalesforceIcon';
 import NotificationModal from '../modals/NotificationModal';
 import ConfirmationModal from '../modals/ConfirmationModal';
 import Breadcrumbs from '../layout/Breadcrumbs';
+import '../../styles/admin-tables.css';
 
 export default function QuotesList({ calculatorType = null, onLoad = null }) {
   const [quotes, setQuotes] = useState([]);
@@ -305,226 +306,212 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         { label: 'Quotes', path: '/quotes' }
       ]} />
       
-      <div className="display-flex justify-content-space-between align-items-center margin-bottom-1">
-        <h2>Quotes {calculatorType ? `(${calculatorType})` : ''}</h2>
-        <button 
-          className="slds-button slds-button_brand display-flex align-items-center flex-gap-05" 
-          onClick={handleExport}
-          disabled={exporting || loading}
-        >
-          {exporting ? (
-            <>
-              <span>Exporting...</span>
-            </>
-          ) : (
-            <>
-              <SalesforceIcon
-                category="utility"
-                name="download"
-                size="x-small"
-                className="slds-button__icon slds-button__icon_left"
-              />
-              <span>Export to CSV</span>
-            </>
-          )}
-        </button>
-      </div>
-      {loading && (
-        <div className="display-flex justify-content-center align-items-center margin-vertical-2">
-          <Loading description="Loading quotes" withOverlay={false} />
-        </div>
-      )}
-      {error && <div className="slds-text-color_error">{error}</div>}
-      
-      {/* Filters Section */}
-      <div className="quotes-filter-section">
-        <div className="slds-form-element">
-          <label className="slds-form-element__label slds-text-body_small">Name</label>
-          <div className="slds-form-element__control">
-            <input 
-              className="slds-input" 
-              placeholder="Search by name..."
-              value={filterName} 
-              onChange={(e) => setFilterName(e.target.value)} 
-            />
+      <div className="admin-table-container">
+        <h1 style={{ marginBottom: '1.5rem', fontSize: '1.75rem', fontWeight: 'bold' }}>
+          Quotes {calculatorType ? `(${calculatorType})` : ''}
+        </h1>
+        
+        <div className="table-header">
+          <div className="table-actions-left">
+            <button 
+              className="btn-primary" 
+              onClick={handleExport}
+              disabled={exporting || loading}
+            >
+              {exporting ? 'Exporting...' : 'Export to CSV'}
+            </button>
+            <span className="total-count">Total: {sortedQuotes.length}</span>
+          </div>
+          <div className="table-actions-right">
+            <div className="pagination-controls">
+              <button 
+                className="btn-neutral"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+              <span className="pagination-info">Page {currentPage} of {totalPages}</span>
+              <button 
+                className="btn-neutral"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+              <div className="rows-per-page">
+                <label>Rows:</label>
+                <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
+        
+        {loading && (
+          <div className="loading-overlay">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Loading quotes...</div>
+          </div>
+        )}
+        
+        {error && (
+          <div className="error-state">
+            <div className="error-box">
+              <h3>Error</h3>
+              <p>{error}</p>
+            </div>
+          </div>
+        )}
+        
+        {!loading && !error && (
+          <>
+            <div className="filters-section">
+          <div className="filter-field" style={{ minWidth: '200px' }}>
+            <label>NAME</label>
+            <input 
+              type="text"
+              placeholder="Search by name..."
+              value={filterName} 
+              onChange={(e) => setFilterName(e.target.value)}
+              style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
+            />
+          </div>
 
-        <div className="slds-form-element">
-          <label className="slds-form-element__label slds-text-body_small">Type</label>
-          <div className="slds-form-element__control">
-            <select className="slds-select" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-              <option value="">All</option>
+          <div className="filter-field">
+            <label>TYPE</label>
+            <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+              <option value="">All Types</option>
               <option value="BTL">BTL</option>
               <option value="BRIDGING">BRIDGING</option>
             </select>
           </div>
-        </div>
 
-        <div className="slds-form-element">
-          <label className="slds-form-element__label slds-text-body_small">Borrower Type</label>
-          <div className="slds-form-element__control">
-            <select className="slds-select" value={filterBorrowerType} onChange={(e) => setFilterBorrowerType(e.target.value)}>
+          <div className="filter-field">
+            <label>BORROWER TYPE</label>
+            <select value={filterBorrowerType} onChange={(e) => setFilterBorrowerType(e.target.value)}>
               <option value="">All</option>
               <option value="Personal">Personal</option>
               <option value="Company">Company</option>
             </select>
           </div>
-        </div>
 
-        <div className="slds-form-element">
-          <label className="slds-form-element__label slds-text-body_small">Created From</label>
-          <div className="slds-form-element__control">
+          <div className="filter-field">
+            <label>CREATED FROM</label>
             <input 
               type="date" 
-              className="slds-input" 
               value={filterCreatedFrom} 
-              onChange={(e) => setFilterCreatedFrom(e.target.value)} 
+              onChange={(e) => setFilterCreatedFrom(e.target.value)}
+              style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
             />
           </div>
-        </div>
 
-        <div className="slds-form-element">
-          <label className="slds-form-element__label slds-text-body_small">Created To</label>
-          <div className="slds-form-element__control">
+          <div className="filter-field">
+            <label>CREATED TO</label>
             <input 
               type="date" 
-              className="slds-input" 
               value={filterCreatedTo} 
-              onChange={(e) => setFilterCreatedTo(e.target.value)} 
+              onChange={(e) => setFilterCreatedTo(e.target.value)}
+              style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
             />
           </div>
-        </div>
 
-        <div className="slds-form-element">
-          <label className="slds-form-element__label slds-text-body_small">Updated From</label>
-          <div className="slds-form-element__control">
+          <div className="filter-field">
+            <label>UPDATED FROM</label>
             <input 
               type="date" 
-              className="slds-input" 
               value={filterUpdatedFrom} 
-              onChange={(e) => setFilterUpdatedFrom(e.target.value)} 
+              onChange={(e) => setFilterUpdatedFrom(e.target.value)}
+              style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
             />
           </div>
-        </div>
 
-        <div className="slds-form-element">
-          <label className="slds-form-element__label slds-text-body_small">Updated To</label>
-          <div className="slds-form-element__control">
+          <div className="filter-field">
+            <label>UPDATED TO</label>
             <input 
               type="date" 
-              className="slds-input" 
               value={filterUpdatedTo} 
-              onChange={(e) => setFilterUpdatedTo(e.target.value)} 
+              onChange={(e) => setFilterUpdatedTo(e.target.value)}
+              style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
             />
+          </div>
+
+          <div className="filter-field">
+            <label style={{ visibility: 'hidden' }}>Actions</label>
+            <button 
+              className="btn-secondary" 
+              onClick={() => {
+                setFilterName('');
+                setFilterType('');
+                setFilterBorrowerType('');
+                setFilterCreatedFrom('');
+                setFilterCreatedTo('');
+                setFilterUpdatedFrom('');
+                setFilterUpdatedTo('');
+              }}
+            >
+              Clear Filters
+            </button>
           </div>
         </div>
 
-        <div className="display-flex align-items-flex-end">
-          <button 
-            className="slds-button slds-button_neutral" 
-            onClick={() => {
-              setFilterName('');
-              setFilterType('');
-              setFilterBorrowerType('');
-              setFilterCreatedFrom('');
-              setFilterCreatedTo('');
-              setFilterUpdatedFrom('');
-              setFilterUpdatedTo('');
-            }}
-          >
-            Clear Filters
-          </button>
-        </div>
-      </div>
-
-      <div className="quotes-showing-count helper-text margin-bottom-05">
-        Showing {paginatedQuotes.length} of {sortedQuotes.length} quotes
-      </div>
-      
-      <div className="overflow-auto position-relative">
-        <table className="slds-table slds-table_cell-buffer slds-table_bordered width-100">
-          <thead>
-            <tr>
-              <th>
-                <button 
-                  className="slds-th__action" 
+        <div className="table-wrapper">
+          <table className="professional-table">
+            <thead>
+              <tr>
+                <th 
+                  className={`sortable ${sortField === 'reference_number' ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}
                   onClick={() => handleSort('reference_number')}
                   title="Sort by Reference Number"
                 >
-                  <span className="slds-th__action-text">Ref #</span>
-                  {sortField === 'reference_number' && (
-                    <span className="slds-th__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </button>
-              </th>
-              <th>
-                <button 
-                  className="slds-th__action" 
+                  REF #
+                </th>
+                <th 
+                  className={`sortable ${sortField === 'name' ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}
                   onClick={() => handleSort('name')}
                   title="Sort by Quote Name"
                 >
-                  <span className="slds-th__action-text">Quote Name</span>
-                  {sortField === 'name' && (
-                    <span className="slds-th__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </button>
-              </th>
-              <th>
-                <button 
-                  className="slds-th__action" 
+                  QUOTE NAME
+                </th>
+                <th 
+                  className={`sortable ${sortField === 'calculator_type' ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}
                   onClick={() => handleSort('calculator_type')}
                   title="Sort by Type"
                 >
-                  <span className="slds-th__action-text">Type</span>
-                  {sortField === 'calculator_type' && (
-                    <span className="slds-th__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </button>
-              </th>
-              <th>Status</th>
-              <th>
-                <button 
-                  className="slds-th__action" 
+                  TYPE
+                </th>
+                <th>STATUS</th>
+                <th 
+                  className={`sortable ${sortField === 'borrower_type' ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}
                   onClick={() => handleSort('borrower_type')}
                   title="Sort by Borrower Type"
                 >
-                  <span className="slds-th__action-text">Borrower Type</span>
-                  {sortField === 'borrower_type' && (
-                    <span className="slds-th__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </button>
-              </th>
-              <th>Borrower/Company</th>
-              <th>Created By</th>
-              <th>
-                <button 
-                  className="slds-th__action" 
+                  BORROWER TYPE
+                </th>
+                <th>BORROWER/COMPANY</th>
+                <th>CREATED BY</th>
+                <th 
+                  className={`sortable ${sortField === 'created_at' ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}
                   onClick={() => handleSort('created_at')}
                   title="Sort by Created Date"
                 >
-                  <span className="slds-th__action-text">Created</span>
-                  {sortField === 'created_at' && (
-                    <span className="slds-th__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </button>
-              </th>
-              <th>Updated By</th>
-              <th>
-                <button 
-                  className="slds-th__action" 
+                  CREATED
+                </th>
+                <th>UPDATED BY</th>
+                <th 
+                  className={`sortable ${sortField === 'updated_at' ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}
                   onClick={() => handleSort('updated_at')}
                   title="Sort by Updated Date"
                 >
-                  <span className="slds-th__action-text">Updated</span>
-                  {sortField === 'updated_at' && (
-                    <span className="slds-th__sort-icon">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                  )}
-                </button>
-              </th>
-              <th className="sticky-table-header">Actions</th>
-            </tr>
-          </thead>
+                  UPDATED
+                </th>
+                <th className="sticky-action">ACTIONS</th>
+              </tr>
+            </thead>
           <tbody>
             {paginatedQuotes.length === 0 ? (
               <tr>
@@ -589,9 +576,11 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                   </span>
                 </td>
                 <td>{q.updated_at ? new Date(q.updated_at).toLocaleString() : '—'}</td>
-                <td className="sticky-table-cell">
-                  <button className="slds-button slds-button_neutral" onClick={() => handleLoad(q.id)}>Load</button>
-                  <button className="slds-button slds-button_destructive margin-left-8" onClick={() => handleDelete(q.id)}>Delete</button>
+                <td className="sticky-action">
+                  <div className="row-actions">
+                    <button className="btn-neutral" onClick={() => handleLoad(q.id)}>Load</button>
+                    <button className="btn-danger" onClick={() => handleDelete(q.id)}>Delete</button>
+                  </div>
                 </td>
               </tr>
               );
@@ -600,27 +589,9 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
           </tbody>
         </table>
       </div>
-
-      {/* Pagination Controls */}
-      {totalFilteredPages > 1 && (
-        <div className="display-flex justify-content-center align-items-center flex-gap-05 margin-top-1">
-          <button 
-            className="slds-button slds-button_neutral" 
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </button>
-          <span>Page {currentPage} of {totalFilteredPages}</span>
-          <button 
-            className="slds-button slds-button_neutral" 
-            onClick={() => setCurrentPage(prev => Math.min(totalFilteredPages, prev + 1))}
-            disabled={currentPage === totalFilteredPages}
-          >
-            Next
-          </button>
-        </div>
-      )}
+      </>
+        )}
+      </div>
       
       <NotificationModal
         isOpen={notification.show}

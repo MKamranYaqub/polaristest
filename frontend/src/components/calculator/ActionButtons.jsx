@@ -12,6 +12,7 @@ import SaveQuoteButton from '../calculators/SaveQuoteButton';
  * @param {function} onIssueQuote - Handler for Issue Quote button
  * @param {function} onQuoteSaved - Callback after quote is saved
  * @param {function} onQuoteUpdated - Callback after quote is updated
+ * @param {function} onCancel - Handler for Cancel Quote button (new quotes only)
  */
 export default function ActionButtons({
   calculatorType,
@@ -20,7 +21,8 @@ export default function ActionButtons({
   onIssueDip,
   onIssueQuote,
   onQuoteSaved,
-  onQuoteUpdated
+  onQuoteUpdated,
+  onCancel
 }) {
   return (
     <div className="flex gap-sm" style={{ marginLeft: 'auto', alignItems: 'center' }}>
@@ -43,9 +45,10 @@ export default function ActionButtons({
       <SaveQuoteButton
         calculatorType={calculatorType}
         calculationData={calculationData}
-        quoteId={quoteId}
-        onQuoteSaved={onQuoteSaved}
-        onQuoteUpdated={onQuoteUpdated}
+        allColumnData={[]}
+        existingQuote={quoteId ? { id: quoteId } : null}
+        onSaved={onQuoteSaved}
+        onCancel={onCancel}
       />
     </div>
   );

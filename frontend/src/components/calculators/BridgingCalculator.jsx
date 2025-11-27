@@ -1180,6 +1180,60 @@ export default function BridgingCalculator({ initialQuote = null }) {
     setQuoteModalOpen(true);
   };
 
+  const handleCancelQuote = () => {
+    // Reset to initial state - clear currentQuoteId and reference
+    setCurrentQuoteId(null);
+    setCurrentQuoteRef(null);
+    
+    // Reset all input fields
+    setPropertyValue('');
+    setGrossLoan('');
+    setFirstChargeValue('');
+    setMonthlyRent('');
+    setTopSlicing('');
+    setProductScope('');
+    setUseSpecificNet(false);
+    setSpecificNetLoan('');
+    setBridgingTerm(12);
+    setCommitmentFee(0);
+    setExitFeePercent(0);
+    setChargeType('');
+    setSubProduct('');
+    
+    // Reset criteria answers
+    setAnswers({});
+    
+    // Reset results
+    setBestBridgeRatesArray([]);
+    
+    // Reset multi-property
+    setIsMultiProperty(false);
+    setMultiPropertyRows([{ propertyValue: '', grossLoan: '' }]);
+    
+    // Reset DIP data
+    setDipData({});
+    setFilteredRatesForDip([]);
+    
+    // Reset broker settings using setters from hook
+    brokerSettings.setClientType('Direct');
+    brokerSettings.setClientFirstName('');
+    brokerSettings.setClientLastName('');
+    brokerSettings.setClientEmail('');
+    brokerSettings.setClientContact('');
+    brokerSettings.setBrokerCompanyName('');
+    brokerSettings.setBrokerRoute(BROKER_ROUTES.DIRECT_BROKER);
+    brokerSettings.setBrokerCommissionPercent(BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER]);
+    brokerSettings.setAddFeesToggle(false);
+    brokerSettings.setFeeCalculationType('pound');
+    brokerSettings.setAdditionalFeeAmount('');
+    
+    showToast({ 
+      kind: 'info', 
+      title: 'Quote Cancelled', 
+      subtitle: 'Calculator has been reset to start a new quote.' 
+    });
+  };
+
   const handleSaveQuoteData = async (quoteId, updatedQuoteData) => {
     try {
       await upsertQuoteData({
@@ -1366,6 +1420,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
                 }
               }
             }}
+            onCancel={handleCancelQuote}
           />
         </div>
       </div>

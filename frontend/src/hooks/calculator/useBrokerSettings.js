@@ -27,7 +27,7 @@ export default function useBrokerSettings(initialQuote = null) {
   
   // Additional fees state
   const [addFeesToggle, setAddFeesToggle] = useState(false);
-  const [feeCalculationType, setFeeCalculationType] = useState('pound');
+  const [feeCalculationType, setFeeCalculationType] = useState('');
   const [additionalFeeAmount, setAdditionalFeeAmount] = useState('');
 
   // Get broker routes and defaults from localStorage (supports runtime updates)

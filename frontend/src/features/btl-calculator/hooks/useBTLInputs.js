@@ -31,7 +31,7 @@ export function useBTLInputs() {
   
   // Additional fees
   const [addFeesToggle, setAddFeesToggle] = useState(false);
-  const [feeCalculationType, setFeeCalculationType] = useState('pound');
+  const [feeCalculationType, setFeeCalculationType] = useState('');
   const [additionalFeeAmount, setAdditionalFeeAmount] = useState('');
   
   // Loan details

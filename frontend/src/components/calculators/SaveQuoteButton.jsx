@@ -18,6 +18,7 @@ export default function SaveQuoteButton({
   existingQuote = null,
   showProductRangeSelection = false,
   onSaved = null,
+  onCancel = null,
 }) {
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -400,6 +401,17 @@ export default function SaveQuoteButton({
     <div className="display-inline-block">
       <button className="slds-button slds-button_brand" onClick={openForm} disabled={saving}>{saving ? 'Saving…' : (existingQuote ? ' Update Quote' : 'Save Quote')}</button>
       
+      {!existingQuote && onCancel && (
+        <button 
+          className="slds-button slds-button_neutral" 
+          onClick={onCancel} 
+          disabled={saving}
+          style={{ marginLeft: '0.5rem' }}
+        >
+          Cancel Quote
+        </button>
+      )}
+      
       <ModalShell
         isOpen={open}
         onClose={closeForm}
@@ -549,4 +561,5 @@ SaveQuoteButton.propTypes = {
   }),
   showProductRangeSelection: PropTypes.bool,
   onSaved: PropTypes.func,
+  onCancel: PropTypes.func,
 };
