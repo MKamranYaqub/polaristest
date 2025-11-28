@@ -8,7 +8,7 @@
 
  */
 
-import { VARIABLE_RATES, FIXED_RATES, FUSION_BANDS } from '../config/bridgeFusionRates';
+import { VARIABLE_RATES, FIXED_RATES, FUSION_BANDS } from '../src/config/bridgeFusionRates';
 
 export class BridgeFusionCalculator {
   /* ==========================================
@@ -97,7 +97,7 @@ export class BridgeFusionCalculator {
       case 'bridge-var': {
         marginMonthly =
           overrideMonthly > 0 ? overrideMonthly / 100 : VARIABLE_RATES[bucket][subProduct] || 0;
-        fullAnnual = (marginMonthly + (bbrPct / 12)) * 12;
+        fullAnnual = (marginMonthly + (bbrPct / 100 / 12)) * 12;
         couponMonthly = marginMonthly;
         break;
       }

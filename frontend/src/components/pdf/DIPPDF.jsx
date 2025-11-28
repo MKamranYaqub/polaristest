@@ -8,10 +8,16 @@ import PDFRow from './shared/PDFRow';
 import TitleInsuranceSection from './sections/TitleInsuranceSection';
 import BrokerFeeSection from './sections/BrokerFeeSection';
 import * as DIPHelpers from './utils/dipHelpers';
+import BTLDIPPDF from './BTLDIPPDF';
 
 const DIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
   const isBTL = quote.calculator_type === 'BTL';
   const isBridging = quote.calculator_type === 'BRIDGING';
+  
+  // Use specialized BTL DIP PDF for BTL quotes (matches Excel DIP sheet)
+  if (isBTL) {
+    return <BTLDIPPDF quote={quote} dipData={dipData} brokerSettings={brokerSettings} />;
+  }
   
   // Use helper functions for complex logic
   const borrowerName = DIPHelpers.getBorrowerName(quote, brokerSettings);
