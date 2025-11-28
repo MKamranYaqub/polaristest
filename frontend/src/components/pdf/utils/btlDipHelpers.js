@@ -13,18 +13,33 @@
  * 8. Title Insurance: Conditional note about valuation
  */
 
-import { parseNumber } from '../../utils/calculator/numberFormatting';
+import { parseNumber } from '../../../utils/calculator/numberFormatting';
 
 // ============================================================================
 // BORROWER & PROPERTY HELPERS
 // ============================================================================
 
 /**
- * Get borrower name from quote or broker settings
+ * Get borrower name from quote, dipData, or broker settings
  */
-export const getBorrowerName = (quote, brokerSettings) => {
+export const getBorrowerName = (quote, dipData, brokerSettings) => {
+  // Check quote fields first (from database)
+  if (quote.borrower_name) return quote.borrower_name;
+  if (quote.name) return quote.name;
   if (quote.quote_borrower_name) return quote.quote_borrower_name;
   
+  // Check if it's a company
+  if (quote.borrower_type === 'Company' && quote.company_name) {
+    return quote.company_name;
+  }
+  
+  // Check client details from quote
+  if (quote.client_first_name && quote.client_last_name) {
+    return `${quote.client_first_name} ${quote.client_last_name}`;
+  }
+  if (quote.client_first_name) return quote.client_first_name;
+  
+  // Check broker settings
   if (brokerSettings?.clientFirstName && brokerSettings?.clientLastName) {
     return `${brokerSettings.clientFirstName} ${brokerSettings.clientLastName}`;
   }
@@ -134,18 +149,41 @@ export const getInitialTerm = (quote) => {
 
 /**
  * Get full loan term in years
+ * For Core products: 25 years
+ * For Specialist products: 10 years (or from rate data)
  */
 export const getFullTerm = (quote) => {
-  const months = parseNumber(quote.full_term) || parseNumber(quote.total_loan_term) || 120;
-  // If stored as months, convert to years
-  return months > 50 ? months / 12 : months;
+  // Check if we have explicit full_term_years from rate data
+  if (quote.full_term_years) {
+    return parseNumber(quote.full_term_years);
+  }
+  
+  // Check product range - Core is 25 years, Specialist is typically 10 years
+  const productRange = (quote.product_range || '').toLowerCase();
+  if (productRange === 'core') {
+    return 25;
+  }
+  
+  // Check for full_term in months or years
+  const fullTerm = parseNumber(quote.full_term) || parseNumber(quote.total_loan_term);
+  if (fullTerm) {
+    // If stored as months (> 50), convert to years
+    return fullTerm > 50 ? fullTerm / 12 : fullTerm;
+  }
+  
+  // Default based on product range
+  return productRange === 'core' ? 25 : 10;
 };
 
 /**
  * Get annual interest rate
  */
 export const getAnnualRate = (quote) => {
-  return parseNumber(quote.actual_rate) || parseNumber(quote.annual_rate) || 0;
+  return parseNumber(quote.actual_rate) || 
+         parseNumber(quote.annual_rate) || 
+         parseNumber(quote.pay_rate) ||
+         parseNumber(quote.initial_rate) ||
+         0;
 };
 
 /**
@@ -186,30 +224,91 @@ export const getMonthlyInterestCost = (quote) => {
  * Check if rolled months > 0 (to show/hide section)
  */
 export const hasRolledMonths = (quote) => {
-  const rolled = parseNumber(quote.rolled_months) || 0;
+  const selectedResult = quote._selectedResult || {};
+  // Try multiple possible field locations
+  const rolled = parseNumber(quote.rolled_months) || 
+                 parseNumber(selectedResult.rolled_months) ||
+                 parseNumber(quote.rolledMonths) ||
+                 parseNumber(selectedResult.rolledMonths) || 0;
+  console.log('hasRolledMonths check:', { 
+    'quote.rolled_months': quote.rolled_months, 
+    'selectedResult.rolled_months': selectedResult.rolled_months,
+    'parsed': rolled,
+    'result': rolled > 0
+  });
   return rolled > 0;
 };
 
-export const getRolledMonths = (quote) => parseNumber(quote.rolled_months) || 0;
+export const getRolledMonths = (quote) => {
+  const selectedResult = quote._selectedResult || {};
+  return parseNumber(quote.rolled_months) || 
+         parseNumber(selectedResult.rolled_months) ||
+         parseNumber(quote.rolledMonths) ||
+         parseNumber(selectedResult.rolledMonths) || 0;
+};
 
 export const getRolledInterestAmount = (quote) => {
-  return parseNumber(quote.rolled_interest_amount) || parseNumber(quote.rolled_interest) || 0;
+  const selectedResult = quote._selectedResult || {};
+  return parseNumber(quote.rolled_months_interest) || 
+         parseNumber(quote.rolled_interest_amount) || 
+         parseNumber(quote.rolledInterestAmount) ||
+         parseNumber(selectedResult.rolled_months_interest) ||
+         parseNumber(selectedResult.rolled_interest_amount) ||
+         parseNumber(selectedResult.rolledInterestAmount) ||
+         parseNumber(quote.rolled_interest) || 
+         0;
 };
 
 /**
  * Check if deferred interest is used (to show/hide section)
+ * BTL quote_results uses deferred_interest_percent
  */
 export const hasDeferredInterest = (quote) => {
-  const deferred = parseNumber(quote.deferred_rate) || parseNumber(quote.deferred_cap_pct) || 0;
+  const selectedResult = quote._selectedResult || {};
+  const deferred = parseNumber(quote.deferred_rate) || 
+                   parseNumber(quote.deferred_interest_percent) || 
+                   parseNumber(quote.deferred_cap_pct) ||
+                   parseNumber(quote.deferredCapPct) ||
+                   parseNumber(quote.deferredRate) ||
+                   parseNumber(selectedResult.deferred_rate) ||
+                   parseNumber(selectedResult.deferred_interest_percent) ||
+                   parseNumber(selectedResult.deferred_cap_pct) ||
+                   parseNumber(selectedResult.deferredCapPct) ||
+                   parseNumber(selectedResult.deferredRate) || 0;
+  console.log('hasDeferredInterest check:', { 
+    'quote.deferred_interest_percent': quote.deferred_interest_percent, 
+    'quote.deferred_rate': quote.deferred_rate,
+    'selectedResult.deferred_interest_percent': selectedResult.deferred_interest_percent,
+    'parsed': deferred,
+    'result': deferred > 0
+  });
   return deferred > 0;
 };
 
 export const getDeferredRate = (quote) => {
-  return parseNumber(quote.deferred_rate) || parseNumber(quote.deferred_cap_pct) || 0;
+  const selectedResult = quote._selectedResult || {};
+  return parseNumber(quote.deferred_rate) || 
+         parseNumber(quote.deferred_interest_percent) || 
+         parseNumber(quote.deferred_cap_pct) ||
+         parseNumber(quote.deferredCapPct) ||
+         parseNumber(quote.deferredRate) ||
+         parseNumber(selectedResult.deferred_rate) ||
+         parseNumber(selectedResult.deferred_interest_percent) ||
+         parseNumber(selectedResult.deferred_cap_pct) ||
+         parseNumber(selectedResult.deferredCapPct) ||
+         parseNumber(selectedResult.deferredRate) || 0;
 };
 
 export const getDeferredAmount = (quote) => {
-  return parseNumber(quote.deferred_interest_amount) || parseNumber(quote.deferred_interest) || 0;
+  const selectedResult = quote._selectedResult || {};
+  return parseNumber(quote.deferred_interest_pounds) || 
+         parseNumber(quote.deferred_interest_amount) || 
+         parseNumber(quote.deferredInterestAmount) ||
+         parseNumber(selectedResult.deferred_interest_pounds) ||
+         parseNumber(selectedResult.deferred_interest_amount) ||
+         parseNumber(selectedResult.deferredInterestAmount) ||
+         parseNumber(quote.deferred_interest) || 
+         0;
 };
 
 /**
@@ -253,17 +352,24 @@ export const hasBrokerFees = (brokerSettings) => {
 };
 
 export const getBrokerCommission = (quote, brokerSettings) => {
-  const procFee = parseNumber(quote.proc_fee_value) || parseNumber(quote.broker_commission);
+  // Check multiple possible field names for broker commission
+  const procFee = parseNumber(quote.proc_fee_value) || 
+                  parseNumber(quote.broker_commission) ||
+                  parseNumber(quote.broker_commission_proc_fee_pounds);
   if (procFee) return procFee;
   
   // Calculate from percentage
   const gross = getGrossLoan(quote);
-  const pct = parseNumber(brokerSettings?.brokerCommissionPercent) || 0;
+  const pct = parseNumber(quote.broker_commission_proc_fee_percent) ||
+              parseNumber(brokerSettings?.brokerCommissionPercent) || 0;
   return gross * (pct / 100);
 };
 
 export const getBrokerClientFee = (quote, brokerSettings) => {
-  const fee = parseNumber(quote.broker_client_fee) || parseNumber(quote.broker_fee_value);
+  // Check multiple possible field names
+  const fee = parseNumber(quote.broker_client_fee) || 
+              parseNumber(quote.broker_fee_value) ||
+              parseNumber(quote.additional_fee_amount);
   if (fee) return fee;
   
   // From broker settings
@@ -287,18 +393,57 @@ export const getBrokerClientFee = (quote, brokerSettings) => {
  * Format: "3% of loan balance in yr1, 2.5% of loan balance in yr2. No charge thereafter."
  */
 export const getERCText = (quote) => {
-  const ercText = quote.erc_text;
-  if (ercText) return ercText;
+  // First check for pre-formatted erc_text
+  const ercText = quote.erc_text || quote.ercText;
+  if (ercText) {
+    // If it's in the "Yr1: 3% | Yr2: 2.5%" format, convert to "3% of loan balance in yr1, 2.5% of loan balance in yr2. No charge thereafter."
+    if (ercText.includes('Yr')) {
+      const parts = ercText.split('|').map(p => p.trim());
+      const converted = parts.map(p => {
+        const match = p.match(/Yr(\d+):\s*([\d.]+)%/);
+        if (match) {
+          return `${match[2]}% of loan balance in yr${match[1]}`;
+        }
+        return p;
+      });
+      return converted.join(', ') + '. No charge thereafter.';
+    }
+    return ercText;
+  }
+  
+  // Check for _selectedResult which contains the calculated data
+  const selectedResult = quote._selectedResult || {};
+  
+  // Check for erc field from quote_results (stored as text like "Yr1: 3% | Yr2: 2.5%")
+  const ercFromResult = selectedResult.erc || quote.erc;
+  if (ercFromResult) {
+    if (typeof ercFromResult === 'string' && ercFromResult.includes('Yr')) {
+      const parts = ercFromResult.split('|').map(p => p.trim());
+      const converted = parts.map(p => {
+        const match = p.match(/Yr(\d+):\s*([\d.]+)%?/);
+        if (match) {
+          return `${match[2]}% of loan balance in yr${match[1]}`;
+        }
+        return p;
+      });
+      return converted.join(', ') + '. No charge thereafter.';
+    }
+    return ercFromResult;
+  }
   
   // Build from individual ERC values
-  const erc1 = parseNumber(quote.erc_1);
-  const erc2 = parseNumber(quote.erc_2);
-  const erc3 = parseNumber(quote.erc_3);
+  const erc1 = parseNumber(selectedResult.erc_1) || parseNumber(quote.erc_1);
+  const erc2 = parseNumber(selectedResult.erc_2) || parseNumber(quote.erc_2);
+  const erc3 = parseNumber(selectedResult.erc_3) || parseNumber(quote.erc_3);
+  const erc4 = parseNumber(selectedResult.erc_4) || parseNumber(quote.erc_4);
+  const erc5 = parseNumber(selectedResult.erc_5) || parseNumber(quote.erc_5);
   
   const parts = [];
   if (erc1) parts.push(`${erc1}% of loan balance in yr1`);
   if (erc2) parts.push(`${erc2}% of loan balance in yr2`);
   if (erc3) parts.push(`${erc3}% of loan balance in yr3`);
+  if (erc4) parts.push(`${erc4}% of loan balance in yr4`);
+  if (erc5) parts.push(`${erc5}% of loan balance in yr5`);
   
   if (parts.length === 0) return 'No early repayment charge applies.';
   
@@ -355,9 +500,27 @@ export const getNumberOfApplicants = (dipData) => {
 // TITLE INSURANCE
 // ============================================================================
 
-export const hasTitleInsurance = (quote) => {
+/**
+ * Check if title insurance should be shown in DIP
+ * Controlled by dipData.title_insurance dropdown (Yes/No)
+ */
+export const hasTitleInsurance = (quote, dipData) => {
+  // Check dipData first (from modal dropdown selection)
+  if (dipData?.title_insurance) {
+    const ti = dipData.title_insurance.toLowerCase();
+    return ti === 'yes';
+  }
+  
+  // Fallback to quote data
   const ti = (quote.title_insurance || '').toLowerCase();
   return ti === 'yes' || ti === 'true' || ti === '1';
+};
+
+/**
+ * Get title insurance cost amount
+ */
+export const getTitleInsuranceCost = (quote) => {
+  return parseNumber(quote.title_insurance_cost) || 0;
 };
 
 // ============================================================================

@@ -1,7 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { Buffer } from 'buffer';
 import App from './App';
 import { SupabaseProvider } from './contexts/SupabaseContext';
+
+// Polyfill Buffer for @react-pdf/renderer
+window.Buffer = Buffer;
 
 // Suppress known Carbon Design System inert attribute warning
 // This is a known issue in @carbon/react that will be fixed in future versions

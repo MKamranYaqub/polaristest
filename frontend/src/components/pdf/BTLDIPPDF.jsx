@@ -1,10 +1,29 @@
 import React from 'react';
-import { Document, Page, View, Text } from '@react-pdf/renderer';
+import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
 import { styles } from './shared/PDFStyles';
 import { btlDipStyles } from './shared/BTLDIPStyles';
 import PDFHeader from './shared/PDFHeader';
 import PDFFooter from './shared/PDFFooter';
 import * as BTLDIPHelpers from './utils/btlDipHelpers';
+
+// Logo path from public folder
+const MFS_LOGO_PATH = '/assets/mfs-logo.png';
+
+// Fixed header styles for every page
+const fixedHeaderStyles = StyleSheet.create({
+  fixedHeader: {
+    position: 'absolute',
+    top: 20,
+    right: 40,
+    width: 80,
+    height: 32,
+  },
+  logo: {
+    width: 80,
+    height: 32,
+    objectFit: 'contain',
+  },
+});
 
 /**
  * BTL DIP PDF - Matches Excel DIP sheet formatting and conditional scenarios
@@ -23,7 +42,27 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
   // Extract all values using helpers
   const h = BTLDIPHelpers;
   
-  const borrowerName = h.getBorrowerName(quote, brokerSettings);
+  // Debug: Log the quote data to see what we're receiving
+  console.log('BTLDIPPDF quote data:', {
+    rolled_months: quote.rolled_months,
+    rolled_months_interest: quote.rolled_months_interest,
+    deferred_rate: quote.deferred_rate,
+    deferred_interest_percent: quote.deferred_interest_percent,
+    deferred_interest_pounds: quote.deferred_interest_pounds,
+    _selectedResult: quote._selectedResult
+  });
+  
+  // Debug: Check what helpers return
+  const debugHasRolled = h.hasRolledMonths(quote);
+  const debugHasDeferred = h.hasDeferredInterest(quote);
+  console.log('BTLDIPPDF helper checks:', {
+    hasRolledMonths: debugHasRolled,
+    getRolledMonths: h.getRolledMonths(quote),
+    hasDeferredInterest: debugHasDeferred,
+    getDeferredRate: h.getDeferredRate(quote)
+  });
+  
+  const borrowerName = h.getBorrowerName(quote, dipData, brokerSettings);
   const securityAddress = h.getSecurityAddress(dipData);
   const dipDate = h.formatDateLong(dipData.dip_date);
   const dipExpiryDate = h.formatDateLong(dipData.dip_expiry_date);
@@ -83,17 +122,24 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
   // Number of applicants for signature blocks
   const numApplicants = h.getNumberOfApplicants(dipData);
   
-  // Title insurance
-  const hasTitleInsurance = h.hasTitleInsurance(quote);
+  // Title insurance - now checks dipData.title_insurance dropdown
+  const hasTitleInsurance = h.hasTitleInsurance(quote, dipData);
+  const titleInsuranceCost = h.getTitleInsuranceCost(quote);
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        {/* Fixed Logo - appears on ALL pages */}
+        <View style={fixedHeaderStyles.fixedHeader} fixed>
+          <Image style={fixedHeaderStyles.logo} src={MFS_LOGO_PATH} />
+        </View>
+        
         {/* Header with branding */}
         <PDFHeader
           title="Decision in Principle"
           subtitle="Buy to Let Mortgage"
           referenceNumber={quote.reference_number}
+          showLogo={false}
         />
 
         {/* Date */}
@@ -262,23 +308,20 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           <Text style={btlDipStyles.summaryValue}>{overpaymentText}</Text>
         </View>
 
-        {/* Direct Debit */}
+        {/* Direct Debit Section - includes warning box */}
         <View style={btlDipStyles.summaryRow}>
           <Text style={btlDipStyles.summaryLabel}>Direct Debit & Start Date:</Text>
-          <Text style={btlDipStyles.summaryValue}>
-            Direct Debit of {h.formatCurrency(directDebit)} will start in month {ddStartMonth} following 
-            drawdown from a valid UK bank account.
-          </Text>
-        </View>
-
-        {/* Important DD Warning */}
-        <View style={btlDipStyles.warningBox}>
-          <Text style={btlDipStyles.warningText}>
-            IMPORTANT: monthly payments shown in this illustration can be considerably different if a variable 
-            rate changes. For example, for every £100,000 borrowed a 0.5% increase would raise the annual cost 
-            by £500. Rates may increase by more than this, or be significantly different on the Revert rate so 
-            make sure you can afford the monthly payment.
-          </Text>
+          <View style={{ width: '70%' }}>
+            <Text style={btlDipStyles.summaryValue}>
+              Direct Debit of {h.formatCurrency(directDebit)} will start in month {ddStartMonth} following drawdown from a valid UK bank account.
+            </Text>
+            <Text style={{ marginTop: 8 }}>
+              <Text style={btlDipStyles.warningImportant}>IMPORTANT: </Text>
+              <Text style={btlDipStyles.warningText}>
+                monthly payments shown in this illustration can be considerably different if a variable rate changes. For example, for every £100,000 borrowed a 0.5% increase would raise the annual cost by £500. Rates may increase by more than this, or be significantly different on the Revert rate so make sure you can afford the monthly payment.
+              </Text>
+            </Text>
+          </View>
         </View>
 
         {/* Admin Fee */}
@@ -304,12 +347,12 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           <Text style={btlDipStyles.summaryValue}>{legalFees}, to be payable by you.</Text>
         </View>
 
-        {/* Title Insurance conditional note */}
+        {/* Title Insurance - CONDITIONAL based on dipData.title_insurance dropdown */}
         {hasTitleInsurance && (
-          <View style={btlDipStyles.infoBox}>
-            <Text style={btlDipStyles.infoText}>
-              Title Insurance is being used for this loan. The Title Insurance premium will be deducted 
-              from the Net Loan at drawdown.
+          <View style={btlDipStyles.summaryRow}>
+            <Text style={btlDipStyles.summaryLabel}>Title Insurance Cost:</Text>
+            <Text style={btlDipStyles.summaryValue}>
+              {h.formatCurrency(titleInsuranceCost)} (to be deducted from the net loan amount)
             </Text>
           </View>
         )}
@@ -330,11 +373,16 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           </Text>
         </View>
 
-        <PDFFooter pageNumber={1} totalPages={3} />
+        <PDFFooter />
       </Page>
 
       {/* PAGE 2 - Terms of Business */}
       <Page size="A4" style={styles.page}>
+        {/* Fixed Logo on every page */}
+        <View style={fixedHeaderStyles.fixedHeader} fixed>
+          <Image style={fixedHeaderStyles.logo} src={MFS_LOGO_PATH} />
+        </View>
+        
         <View style={btlDipStyles.sectionHeader}>
           <Text style={btlDipStyles.sectionTitle}>TERMS OF BUSINESS</Text>
         </View>
@@ -354,89 +402,81 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           </Text>
         </View>
 
-        {/* General & Privacy */}
+        {/* General & Privacy - Full text from Excel */}
         <View style={btlDipStyles.termsSection}>
           <Text style={btlDipStyles.termsSubtitle}>General & Privacy</Text>
           <Text style={btlDipStyles.termsText}>
-            MFS is arranging this transaction in respect of the proposed Loan. The Loan has been 
-            approved in principle by us but remains conditional upon and subject to satisfactory 
-            due diligence, payment of any admin and valuation fees, the valuation and enquiries 
-            to us and our solicitors. We reserve the right to vary the terms or withdraw the Loan 
-            at our discretion.
+            MFS is arranging this transaction in respect of the proposed Loan. The Loan has been approved in principle by us but remains conditional upon and subject to satisfactory due diligence, payment of any admin and valuation fees, the valuation and enquiries to us and our solicitors. We reserve the right to vary the terms or withdraw the Loan at our discretion, should enquiries, valuation, or due diligence result in any material change to the application as now presented or contradict any information disclosed by you to date, or if we need to change our rates due to unexpected impacts on our funding costs after issuing the DIP (e.g. bank base rate or associated costs increasing). If we decide to vary any of the terms, we will notify you and provide our reasons for doing so and await your consent before proceeding.
           </Text>
           <Text style={btlDipStyles.termsText}>
-            By accepting these terms and signing this Decision in Principle, you authorise MFS 
-            and its subsidiaries to conduct due diligence checks and data handling either to 
-            assess the viability of the application or whilst the Loan is in effect.
+            By accepting these terms and signing this Decision in Principle, you authorise MFS and its subsidiaries to conduct due diligence checks and data handling either to assess the viability of the application or whilst the Loan is in effect, including:
+          </Text>
+          <Text style={btlDipStyles.termsTextBullet}>
+            • ID, AML, Credit Searches including a payment profile, and KYC (Know Your Customer) fraud checks as well as other Public Information searches we deem necessary from different Credit Reference Agencies (CRAs).
+          </Text>
+          <Text style={btlDipStyles.termsTextBullet}>
+            • Many checks and searches use or share relevant data with third-party external companies and against any specifications on any databases available with relation to your Loan or property. A record of each search carried out will be retained on your credit file initially as a soft footprint (should have no impact on your credit score) but over time and following application it may be set as a hard, or application, footprint (which could have an impact on your credit rating).
+          </Text>
+          <Text style={btlDipStyles.termsTextBullet}>
+            • Data and your evidence documents may also be shared with any of our loan funding providers.
+          </Text>
+          <Text style={btlDipStyles.termsTextBullet}>
+            • If the Loan is drawn, and whilst any balance of the Loan is outstanding, MFS may exchange information and documents about you (and any Loan guarantors) with CRAs, including recording any outstanding debt if you do not repay in full and on time. CRAs may share your information with other organisations. We may also make periodic searches at CRAs to help manage your account with us. The identities of the CRAs, their role also as fraud prevention agencies, the data they hold, the ways in which they use and share personal information, their data retention periods and your data protection rights with the CRAs are explained in the Credit Reference Agency Information Notice (CRAIN), www.transunion.co.uk/CRAIN. You can also get further information via our privacy policy at www.mfsuk.com/privacy-gdpr/.
+          </Text>
+          <Text style={btlDipStyles.termsTextBullet}>
+            • The personal information we have collected from you will be shared with fraud prevention agencies who will use it to prevent fraud and money-laundering and to verify your identity. If fraud is detected, you could be refused certain services, finance, or employment. Further details of how your information will be used by us and these fraud prevention agencies, and your data protection rights, can be found via our privacy policy at at www.mfsuk.com/privacy-gdpr/ or by going to www.cifas.org.uk/fpn.
+          </Text>
+          <Text style={btlDipStyles.termsTextBullet}>
+            • You have the right to view certain records we hold concerning you and you may request that any inaccuracies are corrected by corresponding with the relevant parties. You may contact our Data Protection Officer at privacy@mfsuk.com or by writing to the Data Protection Officer, Market Financial Solutions, 46 Hertford Street, Mayfair, London, W1J 7DP.
           </Text>
         </View>
 
-        {/* Loan Purpose - CONDITIONAL based on property type */}
+        {/* Loan Purpose - Full text from Excel - CONDITIONAL based on property type */}
         <View style={btlDipStyles.termsSection}>
           <Text style={btlDipStyles.termsSubtitle}>Loan Purpose</Text>
           <Text style={btlDipStyles.termsText}>
-            More than 60% of the Loan provided is being used for business purposes, and by signing 
-            this Decision in Principle you declare to us that the Loan is predominantly for the 
-            purposes of a business, profession or trade carried on, or intended to be carried on by you.
+            More than 60% of the Loan provided is being used for business purposes, and by signing this Decision in Principle you declare to us that the Loan is predominantly for the purposes of a business, profession or trade carried on, or intended to be carried on by you. The Loan will therefore be exempt from the provisions of the Financial Services & Markets Act 2000 and The Mortgage Credit Directive Order 2015 and the Consumer Credit Act 1974 and you will not get the protection afforded by those Acts. You will be required to provide and sign a declaration relating to business purposes before drawdown.
           </Text>
-          
-          {/* Property Type specific declaration */}
-          {isCommercial && (
-            <Text style={btlDipStyles.termsText}>
-              You confirm that less than 40% of the Security Property is used or intended to be 
-              used as a dwelling.
-            </Text>
-          )}
-          {isSemiCommercial && (
-            <Text style={btlDipStyles.termsText}>
-              You confirm that less than 40% of the Security Property is used or intended to be 
-              used as a dwelling by you or any spouse, unmarried partner, civil partner, parents, 
-              grandparents, siblings, children and grandchildren or any other related person in the future.
-            </Text>
-          )}
-          {isResidentialBTL && (
-            <Text style={btlDipStyles.termsText}>
-              You confirm to us that the Security Property has never been used as a dwelling by you 
-              or any spouse, unmarried partner, civil partner, parents, grandparents, siblings, 
-              children and grandchildren or any other related person and will not be occupied by 
-              you or any of the above-stated persons or any other related person in the future.
-            </Text>
-          )}
+          <Text style={btlDipStyles.termsText}>
+            You confirm to us that the Security Property has never been used as a dwelling by you or any spouse, unmarried partner, civil partner, parents, grandparents, siblings, children and grandchildren or any other related person and will not be occupied by you or any of the above-stated persons or any other related person in the future.
+          </Text>
+          <Text style={btlDipStyles.termsText}>
+            You will be required to sign a declaration to this effect before completion takes place. We will rely upon your declarations when completing the proposed Loan, and such declarations will be a condition of the lending.
+          </Text>
+          <Text style={btlDipStyles.termsTextBold}>
+            Do not sign this Decision in Principle or any declaration unless the above paragraphs are true.
+          </Text>
         </View>
 
-        {/* Loan Amount and Deduction of Fees */}
+        {/* Loan Amount and Deduction of Fees - Updated with Title Insurance fee */}
         <View style={btlDipStyles.termsSection}>
           <Text style={btlDipStyles.termsSubtitle}>Loan Amount and Deduction of Fees</Text>
           <Text style={btlDipStyles.termsText}>
-            Please note that the financial particulars in The Summary are, at this stage, estimates 
-            only, and are subject to contract. These will only be varied in circumstances where our 
-            enquiries reveal information which differs from that provided on initial application or 
-            if there is reason to do so at our discretion.
+            Please note that the financial particulars in The Summary are, at this stage, estimates only, and are subject to contract. These will only be varied in circumstances where our enquiries reveal information which differs from that provided on initial application or if there is reason to do so at our discretion.
           </Text>
           <Text style={btlDipStyles.termsText}>
-            You authorise us to deduct (and/or to instruct our solicitor), any Product Fee (which 
-            includes the Broker's Commission as specified in The Summary), Legal Fees and expenses, 
-            any Interest (months of interest rolled and deferred until loan redemption), and any 
-            other fees, costs, or expenses payable by you (which have not already been paid), from 
-            the Gross Loan Amount upon completion of the Loan.
+            You authorise us to deduct (and/or to instruct our solicitor), any Product Fee (which includes the Broker's Commission as specified in The Summary), Legal Fees and expenses, Title Insurance fee, any Interest (months of interest rolled and deferred until loan redemption), and any other fees, costs, or expenses payable by you (which have not already been paid), from the Gross Loan Amount upon completion of the Loan.
           </Text>
         </View>
 
-        {/* Payments to Broker - CONDITIONAL */}
+        {/* Payments to Broker - CONDITIONAL based on broker client fee amount */}
         {hasBrokerFees && (
           <View style={btlDipStyles.termsSection}>
             <Text style={btlDipStyles.termsSubtitle}>Payments to your Broker/Intermediary</Text>
-            <Text style={btlDipStyles.termsText}>
-              You authorise us to deduct the Broker Client Fee from the Net Loan Amount which is in 
-              line with your agreement with your Broker/Intermediary and payable to your Broker/Intermediary. 
-              No part of the Broker Client Fee is payable to us.
-            </Text>
-            <Text style={btlDipStyles.termsText}>
-              In addition to any Broker Client Fee, Market Financial Solutions or its investors pay 
-              a part of the Product Fee to your Introducer/Broker as Broker's Commission upon drawdown 
-              of the Loan, in the amount as specified in The Summary. This means that your Broker/Intermediary 
-              may be unable to provide impartial advice about the Loan to you.
-            </Text>
+            {brokerClientFee > 0 ? (
+              <>
+                <Text style={btlDipStyles.termsText}>
+                  You authorise us to deduct the Broker Client Fee from the Net Loan Amount which is in line with your agreement with your Broker/Intermediary and payable to your Broker/Intermediary. No part of the Broker Client Fee is payable to us.
+                </Text>
+                <Text style={btlDipStyles.termsText}>
+                  In addition to any Broker Client Fee, Market Financial Solutions or its investors pay a part of the Product Fee to your Introducer/Broker as Broker's Commission upon drawdown of the Loan, in the amount as specified in The Summary. This means that your Broker/Intermediary may be unable to provide impartial advice about the Loan to you.
+                </Text>
+              </>
+            ) : (
+              <Text style={btlDipStyles.termsText}>
+                Market Financial Solutions or its investors pay a part of the Product Fee to your Introducer/Broker as Broker's Commission upon drawdown of the Loan, in the amount as specified in The Summary. This means that your Broker/Intermediary may be unable to provide impartial advice about the Loan to you.
+              </Text>
+            )}
           </View>
         )}
 
@@ -467,25 +507,30 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           </Text>
         </View>
 
-        <PDFFooter pageNumber={2} totalPages={3} />
+        <PDFFooter />
       </Page>
 
-      {/* PAGE 3 - Tariff & Signatures */}
+      {/* PAGE 3 - Tariff of Charges */}
       <Page size="A4" style={styles.page}>
-        {/* Tariff of Charges */}
+        {/* Fixed Logo on every page */}
+        <View style={fixedHeaderStyles.fixedHeader} fixed>
+          <Image style={fixedHeaderStyles.logo} src={MFS_LOGO_PATH} />
+        </View>
+        
+        {/* Tariff of Charges Header */}
         <View style={btlDipStyles.sectionHeader}>
           <Text style={btlDipStyles.sectionTitle}>Tariff of Charges</Text>
         </View>
 
+        {/* Fee Structure Table - Post Completion */}
         <View style={btlDipStyles.tariffTable}>
           <View style={btlDipStyles.tariffHeader}>
             <Text style={btlDipStyles.tariffHeaderCell}>Fee</Text>
             <Text style={btlDipStyles.tariffHeaderCellRight}>Charges from</Text>
           </View>
           
-          {/* Post Completion Fees */}
           <View style={btlDipStyles.tariffSubHeader}>
-            <Text style={btlDipStyles.tariffSubHeaderText}>Post Completion Fees</Text>
+            <Text style={btlDipStyles.tariffSubHeaderText}>Fee Structure Table - Post Completion</Text>
           </View>
           
           <View style={btlDipStyles.tariffRow}>
@@ -493,46 +538,243 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
             <Text style={btlDipStyles.tariffCellRight}>£0</Text>
           </View>
           <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Data Request</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£0</Text>
+          </View>
+          <View style={btlDipStyles.tariffRow}>
             <Text style={btlDipStyles.tariffCell}>Building Insurance</Text>
             <Text style={btlDipStyles.tariffCellRight}>£250</Text>
           </View>
-          <View style={btlDipStyles.tariffRow}>
+          <View style={btlDipStyles.tariffRowAlt}>
             <Text style={btlDipStyles.tariffCell}>Expiry/Renewal of Buildings Insurance</Text>
             <Text style={btlDipStyles.tariffCellRight}>£500</Text>
           </View>
-          <View style={btlDipStyles.tariffRowAlt}>
-            <Text style={btlDipStyles.tariffCell}>Duplicate or Interim Statement</Text>
+          <View style={btlDipStyles.tariffRow}>
+            <Text style={btlDipStyles.tariffCell}>Duplicate or Interim Statement (per Statement)</Text>
             <Text style={btlDipStyles.tariffCellRight}>£35</Text>
           </View>
-          <View style={btlDipStyles.tariffRow}>
-            <Text style={btlDipStyles.tariffCell}>Calculating Settlement Figures (3rd time onwards)</Text>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Calculating Settlement Figures for 3rd time onwards</Text>
             <Text style={btlDipStyles.tariffCellRight}>£55</Text>
           </View>
+          <View style={btlDipStyles.tariffRow}>
+            <Text style={btlDipStyles.tariffCell}>Approval of Tenancy Agreement</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£0</Text>
+          </View>
           <View style={btlDipStyles.tariffRowAlt}>
-            <Text style={btlDipStyles.tariffCell}>Deed of Postponement</Text>
+            <Text style={btlDipStyles.tariffCell}>Deed of Postponement (per Deed required to be executed)</Text>
             <Text style={btlDipStyles.tariffCellRight}>£250</Text>
           </View>
           <View style={btlDipStyles.tariffRow}>
-            <Text style={btlDipStyles.tariffCell}>Repayment Administration Fee (per Property)</Text>
-            <Text style={btlDipStyles.tariffCellRight}>£475</Text>
-          </View>
-          <View style={btlDipStyles.tariffRowAlt}>
-            <Text style={btlDipStyles.tariffCell}>Part Repayment</Text>
+            <Text style={btlDipStyles.tariffCell}>Unpaid Ground Rent or Service Charge</Text>
             <Text style={btlDipStyles.tariffCellRight}>£75</Text>
           </View>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Repayment Administration Fee (per Property being discharged)</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£475</Text>
+          </View>
           <View style={btlDipStyles.tariffRow}>
-            <Text style={btlDipStyles.tariffCell}>Unpaid/Declined Direct Debit</Text>
+            <Text style={btlDipStyles.tariffCell}>Deeds Handling</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£0</Text>
+          </View>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Part Sale / Transfer of Security (per part sale/transfer)</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£250</Text>
+          </View>
+          <View style={btlDipStyles.tariffRow}>
+            <Text style={btlDipStyles.tariffCell}>Consent to Another Lender (per Consent granted)</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£250</Text>
+          </View>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Approval of Easement</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£250</Text>
+          </View>
+          <View style={btlDipStyles.tariffRow}>
+            <Text style={btlDipStyles.tariffCell}>Part Repayment (per part-payment)</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£75</Text>
+          </View>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Instructing Solicitors</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£0</Text>
+          </View>
+          <View style={btlDipStyles.tariffRow}>
+            <Text style={btlDipStyles.tariffCell}>Mortgage Reference or Questionnaire</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£0</Text>
+          </View>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Confirmation of Payment History</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£0</Text>
+          </View>
+          <View style={btlDipStyles.tariffRow}>
+            <Text style={btlDipStyles.tariffCell}>Unpaid/Declined/Dishonoured Direct Debit or Cheque</Text>
             <Text style={btlDipStyles.tariffCellRight}>£25</Text>
+          </View>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Set Up Fee</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£0</Text>
+          </View>
+          <View style={btlDipStyles.tariffRow}>
+            <Text style={btlDipStyles.tariffCell}>Loan Administration Fee</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£0</Text>
+          </View>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Asset Manager Fee</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£0</Text>
           </View>
         </View>
 
-        {/* Important Notices */}
+        {/* Fee Structure Table - In event of Default */}
+        <View style={btlDipStyles.tariffTable}>
+          <View style={btlDipStyles.tariffSubHeader}>
+            <Text style={btlDipStyles.tariffSubHeaderText}>Fees Structure Table - In event of Default</Text>
+          </View>
+          
+          <View style={btlDipStyles.tariffRow}>
+            <Text style={btlDipStyles.tariffCell}>Letters and Calls to Customers (per letter or call)</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£35</Text>
+          </View>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Letter and Calls to Third Parties (per letter or call)</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£35</Text>
+          </View>
+          <View style={btlDipStyles.tariffRow}>
+            <Text style={btlDipStyles.tariffCell}>Instruction of Collection Agents</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£100</Text>
+          </View>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Issue of Default Notice</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£70</Text>
+          </View>
+          <View style={btlDipStyles.tariffRow}>
+            <Text style={btlDipStyles.tariffCell}>Issue of Possession Proceedings</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£150</Text>
+          </View>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Court Preparation Fee (per hearing)</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£195</Text>
+          </View>
+          <View style={btlDipStyles.tariffRow}>
+            <Text style={btlDipStyles.tariffCell}>Court Hearing Fee (per hearing)</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£250</Text>
+          </View>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Issuing a Warrant for Possession</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£175</Text>
+          </View>
+          <View style={btlDipStyles.tariffRow}>
+            <Text style={btlDipStyles.tariffCell}>Borrowers Application to Suspend our Legal Action</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£155</Text>
+          </View>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Repossession of Property (per property)</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£175</Text>
+          </View>
+          <View style={btlDipStyles.tariffRow}>
+            <Text style={btlDipStyles.tariffCell}>Administration of an Account in Possession (per month)</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£250</Text>
+          </View>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Realisation of the Sale of a Repossessed Property</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£300</Text>
+          </View>
+          <View style={btlDipStyles.tariffRow}>
+            <Text style={btlDipStyles.tariffCell}>Issuing a Demand to Appoint a Receiver</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£750</Text>
+          </View>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Appointing a Receiver to Manage the Account</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£2,500</Text>
+          </View>
+          <View style={btlDipStyles.tariffRow}>
+            <Text style={btlDipStyles.tariffCell}>Director's Time (where applicable) per hour</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£150</Text>
+          </View>
+          <View style={btlDipStyles.tariffRowAlt}>
+            <Text style={btlDipStyles.tariffCell}>Monthly Arrears Management Fee</Text>
+            <Text style={btlDipStyles.tariffCellRight}>£400</Text>
+          </View>
+        </View>
+
+        <Text style={btlDipStyles.termsTextSmall}>
+          Please see the enclosed Appendix – Schedule 1 for the explanation of each charge outlined within the Fee structure tables.
+        </Text>
+
+        <PDFFooter />
+      </Page>
+
+      {/* PAGE 4 - Additional Terms & Signatures */}
+      <Page size="A4" style={styles.page}>
+        {/* Fixed Logo on every page */}
+        <View style={fixedHeaderStyles.fixedHeader} fixed>
+          <Image style={fixedHeaderStyles.logo} src={MFS_LOGO_PATH} />
+        </View>
+        
+        {/* Valuation Fee and Legal Fees Section */}
+        <View style={btlDipStyles.termsSection}>
+          <Text style={btlDipStyles.termsSubtitle}>Valuation Fee and Legal Fees</Text>
+          <Text style={btlDipStyles.termsText}>
+            The fees for the valuation of the Property shall be your cost and will be collected in advance upon acceptance of this Decision in Principle. You will be responsible for our Legal Fees in relation to the Loan. These are set out in the Financial Summary. You will be responsible for these fees whether the Loan proceeds to completion or not. Our solicitors will require payment in full or your solicitors' undertaking to make payment before commencing work. With regards to the Valuation report, unless Title Insurance is used, once our Solicitors have conducted their Report on Title it will need to be sent to the valuer for their comments. Any detrimental impact, or adverse comments from the Valuer may result in MFS not being able to proceed with the Loan or varying the terms offered.
+          </Text>
+        </View>
+
+        {/* No Legally Binding Agreement */}
         <View style={btlDipStyles.termsSection}>
           <Text style={btlDipStyles.termsSubtitle}>No Legally Binding Agreement</Text>
-          <Text style={btlDipStyles.termsTextSmall}>
-            You acknowledge and agree that we do not, and will not, provide any financial, accounting, 
-            taxation or legal advice in relation to the Loan. You should seek your own independent 
-            advice in relation to this Decision in Principle.
+          <Text style={btlDipStyles.termsText}>
+            You acknowledge and agree that we do not, and will not, provide any financial, accounting, taxation or legal advice in relation to the Loan (and this includes any advice as to the suitability of the Loan for you).
+          </Text>
+          <Text style={btlDipStyles.termsText}>
+            You acknowledge that nothing in this Decision in Principle is to be construed so as to constitute or imply a commitment to provide the Loan, nor a representation that the Loan will be made available. Any such commitment is subject to contract, credit approval, valuation and satisfactory due diligence and documentation.
+          </Text>
+          <Text style={btlDipStyles.termsText}>
+            This letter may be signed in counterparts and emailed scanned versions and this has the same effect as if the signatures on the counterparts were on a single copy of the letter.
+          </Text>
+          <Text style={btlDipStyles.termsTextBold}>
+            You should seek your own independent advice in relation to this Decision in Principle.
+          </Text>
+        </View>
+
+        {/* Assignment */}
+        <View style={btlDipStyles.termsSection}>
+          <Text style={btlDipStyles.termsSubtitle}>Assignment</Text>
+          <Text style={btlDipStyles.termsText}>
+            In some instances, we may arrange to assign or transfer the Loan to such entity associated with us, as we deem fit at our discretion. The Terms will not change. If we do assign the Loan you will be notified of the change of lender and be provided with contact and payment details. You may not assign the Loan or its benefit or obligations to any other party or property other than the one stated.
+          </Text>
+        </View>
+
+        {/* Agency and Conflict of Interest */}
+        <View style={btlDipStyles.termsSection}>
+          <Text style={btlDipStyles.termsSubtitle}>Agency and Conflict of Interest</Text>
+          <Text style={btlDipStyles.termsText}>
+            You acknowledge that we do not act as your agent and therefore do not owe you a duty of care in this regard. When signing this Decision in Principle you expressly waive any claim you may now or in the future seek to bring. You agree to waive any claim to a conflict of interest arising out of any assignment of the Loan or the Loan itself.
+          </Text>
+        </View>
+
+        {/* Indemnity */}
+        <View style={btlDipStyles.termsSection}>
+          <Text style={btlDipStyles.termsSubtitle}>Indemnity</Text>
+          <Text style={btlDipStyles.termsText}>
+            You agree to indemnify and hold us harmless (including all of our employees, and assignees and their employees' agents or directors, agents and directors) against all claims, losses, damages, liabilities, costs and expenses whether consequential or not, incurred or arising out of or related to any actual or threatened claim against us (or any of its employees, agents and directors and assignees etc.), brought by any guarantor or any other party to the Loan (except for instances where such liability arises through direct gross negligence or fraud) or in relation to the Loan. Please note, your solicitors must hold sufficient professional indemnity insurance to cover the Gross Loan Amount.
+          </Text>
+        </View>
+
+        {/* Data Breach Notification */}
+        <View style={btlDipStyles.termsSection}>
+          <Text style={btlDipStyles.termsSubtitle}>Data Breach Notification</Text>
+          <Text style={btlDipStyles.termsText}>
+            All personal data breaches must be reported immediately to the Company's Data Protection Officer.
+          </Text>
+          <Text style={btlDipStyles.termsText}>
+            Data Protection Officer Contact details:
+          </Text>
+          <Text style={btlDipStyles.termsText}>
+            Martin Schofield
+          </Text>
+          <Text style={btlDipStyles.termsText}>
+            Email: privacy@mfsuk.com
+          </Text>
+          <Text style={btlDipStyles.termsText}>
+            Data Controller: Market Financial Solutions Limited.
           </Text>
         </View>
 
@@ -582,7 +824,7 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           </View>
         )}
 
-        <PDFFooter pageNumber={3} totalPages={3} />
+        <PDFFooter />
       </Page>
     </Document>
   );

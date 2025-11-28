@@ -22,7 +22,8 @@ import useBrokerSettings from '../../hooks/calculator/useBrokerSettings';
 import { useResultsVisibility } from '../../hooks/useResultsVisibility';
 import { useResultsRowOrder } from '../../hooks/useResultsRowOrder';
 import { useResultsLabelAlias } from '../../hooks/useResultsLabelAlias';
-import { getQuote, upsertQuoteData, requestDipPdf, requestQuotePdf } from '../../utils/quotes';
+import { getQuote, upsertQuoteData, requestQuotePdf } from '../../utils/quotes';
+import { downloadDIPPDF } from '../../utils/generateDIPPDF';
 import { parseNumber, formatCurrency, formatPercent } from '../../utils/calculator/numberFormatting';
 import { computeTierFromAnswers } from '../../utils/calculator/rateFiltering';
 import { computeBTLLoan } from '../../utils/btlCalculationEngine';
@@ -88,6 +89,8 @@ export default function BTLcalculator({ initialQuote = null }) {
   // Quote id/ref for UI
   const [currentQuoteId, setCurrentQuoteId] = useState(effectiveInitialQuote?.id || null);
   const [currentQuoteRef, setCurrentQuoteRef] = useState(effectiveInitialQuote?.reference_number || null);
+  // Store full quote data for Update Quote modal (name, borrower info, notes, etc.)
+  const [currentQuoteData, setCurrentQuoteData] = useState(effectiveInitialQuote || null);
 
   // Property & Product inputs
   const [propertyValue, setPropertyValue] = useState('');
@@ -119,6 +122,9 @@ export default function BTLcalculator({ initialQuote = null }) {
   
   // Ref to collect optimized values during render without causing re-renders
   const optimizedValuesRef = useRef({ rolled: {}, deferred: {} });
+  
+  // Track whether we loaded results from a saved quote (skip rates_flat fetch if so)
+  const loadedFromSavedQuoteRef = useRef(false);
 
   // Editable rate and product fee overrides - per-column state
   const [ratesOverrides, setRatesOverrides] = useState({});
@@ -245,7 +251,14 @@ export default function BTLcalculator({ initialQuote = null }) {
       
       // Store quote ID and DIP data for Issue DIP modal
       if (quote.id) setCurrentQuoteId(quote.id);
-      if (quote.commercial_or_main_residence || quote.dip_date || quote.dip_expiry_date) {
+      
+      // Check if any DIP-related field exists to load DIP data
+      const hasDipData = quote.commercial_or_main_residence || quote.dip_date || quote.dip_expiry_date ||
+                         quote.guarantor_name || quote.lender_legal_fee || quote.number_of_applicants ||
+                         quote.security_properties || quote.fee_type_selection || quote.title_insurance ||
+                         quote.funding_line || quote.product_range || quote.dip_status;
+      
+      if (hasDipData) {
         setDipData({
           commercial_or_main_residence: quote.commercial_or_main_residence,
           funding_line: quote.funding_line,
@@ -255,10 +268,11 @@ export default function BTLcalculator({ initialQuote = null }) {
           lender_legal_fee: quote.lender_legal_fee,
           number_of_applicants: quote.number_of_applicants,
           overpayments_percent: quote.overpayments_percent,
-          paying_network_club: quote.paying_network_club,
           security_properties: quote.security_properties,
           fee_type_selection: quote.fee_type_selection,
-          dip_status: quote.dip_status
+          dip_status: quote.dip_status,
+          title_insurance: quote.title_insurance,
+          product_range: quote.product_range
         });
       }
       
@@ -323,6 +337,8 @@ export default function BTLcalculator({ initialQuote = null }) {
           product: result.product_name,
         }));
         setRelevantRates(loadedRates);
+        // Mark that we loaded from a saved quote to prevent rates_flat fetch from overwriting
+        loadedFromSavedQuoteRef.current = true;
       }
       
       // Load criteria answers if available
@@ -408,6 +424,15 @@ export default function BTLcalculator({ initialQuote = null }) {
   // Fetch relevant rates whenever productScope, currentTier or productType changes
   useEffect(() => {
     if (!supabase) return;
+    
+    // Skip fetching from rates_flat if we loaded results from a saved quote
+    // The saved quote already has computed results; fetching raw rates would overwrite them
+    if (loadedFromSavedQuoteRef.current) {
+      // Reset the flag so future changes (e.g., changing criteria) will fetch fresh rates
+      loadedFromSavedQuoteRef.current = false;
+      return;
+    }
+    
     async function fetchRelevant() {
       // Do not attempt to fetch/filter rates until a productType is selected.
       // On initial page load productType can be empty which previously allowed all products through.
@@ -883,18 +908,8 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   const handleCreatePDF = async (quoteId) => {
     try {
-      const response = await requestDipPdf(quoteId, token);
-
-      // Download the PDF
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `DIP_${quoteId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Use React PDF generation (client-side) instead of backend PDFKit
+      await downloadDIPPDF(quoteId, 'BTL', quoteData?.reference_number || quoteId);
       
       // Note: Success toast is shown by IssueDIPModal
     } catch (err) {
@@ -973,6 +988,10 @@ export default function BTLcalculator({ initialQuote = null }) {
     // Reset to initial state - clear currentQuoteId and reference
     setCurrentQuoteId(null);
     setCurrentQuoteRef(null);
+    setCurrentQuoteData(null);
+    
+    // Reset the loaded-from-saved-quote flag
+    loadedFromSavedQuoteRef.current = false;
     
     // Reset all input fields
     setPropertyValue('');
@@ -1236,6 +1255,9 @@ export default function BTLcalculator({ initialQuote = null }) {
         { label: 'Buy to Let', path: '/calculator/btl' }
       ]} />
 
+      {/* Quote Reference Badge */}
+      <QuoteReferenceHeader reference={currentQuoteRef} />
+
       {/* Product Configuration section */}
       <BTLProductSection
         productScope={productScope}
@@ -1250,6 +1272,7 @@ export default function BTLcalculator({ initialQuote = null }) {
         onIssueDip={() => setDipModalOpen(true)}
         onIssueQuote={handleIssueQuote}
         onCancelQuote={handleCancelQuote}
+        onNewQuote={handleCancelQuote}
         saveQuoteButton={
           <SaveQuoteButton
             calculatorType="BTL"
@@ -1278,10 +1301,14 @@ export default function BTLcalculator({ initialQuote = null }) {
               rolledMonthsPerColumn,
               deferredInterestPerColumn,
             }}
-            existingQuote={currentQuoteId ? { id: currentQuoteId } : null}
-            onQuoteSaved={(savedQuote) => {
-              if (savedQuote && savedQuote.id && !currentQuoteId) {
-                setCurrentQuoteId(savedQuote.id);
+            existingQuote={currentQuoteData}
+            onSaved={(savedQuote) => {
+              if (savedQuote && savedQuote.id) {
+                if (!currentQuoteId) {
+                  setCurrentQuoteId(savedQuote.id);
+                }
+                // Store the full quote data for future Update Quote operations
+                setCurrentQuoteData(savedQuote);
               }
               if (savedQuote && savedQuote.reference_number) {
                 setCurrentQuoteRef(savedQuote.reference_number);
@@ -1296,9 +1323,10 @@ export default function BTLcalculator({ initialQuote = null }) {
                     lender_legal_fee: savedQuote.lender_legal_fee,
                     number_of_applicants: savedQuote.number_of_applicants,
                     overpayments_percent: savedQuote.overpayments_percent,
-                    paying_network_club: savedQuote.paying_network_club,
                     security_properties: savedQuote.security_properties,
                     fee_type_selection: savedQuote.fee_type_selection,
+                    title_insurance: savedQuote.title_insurance,
+                    product_range: savedQuote.product_range
                   });
                 }
               }

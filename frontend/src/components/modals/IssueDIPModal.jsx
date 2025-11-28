@@ -47,9 +47,9 @@ export default function IssueDIPModal({
     lender_legal_fee: existingDipData.lender_legal_fee || '',
     number_of_applicants: existingDipData.number_of_applicants || '1',
     overpayments_percent: existingDipData.overpayments_percent || '10',
-    paying_network_club: existingDipData.paying_network_club || '',
     fee_type_selection: existingDipData.fee_type_selection || '',
-    product_range: existingDipData.product_range || 'specialist' // Core or Specialist
+    product_range: existingDipData.product_range || 'specialist', // Core or Specialist
+    title_insurance: existingDipData.title_insurance || '' // Yes or No - controls Title Insurance section in PDF - mandatory
   });
 
   const [securityProperties, setSecurityProperties] = useState(
@@ -81,9 +81,9 @@ export default function IssueDIPModal({
         lender_legal_fee: existingDipData.lender_legal_fee || '',
         number_of_applicants: existingDipData.number_of_applicants ? String(existingDipData.number_of_applicants) : '1',
         overpayments_percent: existingDipData.overpayments_percent ? String(existingDipData.overpayments_percent) : '10',
-        paying_network_club: existingDipData.paying_network_club || '',
         fee_type_selection: existingDipData.fee_type_selection || '',
-        product_range: existingDipData.product_range || 'specialist'
+        product_range: existingDipData.product_range || 'specialist',
+        title_insurance: existingDipData.title_insurance || ''
       });
 
       if (existingDipData.security_properties && Array.isArray(existingDipData.security_properties) && existingDipData.security_properties.length > 0) {
@@ -230,11 +230,11 @@ export default function IssueDIPModal({
     if (!formData.overpayments_percent || !formData.overpayments_percent.trim()) {
       errors.overpayments_percent = 'Please enter overpayments percentage';
     }
-    if (!formData.paying_network_club || !formData.paying_network_club.trim()) {
-      errors.paying_network_club = 'Please select paying network/club';
-    }
     if (!formData.fee_type_selection) {
       errors.fee_type_selection = 'Please select fee type';
+    }
+    if (!formData.title_insurance) {
+      errors.title_insurance = 'Please select title insurance option';
     }
     if (showProductRangeSelection && !formData.product_range) {
       errors.product_range = 'Please select product range';
@@ -294,10 +294,13 @@ export default function IssueDIPModal({
       case 'overpayments_percent':
         if (!value || !value.trim()) error = 'Please enter overpayments percentage';
         break;
-      case 'paying_network_club':
-        if (!value || !value.trim()) error = 'Please select paying network/club';
-        break;
       case 'fee_type_selection':
+        if (!value) error = 'Please select fee type';
+        break;
+      case 'title_insurance':
+        if (!value) error = 'Please select title insurance option';
+        break;
+      case 'product_range':
         if (!value) error = 'Please select fee type';
         break;
       case 'product_range':
@@ -668,10 +671,35 @@ export default function IssueDIPModal({
             </div>
           )}
         </div>
-      </div>
 
-      {/* Overpayments % and Paying Network/Club */}
-      <div className="grid-2-col-gap-margin">
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">
+            <abbr className="slds-required" title="required">*</abbr> Title Insurance
+            <HelpIcon content="Select 'Yes' to include Title Insurance in the DIP. The Title Insurance premium (£250) will be deducted from the Net Loan at drawdown. Select 'No' to exclude this section from the DIP PDF." />
+          </label>
+          <div className="slds-form-element__control">
+            <select 
+              className={`slds-select ${fieldErrors.title_insurance ? 'error-border' : ''}`}
+              name="title_insurance"
+              value={formData.title_insurance}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              required
+              aria-invalid={fieldErrors.title_insurance ? 'true' : 'false'}
+              aria-describedby={fieldErrors.title_insurance ? 'error-title_insurance' : undefined}
+            >
+              <option value="">Select...</option>
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+          {fieldErrors.title_insurance && (
+            <div id="error-title_insurance" className="field-error-message" role="alert">
+              ⚠️ {fieldErrors.title_insurance}
+            </div>
+          )}
+        </div>
+
         <div className="slds-form-element">
           <label className="slds-form-element__label">
             <abbr className="slds-required" title="required">*</abbr> Overpayments %
@@ -700,34 +728,7 @@ export default function IssueDIPModal({
             </div>
           )}
         </div>
-
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">
-            <abbr className="slds-required" title="required">*</abbr> Paying Network / Club?
-          </label>
-          <div className="slds-form-element__control">
-            <select 
-              className={`slds-select ${fieldErrors.paying_network_club ? 'error-border' : ''}`}
-              name="paying_network_club"
-              value={formData.paying_network_club}
-              onChange={handleInputChange}
-              onBlur={handleBlur}
-              required
-              aria-invalid={fieldErrors.paying_network_club ? 'true' : 'false'}
-              aria-describedby={fieldErrors.paying_network_club ? 'error-paying_network_club' : undefined}
-            >
-              <option value="">Select...</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </div>
-          {fieldErrors.paying_network_club && (
-            <div id="error-paying_network_club" className="field-error-message" role="alert">
-              ⚠️ {fieldErrors.paying_network_club}
-            </div>
-          )}
-        </div>
-      </div>          
+      </div>
 
           {/* Security Properties */}
           <div className="margin-bottom-1">

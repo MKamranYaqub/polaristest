@@ -86,6 +86,20 @@ export const btlDipStyles = StyleSheet.create({
     lineHeight: 1.5,
     marginBottom: 5,
   },
+  termsTextBullet: {
+    fontSize: 8,
+    color: '#3e3e3c',
+    lineHeight: 1.5,
+    marginBottom: 4,
+    marginLeft: 10,
+  },
+  termsTextBold: {
+    fontSize: 8,
+    color: '#080707',
+    lineHeight: 1.5,
+    marginBottom: 5,
+    fontWeight: 'bold',
+  },
   termsTextSmall: {
     fontSize: 7,
     color: '#706e6b',
@@ -104,6 +118,10 @@ export const btlDipStyles = StyleSheet.create({
     fontSize: 8,
     color: '#826100',
     lineHeight: 1.4,
+  },
+  warningImportant: {
+    fontSize: 8,
+    color: '#c23934',
     fontWeight: 'bold',
   },
   infoBox: {
@@ -119,15 +137,16 @@ export const btlDipStyles = StyleSheet.create({
     lineHeight: 1.4,
   },
 
-  // Tariff table
+  // Tariff table - matches Excel styling
   tariffTable: {
-    marginVertical: 10,
-    border: '1pt solid #dddbda',
+    marginVertical: 8,
+    border: '1pt solid #000000',
   },
   tariffHeader: {
     flexDirection: 'row',
-    backgroundColor: '#0176d3',
-    padding: 6,
+    backgroundColor: '#808080',
+    padding: 5,
+    borderBottom: '1pt solid #000000',
   },
   tariffHeaderCell: {
     flex: 2,
@@ -143,34 +162,37 @@ export const btlDipStyles = StyleSheet.create({
     textAlign: 'right',
   },
   tariffSubHeader: {
-    backgroundColor: '#f3f2f2',
+    backgroundColor: '#d9d9d9',
     padding: 4,
+    borderBottom: '1pt solid #000000',
   },
   tariffSubHeaderText: {
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: 'bold',
-    color: '#3e3e3c',
+    color: '#000000',
+    textAlign: 'center',
   },
   tariffRow: {
     flexDirection: 'row',
-    padding: 4,
-    borderBottom: '0.5pt solid #dddbda',
+    padding: 3,
+    borderBottom: '0.5pt solid #000000',
+    backgroundColor: '#ffffff',
   },
   tariffRowAlt: {
     flexDirection: 'row',
-    padding: 4,
-    borderBottom: '0.5pt solid #dddbda',
-    backgroundColor: '#fafaf9',
+    padding: 3,
+    borderBottom: '0.5pt solid #000000',
+    backgroundColor: '#f2f2f2',
   },
   tariffCell: {
     flex: 2,
     fontSize: 8,
-    color: '#3e3e3c',
+    color: '#000000',
   },
   tariffCellRight: {
     flex: 1,
     fontSize: 8,
-    color: '#3e3e3c',
+    color: '#000000',
     textAlign: 'right',
   },
 

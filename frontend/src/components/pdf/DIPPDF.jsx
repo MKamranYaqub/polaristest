@@ -11,8 +11,10 @@ import * as DIPHelpers from './utils/dipHelpers';
 import BTLDIPPDF from './BTLDIPPDF';
 
 const DIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
-  const isBTL = quote.calculator_type === 'BTL';
-  const isBridging = quote.calculator_type === 'BRIDGING';
+  // Normalize calculator_type to handle both 'BTL' and 'btl' cases
+  const calcType = (quote.calculator_type || '').toUpperCase();
+  const isBTL = calcType === 'BTL';
+  const isBridging = calcType === 'BRIDGING' || calcType === 'BRIDGE';
   
   // Use specialized BTL DIP PDF for BTL quotes (matches Excel DIP sheet)
   if (isBTL) {
@@ -151,9 +153,6 @@ const DIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
             )}
             {brokerSettings.brokerCommissionPercent && (
               <PDFRow label="Commission" value={`${brokerSettings.brokerCommissionPercent}%`} />
-            )}
-            {dipData.paying_network_club && (
-              <PDFRow label="Paying Network Club" value={dipData.paying_network_club} />
             )}
           </PDFSection>
         )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSupabase } from '../../contexts/SupabaseContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -92,13 +92,18 @@ export default function BridgingCalculator({ initialQuote = null }) {
   // Slider controls for results - per-column state
   const [rolledMonthsPerColumn, setRolledMonthsPerColumn] = useState({});
   const [deferredInterestPerColumn, setDeferredInterestPerColumn] = useState({});
+  
+  // Track whether we loaded results from a saved quote (skip rates fetch if so)
+  const loadedFromSavedQuoteRef = useRef(false);
 
   // Editable rate and product fee overrides - per-column state
   const [ratesOverrides, setRatesOverrides] = useState({});
   const [productFeeOverrides, setProductFeeOverrides] = useState({});
 
   const [dipModalOpen, setDipModalOpen] = useState(false);
-  const [currentQuoteId, setCurrentQuoteId] = useState(null);
+  const [currentQuoteId, setCurrentQuoteId] = useState(effectiveInitialQuote?.id || null);
+  // Store full quote data for Update Quote modal (name, borrower info, notes, etc.)
+  const [currentQuoteData, setCurrentQuoteData] = useState(effectiveInitialQuote || null);
   const [dipData, setDipData] = useState({});
   const [selectedFeeTypeForDip, setSelectedFeeTypeForDip] = useState('');
   const [filteredRatesForDip, setFilteredRatesForDip] = useState([]);
@@ -346,11 +351,11 @@ export default function BridgingCalculator({ initialQuote = null }) {
           lender_legal_fee: quote.lender_legal_fee,
           number_of_applicants: quote.number_of_applicants,
           overpayments_percent: quote.overpayments_percent,
-          paying_network_club: quote.paying_network_club,
           security_properties: quote.security_properties,
           fee_type_selection: quote.fee_type_selection,
           dip_status: quote.dip_status,
-          funding_line: quote.funding_line
+          funding_line: quote.funding_line,
+          title_insurance: quote.title_insurance
         });
       }
       
@@ -481,6 +486,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
         });
         });
         setRelevantRates(loadedRates);
+        // Mark that we loaded from a saved quote to prevent rates fetch from overwriting
+        loadedFromSavedQuoteRef.current = true;
         
         // Restore product fee overrides if they were edited
         // We need to check if saved product_fee_percent differs from what would be calculated
@@ -581,6 +588,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
   // Fetch rates for Bridging: filter depending on mode
   useEffect(() => {
     if (!supabase) return;
+    
+    // Always fetch rates from database - they're needed for filtering
+    // The loadedFromSavedQuoteRef flag is used in the filtering effect, not here
+    
     let mounted = true;
     async function loadRates() {
       try {
@@ -681,6 +692,13 @@ export default function BridgingCalculator({ initialQuote = null }) {
   }, [answers]);
 
   useEffect(() => {
+    // Skip filtering if we just loaded results from a saved quote
+    // The saved quote's computed results should be preserved until user changes inputs
+    if (loadedFromSavedQuoteRef.current) {
+      loadedFromSavedQuoteRef.current = false;
+      return;
+    }
+    
     // filter rates whenever inputs or answers change
     const raw = rates || [];
     const mode = computeModeFromAnswers();
@@ -863,6 +881,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
         const overrideRateValue = getNumericValue(ratesOverrides?.[columnKey]);
         const overrideProductFeeValue = getNumericValue(productFeeOverrides?.[columnKey]);
 
+        // Determine if this is a Fusion product - Fusion uses fixed term from rate record, not the slider
+        const isFusionProduct = rateSetKey === 'fusion';
+
         // Use the comprehensive Bridge & Fusion calculation engine
         // Pass broker settings to let the engine calculate fees internally
         const calculated = BridgeFusionCalculator.calculateForRate(rate, {
@@ -872,7 +893,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
           topSlicing: topSlicingNum,
           useSpecificNet: useSpecificNet === 'Yes',
           specificNetLoan: specificNet,
-          termMonths: term,
+          // For Fusion, don't pass termMonths - let engine use rate's max_term (typically 24 months)
+          // For Bridge products, use the slider value
+          termMonths: isFusionProduct ? undefined : term,
           bbrAnnual: bbrAnnual,
           procFeePct: 0, // Will be calculated from brokerSettings
           brokerFeeFlat: 0,
@@ -1202,6 +1225,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
     // Reset to initial state - clear currentQuoteId and reference
     setCurrentQuoteId(null);
     setCurrentQuoteRef(null);
+    setCurrentQuoteData(null);
+    
+    // Reset the loaded-from-saved-quote flag
+    loadedFromSavedQuoteRef.current = false;
     
     // Reset all input fields
     setPropertyValue('');
@@ -1332,6 +1359,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
         onIssueDip={() => setDipModalOpen(true)}
         onIssueQuote={handleIssueQuote}
         onCancelQuote={handleCancelQuote}
+        onNewQuote={handleCancelQuote}
         saveQuoteButton={
           <SaveQuoteButton
             calculatorType="Bridging"
@@ -1362,10 +1390,14 @@ export default function BridgingCalculator({ initialQuote = null }) {
               deferredInterestPerColumn,
               multiPropertyRows: isMultiProperty ? multiPropertyRows : null
             }}
-            existingQuote={currentQuoteId ? { id: currentQuoteId } : null}
-            onQuoteSaved={async (savedQuote) => {
-              if (savedQuote && savedQuote.id && !currentQuoteId) {
-                setCurrentQuoteId(savedQuote.id);
+            existingQuote={currentQuoteData}
+            onSaved={async (savedQuote) => {
+              if (savedQuote && savedQuote.id) {
+                if (!currentQuoteId) {
+                  setCurrentQuoteId(savedQuote.id);
+                }
+                // Store the full quote data for future Update Quote operations
+                setCurrentQuoteData(savedQuote);
               }
               if (savedQuote && savedQuote.reference_number) {
                 setCurrentQuoteRef(savedQuote.reference_number);
@@ -1404,10 +1436,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
                     lender_legal_fee: savedQuote.lender_legal_fee,
                     number_of_applicants: savedQuote.number_of_applicants,
                     overpayments_percent: savedQuote.overpayments_percent,
-                    paying_network_club: savedQuote.paying_network_club,
                     security_properties: savedQuote.security_properties,
                     fee_type_selection: savedQuote.fee_type_selection,
-                    dip_status: savedQuote.dip_status
+                    dip_status: savedQuote.dip_status,
+                    title_insurance: savedQuote.title_insurance
                   });
                 }
               }

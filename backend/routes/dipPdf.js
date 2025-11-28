@@ -7,6 +7,109 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
+// ============================================================================
+// HELPER FUNCTIONS - Match Excel DIP Sheet Conditional Logic
+// ============================================================================
+
+/**
+ * Format currency with £ symbol and commas
+ */
+const formatCurrency = (value) => {
+  if (value === null || value === undefined || isNaN(value)) return '£0.00';
+  return `£${Number(value).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+/**
+ * Format percentage
+ */
+const formatPercent = (value, decimals = 2) => {
+  if (value === null || value === undefined) return '0.00%';
+  return `${Number(value).toFixed(decimals)}%`;
+};
+
+/**
+ * Format date in long format: "Friday, 28 November 2025"
+ */
+const formatDateLong = (dateString) => {
+  if (!dateString) return 'N/A';
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  } catch {
+    return dateString;
+  }
+};
+
+/**
+ * Check if product is tracker-based
+ */
+const isTrackerProduct = (quote) => {
+  const productType = (quote.product_type || '').toLowerCase();
+  const rateType = (quote.rate_type || '').toLowerCase();
+  return productType.includes('tracker') || rateType.includes('tracker');
+};
+
+/**
+ * Check if revert rate is MVR-based (vs BBR-based)
+ */
+const isMVRRevert = (quote) => {
+  const revertText = (quote.revert_rate_text || quote.revert_index || '').toLowerCase();
+  return revertText.includes('mvr') || revertText.includes('variable');
+};
+
+/**
+ * Get initial term in years (from months)
+ */
+const getInitialTermYears = (quote) => {
+  const months = Number(quote.initial_term) || Number(quote.term_months) || 24;
+  return months / 12;
+};
+
+/**
+ * Get full term in years
+ */
+const getFullTermYears = (quote) => {
+  const term = Number(quote.full_term) || Number(quote.total_loan_term) || 120;
+  // If stored as months, convert to years
+  return term > 50 ? term / 12 : term;
+};
+
+/**
+ * Get property type for conditional declarations
+ */
+const getPropertyType = (quote) => {
+  if (quote.commercial_or_main_residence) {
+    if (quote.commercial_or_main_residence === 'Commercial') return 'Commercial';
+    if (quote.commercial_or_main_residence === 'Main Residence') return 'Residential BTL';
+  }
+  const propType = (quote.property_type || '').toLowerCase();
+  if (propType.includes('commercial') && propType.includes('semi')) return 'Semi-Commercial';
+  if (propType.includes('commercial')) return 'Commercial';
+  return 'Residential BTL';
+};
+
+/**
+ * Get ERC text from rate data
+ */
+const getERCText = (result) => {
+  const erc1 = result?.erc_1_percent || result?.erc_1;
+  const erc2 = result?.erc_2_percent || result?.erc_2;
+  const parts = [];
+  if (erc1) parts.push(`${erc1}% of loan balance in yr1`);
+  if (erc2) parts.push(`${erc2}% of loan balance in yr2`);
+  if (parts.length === 0) return 'No early repayment charge applies.';
+  return parts.join(', ') + '. No charge thereafter.';
+};
+
+// ============================================================================
+// MAIN PDF GENERATION ROUTE
+// ============================================================================
+
 // Generate PDF for a quote with DIP data
 router.post('/:id', async (req, res) => {
   try {
@@ -44,278 +147,535 @@ router.post('/:id', async (req, res) => {
       .order('created_at', { ascending: true });
     
     if (resultsError) {
+      console.error('Error fetching results:', resultsError);
     }
     
     const results = resultsData || [];
+    
+    // Get the selected/displayed result
+    let displayResult = results[0] || {};
+    if (quote.fee_type_selection && results.length > 0) {
+      if (isBridge) {
+        displayResult = results.find(r => 
+          (r.product_name || '').toLowerCase().includes(quote.fee_type_selection.toLowerCase())
+        ) || results[0];
+      } else {
+        displayResult = results.find(r => 
+          quote.fee_type_selection.includes(r.fee_column)
+        ) || results[0];
+      }
+    }
 
-    // Create PDF document
-    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+    // Create PDF document - smaller margins for more content
+    const doc = new PDFDocument({ 
+      size: 'A4', 
+      margins: { top: 40, bottom: 40, left: 50, right: 50 }
+    });
     
     // Set response headers for PDF download
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=DIP_${quote.reference_number || id}.pdf`);
-    // Prevent any caching of generated PDFs
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     
     // Pipe PDF to response
     doc.pipe(res);
-
-  // Header
-  doc.fontSize(20).text('Decision in Principle (DIP)', { align: 'center' });
-  doc.moveDown();
-  // Visible layout/version marker to distinguish DIP generator
-  doc.fontSize(10).fillColor('gray').text('Layout: DIP Detailed v2', { align: 'center' });
-  doc.fillColor('black');
-    doc.fontSize(12).text(`Reference Number: ${quote.reference_number || 'N/A'}`, { align: 'center' });
-    doc.moveDown(2);
-
-    // Quote Information Section
-    doc.fontSize(16).text('Quote Information', { underline: true });
-    doc.moveDown(0.5);
-    doc.fontSize(11);
-    doc.text(`Name: ${quote.name || 'N/A'}`);
-    doc.text(`Calculator Type: ${quote.calculator_type || 'N/A'}`);
-    doc.text(`Borrower Type: ${quote.borrower_type || 'N/A'}`);
-    if (quote.borrower_type === 'Company') {
-      doc.text(`Company Name: ${quote.company_name || 'N/A'}`);
+    
+    // ========================================================================
+    // BTL DIP PDF GENERATION - Matches Excel DIP Sheet Format
+    // ========================================================================
+    
+    if (quote.calculator_type === 'BTL' || quote.calculator_type?.toLowerCase() === 'btl') {
+      generateBTLDIPPDF(doc, quote, displayResult);
     } else {
-      doc.text(`Borrower Name: ${quote.borrower_name || 'N/A'}`);
+      // Original format for Bridging (can be updated later)
+      generateBridgingDIPPDF(doc, quote, displayResult, results, isBridge);
     }
-    doc.text(`Created: ${quote.created_at ? new Date(quote.created_at).toLocaleString() : 'N/A'}`);
-    doc.moveDown(1.5);
-
-    // DIP Information Section
-    doc.fontSize(16).text('DIP Details', { underline: true });
-    doc.moveDown(0.5);
-    doc.fontSize(11);
-    doc.text(`Residence Type: ${quote.commercial_or_main_residence || 'N/A'}`);
-    doc.text(`DIP Date: ${quote.dip_date ? new Date(quote.dip_date).toLocaleDateString() : 'N/A'}`);
-    doc.text(`DIP Expiry Date: ${quote.dip_expiry_date ? new Date(quote.dip_expiry_date).toLocaleDateString() : 'N/A'}`);
-    doc.text(`Guarantor Name: ${quote.guarantor_name || 'N/A'}`);
-    doc.text(`Lender Legal Fee: ${quote.lender_legal_fee ? `£${quote.lender_legal_fee.toLocaleString()}` : 'N/A'}`);
-    doc.text(`Number of Applicants: ${quote.number_of_applicants || 'N/A'}`);
-    doc.text(`Overpayments: ${quote.overpayments_percent || '10'}%`);
-    doc.text(`Paying Network/Club: ${quote.paying_network_club || 'N/A'}`);
-    doc.text(`Fee Type Selection: ${quote.fee_type_selection || 'N/A'}`);
-  // Funding Line (new field)
-  doc.text(`Funding Line: ${quote.funding_line || 'N/A'}`);
-    
-    // Add Product Range if available (BTL only)
-    if (quote.calculator_type === 'BTL' && quote.product_range) {
-      doc.text(`Product Range: ${quote.product_range.charAt(0).toUpperCase() + quote.product_range.slice(1)}`);
-    }
-    
-    doc.text(`DIP Status: ${quote.dip_status || 'Not Issued'}`);
-    doc.moveDown(1.5);
-
-    // Security Properties Section
-    if (quote.security_properties && Array.isArray(quote.security_properties) && quote.security_properties.length > 0) {
-      doc.fontSize(16).text('Security Properties', { underline: true });
-      doc.moveDown(0.5);
-      doc.fontSize(11);
-      quote.security_properties.forEach((prop, index) => {
-        doc.text(`Property ${index + 1}:`, { underline: true });
-        doc.text(`  Street: ${prop.street || 'N/A'}`);
-        doc.text(`  City: ${prop.city || 'N/A'}`);
-        doc.text(`  Postcode: ${prop.postcode || 'N/A'}`);
-        doc.moveDown(0.5);
-      });
-      doc.moveDown(1);
-    }
-
-    // Calculation Details Section
-    doc.fontSize(16).text('Calculation Details', { underline: true });
-    doc.moveDown(0.5);
-    doc.fontSize(11);
-    
-    if (quote.calculator_type === 'BTL') {
-      doc.text(`Product Scope: ${quote.product_scope || 'N/A'}`);
-      doc.text(`Product Type: ${quote.product_type || 'N/A'}`);
-      doc.text(`Property Value: ${quote.property_value ? `£${quote.property_value.toLocaleString()}` : 'N/A'}`);
-      doc.text(`Monthly Rent: ${quote.monthly_rent ? `£${quote.monthly_rent.toLocaleString()}` : 'N/A'}`);
-      doc.text(`Retention: ${quote.retention_choice || 'N/A'}`);
-      if (quote.retention_choice === 'Yes') {
-        doc.text(`Retention LTV: ${quote.retention_ltv || 'N/A'}%`);
-      }
-      doc.text(`Target LTV: ${quote.target_ltv || 'N/A'}%`);
-      doc.text(`Tier: ${quote.tier || 'N/A'}`);
-      doc.text(`Top Slicing: ${quote.top_slicing || 'N/A'}`);
-    } else if (quote.calculator_type === 'BRIDGING') {
-      doc.text(`Product Scope: ${quote.product_scope || 'N/A'}`);
-      doc.text(`Property Value: ${quote.property_value ? `£${quote.property_value.toLocaleString()}` : 'N/A'}`);
-      doc.text(`Gross Loan: ${quote.gross_loan ? `£${quote.gross_loan.toLocaleString()}` : 'N/A'}`);
-      doc.text(`Bridging Term: ${quote.bridging_loan_term || 'N/A'} months`);
-      doc.text(`Charge Type: ${quote.charge_type || 'N/A'}`);
-      doc.text(`Sub Product: ${quote.sub_product || 'N/A'}`);
-      if (quote.use_specific_net_loan) {
-        doc.text(`Specific Net Loan: ${quote.specific_net_loan ? `£${quote.specific_net_loan.toLocaleString()}` : 'N/A'}`);
-      }
-    }
-    
-    doc.moveDown(1.5);
-
-    // Rate Calculation Results Section
-    if (results && results.length > 0) {
-      doc.fontSize(16).text('Rate Calculation Results', { underline: true });
-      doc.moveDown(0.5);
-      // Log all result product names for debugging
-      if (results.length > 0) {
-      }
-      
-      // Filter results by selected fee type if specified
-      let displayResults = results;
-      
-      if (quote.fee_type_selection) {
-        if (isBridge) {
-          // For Bridging: filter by product name (Fusion, Variable Bridge, Fixed Bridge)
-          displayResults = results.filter(result => {
-            const productName = (result.product_name || '').toString().toLowerCase().trim();
-            const selectedType = (quote.fee_type_selection || '').toString().toLowerCase().trim();
-            const match = productName === selectedType || productName.includes(selectedType) || selectedType.includes(productName);
-            return match;
-          });
-        } else {
-          // For BTL: filter by fee column
-          displayResults = results.filter(result => {
-            const feeCol = (result.fee_column || '').toString();
-            const match = quote.fee_type_selection.includes(feeCol) || quote.fee_type_selection.includes(`${feeCol}%`);
-            return match;
-          });
-        }
-      } else {
-      }
-      
-      if (displayResults.length > 0) {
-        displayResults.forEach((result, idx) => {
-          // For Bridging, show product name; for BTL, show fee percentage
-          const optionLabel = isBridge && result.product_name 
-            ? `${result.product_name}` 
-            : result.fee_column 
-              ? `Fee ${result.fee_column}%` 
-              : `Option ${idx + 1}`;
-          
-          // Add page break if this is not the first result and we're running low on space
-          if (idx > 0 && doc.y > 650) {
-            doc.addPage();
-          }
-          
-          doc.fontSize(13).fillColor('#0176d3').text(`${optionLabel}`, { underline: false });
-          doc.fillColor('black');
-          doc.fontSize(9);
-          doc.moveDown(0.3);
-          
-          // Helper function to format currency
-          const formatCurrency = (value) => {
-            if (value === null || value === undefined) return '—';
-            return `£${Number(value).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-          };
-          
-          // Helper function to format percentage
-          const formatPercent = (value, decimals = 2) => {
-            if (value === null || value === undefined) return '—';
-            return `${Number(value).toFixed(decimals)}%`;
-          };
-          
-          // Helper function to format number
-          const formatNumber = (value, decimals = 2) => {
-            if (value === null || value === undefined) return '—';
-            return Number(value).toFixed(decimals);
-          };
-          
-          // Display ALL financial details in organized sections
-          
-          // Loan Amounts Section
-          doc.fontSize(10).fillColor('#555555').text('Loan Details:', { underline: true });
-          doc.fillColor('black').fontSize(9);
-          if (result.gross_loan !== undefined) doc.text(`  Gross Loan: ${formatCurrency(result.gross_loan)}`);
-          if (result.net_loan !== undefined) doc.text(`  Net Loan: ${formatCurrency(result.net_loan)}`);
-          if (result.property_value !== undefined) doc.text(`  Property Value: ${formatCurrency(result.property_value)}`);
-          if (result.ltv_percentage !== undefined) doc.text(`  LTV: ${formatPercent(result.ltv_percentage)}`);
-          if (result.net_ltv !== undefined) doc.text(`  Net LTV: ${formatPercent(result.net_ltv)}`);
-          if (result.icr !== undefined) doc.text(`  ICR: ${formatPercent(result.icr)}`);
-          doc.moveDown(0.3);
-          
-          // Rates Section
-          doc.fontSize(10).fillColor('#555555').text('Interest Rates:', { underline: true });
-          doc.fillColor('black').fontSize(9);
-          if (result.initial_rate !== undefined) doc.text(`  Initial Rate: ${formatPercent(result.initial_rate)}`);
-          if (result.pay_rate !== undefined) doc.text(`  Pay Rate: ${formatPercent(result.pay_rate)}`);
-          if (result.revert_rate !== undefined) doc.text(`  Revert Rate: ${formatPercent(result.revert_rate)}`);
-          if (result.revert_rate_dd !== undefined) doc.text(`  Revert Rate DD: ${formatPercent(result.revert_rate_dd)}`);
-          if (result.full_rate !== undefined) doc.text(`  Full Rate: ${result.full_rate}`);
-          if (result.aprc !== undefined) doc.text(`  APRC: ${formatPercent(result.aprc)}`);
-          if (result.deferred_rate !== undefined) doc.text(`  Deferred Rate: ${formatPercent(result.deferred_rate)}`);
-          doc.moveDown(0.3);
-          
-          // Fees Section
-          doc.fontSize(10).fillColor('#555555').text('Fees:', { underline: true });
-          doc.fillColor('black').fontSize(9);
-          if (result.product_fee_percent !== undefined && result.product_fee_percent !== null) doc.text(`  Product Fee %: ${formatPercent(result.product_fee_percent)}`);
-          if (result.product_fee_pounds !== undefined && result.product_fee_pounds !== null) doc.text(`  Product Fee £: ${formatCurrency(result.product_fee_pounds)}`);
-          if (result.admin_fee !== undefined && result.admin_fee !== null) doc.text(`  Admin Fee: ${formatCurrency(result.admin_fee)}`);
-          if (result.broker_client_fee !== undefined && result.broker_client_fee !== null) doc.text(`  Broker Client Fee: ${formatCurrency(result.broker_client_fee)}`);
-          if (result.broker_commission_proc_fee_percent !== undefined && result.broker_commission_proc_fee_percent !== null) doc.text(`  Broker Commission %: ${formatPercent(result.broker_commission_proc_fee_percent)}`);
-          if (result.broker_commission_proc_fee_pounds !== undefined && result.broker_commission_proc_fee_pounds !== null) doc.text(`  Broker Commission £: ${formatCurrency(result.broker_commission_proc_fee_pounds)}`);
-          if (result.commitment_fee_pounds !== undefined && result.commitment_fee_pounds !== null) doc.text(`  Commitment Fee: ${formatCurrency(result.commitment_fee_pounds)}`);
-          if (result.exit_fee !== undefined && result.exit_fee !== null) doc.text(`  Exit Fee: ${formatCurrency(result.exit_fee)}`);
-          if (result.title_insurance_cost !== undefined && result.title_insurance_cost !== null) doc.text(`  Title Insurance Cost: ${formatCurrency(result.title_insurance_cost)}`);
-          doc.moveDown(0.3);
-          
-          // Interest Calculations Section
-          doc.fontSize(10).fillColor('#555555').text('Interest Calculations:', { underline: true });
-          doc.fillColor('black').fontSize(9);
-          if (result.monthly_interest_cost !== undefined) doc.text(`  Monthly Interest Cost: ${formatCurrency(result.monthly_interest_cost)}`);
-          if (result.rolled_months !== undefined) doc.text(`  Rolled Months: ${formatNumber(result.rolled_months, 0)} months`);
-          if (result.rolled_months_interest !== undefined) doc.text(`  Rolled Months Interest: ${formatCurrency(result.rolled_months_interest)}`);
-          if (result.deferred_interest_percent !== undefined) doc.text(`  Deferred Interest %: ${formatPercent(result.deferred_interest_percent)}`);
-          if (result.deferred_interest_pounds !== undefined) doc.text(`  Deferred Interest £: ${formatCurrency(result.deferred_interest_pounds)}`);
-          if (result.serviced_interest !== undefined) doc.text(`  Serviced Interest: ${formatCurrency(result.serviced_interest)}`);
-          doc.moveDown(0.3);
-          
-          // ERC Section (Early Repayment Charges - Fusion only, Bridge calculator only)
-          if (isBridge && result.erc_1_pounds !== undefined && result.erc_1_pounds !== null && result.erc_1_pounds > 0) {
-            doc.fontSize(10).fillColor('#555555').text('Early Repayment Charges (Fusion Only):', { underline: true });
-            doc.fillColor('black').fontSize(9);
-            if (result.erc_1_pounds !== undefined && result.erc_1_pounds !== null) doc.text(`  ERC Year 1: ${formatCurrency(result.erc_1_pounds)}`);
-            if (result.erc_2_pounds !== undefined && result.erc_2_pounds !== null) doc.text(`  ERC Year 2: ${formatCurrency(result.erc_2_pounds)}`);
-            doc.moveDown(0.3);
-          }
-          
-          // Other Details Section
-          doc.fontSize(10).fillColor('#555555').text('Other Details:', { underline: true });
-          doc.fillColor('black').fontSize(9);
-          if (result.direct_debit !== undefined && result.direct_debit !== null) doc.text(`  Direct Debit: ${formatCurrency(result.direct_debit)}`);
-          if (result.rent !== undefined && result.rent !== null) doc.text(`  Rent: ${formatCurrency(result.rent)}`);
-          if (result.top_slicing !== undefined && result.top_slicing !== null) doc.text(`  Top Slicing: ${formatCurrency(result.top_slicing)}`);
-          if (result.nbp !== undefined && result.nbp !== null) doc.text(`  NBP: ${formatCurrency(result.nbp)}`);
-          if (result.total_cost_to_borrower !== undefined && result.total_cost_to_borrower !== null) doc.text(`  Total Cost to Borrower: ${formatCurrency(result.total_cost_to_borrower)}`);
-          if (result.total_loan_term !== undefined && result.total_loan_term !== null) doc.text(`  Total Loan Term: ${formatNumber(result.total_loan_term, 0)} months`);
-          if (result.product_name) doc.text(`  Product: ${result.product_name}`);
-          
-          doc.moveDown(1);
-        });
-      } else {
-        doc.fontSize(11).text('No matching results found for the selected fee type.');
-      }
-      
-      doc.moveDown(1);
-    }
-
-    doc.moveDown(2);
-
-    // Footer
-    doc.fontSize(9).text('This is a computer-generated document and does not require a signature.', {
-      align: 'center',
-      color: 'gray'
-    });
 
     // Finalize PDF
     doc.end();
   } catch (err) {
+    console.error('DIP PDF generation error:', err);
     return res.status(500).json({ error: err.message ?? String(err) });
   }
 });
+
+// ============================================================================
+// BTL DIP PDF GENERATOR - Matches Excel Format with Conditional Logic
+// ============================================================================
+
+function generateBTLDIPPDF(doc, quote, result) {
+  const propertyType = getPropertyType(quote);
+  const isTracker = isTrackerProduct(quote);
+  const isMVR = isMVRRevert(quote);
+  const initialTermYears = getInitialTermYears(quote);
+  const fullTermYears = getFullTermYears(quote);
+  const numApplicants = Number(quote.number_of_applicants) || 1;
+  const rolledMonths = Number(result?.rolled_months) || 0;
+  const deferredInterest = Number(result?.deferred_interest_pounds) || 0;
+  
+  // Get property address
+  const property = quote.security_properties?.[0] || {};
+  const propertyAddress = [property.street, property.city, property.postcode].filter(Boolean).join(', ') || 'Property address to be confirmed';
+  
+  // ========== PAGE 1: HEADER & KEY LOAN DETAILS ==========
+  
+  // Company Header
+  doc.fontSize(18).font('Helvetica-Bold').text('MFS', { align: 'center' });
+  doc.fontSize(10).font('Helvetica').text('Market Financial Solutions', { align: 'center' });
+  doc.moveDown(0.5);
+  
+  // Title
+  doc.fontSize(16).font('Helvetica-Bold').fillColor('#1a5276').text('DECISION IN PRINCIPLE', { align: 'center' });
+  doc.fontSize(10).font('Helvetica').fillColor('#666666').text('This is not a binding offer of finance', { align: 'center' });
+  doc.fillColor('black');
+  doc.moveDown(1);
+  
+  // Reference Box
+  doc.rect(50, doc.y, 495, 25).fill('#f0f0f0');
+  doc.fillColor('black').fontSize(10).font('Helvetica-Bold');
+  doc.text(`Reference: ${quote.reference_number || 'TBC'}`, 60, doc.y - 18);
+  doc.text(`Date: ${formatDateLong(quote.dip_date || new Date())}`, 300, doc.y - 12, { align: 'right' });
+  doc.moveDown(1.5);
+  
+  // Borrower Details Section
+  drawSectionHeader(doc, 'BORROWER DETAILS');
+  
+  const borrowerName = quote.borrower_type === 'Company' 
+    ? quote.company_name || 'N/A'
+    : quote.borrower_name || quote.name || 'N/A';
+  
+  drawLabelValue(doc, 'Borrower:', borrowerName);
+  drawLabelValue(doc, 'Borrower Type:', quote.borrower_type || 'Individual');
+  if (quote.guarantor_name) {
+    drawLabelValue(doc, 'Guarantor:', quote.guarantor_name);
+  }
+  doc.moveDown(0.5);
+  
+  // Property Details Section
+  drawSectionHeader(doc, 'SECURITY PROPERTY');
+  drawLabelValue(doc, 'Property Address:', propertyAddress);
+  drawLabelValue(doc, 'Property Type:', propertyType);
+  drawLabelValue(doc, 'Property Value:', formatCurrency(quote.property_value));
+  if (quote.monthly_rent) {
+    drawLabelValue(doc, 'Monthly Rental Income:', formatCurrency(quote.monthly_rent));
+  }
+  doc.moveDown(0.5);
+  
+  // Loan Details Section - KEY FINANCIAL SUMMARY
+  drawSectionHeader(doc, 'LOAN DETAILS');
+  
+  // Create two-column layout for loan details
+  const col1X = 55;
+  const col2X = 300;
+  const startY = doc.y;
+  
+  doc.fontSize(9);
+  
+  // Column 1
+  doc.font('Helvetica-Bold').text('Gross Loan Amount:', col1X, startY);
+  doc.font('Helvetica').text(formatCurrency(result?.gross_loan || quote.gross_loan), col1X + 120, startY);
+  
+  doc.font('Helvetica-Bold').text('Net Loan Amount:', col1X, startY + 15);
+  doc.font('Helvetica').text(formatCurrency(result?.net_loan), col1X + 120, startY + 15);
+  
+  doc.font('Helvetica-Bold').text('Loan to Value (LTV):', col1X, startY + 30);
+  doc.font('Helvetica').text(formatPercent(result?.ltv_percentage || quote.target_ltv), col1X + 120, startY + 30);
+  
+  // Column 2
+  doc.font('Helvetica-Bold').text('Initial Interest Rate:', col2X, startY);
+  doc.font('Helvetica').text(formatPercent(result?.initial_rate || result?.pay_rate), col2X + 120, startY);
+  
+  doc.font('Helvetica-Bold').text('Product Fee:', col2X, startY + 15);
+  const productFee = result?.product_fee_pounds 
+    ? formatCurrency(result.product_fee_pounds)
+    : result?.product_fee_percent 
+      ? `${formatPercent(result.product_fee_percent)} of loan`
+      : 'N/A';
+  doc.font('Helvetica').text(productFee, col2X + 120, startY + 15);
+  
+  doc.font('Helvetica-Bold').text('Monthly Payment:', col2X, startY + 30);
+  doc.font('Helvetica').text(formatCurrency(result?.monthly_interest_cost), col2X + 120, startY + 30);
+  
+  doc.y = startY + 55;
+  doc.moveDown(0.5);
+  
+  // ========== CONDITIONAL: Total Loan Term Text ==========
+  drawSectionHeader(doc, 'TERM OF LOAN');
+  
+  // Initial period text - CONDITIONAL on Fixed vs Tracker
+  const initialPeriodLabel = isTracker ? 'Initial Tracker Rate Period:' : 'Initial Fixed Rate Period:';
+  drawLabelValue(doc, initialPeriodLabel, `${initialTermYears} year${initialTermYears !== 1 ? 's' : ''}`);
+  
+  // Total term
+  drawLabelValue(doc, 'Total Loan Term:', `${fullTermYears} years`);
+  
+  // Revert rate text - CONDITIONAL on MVR vs BBR
+  let revertText = '';
+  if (isMVR) {
+    revertText = `After the initial period, the rate will revert to our MFS Variable Rate (MVR), currently ${formatPercent(result?.revert_rate || 7.99)}`;
+  } else {
+    const margin = Number(result?.revert_rate) - 5.25 || 2.74; // Approximate margin over BBR
+    revertText = `After the initial period, the rate will be BBR plus a margin of ${formatPercent(margin)}`;
+  }
+  doc.fontSize(8).font('Helvetica').text(revertText, { width: 490 });
+  doc.moveDown(1);
+  
+  // ========== CONDITIONAL: Rolled Months Section ==========
+  if (rolledMonths > 0) {
+    drawSectionHeader(doc, 'ROLLED UP INTEREST');
+    drawLabelValue(doc, 'Rolled Months:', `${rolledMonths} month${rolledMonths !== 1 ? 's' : ''}`);
+    drawLabelValue(doc, 'Rolled Interest Amount:', formatCurrency(result?.rolled_months_interest));
+    doc.fontSize(8).font('Helvetica').fillColor('#666666');
+    doc.text('Interest for the above period will be added to the loan at completion.', { width: 490 });
+    doc.fillColor('black');
+    doc.moveDown(0.5);
+  }
+  
+  // ========== CONDITIONAL: Deferred Interest Section ==========
+  if (deferredInterest > 0) {
+    drawSectionHeader(doc, 'DEFERRED INTEREST');
+    drawLabelValue(doc, 'Deferred Interest:', formatCurrency(deferredInterest));
+    if (result?.deferred_rate) {
+      drawLabelValue(doc, 'Deferred Rate:', formatPercent(result.deferred_rate));
+    }
+    doc.fontSize(8).font('Helvetica').fillColor('#666666');
+    doc.text('The deferred interest amount will be added to your loan balance and charged at the deferred rate.', { width: 490 });
+    doc.fillColor('black');
+    doc.moveDown(0.5);
+  }
+  
+  // ========== EARLY REPAYMENT CHARGES ==========
+  drawSectionHeader(doc, 'EARLY REPAYMENT CHARGES');
+  doc.fontSize(9).font('Helvetica');
+  doc.text(getERCText(result), { width: 490 });
+  doc.moveDown(0.5);
+  
+  // Overpayments
+  const overpaymentPercent = quote.overpayments_percent || 10;
+  doc.fontSize(9).font('Helvetica');
+  doc.text(`You may make overpayments of up to ${overpaymentPercent}% of the outstanding loan balance per annum without penalty during the initial rate period.`, { width: 490 });
+  doc.moveDown(1);
+  
+  // ========== PAGE 2: TARIFF OF CHARGES ==========
+  doc.addPage();
+  
+  drawSectionHeader(doc, 'TARIFF OF CHARGES');
+  
+  // Create fees table
+  const fees = [
+    { label: 'Product/Arrangement Fee', value: result?.product_fee_pounds || result?.product_fee_percent ? `${formatPercent(result?.product_fee_percent)} (${formatCurrency(result?.product_fee_pounds)})` : 'N/A' },
+    { label: 'Admin Fee', value: formatCurrency(result?.admin_fee || 0) },
+    { label: 'Valuation Fee', value: 'Payable directly to valuer' },
+    { label: 'Legal Fees (Lender)', value: formatCurrency(quote.lender_legal_fee) },
+    { label: 'Exit Fee', value: formatCurrency(result?.exit_fee || 0) },
+  ];
+  
+  if (result?.title_insurance_cost) {
+    fees.push({ label: 'Title Insurance', value: formatCurrency(result.title_insurance_cost) });
+  }
+  
+  if (result?.broker_client_fee) {
+    fees.push({ label: 'Broker Fee', value: formatCurrency(result.broker_client_fee) });
+  }
+  
+  drawFeesTable(doc, fees);
+  doc.moveDown(1);
+  
+  // ========== IMPORTANT INFORMATION ==========
+  drawSectionHeader(doc, 'IMPORTANT INFORMATION');
+  
+  const importantPoints = [
+    'This Decision in Principle is subject to satisfactory valuation, legal checks, and full underwriting.',
+    'The actual rate offered may differ from this indication based on final assessment.',
+    'This DIP is valid for 90 days from the date shown above.',
+    'A full mortgage offer will be issued subject to satisfactory completion of all checks.',
+    `Interest will be charged ${quote.retention_choice === 'Yes' ? 'with retention facility' : 'on a serviced basis, payable monthly'}.`,
+  ];
+  
+  doc.fontSize(9).font('Helvetica');
+  importantPoints.forEach((point, idx) => {
+    doc.text(`${idx + 1}. ${point}`, { width: 490 });
+    doc.moveDown(0.3);
+  });
+  doc.moveDown(0.5);
+  
+  // ========== CONDITIONAL: PROPERTY TYPE DECLARATION ==========
+  drawSectionHeader(doc, 'BORROWER DECLARATION');
+  
+  // Property use declaration - CONDITIONAL based on property type
+  let propertyDeclaration = '';
+  if (propertyType === 'Commercial') {
+    propertyDeclaration = 'I/We confirm that less than 40% of the property will be used as a dwelling by myself or my family members.';
+  } else if (propertyType === 'Semi-Commercial') {
+    propertyDeclaration = 'I/We confirm that the property is semi-commercial in nature, with a residential element that will not be occupied by myself or my family members.';
+  } else {
+    // Residential BTL
+    propertyDeclaration = 'I/We confirm that the property has never been, and will not be, used as a dwelling by myself or my family members. The property is held for investment purposes and will be let to third party tenants.';
+  }
+  
+  doc.fontSize(9).font('Helvetica');
+  doc.text(propertyDeclaration, { width: 490 });
+  doc.moveDown(0.5);
+  
+  // Additional declarations
+  const declarations = [
+    'I/We confirm that all information provided in support of this application is true and accurate.',
+    'I/We understand that providing false or misleading information may result in the withdrawal of any offer.',
+    'I/We consent to the lender carrying out credit and identity checks as required.',
+    'I/We have been advised to seek independent legal advice regarding this transaction.',
+  ];
+  
+  declarations.forEach((decl, idx) => {
+    doc.text(`${idx + 1}. ${decl}`, { width: 490 });
+    doc.moveDown(0.3);
+  });
+  doc.moveDown(1);
+  
+  // ========== CONDITIONAL: SIGNATURE BLOCKS (1-4 Applicants) ==========
+  drawSectionHeader(doc, 'SIGNATURES');
+  
+  for (let i = 1; i <= numApplicants; i++) {
+    if (doc.y > 700) doc.addPage();
+    drawSignatureBlock(doc, `Applicant ${i}`, i === 1 ? borrowerName : `Applicant ${i}`);
+    doc.moveDown(0.5);
+  }
+  
+  // ========== FOOTER ==========
+  doc.moveDown(1);
+  doc.fontSize(8).font('Helvetica').fillColor('#666666');
+  doc.text('Market Financial Solutions is authorised and regulated by the Financial Conduct Authority.', { align: 'center' });
+  doc.text('This document is for information purposes only and does not constitute a binding offer of finance.', { align: 'center' });
+  doc.fillColor('black');
+}
+
+// ============================================================================
+// BRIDGING DIP PDF GENERATOR - Original Format (kept for backwards compatibility)
+// ============================================================================
+
+function generateBridgingDIPPDF(doc, quote, displayResult, results, isBridge) {
+  // Header
+  doc.fontSize(20).text('Decision in Principle (DIP)', { align: 'center' });
+  doc.moveDown();
+  doc.fontSize(10).fillColor('gray').text('Layout: Bridge DIP v2', { align: 'center' });
+  doc.fillColor('black');
+  doc.fontSize(12).text(`Reference Number: ${quote.reference_number || 'N/A'}`, { align: 'center' });
+  doc.moveDown(2);
+
+  // Quote Information Section
+  doc.fontSize(16).text('Quote Information', { underline: true });
+  doc.moveDown(0.5);
+  doc.fontSize(11);
+  doc.text(`Name: ${quote.name || 'N/A'}`);
+  doc.text(`Calculator Type: ${quote.calculator_type || 'N/A'}`);
+  doc.text(`Borrower Type: ${quote.borrower_type || 'N/A'}`);
+  if (quote.borrower_type === 'Company') {
+    doc.text(`Company Name: ${quote.company_name || 'N/A'}`);
+  } else {
+    doc.text(`Borrower Name: ${quote.borrower_name || 'N/A'}`);
+  }
+  doc.text(`Created: ${quote.created_at ? new Date(quote.created_at).toLocaleString() : 'N/A'}`);
+  doc.moveDown(1.5);
+
+  // DIP Information Section
+  doc.fontSize(16).text('DIP Details', { underline: true });
+  doc.moveDown(0.5);
+  doc.fontSize(11);
+  doc.text(`Residence Type: ${quote.commercial_or_main_residence || 'N/A'}`);
+  doc.text(`DIP Date: ${quote.dip_date ? new Date(quote.dip_date).toLocaleDateString() : 'N/A'}`);
+  doc.text(`DIP Expiry Date: ${quote.dip_expiry_date ? new Date(quote.dip_expiry_date).toLocaleDateString() : 'N/A'}`);
+  doc.text(`Guarantor Name: ${quote.guarantor_name || 'N/A'}`);
+  doc.text(`Lender Legal Fee: ${quote.lender_legal_fee ? `£${Number(quote.lender_legal_fee).toLocaleString()}` : 'N/A'}`);
+  doc.text(`Number of Applicants: ${quote.number_of_applicants || 'N/A'}`);
+  doc.text(`Overpayments: ${quote.overpayments_percent || '10'}%`);
+  doc.text(`Title Insurance: ${quote.title_insurance || 'No'}`);
+  doc.text(`Fee Type Selection: ${quote.fee_type_selection || 'N/A'}`);
+  doc.text(`Funding Line: ${quote.funding_line || 'N/A'}`);
+  doc.text(`DIP Status: ${quote.dip_status || 'Not Issued'}`);
+  doc.moveDown(1.5);
+
+  // Security Properties Section
+  if (quote.security_properties && Array.isArray(quote.security_properties) && quote.security_properties.length > 0) {
+    doc.fontSize(16).text('Security Properties', { underline: true });
+    doc.moveDown(0.5);
+    doc.fontSize(11);
+    quote.security_properties.forEach((prop, index) => {
+      doc.text(`Property ${index + 1}:`, { underline: true });
+      doc.text(`  Street: ${prop.street || 'N/A'}`);
+      doc.text(`  City: ${prop.city || 'N/A'}`);
+      doc.text(`  Postcode: ${prop.postcode || 'N/A'}`);
+      doc.moveDown(0.5);
+    });
+    doc.moveDown(1);
+  }
+
+  // Calculation Details Section
+  doc.fontSize(16).text('Calculation Details', { underline: true });
+  doc.moveDown(0.5);
+  doc.fontSize(11);
+  
+  doc.text(`Product Scope: ${quote.product_scope || 'N/A'}`);
+  doc.text(`Property Value: ${quote.property_value ? `£${quote.property_value.toLocaleString()}` : 'N/A'}`);
+  doc.text(`Gross Loan: ${quote.gross_loan ? `£${quote.gross_loan.toLocaleString()}` : 'N/A'}`);
+  doc.text(`Bridging Term: ${quote.bridging_loan_term || 'N/A'} months`);
+  doc.text(`Charge Type: ${quote.charge_type || 'N/A'}`);
+  doc.text(`Sub Product: ${quote.sub_product || 'N/A'}`);
+  if (quote.use_specific_net_loan) {
+    doc.text(`Specific Net Loan: ${quote.specific_net_loan ? `£${quote.specific_net_loan.toLocaleString()}` : 'N/A'}`);
+  }
+  
+  doc.moveDown(1.5);
+
+  // Rate Calculation Results Section
+  if (results && results.length > 0) {
+    doc.fontSize(16).text('Rate Calculation Results', { underline: true });
+    doc.moveDown(0.5);
+    
+    let displayResults = results;
+    
+    if (quote.fee_type_selection) {
+      displayResults = results.filter(result => {
+        const productName = (result.product_name || '').toString().toLowerCase().trim();
+        const selectedType = (quote.fee_type_selection || '').toString().toLowerCase().trim();
+        return productName === selectedType || productName.includes(selectedType) || selectedType.includes(productName);
+      });
+    }
+    
+    if (displayResults.length > 0) {
+      displayResults.forEach((result, idx) => {
+        const optionLabel = result.product_name || `Option ${idx + 1}`;
+        
+        if (idx > 0 && doc.y > 650) {
+          doc.addPage();
+        }
+        
+        doc.fontSize(13).fillColor('#0176d3').text(`${optionLabel}`, { underline: false });
+        doc.fillColor('black');
+        doc.fontSize(9);
+        doc.moveDown(0.3);
+        
+        // Loan Details
+        doc.fontSize(10).fillColor('#555555').text('Loan Details:', { underline: true });
+        doc.fillColor('black').fontSize(9);
+        if (result.gross_loan !== undefined) doc.text(`  Gross Loan: ${formatCurrency(result.gross_loan)}`);
+        if (result.net_loan !== undefined) doc.text(`  Net Loan: ${formatCurrency(result.net_loan)}`);
+        if (result.ltv_percentage !== undefined) doc.text(`  LTV: ${formatPercent(result.ltv_percentage)}`);
+        doc.moveDown(0.3);
+        
+        // Rates
+        doc.fontSize(10).fillColor('#555555').text('Interest Rates:', { underline: true });
+        doc.fillColor('black').fontSize(9);
+        if (result.initial_rate !== undefined) doc.text(`  Initial Rate: ${formatPercent(result.initial_rate)}`);
+        if (result.pay_rate !== undefined) doc.text(`  Pay Rate: ${formatPercent(result.pay_rate)}`);
+        doc.moveDown(0.3);
+        
+        // Fees
+        doc.fontSize(10).fillColor('#555555').text('Fees:', { underline: true });
+        doc.fillColor('black').fontSize(9);
+        if (result.product_fee_percent) doc.text(`  Product Fee %: ${formatPercent(result.product_fee_percent)}`);
+        if (result.product_fee_pounds) doc.text(`  Product Fee £: ${formatCurrency(result.product_fee_pounds)}`);
+        if (result.admin_fee) doc.text(`  Admin Fee: ${formatCurrency(result.admin_fee)}`);
+        if (result.exit_fee) doc.text(`  Exit Fee: ${formatCurrency(result.exit_fee)}`);
+        doc.moveDown(0.3);
+        
+        // Interest
+        doc.fontSize(10).fillColor('#555555').text('Interest:', { underline: true });
+        doc.fillColor('black').fontSize(9);
+        if (result.monthly_interest_cost !== undefined) doc.text(`  Monthly Interest: ${formatCurrency(result.monthly_interest_cost)}`);
+        if (result.rolled_months !== undefined) doc.text(`  Rolled Months: ${result.rolled_months}`);
+        if (result.rolled_months_interest !== undefined) doc.text(`  Rolled Interest: ${formatCurrency(result.rolled_months_interest)}`);
+        
+        doc.moveDown(1);
+      });
+    } else {
+      doc.fontSize(11).text('No matching results found for the selected fee type.');
+    }
+  }
+
+  doc.moveDown(2);
+
+  // Footer
+  doc.fontSize(9).text('This is a computer-generated document and does not require a signature.', {
+    align: 'center',
+    color: 'gray'
+  });
+}
+
+// ============================================================================
+// PDF DRAWING HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Draw a section header with blue background
+ */
+function drawSectionHeader(doc, title) {
+  doc.rect(50, doc.y, 495, 18).fill('#1a5276');
+  doc.fillColor('white').fontSize(10).font('Helvetica-Bold');
+  doc.text(title, 55, doc.y - 14);
+  doc.fillColor('black').font('Helvetica');
+  doc.moveDown(0.8);
+}
+
+/**
+ * Draw a label-value pair
+ */
+function drawLabelValue(doc, label, value, options = {}) {
+  const labelWidth = options.labelWidth || 150;
+  doc.fontSize(9);
+  doc.font('Helvetica-Bold').text(label, { continued: true, width: labelWidth });
+  doc.font('Helvetica').text(`  ${value || 'N/A'}`);
+  doc.moveDown(0.2);
+}
+
+/**
+ * Draw a fees table
+ */
+function drawFeesTable(doc, fees) {
+  const startX = 55;
+  const colWidth = 240;
+  let y = doc.y;
+  
+  // Table header
+  doc.rect(startX, y, 485, 18).fill('#e8e8e8');
+  doc.fillColor('black').fontSize(9).font('Helvetica-Bold');
+  doc.text('Fee Description', startX + 5, y + 4);
+  doc.text('Amount', startX + colWidth + 10, y + 4);
+  y += 20;
+  
+  // Table rows
+  doc.font('Helvetica').fontSize(9);
+  fees.forEach((fee, idx) => {
+    if (idx % 2 === 0) {
+      doc.rect(startX, y, 485, 16).fill('#f9f9f9');
+    }
+    doc.fillColor('black');
+    doc.text(fee.label, startX + 5, y + 3, { width: colWidth - 10 });
+    doc.text(fee.value, startX + colWidth + 10, y + 3, { width: colWidth - 10 });
+    y += 16;
+  });
+  
+  doc.y = y + 5;
+}
+
+/**
+ * Draw a signature block
+ */
+function drawSignatureBlock(doc, title, name) {
+  doc.fontSize(9).font('Helvetica-Bold').text(title);
+  doc.moveDown(0.3);
+  doc.font('Helvetica').fontSize(9).text(`Name: ${name}`);
+  doc.moveDown(0.3);
+  
+  // Signature line
+  doc.text('Signature: ', { continued: true });
+  doc.moveTo(doc.x, doc.y + 10).lineTo(doc.x + 200, doc.y + 10).stroke();
+  doc.moveDown(0.8);
+  
+  // Date line
+  doc.text('Date: ', { continued: true });
+  doc.moveTo(doc.x, doc.y + 10).lineTo(doc.x + 150, doc.y + 10).stroke();
+  doc.moveDown(0.5);
+}
 
 export default router;

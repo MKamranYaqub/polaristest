@@ -788,6 +788,11 @@ export class BTLCalculationEngine {
       adminFee,
       brokerClientFee: brokerFeeValue, // Alias for broker fee
         ercText,
+      erc_1: this.selectedRate?.erc_1 || null,
+      erc_2: this.selectedRate?.erc_2 || null,
+      erc_3: this.selectedRate?.erc_3 || null,
+      erc_4: this.selectedRate?.erc_4 || null,
+      erc_5: this.selectedRate?.erc_5 || null,
       exitFee,
       nbp,
   revertRate,

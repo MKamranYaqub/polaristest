@@ -21,6 +21,7 @@ const BridgingProductSection = ({
   onIssueQuote,
   saveQuoteButton,
   onCancelQuote,
+  onNewQuote,
   isReadOnly = false
 }) => {
   const handleAnswerChange = (key, index) => {
@@ -110,6 +111,25 @@ const BridgingProductSection = ({
         <div style={{ display: 'flex', gap: 'var(--token-spacing-sm)', alignItems: 'center' }}>
           {quoteId && (
             <>
+              <button 
+                className="slds-button"
+                onClick={onNewQuote}
+                title="Start a new quote"
+                style={{
+                  backgroundColor: '#00a89d',
+                  color: 'white',
+                  fontWeight: '600',
+                  border: 'none',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '4px',
+                  boxShadow: '0 2px 4px rgba(0, 168, 157, 0.3)',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#008c82'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#00a89d'}
+              >
+                + New Quote
+              </button>
               <button 
                 className="slds-button slds-button_neutral"
                 onClick={onIssueDip}
