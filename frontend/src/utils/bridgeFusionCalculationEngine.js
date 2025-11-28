@@ -144,8 +144,9 @@ export class BridgeFusionCalculator {
     // Validate inputs
     if (isNaN(gross) || gross <= 0) {
       if (useSpecificNet && !isNaN(targetNet) && targetNet > 0) {
-        // We'll calculate gross from net below
-        gross = 0; // Placeholder
+        // We'll calculate gross from net below - start with target net + estimated fees
+        // Typical fees are ~5-10%, so start with targetNet * 1.15 to ensure we iterate upward
+        gross = Math.ceil(targetNet * 1.15 / 1000) * 1000; // Round up to nearest £1000
       } else {
         // Return empty result
         return {
@@ -198,71 +199,96 @@ export class BridgeFusionCalculator {
     }
 
     // If using specific net loan, we need to reverse-calculate the gross loan
-    // Net = Gross - ArrangementFee - RolledInterest - DeferredInterest - ProcFee - BrokerFee - AdminFee
-    // This requires iterative calculation since fees depend on gross
+    // Net = Gross - ArrangementFee - RolledInterest - DeferredInterest - ProcFee - BrokerFee - AdminFee - TitleInsurance
+    // Use algebraic formula: Gross = Net / (1 - totalDeductionRate)
     if (useSpecificNet && targetNet > 0) {
-      // Start with an estimate: gross = net / (1 - estimated total fee %)
-      // Typical fees: 2% arrangement + rolled interest + deferred + proc fee
-      // We'll iterate to find the exact gross loan
-      let estimatedGross = targetNet / 0.85; // Start with 85% net (15% fees estimate)
+      // Calculate estimated deduction rate (arrangement fee % + rolled interest rate * months)
+      // First, estimate the rate tier by assuming gross ≈ net * 1.2
+      const estimatedGrossForRate = targetNet * 1.2;
+      const estimatedLtvBucket = this.getLtvBucket(estimatedGrossForRate + (secondChargeFlag ? firstChargeValNum : 0), pv);
       
-      // Iterate up to 10 times to find accurate gross loan
+      let estimatedMonthlyRate = 0;
+      if (productKind === 'bridge-var') {
+        estimatedMonthlyRate = this.getBridgeVarMargin(estimatedLtvBucket, rateRecord) + (bbrAnnual / 12);
+      } else if (productKind === 'bridge-fix') {
+        estimatedMonthlyRate = this.getBridgeFixCoupon(estimatedLtvBucket, rateRecord);
+      } else if (productKind === 'fusion') {
+        const tierInfo = this.getFusionTierInfo(estimatedGrossForRate, rateRecord, bbrAnnual);
+        estimatedMonthlyRate = (tierInfo.marginAnnual / 12) + (bbrAnnual / 12);
+      }
+      
+      const deferredMonthlyRate = deferredAnnualRate / 12;
+      const estimatedRolledRate = estimatedMonthlyRate * rolled;
+      const estimatedDeferredRate = productKind === 'fusion' ? deferredMonthlyRate * term : 0;
+      
+      // Total deduction rate (as percentage of gross)
+      const totalDeductionRate = arrangementPct + estimatedRolledRate + estimatedDeferredRate + (procFeePct / 100);
+      
+      // Use algebraic formula for initial estimate
+      let estimatedGross = targetNet / (1 - totalDeductionRate);
+      
+      // Iterate to find precise gross loan (accounts for flat fees and title insurance)
       for (let i = 0; i < 10; i++) {
         const tempGross = estimatedGross;
         
-        // Calculate fees based on current gross estimate
+        // Calculate all fees based on current gross estimate
         const tempArrangementFee = tempGross * arrangementPct;
         const tempProcFee = tempGross * (procFeePct / 100);
         const tempBrokerFee = parseNumber(brokerFeeFlat) || 0;
         
-        // Estimate rates for rolled/deferred interest
-        // We need to do a quick rate lookup based on estimated LTV
-        const estimatedLtvBucket = this.getLtvBucket(tempGross, pv);
-        let tempCouponMonthly = 0;
-        let tempBbrMonthly = bbrAnnual / 12;
+        // Calculate broker client fee from broker settings
+        let tempBrokerClientFee = parseNumber(brokerClientFee) || 0;
+        if (brokerSettings?.addFeesToggle && brokerSettings?.additionalFeeAmount) {
+          const feeAmount = parseNumber(brokerSettings.additionalFeeAmount);
+          if (brokerSettings.feeCalculationType === 'percentage' && tempGross > 0) {
+            tempBrokerClientFee = tempGross * (feeAmount / 100);
+          } else {
+            tempBrokerClientFee = feeAmount;
+          }
+        }
         
-        // Get approximate rates
+        // Calculate title insurance
+        let tempTitleInsurance = 0;
+        if (tempGross > 0 && tempGross <= 3000000) {
+          const base = tempGross * 0.0013;
+          tempTitleInsurance = Math.max(392, base * 1.12);
+        }
+        
+        // Get rate for this gross (rate may change with LTV tier)
+        const ltvForRate = this.getLtvBucket(tempGross + (secondChargeFlag ? firstChargeValNum : 0), pv);
+        let tempMonthlyRate = 0;
+        
         if (productKind === 'bridge-var') {
-          tempCouponMonthly = this.getBridgeVarMargin(estimatedLtvBucket, rateRecord);
+          tempMonthlyRate = this.getBridgeVarMargin(ltvForRate, rateRecord) + (bbrAnnual / 12);
         } else if (productKind === 'bridge-fix') {
-          tempCouponMonthly = this.getBridgeFixCoupon(estimatedLtvBucket, rateRecord);
-          tempBbrMonthly = 0;
+          tempMonthlyRate = this.getBridgeFixCoupon(ltvForRate, rateRecord);
         } else if (productKind === 'fusion') {
           const tierInfo = this.getFusionTierInfo(tempGross, rateRecord, bbrAnnual);
-          tempCouponMonthly = tierInfo.marginAnnual / 12;
-          tempBbrMonthly = bbrAnnual / 12;
+          tempMonthlyRate = (tierInfo.marginAnnual / 12) + (bbrAnnual / 12);
         }
         
         // Calculate rolled and deferred interest
-        const tempRolledIntCoupon = tempGross * tempCouponMonthly * rolled;
-        const tempRolledIntBBR = ['bridge-var', 'fusion'].includes(productKind)
-          ? tempGross * tempBbrMonthly * rolled
-          : 0;
-        const tempRolledInterest = tempRolledIntCoupon + tempRolledIntBBR;
-        
+        const tempRolledInterest = tempGross * tempMonthlyRate * rolled;
         const tempDeferredMonthlyRate = deferredAnnualRate / 12;
-        const tempDeferred = productKind === 'fusion' 
-          ? tempGross * tempDeferredMonthlyRate * term 
-          : 0;
+        const tempDeferred = productKind === 'fusion' ? tempGross * tempDeferredMonthlyRate * term : 0;
         
-        // Calculate what net would be with this gross
-        const calculatedNet = tempGross - tempArrangementFee - tempRolledInterest - tempDeferred - tempProcFee - tempBrokerFee - adminFeeAmt;
+        // Calculate net with ALL fees
+        const calculatedNet = tempGross - tempArrangementFee - tempRolledInterest - tempDeferred - tempProcFee - tempBrokerFee - tempBrokerClientFee - adminFeeAmt - tempTitleInsurance;
         
-        // Check if we're close enough
+        // Check if we're close enough (within £1)
         const diff = Math.abs(calculatedNet - targetNet);
-        if (diff < 0.01) {
-          gross = this.roundUpTo(tempGross);
+        if (diff < 1) {
+          gross = Math.ceil(tempGross / 1000) * 1000; // Round up to nearest £1000
           break;
         }
         
-        // Adjust estimate: if calculated net is too low, increase gross; if too high, decrease gross
-        if (calculatedNet < targetNet) {
-          estimatedGross = tempGross + (targetNet - calculatedNet);
-        } else {
-          estimatedGross = tempGross - (calculatedNet - targetNet);
-        }
-        if (i === 9) { // If loop is finishing, round up the last estimate
-          gross = this.roundUpTo(estimatedGross);
+        // Adjust estimate based on difference
+        const adjustment = targetNet - calculatedNet;
+        estimatedGross = tempGross + adjustment;
+        
+        if (i === 9) {
+          // Last iteration - round up
+          gross = Math.ceil(estimatedGross / 1000) * 1000;
         }
       }
     }
@@ -349,6 +375,21 @@ export class BridgeFusionCalculator {
       let { netCand: currentNet } = computeNetForGross(gross);
       if (currentNet >= targetNet - 0.5) {
         netTargetMet = true;
+        // If we overshot significantly, try to reduce gross in 1000 steps
+        if (currentNet > targetNet + 500) {
+          while (currentNet > targetNet + 500 && gross > 1000) {
+            const testGross = gross - 1000;
+            const { netCand: testNet } = computeNetForGross(testGross);
+            if (testNet < targetNet - 0.5) {
+              // Going down would undershoot, so current gross is optimal
+              break;
+            }
+            gross = testGross;
+            currentNet = testNet;
+            safetyIterations++;
+            if (safetyIterations > 200) break;
+          }
+        }
       } else {
         // Increment in 1000 steps
         while (currentNet < targetNet - 0.5) {

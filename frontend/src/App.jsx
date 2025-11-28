@@ -26,6 +26,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProtectedRoute from './pages/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import { isEmbeddedMode } from './utils/embedding';
+import useHeaderColors from './hooks/useHeaderColors';
 import './styles/index.scss';
 import './styles/accessibility.css';
 import './styles/utilities.css';
@@ -34,6 +35,9 @@ import './styles/utilities.css';
 const AppContent = () => {
   const { resolvedTheme } = useTheme();
   const location = useLocation();
+  
+  // Load and apply header colors from Supabase
+  useHeaderColors();
   
   // Public routes that shouldn't show navigation
   const isPublicRoute = ['/login', '/forgot-password', '/reset-password'].includes(location.pathname);

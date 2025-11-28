@@ -20,6 +20,7 @@ import MultiPropertyDetailsSection from '../calculator/bridging/MultiPropertyDet
 import useBrokerSettings from '../../hooks/calculator/useBrokerSettings';
 import { useResultsVisibility } from '../../hooks/useResultsVisibility';
 import { useResultsRowOrder } from '../../hooks/useResultsRowOrder';
+import { useResultsLabelAlias } from '../../hooks/useResultsLabelAlias';
 import { getQuote, upsertQuoteData, requestDipPdf, requestQuotePdf } from '../../utils/quotes';
 import { parseNumber, formatCurrencyInput } from '../../utils/calculator/numberFormatting';
 import { computeLoanLtv, computeLoanSize } from '../../utils/calculator/loanCalculations';
@@ -50,6 +51,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
   
   // Use custom hook for results table row ordering
   const { getOrderedRows } = useResultsRowOrder('bridge');
+
+  // Use custom hook for results table label aliases
+  const { getLabel } = useResultsLabelAlias();
 
   const [allCriteria, setAllCriteria] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -629,7 +633,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
   useEffect(() => {
     // when second-charge is selected, clear subProduct and disable sub-product selection in UI
     if ((chargeType || '').toString().toLowerCase() === 'second') {
-      setSubProduct('');
+      // Align sub product with charge type per requirement
+      setSubProduct('Second Charge');
     }
   }, [chargeType]);
 
@@ -662,6 +667,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
       if (derivedCharge) {
         setChargeType(prev => (prev === derivedCharge ? prev : derivedCharge));
+        // If charge is derived as Second and no explicit sub-product provided, set sub-product accordingly
+        if (derivedCharge.toLowerCase() === 'second' && (derivedSub === null || derivedSub === '')) {
+          derivedSub = 'Second Charge';
+        }
       }
       if (derivedSub !== null) {
         setSubProduct(prev => (prev === derivedSub ? prev : derivedSub || ''));
@@ -684,11 +693,18 @@ export default function BridgingCalculator({ initialQuote = null }) {
     const pv = parseNumber(propertyValue);
     const fcv = parseNumber(firstChargeValue) || 0;
     const grossInput = parseNumber(grossLoan);
+    const netInput = parseNumber(specificNetLoan);
     let combinedLtv = loanLtv;
-    
-    if (parsedCharge === 'second' && Number.isFinite(pv) && pv > 0 && Number.isFinite(grossInput)) {
-      // This matches engine's exposureForBucket calculation
-      combinedLtv = ((grossInput + fcv) / pv) * 100;
+
+    if (parsedCharge === 'second' && Number.isFinite(pv) && pv > 0) {
+      // For second charge, exposure uses (gross + first charge). When in net mode (gross=0),
+      // approximate gross from net so LTV bucket selection reflects reality and picks correct tier.
+      let exposureGross = Number.isFinite(grossInput) && grossInput > 0
+        ? grossInput
+        : (useSpecificNet === 'Yes' && Number.isFinite(netInput) && netInput > 0
+            ? netInput * 1.12 // same uplift heuristic used for rate selection when only net provided
+            : 0);
+      combinedLtv = ((exposureGross + fcv) / pv) * 100;
     }
 
     // Bridge: productScope + (Charge type filtered to Bridge-style rows) + sub-product + LTV
@@ -805,7 +821,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
     setBridgeMatched(bridgeOut);
     setFusionMatched(fusionOut);
     setRelevantRates([...bridgeOut, ...fusionOut]);
-  }, [rates, productScope, subProduct, propertyValue, grossLoan, specificNetLoan, answers, chargeType, firstChargeValue]);
+  }, [rates, productScope, subProduct, propertyValue, grossLoan, specificNetLoan, useSpecificNet, answers, chargeType, firstChargeValue]);
 
   // Compute calculated rates using Bridge & Fusion calculation engine
   const calculatedRates = useMemo(() => {
@@ -864,7 +880,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
           rolledMonthsOverride: rolledMonthsPerColumn?.[columnKey],
           deferredRateOverride: deferredInterestPerColumn?.[columnKey],
           commitmentFeePounds: parseNumber(commitmentFee) || 0,
-          exitFeePercent: parseNumber(exitFeePercent) || 1,
+          exitFeePercent: parseNumber(exitFeePercent) || 0,
           overriddenRate: overrideRateValue,
           productFeeOverridePercent: overrideProductFeeValue,
           // Pass broker settings for automatic fee calculation
@@ -1311,7 +1327,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
         onAnswerChange={handleAnswerChange}
         allCriteria={allCriteria}
         chargeType={chargeType}
-        productScope={productScope}
         subProductLimits={subProductLimits}
         quoteId={currentQuoteId}
         onIssueDip={() => setDipModalOpen(true)}
@@ -1464,61 +1479,71 @@ export default function BridgingCalculator({ initialQuote = null }) {
           <h2 className="header-title">Results</h2>
         </header>
         <div className="collapsible-body">
-          {/* 4-column layout: Label | Fusion | Variable Bridge | Fixed Bridge */}
-          <div className="results-table-wrapper">
-            <table className="slds-table slds-table_cell-buffer slds-table_bordered max-width-900">
-              <thead>
-                <tr>
-                  {/* increase label width a bit and adjust other columns */}
-                  <th className="width-24">Label</th>
-                  <th className="width-25 text-align-center">{bestBridgeRates.fusion?.label || 'Fusion'}</th>
-                  <th className="width-25 text-align-center">{bestBridgeRates.variable?.label || 'Variable Bridge'}</th>
-                  <th className="width-26 text-align-center">{bestBridgeRates.fixed?.label || 'Fixed Bridge'}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {
-                  (() => {
-                    const bestFusion = bestBridgeRates.fusion;
-                    const bestVariable = bestBridgeRates.variable;
-                    const bestFixed = bestBridgeRates.fixed;
+          {/* Check if required fields are filled before showing the table */}
+          {(() => {
+            const hasPropertyValue = parseNumber(propertyValue) > 0;
+            const hasGrossLoan = parseNumber(grossLoan) > 0;
+            const hasSpecificNet = useSpecificNet === 'Yes' && parseNumber(specificNetLoan) > 0;
+            const hasRequiredFields = hasPropertyValue && (hasGrossLoan || hasSpecificNet);
+            
+            if (!hasRequiredFields) {
+              return (
+                <div className="no-rates" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
+                  <p style={{ fontSize: '1.1rem', marginBottom: 'var(--token-spacing-sm)' }}>Please enter Property Value and Gross Loan (or Net Loan if using specific net) to see results.</p>
+                  <p style={{ fontSize: '0.9rem' }}>Both fields are required to calculate loan options.</p>
+                </div>
+              );
+            }
+            
+            return (
+              <div className="results-table-wrapper" data-calculator-type="bridge">
+                <table className="slds-table slds-table_cell-buffer slds-table_bordered max-width-900">
+                  <thead>
+                    <tr>
+                      {/* increase label width a bit and adjust other columns */}
+                      <th className="width-24 th-label">Label</th>
+                      <th 
+                        className="width-25 text-align-center th-data-col brand-header"
+                        style={{ 
+                          backgroundColor: 'var(--results-header-bridge-col1-bg, var(--results-header-col1-bg))',
+                          color: 'var(--results-header-bridge-col1-text, var(--results-header-col1-text))'
+                        }}
+                      >{bestBridgeRates.fusion?.label || 'Fusion'}</th>
+                      <th 
+                        className="width-25 text-align-center th-data-col brand-header"
+                        style={{ 
+                          backgroundColor: 'var(--results-header-bridge-col2-bg, var(--results-header-col2-bg))',
+                          color: 'var(--results-header-bridge-col2-text, var(--results-header-col2-text))'
+                        }}
+                      >{bestBridgeRates.variable?.label || 'Variable Bridge'}</th>
+                      <th 
+                        className="width-26 text-align-center th-data-col brand-header"
+                        style={{ 
+                          backgroundColor: 'var(--results-header-bridge-col3-bg, var(--results-header-col3-bg))',
+                          color: 'var(--results-header-bridge-col3-text, var(--results-header-col3-text))'
+                        }}
+                      >{bestBridgeRates.fixed?.label || 'Fixed Bridge'}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {
+                      (() => {
+                        const bestFusion = bestBridgeRates.fusion;
+                        const bestVariable = bestBridgeRates.variable;
+                        const bestFixed = bestBridgeRates.fixed;
 
-                    if (!bestFusion && !bestVariable && !bestFixed) {
-                      // Check if it's because no inputs were provided
-                      const hasPropertyValue = parseNumber(propertyValue) > 0;
-                      const hasGrossLoan = parseNumber(grossLoan) > 0;
-                      const hasSpecificNet = useSpecificNet === 'Yes' && parseNumber(specificNetLoan) > 0;
-                      
-                      if (!hasPropertyValue || (!hasGrossLoan && !hasSpecificNet)) {
-                        return (
-                          <tr>
-                            <td colSpan={4} className="slds-text-body_small" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
-                              Please enter Property Value and Gross Loan (or Net Loan if using specific net) to see results.
-                            </td>
-                          </tr>
-                        );
-                      }
-                      if (useSpecificNet === 'Yes' && !specificNetLoan) {
-                        return (
+                        if (!bestFusion && !bestVariable && !bestFixed) {
+                          return (
                             <tr>
-                                <td colSpan={4} className="slds-text-body_small" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
-                                    Please enter a specific net loan amount to view rates and results.
-                                </td>
+                              <td colSpan={4} className="slds-text-body_small" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
+                                No results match the selected criteria. Please adjust your loan details or criteria answers.
+                              </td>
                             </tr>
-                        );
-                    }
-                      
-                      return (
-                        <tr>
-                          <td colSpan={4} className="slds-text-body_small" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
-                            No results match the selected criteria. Please adjust your loan details or criteria answers.
-                          </td>
-                        </tr>
-                      );
-                    }
+                          );
+                        }
 
-                    return (
-                      <>
+                        return (
+                          <>
                         {
                           (() => {
                             // Calculate rates for all columns first
@@ -1556,7 +1581,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
                             return (
                               <EditableResultRow
-                                label="Rates"
+                                label={getLabel('Rates')}
                                 columns={columnsHeaders}
                                 columnValues={ratesDisplayValues}
                                 originalValues={originalRates}
@@ -1868,7 +1893,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                 return (
                                   <SliderResultRow
                                     key="Rolled Months"
-                                    label="Rolled Months"
+                                    label={getLabel('Rolled Months')}
                                     value={0}
                                     onChange={(newValue, columnKey) => {
                                       setRolledMonthsPerColumn(prev => ({ ...prev, [columnKey]: newValue }));
@@ -1888,7 +1913,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                 return (
                                   <SliderResultRow
                                     key="Deferred Interest %"
-                                    label="Deferred Interest %"
+                                    label={getLabel('Deferred Interest %')}
                                     value={0}
                                     onChange={(newValue, columnKey) => {
                                       // Only allow changes for Fusion
@@ -1912,7 +1937,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                 return (
                                   <EditableResultRow
                                     key="Product Fee %"
-                                    label="Product Fee %"
+                                    label={getLabel('Product Fee %')}
                                     columns={columnsHeaders}
                                     columnValues={values['Product Fee %'] || {}}
                                     originalValues={originalProductFees}
@@ -1931,10 +1956,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                   />
                                 );
                               } else {
-                                // Regular placeholder row
+                                // Regular placeholder row - use getLabel for display
                                 return (
                                   <tr key={rowLabel}>
-                                    <td className="vertical-align-top font-weight-600">{rowLabel}</td>
+                                    <td className="vertical-align-top font-weight-600">{getLabel(rowLabel)}</td>
                                     {columnsHeaders.map((c) => (
                                       <td key={c} className="vertical-align-top text-align-center">
                                         {(values && values[rowLabel] && Object.prototype.hasOwnProperty.call(values[rowLabel], c)) ? values[rowLabel][c] : '—'}
@@ -1953,6 +1978,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
               </tbody>
             </table>
           </div>
+            );
+          })()}
         </div>
       </section>
 

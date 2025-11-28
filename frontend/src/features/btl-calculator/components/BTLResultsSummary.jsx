@@ -22,7 +22,8 @@ export default function BTLResultsSummary({
   columnsHeaders = [],
   onAddAsDIP,
   onDeleteColumn,
-  isReadOnly = false
+  isReadOnly = false,
+  calculatorType = 'btl' // 'btl' or 'core'
 }) {
   if (!results || results.length === 0) {
     return (
@@ -77,18 +78,29 @@ export default function BTLResultsSummary({
         
         <div className="slds-card__body slds-card__body_inner">
           {/* Results Table */}
-          <div style={{ overflowX: 'auto' }}>
+          <div className="results-table-wrapper" data-calculator-type={calculatorType}>
             <table className="slds-table slds-table_cell-buffer slds-table_bordered">
               <thead>
                 <tr className="slds-line-height_reset">
-                  <th scope="col" style={{ width: '200px' }}>
+                  <th scope="col" className="th-label" style={{ width: '200px' }}>
                     <div className="slds-truncate" title="Field">Field</div>
                   </th>
-                  {columnsHeaders.map((header, idx) => (
-                    <th key={idx} scope="col">
-                      <div className="slds-truncate" title={header}>{header}</div>
-                    </th>
-                  ))}
+                  {columnsHeaders.map((header, idx) => {
+                    const colNum = idx + 1;
+                    return (
+                      <th 
+                        key={idx} 
+                        scope="col" 
+                        className="th-data-col"
+                        style={{ 
+                          backgroundColor: `var(--results-header-${calculatorType}-col${colNum}-bg, var(--results-header-col${((idx % 3) + 1)}-bg))`,
+                          color: `var(--results-header-${calculatorType}-col${colNum}-text, var(--results-header-col${((idx % 3) + 1)}-text))`
+                        }}
+                      >
+                        <div className="slds-truncate" title={header}>{header}</div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>

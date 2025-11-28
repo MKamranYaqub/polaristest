@@ -4,7 +4,7 @@
 // Calculator-specific SCSS (SLDS-compliant)
 .calculator-container {
   font-family: $token-font-family;
-  padding: $spacing-md;
+  padding: $spacing-xs;
   width: 100%;
   max-width: none; /* allow the container to fill the available content column */
   margin: 0;
@@ -472,6 +472,179 @@ input[type="range"] {
   }
 }
 
+// ============================================
+// BRANDED RESULTS TABLE STYLING (MFS theme)
+// ============================================
+.results-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--token-radius-md);
+  
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    background: var(--token-layer-surface);
+    font-variant-numeric: tabular-nums;
+  }
+  
+  // Sticky header
+  thead {
+    position: sticky;
+    top: 0;
+    z-index: var(--token-z-sticky, 1020);
+  }
+  
+  thead th {
+    text-align: center;
+    font-weight: 600;
+    padding: var(--token-spacing-md) var(--token-spacing-lg) !important;
+    border-bottom: 2px solid var(--mfs-brand-navy);
+    white-space: nowrap;
+  }
+  
+  // Label column (first column header)
+  thead th.th-label {
+    color: var(--results-header-label-text) !important;
+    background: var(--results-header-label-bg) !important;
+    text-align: left;
+    position: sticky;
+    left: 0;
+    z-index: calc(var(--token-z-sticky, 1020) + 1);
+  }
+  
+  // Data column headers - colors set via inline styles for dynamic support
+  thead th.th-data-col {
+    text-align: center;
+    font-weight: 600;
+  }
+  
+  // Legacy class support - Fusion column header (default)
+  thead th.th-fusion {
+    background: var(--results-header-col1-bg) !important;
+    color: var(--results-header-col1-text) !important;
+  }
+  
+  // Legacy class support - Variable Bridge column header (default)
+  thead th.th-variable {
+    background: var(--results-header-col2-bg) !important;
+    color: var(--results-header-col2-text) !important;
+  }
+  
+  // Legacy class support - Fixed Bridge column header (default)
+  thead th.th-fixed {
+    background: var(--results-header-col3-bg) !important;
+    color: var(--results-header-col3-text) !important;
+  }
+}
+
+// BTL Calculator specific header colors
+.results-table-wrapper[data-calculator-type="btl"] {
+  thead th.th-label {
+    color: var(--results-header-btl-label-text) !important;
+    background: var(--results-header-btl-label-bg) !important;
+  }
+  // Legacy class support
+  thead th.th-fusion {
+    background: var(--results-header-btl-col1-bg) !important;
+    color: var(--results-header-btl-col1-text) !important;
+  }
+  thead th.th-variable {
+    background: var(--results-header-btl-col2-bg) !important;
+    color: var(--results-header-btl-col2-text) !important;
+  }
+  thead th.th-fixed {
+    background: var(--results-header-btl-col3-bg) !important;
+    color: var(--results-header-btl-col3-text) !important;
+  }
+}
+
+// Bridge Calculator specific header colors
+.results-table-wrapper[data-calculator-type="bridge"] {
+  thead th.th-label {
+    color: var(--results-header-bridge-label-text) !important;
+    background: var(--results-header-bridge-label-bg) !important;
+  }
+  thead th.th-fusion {
+    background: var(--results-header-bridge-col1-bg) !important;
+    color: var(--results-header-bridge-col1-text) !important;
+  }
+  thead th.th-variable {
+    background: var(--results-header-bridge-col2-bg) !important;
+    color: var(--results-header-bridge-col2-text) !important;
+  }
+  thead th.th-fixed {
+    background: var(--results-header-bridge-col3-bg) !important;
+    color: var(--results-header-bridge-col3-text) !important;
+  }
+}
+
+// Core Calculator specific header colors
+.results-table-wrapper[data-calculator-type="core"] {
+  thead th.th-label {
+    color: var(--results-header-core-label-text) !important;
+    background: var(--results-header-core-label-bg) !important;
+  }
+  thead th.th-fusion {
+    background: var(--results-header-core-col1-bg) !important;
+    color: var(--results-header-core-col1-text) !important;
+  }
+  thead th.th-variable {
+    background: var(--results-header-core-col2-bg) !important;
+    color: var(--results-header-core-col2-text) !important;
+  }
+  thead th.th-fixed {
+    background: var(--results-header-core-col3-bg) !important;
+    color: var(--results-header-core-col3-text) !important;
+  }
+}
+
+// Results table styling continued (body styles)
+.results-table-wrapper {
+  // Table body styling
+  tbody tr {
+    transition: background-color 0.15s ease;
+  }
+  
+  // Zebra striping
+  tbody tr:nth-child(even) {
+    background: var(--token-ui-background-subtle, #fafafa);
+  }
+  
+  // Hover highlight
+  tbody tr:hover {
+    background: var(--mfs-brand-orange-100, #FFF3DF) !important;
+  }
+  
+  // Sticky first column (row labels)
+  tbody th[scope='row'],
+  tbody td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: var(--token-z-base, 1);
+    background: var(--token-ui-background-neutral, #f4f6f9);
+    font-weight: 600;
+    text-align: left;
+  }
+  
+  // Cell styling
+  td, th {
+    padding: var(--token-spacing-sm) var(--token-spacing-md);
+    border-bottom: 1px solid var(--token-ui-border-subtle, #e0e6ed);
+    vertical-align: middle;
+  }
+  
+  // Center-align data columns
+  td:not(:first-child) {
+    text-align: center;
+  }
+  
+  // Right-align currency and percentage values for readability
+  td.text-align-right {
+    text-align: right;
+  }
+}
+
 // Helper text below inputs
 .helper-text {
   margin-top: var(--token-spacing-xs);
@@ -536,12 +709,7 @@ input[type="range"] {
     padding: $spacing-sm;
   }
 
-  /* ensure results table becomes more compact and allows horizontal scroll */
-  .results-section {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
+  /* ensure results table becomes more compact */
   .results-section table {
     font-size: 0.95rem;
   }

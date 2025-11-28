@@ -21,6 +21,7 @@ import Breadcrumbs from '../layout/Breadcrumbs';
 import useBrokerSettings from '../../hooks/calculator/useBrokerSettings';
 import { useResultsVisibility } from '../../hooks/useResultsVisibility';
 import { useResultsRowOrder } from '../../hooks/useResultsRowOrder';
+import { useResultsLabelAlias } from '../../hooks/useResultsLabelAlias';
 import { getQuote, upsertQuoteData, requestDipPdf, requestQuotePdf } from '../../utils/quotes';
 import { parseNumber, formatCurrency, formatPercent } from '../../utils/calculator/numberFormatting';
 import { computeTierFromAnswers } from '../../utils/calculator/rateFiltering';
@@ -60,6 +61,9 @@ export default function BTLcalculator({ initialQuote = null }) {
   
   // Use custom hook for results table row ordering - dynamically switch based on selected range
   const { getOrderedRows } = useResultsRowOrder(calculatorTypeForSettings);
+  
+  // Use custom hook for results table label aliases
+  const { getLabel } = useResultsLabelAlias();
   
   const [allCriteria, setAllCriteria] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1465,13 +1469,13 @@ export default function BTLcalculator({ initialQuote = null }) {
                         {feeBuckets.length === 0 ? (
                           <div className="no-rates">No {selectedRange} range rates available for the selected criteria.</div>
                         ) : (
-                          <div style={{ marginTop: 'var(--token-spacing-lg)', overflowX: 'auto' }}>
+                          <div className="results-table-wrapper" data-calculator-type={calculatorTypeForSettings} style={{ marginTop: 'var(--token-spacing-lg)' }}>
                             <table className="slds-table slds-table_cell-buffer slds-table_bordered" style={{ minWidth: Math.max(600, feeBuckets.length * 220) }}>
                               <thead>
                                 <tr>
                                   {/* increased label column width */}
-                                  <th style={{ width: '200px' }}>Label</th>
-                                  {feeBuckets.map((fb) => {
+                                  <th className="th-label" style={{ width: '200px' }}>Label</th>
+                                  {feeBuckets.map((fb, idx) => {
                                     const rows = filteredRates.filter(r => {
                                       const key = (r.product_fee === undefined || r.product_fee === null || r.product_fee === '') ? 'none' : String(r.product_fee);
                                       return key === fb;
@@ -1479,8 +1483,19 @@ export default function BTLcalculator({ initialQuote = null }) {
                                     const firstRow = rows[0];
                                     const productLabel = firstRow ? firstRow.product : '';
                                     const feeLabel = fb === 'none' ? '' : ` ${fb}% Fee`;
+                                    // Use column index for dynamic colors (1-based for CSS vars)
+                                    const colNum = idx + 1;
                                     return (
-                                      <th key={fb} style={{ width: `${(100 - 15) / feeBuckets.length}%`, textAlign: 'center' }}>
+                                      <th 
+                                        key={fb} 
+                                        className="th-data-col"
+                                        data-col-index={colNum}
+                                        style={{ 
+                                          width: `${(100 - 15) / feeBuckets.length}%`,
+                                          backgroundColor: `var(--results-header-${calculatorTypeForSettings}-col${colNum}-bg, var(--results-header-col${((idx % 3) + 1)}-bg))`,
+                                          color: `var(--results-header-${calculatorTypeForSettings}-col${colNum}-text, var(--results-header-col${((idx % 3) + 1)}-text))`
+                                        }}
+                                      >
                                         {productLabel}{feeLabel}
                                       </th>
                                     );
@@ -1517,7 +1532,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                       <>
                                         {/* Rates row - now editable */}
                                         <EditableResultRow
-                                          label="Rates"
+                                          label={getLabel('Rates')}
                                           columns={columnsHeaders}
                                           columnValues={ratesDisplayValues}
                                           originalValues={originalRates}
@@ -1852,7 +1867,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                         return (
                                           <SliderResultRow
                                             key="Rolled Months"
-                                            label="Rolled Months"
+                                            label={getLabel('Rolled Months')}
                                             value={0}
                                             onChange={(newValue, columnKey) => {
                                               // Always set as manual value - don't auto-clear even if matches optimized
@@ -1911,7 +1926,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                         return (
                                           <SliderResultRow
                                             key="Deferred Interest %"
-                                            label="Deferred Interest %"
+                                            label={getLabel('Deferred Interest %')}
                                             value={0}
                                             onChange={(newValue, columnKey) => {
                                               // Always set as manual value - don't auto-clear even if matches optimized
@@ -1971,7 +1986,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                         return (
                                           <EditableResultRow
                                             key="Product Fee %"
-                                            label="Product Fee %"
+                                            label={getLabel('Product Fee %')}
                                             columns={columnsHeaders}
                                             columnValues={values['Product Fee %'] || {}}
                                             originalValues={originalProductFees}
@@ -1990,10 +2005,10 @@ export default function BTLcalculator({ initialQuote = null }) {
                                           />
                                         );
                                       } else {
-                                        // Regular placeholder row
+                                        // Regular placeholder row - use getLabel for display
                                         return (
                                           <tr key={rowLabel}>
-                                            <td className="vertical-align-top font-weight-600">{rowLabel}</td>
+                                            <td className="vertical-align-top font-weight-600">{getLabel(rowLabel)}</td>
                                             {columnsHeaders.map((c) => (
                                               <td key={c} className="vertical-align-top text-align-center">
                                                 {(values && values[rowLabel] && Object.prototype.hasOwnProperty.call(values[rowLabel], c)) ? values[rowLabel][c] : '—'}

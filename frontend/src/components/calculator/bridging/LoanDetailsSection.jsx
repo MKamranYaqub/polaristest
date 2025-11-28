@@ -52,7 +52,7 @@ const LoanDetailsSection = ({
       }
       onSpecificNetLoanChange('');
     }
-  }, [loanCalculationRequested]);
+  }, [loanCalculationRequested, useSpecificNet, onGrossLoanChange, onUseSpecificNetChange, onSpecificNetLoanChange]);
 
   // Get info box content based on selected sub-product
   const subProductInfo = useMemo(() => {

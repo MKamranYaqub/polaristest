@@ -123,4 +123,3 @@ export const UI_PREFERENCES = {
 
 // Slider configuration moved to rate records in database
 // Each rate now defines its own min/max values for rolled months and deferred interest
-

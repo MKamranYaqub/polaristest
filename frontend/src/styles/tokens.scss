@@ -99,6 +99,111 @@
   --token-brand-primary: #0176d3;
   --token-brand-header: #2e5aac;
   --token-ui-background-neutral: #f4f6f9;
+
+  /* MFS brand colors */
+  --mfs-brand-orange: #ED8B00; /* MFS primary orange */
+  --mfs-brand-orange-500: #F39C12; /* hover/alt */
+  --mfs-brand-orange-100: #FFF3DF; /* subtle bg */
+  --mfs-brand-navy: #002855; /* MFS deep navy */
+  --mfs-brand-navy-500: #1B3B6F; /* hover/alt */
+  --mfs-brand-navy-100: #E6ECF6; /* subtle bg */
+  
+  /* Results table header colors (tokenized for easy theming) */
+  /* Default colors (backward compatibility) - columns 1-10 */
+  --results-header-label-bg: var(--token-ui-background-neutral);
+  --results-header-label-text: var(--token-ui-text-dark);
+  --results-header-col1-bg: var(--mfs-brand-navy);
+  --results-header-col1-text: #ffffff;
+  --results-header-col2-bg: var(--mfs-brand-navy-500);
+  --results-header-col2-text: #ffffff;
+  --results-header-col3-bg: var(--mfs-brand-orange);
+  --results-header-col3-text: #ffffff;
+  --results-header-col4-bg: var(--mfs-brand-navy);
+  --results-header-col4-text: #ffffff;
+  --results-header-col5-bg: var(--mfs-brand-navy-500);
+  --results-header-col5-text: #ffffff;
+  --results-header-col6-bg: var(--mfs-brand-orange);
+  --results-header-col6-text: #ffffff;
+  --results-header-col7-bg: var(--mfs-brand-navy);
+  --results-header-col7-text: #ffffff;
+  --results-header-col8-bg: var(--mfs-brand-navy-500);
+  --results-header-col8-text: #ffffff;
+  --results-header-col9-bg: var(--mfs-brand-orange);
+  --results-header-col9-text: #ffffff;
+  --results-header-col10-bg: var(--mfs-brand-navy);
+  --results-header-col10-text: #ffffff;
+  
+  /* BTL Calculator header colors (columns 1-10) */
+  --results-header-btl-label-bg: var(--token-ui-background-neutral);
+  --results-header-btl-label-text: var(--token-ui-text-dark);
+  --results-header-btl-col1-bg: var(--mfs-brand-navy);
+  --results-header-btl-col1-text: #ffffff;
+  --results-header-btl-col2-bg: var(--mfs-brand-navy-500);
+  --results-header-btl-col2-text: #ffffff;
+  --results-header-btl-col3-bg: var(--mfs-brand-orange);
+  --results-header-btl-col3-text: #ffffff;
+  --results-header-btl-col4-bg: var(--mfs-brand-navy);
+  --results-header-btl-col4-text: #ffffff;
+  --results-header-btl-col5-bg: var(--mfs-brand-navy-500);
+  --results-header-btl-col5-text: #ffffff;
+  --results-header-btl-col6-bg: var(--mfs-brand-orange);
+  --results-header-btl-col6-text: #ffffff;
+  --results-header-btl-col7-bg: var(--mfs-brand-navy);
+  --results-header-btl-col7-text: #ffffff;
+  --results-header-btl-col8-bg: var(--mfs-brand-navy-500);
+  --results-header-btl-col8-text: #ffffff;
+  --results-header-btl-col9-bg: var(--mfs-brand-orange);
+  --results-header-btl-col9-text: #ffffff;
+  --results-header-btl-col10-bg: var(--mfs-brand-navy);
+  --results-header-btl-col10-text: #ffffff;
+  
+  /* Bridge Calculator header colors (columns 1-10) */
+  --results-header-bridge-label-bg: var(--token-ui-background-neutral);
+  --results-header-bridge-label-text: var(--token-ui-text-dark);
+  --results-header-bridge-col1-bg: var(--mfs-brand-navy);
+  --results-header-bridge-col1-text: #ffffff;
+  --results-header-bridge-col2-bg: var(--mfs-brand-navy-500);
+  --results-header-bridge-col2-text: #ffffff;
+  --results-header-bridge-col3-bg: var(--mfs-brand-orange);
+  --results-header-bridge-col3-text: #ffffff;
+  --results-header-bridge-col4-bg: var(--mfs-brand-navy);
+  --results-header-bridge-col4-text: #ffffff;
+  --results-header-bridge-col5-bg: var(--mfs-brand-navy-500);
+  --results-header-bridge-col5-text: #ffffff;
+  --results-header-bridge-col6-bg: var(--mfs-brand-orange);
+  --results-header-bridge-col6-text: #ffffff;
+  --results-header-bridge-col7-bg: var(--mfs-brand-navy);
+  --results-header-bridge-col7-text: #ffffff;
+  --results-header-bridge-col8-bg: var(--mfs-brand-navy-500);
+  --results-header-bridge-col8-text: #ffffff;
+  --results-header-bridge-col9-bg: var(--mfs-brand-orange);
+  --results-header-bridge-col9-text: #ffffff;
+  --results-header-bridge-col10-bg: var(--mfs-brand-navy);
+  --results-header-bridge-col10-text: #ffffff;
+  
+  /* Core Calculator header colors (columns 1-10) */
+  --results-header-core-label-bg: var(--token-ui-background-neutral);
+  --results-header-core-label-text: var(--token-ui-text-dark);
+  --results-header-core-col1-bg: var(--mfs-brand-navy);
+  --results-header-core-col1-text: #ffffff;
+  --results-header-core-col2-bg: var(--mfs-brand-navy-500);
+  --results-header-core-col2-text: #ffffff;
+  --results-header-core-col3-bg: var(--mfs-brand-orange);
+  --results-header-core-col3-text: #ffffff;
+  --results-header-core-col4-bg: var(--mfs-brand-navy);
+  --results-header-core-col4-text: #ffffff;
+  --results-header-core-col5-bg: var(--mfs-brand-navy-500);
+  --results-header-core-col5-text: #ffffff;
+  --results-header-core-col6-bg: var(--mfs-brand-orange);
+  --results-header-core-col6-text: #ffffff;
+  --results-header-core-col7-bg: var(--mfs-brand-navy);
+  --results-header-core-col7-text: #ffffff;
+  --results-header-core-col8-bg: var(--mfs-brand-navy-500);
+  --results-header-core-col8-text: #ffffff;
+  --results-header-core-col9-bg: var(--mfs-brand-orange);
+  --results-header-core-col9-text: #ffffff;
+  --results-header-core-col10-bg: var(--mfs-brand-navy);
+  --results-header-core-col10-text: #ffffff;
   
   /* Z-index scale */
   --token-z-base: 1;

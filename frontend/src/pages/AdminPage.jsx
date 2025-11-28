@@ -7,7 +7,7 @@ import GlobalSettings from '../components/admin/GlobalSettings';
 
 const AdminPage = ({ tab = 'constants' }) => {
   return (
-    <div className="padding-2">
+    <div className="padding-0">
       {tab === 'constants' && (
         <div>
           <h1 className="font-size-2rem font-weight-bold margin-bottom-1">Application Constants</h1>

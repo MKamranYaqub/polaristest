@@ -436,6 +436,32 @@ table.slds-table.max-width-1200 {
   overflow-x: auto;
 }
 
+/* ensure brand table headers look consistent when some components don't wrap table in results-section */
+.results-table-wrapper__table thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--token-z-sticky, 1020);
+  text-align: center;
+  font-weight: 600;
+  color: var(--token-text-inverse);
+  padding: var(--token-spacing-md) var(--token-spacing-lg);
+}
+.results-table-wrapper__table thead th.th-label {
+  color: var(--token-ui-text-dark);
+  background: var(--token-ui-background-neutral);
+  text-align: left;
+}
+.results-table-wrapper__table thead th.th-fusion { background: var(--mfs-brand-navy); }
+.results-table-wrapper__table thead th.th-variable { background: var(--mfs-brand-navy-500); }
+.results-table-wrapper__table thead th.th-fixed { background: var(--mfs-brand-orange); }
+
+.results-table-wrapper__table tbody th[scope='row'] {
+  position: sticky;
+  left: 0;
+  z-index: var(--token-z-sticky, 1020);
+  background: var(--token-ui-background-neutral);
+}
+
 /* Hide the Multi Property Details section without removing its code.
    This keeps the component in place but prevents it from rendering
    visually in the UI. Remove or toggle this class to show it again. */

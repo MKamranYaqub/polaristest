@@ -17,12 +17,22 @@ import { parseNumber } from './numberFormatting';
 export function computeLoanLtv(propertyValue, specificNetLoan, grossLoan, firstChargeValue) {
   const pv = parseNumber(propertyValue);
   if (!Number.isFinite(pv) || pv <= 0) return NaN;
-  
-  const loanAmount = parseNumber(specificNetLoan) || parseNumber(grossLoan);
+
+  const net = parseNumber(specificNetLoan);
+  const gross = parseNumber(grossLoan);
   const firstCharge = parseNumber(firstChargeValue) || 0;
-  
+
+  // When using a specific net loan (and no explicit gross), approximate the
+  // implied gross for rate selection by applying an uplift to cover fees and rolled interest.
+  // This prevents selecting low LTV buckets (e.g., 60%) based on net, which would later cap gross
+  // and under-deliver the target net. A conservative 12% uplift works well across products.
+  const impliedGross = (Number.isFinite(net) && net > 0 && (!Number.isFinite(gross) || gross <= 0))
+    ? net * 1.12
+    : (Number.isFinite(gross) ? gross : NaN);
+
+  const loanAmount = Number.isFinite(impliedGross) ? impliedGross : (Number.isFinite(net) ? net : gross);
   if (!Number.isFinite(loanAmount) || loanAmount <= 0) return NaN;
-  
+
   // LTV = (Gross Loan + First Charge Value) / Property Value × 100
   return ((loanAmount + firstCharge) / pv) * 100;
 }
