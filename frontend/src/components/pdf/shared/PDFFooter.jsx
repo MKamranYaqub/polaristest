@@ -41,13 +41,7 @@ const PDFFooter = ({ generatedDate }) => (
       <Text style={footerStyles.pageNumber} render={({ pageNumber, totalPages }) => (
         `Page ${pageNumber} of ${totalPages}`
       )} />
-      <Text style={footerStyles.generatedDate}>
-        Generated: {generatedDate || new Date().toLocaleDateString('en-GB')}
-      </Text>
     </View>
-    <Text style={footerStyles.disclaimer}>
-      This document is for informational purposes only and does not constitute a formal offer.
-    </Text>
   </View>
 );
 

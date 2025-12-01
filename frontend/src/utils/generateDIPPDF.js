@@ -235,6 +235,7 @@ export async function generateBTLDIPPDF(quoteId) {
     dip_date: quote.dip_date,
     dip_expiry_date: quote.dip_expiry_date,
     commercial_or_main_residence: quote.commercial_or_main_residence,
+    applicant_type: quote.applicant_type,
     guarantor_name: quote.guarantor_name,
     lender_legal_fee: quote.lender_legal_fee,
     number_of_applicants: quote.number_of_applicants || 1,

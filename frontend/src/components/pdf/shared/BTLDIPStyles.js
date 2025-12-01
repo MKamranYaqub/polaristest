@@ -15,7 +15,7 @@ export const btlDipStyles = StyleSheet.create({
   dateText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#0176d3',
+    color: '#003087',
   },
   dateValue: {
     fontSize: 10,
@@ -33,12 +33,12 @@ export const btlDipStyles = StyleSheet.create({
     width: '30%',
     fontSize: 9,
     fontWeight: 'bold',
-    color: '#080707',
+    color: '#000000',
   },
   summaryValue: {
     width: '70%',
     fontSize: 9,
-    color: '#3e3e3c',
+    color: '#000000',
     lineHeight: 1.4,
   },
 
@@ -47,12 +47,12 @@ export const btlDipStyles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 10,
     paddingBottom: 5,
-    borderBottom: '2pt solid #0176d3',
+    borderBottom: '2pt solid #003087',
   },
   sectionTitle: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#0176d3',
+    color: '#003087',
     textTransform: 'uppercase',
   },
 
@@ -116,17 +116,23 @@ export const btlDipStyles = StyleSheet.create({
   },
   warningText: {
     fontSize: 8,
-    color: '#826100',
+    color: '#ff0000',
     lineHeight: 1.4,
   },
   warningImportant: {
     fontSize: 8,
-    color: '#c23934',
+    color: '#ff0000',
     fontWeight: 'bold',
+  },
+  
+  // Link styling
+  link: {
+    color: '#0070d2',
+    textDecoration: 'underline',
   },
   infoBox: {
     backgroundColor: '#d8edff',
-    border: '1pt solid #0176d3',
+    border: '1pt solid #003087',
     padding: 8,
     marginVertical: 8,
     borderRadius: 3,
@@ -139,61 +145,63 @@ export const btlDipStyles = StyleSheet.create({
 
   // Tariff table - matches Excel styling
   tariffTable: {
-    marginVertical: 8,
+    marginVertical: 0,
     border: '1pt solid #000000',
   },
   tariffHeader: {
     flexDirection: 'row',
-    backgroundColor: '#808080',
-    padding: 5,
+    backgroundColor: '#ffffff',
+    padding: 3,
     borderBottom: '1pt solid #000000',
   },
   tariffHeaderCell: {
     flex: 2,
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: '#000000',
   },
   tariffHeaderCellRight: {
     flex: 1,
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: 'bold',
-    color: '#ffffff',
-    textAlign: 'right',
+    color: '#000000',
+    textAlign: 'left',
+    paddingLeft: 10,
   },
   tariffSubHeader: {
-    backgroundColor: '#d9d9d9',
-    padding: 4,
+    backgroundColor: '#ffffff',
+    padding: 3,
     borderBottom: '1pt solid #000000',
   },
   tariffSubHeaderText: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: 'bold',
     color: '#000000',
     textAlign: 'center',
   },
   tariffRow: {
     flexDirection: 'row',
-    padding: 3,
-    borderBottom: '0.5pt solid #000000',
+    padding: 2,
+    borderBottom: '1pt solid #000000',
     backgroundColor: '#ffffff',
   },
   tariffRowAlt: {
     flexDirection: 'row',
-    padding: 3,
-    borderBottom: '0.5pt solid #000000',
-    backgroundColor: '#f2f2f2',
+    padding: 2,
+    borderBottom: '1pt solid #000000',
+    backgroundColor: '#ffffff',
   },
   tariffCell: {
     flex: 2,
-    fontSize: 8,
+    fontSize: 7,
     color: '#000000',
   },
   tariffCellRight: {
     flex: 1,
-    fontSize: 8,
+    fontSize: 7,
     color: '#000000',
-    textAlign: 'right',
+    textAlign: 'left',
+    paddingLeft: 10,
   },
 
   // Signature section
@@ -219,7 +227,7 @@ export const btlDipStyles = StyleSheet.create({
   // Highlights
   highlightValue: {
     fontWeight: 'bold',
-    color: '#0176d3',
+    color: '#003087',
   },
   currencyValue: {
     fontWeight: 'bold',

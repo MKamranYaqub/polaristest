@@ -1120,6 +1120,40 @@ export default function BridgingCalculator({ initialQuote = null }) {
   ), [bestBridgeRates]);
 
   // DIP Modal Handlers
+  const handleOpenDipModal = async () => {
+    try {
+      // Always reload quote from database to get latest version
+      if (currentQuoteId) {
+        const response = await getQuote(currentQuoteId, false);
+        if (response && response.quote) {
+          const quote = response.quote;
+          // Update dipData with latest values from database
+          if (quote.commercial_or_main_residence || quote.dip_date || quote.dip_expiry_date) {
+            setDipData({
+              commercial_or_main_residence: quote.commercial_or_main_residence,
+              dip_date: quote.dip_date,
+              dip_expiry_date: quote.dip_expiry_date,
+              applicant_type: quote.applicant_type,
+              guarantor_name: quote.guarantor_name,
+              lender_legal_fee: quote.lender_legal_fee,
+              number_of_applicants: quote.number_of_applicants,
+              overpayments_percent: quote.overpayments_percent,
+              security_properties: quote.security_properties,
+              fee_type_selection: quote.fee_type_selection,
+              dip_status: quote.dip_status,
+              funding_line: quote.funding_line,
+              title_insurance: quote.title_insurance
+            });
+          }
+        }
+      }
+      // Open modal with refreshed data
+      setDipModalOpen(true);
+    } catch (err) {
+      showToast({ kind: 'error', title: 'Failed to load quote data', subtitle: err.message });
+    }
+  };
+
   const handleSaveDipData = async (quoteId, dipData) => {
     try {
       await upsertQuoteData({
@@ -1356,7 +1390,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
         chargeType={chargeType}
         subProductLimits={subProductLimits}
         quoteId={currentQuoteId}
-        onIssueDip={() => setDipModalOpen(true)}
+        onIssueDip={handleOpenDipModal}
         onIssueQuote={handleIssueQuote}
         onCancelQuote={handleCancelQuote}
         onNewQuote={handleCancelQuote}

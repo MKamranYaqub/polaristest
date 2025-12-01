@@ -14,6 +14,10 @@
  */
 
 import { parseNumber } from '../../../utils/calculator/numberFormatting';
+import { MARKET_RATES } from '../../../config/constants';
+
+// Export MARKET_RATES and parseNumber for use in PDF component
+export { MARKET_RATES, parseNumber };
 
 // ============================================================================
 // BORROWER & PROPERTY HELPERS
@@ -76,18 +80,50 @@ export const getSecurityAddress = (dipData) => {
  * Returns: 'Residential', 'Commercial', 'Semi-Commercial'
  */
 export const getPropertyType = (quote, dipData) => {
-  // Check dipData first (from modal selection)
+  // Primary source: product_scope field from quote (the "What type of quote is this for?" field)
+  const productScope = quote.product_scope || quote.productScope;
+  if (productScope) {
+    const scopeLower = productScope.toLowerCase();
+    if (scopeLower.includes('semi') && scopeLower.includes('commercial')) return 'Semi-Commercial';
+    if (scopeLower.includes('commercial')) return 'Commercial';
+    if (scopeLower.includes('residential')) return 'Residential';
+  }
+  
+  // Fallback: Check dipData (from modal selection)
   if (dipData?.commercial_or_main_residence) {
     if (dipData.commercial_or_main_residence === 'Commercial') return 'Commercial';
     if (dipData.commercial_or_main_residence === 'Main Residence') return 'Residential BTL';
   }
   
-  // Check quote property type
+  // Fallback: Check quote property type
   const propType = (quote.property_type || '').toLowerCase();
   if (propType.includes('commercial') && propType.includes('semi')) return 'Semi-Commercial';
   if (propType.includes('commercial')) return 'Commercial';
   
   return 'Residential BTL';
+};
+
+/**
+ * Get product type description based on property type
+ * Logic: =IF(V3="Residential","Buy to Let Standard Residential",
+ *         IF(V3="Semi-Commercial","Buy to Let Semi Commercial",
+ *         IF(V3="Commercial","Buy to Let Commercial")))
+ */
+export const getProductTypeText = (quote, dipData) => {
+  const propertyType = getPropertyType(quote, dipData);
+  
+  if (propertyType === 'Residential' || propertyType === 'Residential BTL') {
+    return 'Buy to Let Standard Residential';
+  }
+  if (propertyType === 'Semi-Commercial') {
+    return 'Buy to Let Semi Commercial';
+  }
+  if (propertyType === 'Commercial') {
+    return 'Buy to Let Commercial';
+  }
+  
+  // Default fallback
+  return 'Buy to Let Standard Residential';
 };
 
 // ============================================================================
@@ -315,7 +351,23 @@ export const getDeferredAmount = (quote) => {
  * Get pay rate (full rate minus deferred)
  */
 export const getPayRate = (quote) => {
-  const fullRate = getAnnualRate(quote);
+  // For tracker products: need to calculate full rate = margin + BBR
+  // For fixed products: initial_rate is the fixed rate (stored * 100)
+  const isTracker = isTrackerProduct(quote);
+  let fullRate = getAnnualRate(quote);
+  
+  if (isTracker) {
+    // Use the same calculation as BTLDIPPDF.jsx lines 93-95
+    // For tracker: calculate margin, then rate payable
+    const currentBBR = MARKET_RATES.STANDARD_BBR * 100; // BBR as percentage (4.00)
+    const trackerMargin = (fullRate / 100) - (currentBBR / 100); // Extract margin from stored rate
+    fullRate = trackerMargin + currentBBR; // Full rate payable: margin + BBR
+  } else {
+    // For fixed products: stored as rate * 100 (e.g., 679 for 6.79%)
+    // Convert to percentage
+    fullRate = fullRate / 100;
+  }
+  
   const deferredRate = getDeferredRate(quote);
   return (fullRate - deferredRate).toFixed(2);
 };
@@ -337,7 +389,13 @@ export const getValuationFee = (quote, dipData) => {
 
 export const getLegalFees = (quote, dipData) => {
   const fee = dipData?.lender_legal_fee || quote.lender_legal_fee;
-  return fee || 'TBC by the Underwriter';
+  if (!fee) return 'TBC by the Underwriter';
+  // If it's a number, check if it's 0
+  const numericFee = parseNumber(fee);
+  if (numericFee === 0) return 'TBC';
+  if (numericFee) return `£${Math.round(numericFee).toLocaleString('en-GB')}`;
+  // Otherwise return as-is (might be text like "TBC by the Underwriter")
+  return fee;
 };
 
 // ============================================================================
@@ -390,19 +448,19 @@ export const getBrokerClientFee = (quote, brokerSettings) => {
 
 /**
  * Get ERC text from rate record
- * Format: "3% of loan balance in yr1, 2.5% of loan balance in yr2. No charge thereafter."
+ * Format: "3% of loan balance in year 1, 2.5% of loan balance in year 2. No charge thereafter."
  */
 export const getERCText = (quote) => {
   // First check for pre-formatted erc_text
   const ercText = quote.erc_text || quote.ercText;
   if (ercText) {
-    // If it's in the "Yr1: 3% | Yr2: 2.5%" format, convert to "3% of loan balance in yr1, 2.5% of loan balance in yr2. No charge thereafter."
+    // If it's in the "Yr1: 3% | Yr2: 2.5%" format, convert to "3% of loan balance in year 1, 2.5% of loan balance in year 2. No charge thereafter."
     if (ercText.includes('Yr')) {
       const parts = ercText.split('|').map(p => p.trim());
       const converted = parts.map(p => {
         const match = p.match(/Yr(\d+):\s*([\d.]+)%/);
         if (match) {
-          return `${match[2]}% of loan balance in yr${match[1]}`;
+          return `${match[2]}% of loan balance in year ${match[1]}`;
         }
         return p;
       });
@@ -422,7 +480,7 @@ export const getERCText = (quote) => {
       const converted = parts.map(p => {
         const match = p.match(/Yr(\d+):\s*([\d.]+)%?/);
         if (match) {
-          return `${match[2]}% of loan balance in yr${match[1]}`;
+          return `${match[2]}% of loan balance in year ${match[1]}`;
         }
         return p;
       });
@@ -439,11 +497,11 @@ export const getERCText = (quote) => {
   const erc5 = parseNumber(selectedResult.erc_5) || parseNumber(quote.erc_5);
   
   const parts = [];
-  if (erc1) parts.push(`${erc1}% of loan balance in yr1`);
-  if (erc2) parts.push(`${erc2}% of loan balance in yr2`);
-  if (erc3) parts.push(`${erc3}% of loan balance in yr3`);
-  if (erc4) parts.push(`${erc4}% of loan balance in yr4`);
-  if (erc5) parts.push(`${erc5}% of loan balance in yr5`);
+  if (erc1) parts.push(`${erc1}% of loan balance in year 1`);
+  if (erc2) parts.push(`${erc2}% of loan balance in year 2`);
+  if (erc3) parts.push(`${erc3}% of loan balance in year 3`);
+  if (erc4) parts.push(`${erc4}% of loan balance in year 4`);
+  if (erc5) parts.push(`${erc5}% of loan balance in year 5`);
   
   if (parts.length === 0) return 'No early repayment charge applies.';
   
@@ -482,6 +540,26 @@ export const getICR = (quote) => {
   const icr = parseNumber(quote.icr);
   // ICR is stored as ratio (e.g., 1.45) not percentage
   return icr || null;
+};
+
+/**
+ * Get LTV (Loan to Value) percentage from quote
+ * Returns the actual ltv_percentage from the selected rate/result
+ */
+export const getLTV = (quote) => {
+  // Try to get from selected result first (actual calculated LTV)
+  if (quote._selectedResult?.ltv_percentage) {
+    return parseNumber(quote._selectedResult.ltv_percentage);
+  }
+  
+  // Try various field names for actual LTV
+  const ltv = parseNumber(
+    quote.ltv_percentage ?? 
+    quote.ltv ??
+    quote.target_ltv
+  );
+  
+  return ltv || null;
 };
 
 // ============================================================================
@@ -528,9 +606,20 @@ export const getTitleInsuranceCost = (quote) => {
 // ============================================================================
 
 /**
- * Format currency with £ symbol and commas
+ * Format currency with £ symbol and commas (0 decimal places)
+ * Use this for all pound values except monthly interest cost
  */
 export const formatCurrency = (value) => {
+  const num = parseNumber(value);
+  if (!num && num !== 0) return '£0';
+  return `£${Math.round(num).toLocaleString('en-GB')}`;
+};
+
+/**
+ * Format currency with £ symbol and commas (2 decimal places)
+ * Use this for monthly interest cost only
+ */
+export const formatCurrencyWithPence = (value) => {
   const num = parseNumber(value);
   if (!num && num !== 0) return '£0.00';
   return `£${num.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

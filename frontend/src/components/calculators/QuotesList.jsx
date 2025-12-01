@@ -538,18 +538,19 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
               const quoteStatus = q.quote_status || 'Not Issued';
               
               // Choose the most relevant status to display
+              // Priority: DIP status > Quote status (DIP is more advanced stage)
               let statusText = 'Draft';
               let statusClass = 'slds-badge_default';
               
-              if (quoteStatus === 'Issued') {
-                statusText = 'Quote Issued';
-                statusClass = 'slds-theme_success';
-              } else if (dipStatus === 'Issued') {
+              if (dipStatus === 'Issued') {
                 statusText = 'DIP Issued';
                 statusClass = 'slds-theme_info';
               } else if (dipStatus === 'Expired') {
                 statusText = 'DIP Expired';
                 statusClass = 'slds-theme_warning';
+              } else if (quoteStatus === 'Issued') {
+                statusText = 'Quote Issued';
+                statusClass = 'slds-theme_success';
               }
 
               return (

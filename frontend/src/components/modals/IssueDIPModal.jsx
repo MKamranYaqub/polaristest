@@ -43,6 +43,7 @@ export default function IssueDIPModal({
     funding_line: existingDipData.funding_line || '',
     dip_date: existingDipData.dip_date || defaults.dipDate,
     dip_expiry_date: existingDipData.dip_expiry_date || defaults.dipExpiryDate,
+    applicant_type: existingDipData.applicant_type || '',
     guarantor_name: existingDipData.guarantor_name || '',
     lender_legal_fee: existingDipData.lender_legal_fee || '',
     number_of_applicants: existingDipData.number_of_applicants || '1',
@@ -72,11 +73,13 @@ export default function IssueDIPModal({
   // Update form data when existingDipData changes (when loading a saved quote)
   useEffect(() => {
     if (existingDipData && Object.keys(existingDipData).length > 0) {
+      const defaultDates = getDefaultDates();
       setFormData({
         commercial_or_main_residence: existingDipData.commercial_or_main_residence || '',
         funding_line: existingDipData.funding_line || '',
-        dip_date: existingDipData.dip_date || defaults.dipDate,
-        dip_expiry_date: existingDipData.dip_expiry_date || defaults.dipExpiryDate,
+        dip_date: existingDipData.dip_date || defaultDates.dipDate,
+        dip_expiry_date: existingDipData.dip_expiry_date || defaultDates.dipExpiryDate,
+        applicant_type: existingDipData.applicant_type || '',
         guarantor_name: existingDipData.guarantor_name || '',
         lender_legal_fee: existingDipData.lender_legal_fee || '',
         number_of_applicants: existingDipData.number_of_applicants ? String(existingDipData.number_of_applicants) : '1',
@@ -90,7 +93,7 @@ export default function IssueDIPModal({
         setSecurityProperties(existingDipData.security_properties);
       }
     }
-  }, [existingDipData]);
+  }, [existingDipData, existingDipData?.funding_line]);
 
   // Auto-calculate expiry date when DIP date changes
   useEffect(() => {
@@ -218,7 +221,10 @@ export default function IssueDIPModal({
     if (!formData.dip_expiry_date) {
       errors.dip_expiry_date = 'Please enter DIP expiry date';
     }
-    if (!formData.guarantor_name || !formData.guarantor_name.trim()) {
+    if (!formData.applicant_type) {
+      errors.applicant_type = 'Please select applicant type';
+    }
+    if (formData.applicant_type === 'Corporate' && (!formData.guarantor_name || !formData.guarantor_name.trim())) {
       errors.guarantor_name = 'Please enter guarantor name';
     }
     if (!formData.lender_legal_fee || !formData.lender_legal_fee.trim()) {
@@ -282,8 +288,13 @@ export default function IssueDIPModal({
       case 'dip_expiry_date':
         if (!value) error = 'Please enter DIP expiry date';
         break;
+      case 'applicant_type':
+        if (!value) error = 'Please select applicant type';
+        break;
       case 'guarantor_name':
-        if (!value || !value.trim()) error = 'Please enter guarantor name';
+        if (formData.applicant_type === 'Corporate' && (!value || !value.trim())) {
+          error = 'Please enter guarantor name';
+        }
         break;
       case 'lender_legal_fee':
         if (!value || !value.trim()) error = 'Please enter lender legal fee';
@@ -590,28 +601,59 @@ export default function IssueDIPModal({
         </div>
       </div>
 
-      {/* Guarantor Name */}
-      <div className="slds-form-element margin-bottom-1">
-        <label className="slds-form-element__label">
-          <abbr className="slds-required" title="required">*</abbr> Guarantor Name
-        </label>
-        <div className="slds-form-element__control">
-          <input 
-            type="text" 
-            className={`slds-input ${fieldErrors.guarantor_name ? 'error-border' : ''}`}
-            name="guarantor_name"
-            value={formData.guarantor_name}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            placeholder="Enter guarantor name"
-            required
-            aria-invalid={fieldErrors.guarantor_name ? 'true' : 'false'}
-            aria-describedby={fieldErrors.guarantor_name ? 'error-guarantor_name' : undefined}
-          />
+      {/* Applicant Type and Guarantor Name */}
+      <div className="grid-2-col-gap-margin">
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">
+            <abbr className="slds-required" title="required">*</abbr> Applicant Type
+          </label>
+          <div className="slds-form-element__control">
+            <select
+              className={`slds-select ${fieldErrors.applicant_type ? 'error-border' : ''}`}
+              name="applicant_type"
+              value={formData.applicant_type}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              required
+              aria-invalid={fieldErrors.applicant_type ? 'true' : 'false'}
+              aria-describedby={fieldErrors.applicant_type ? 'error-applicant_type' : undefined}
+            >
+              <option value="">Select Applicant Type</option>
+              <option value="Personal">Personal</option>
+              <option value="Corporate">Corporate</option>
+            </select>
+          </div>
+          {fieldErrors.applicant_type && (
+            <div id="error-applicant_type" className="field-error-message" role="alert">
+              ⚠️ {fieldErrors.applicant_type}
+            </div>
+          )}
         </div>
-        {fieldErrors.guarantor_name && (
-          <div id="error-guarantor_name" className="field-error-message" role="alert">
-            ⚠️ {fieldErrors.guarantor_name}
+
+        {formData.applicant_type === 'Corporate' && (
+          <div className="slds-form-element">
+            <label className="slds-form-element__label">
+              <abbr className="slds-required" title="required">*</abbr> Guarantor Name
+            </label>
+            <div className="slds-form-element__control">
+              <input 
+                type="text" 
+                className={`slds-input ${fieldErrors.guarantor_name ? 'error-border' : ''}`}
+                name="guarantor_name"
+                value={formData.guarantor_name}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                placeholder="Enter guarantor name"
+                required
+                aria-invalid={fieldErrors.guarantor_name ? 'true' : 'false'}
+                aria-describedby={fieldErrors.guarantor_name ? 'error-guarantor_name' : undefined}
+              />
+            </div>
+            {fieldErrors.guarantor_name && (
+              <div id="error-guarantor_name" className="field-error-message" role="alert">
+                ⚠️ {fieldErrors.guarantor_name}
+              </div>
+            )}
           </div>
         )}
       </div>

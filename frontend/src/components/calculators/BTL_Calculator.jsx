@@ -219,6 +219,9 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   // Auto-select a product scope when data loads if none selected
   useEffect(() => {
+    // Skip auto-setting defaults if we're loading from a saved quote
+    if (effectiveInitialQuote) return;
+    
     if (!productScope) {
       const available = Array.from(new Set(allCriteria.map((r) => r.product_scope).filter(Boolean)));
       if (available.length > 0) {
@@ -239,7 +242,7 @@ export default function BTLcalculator({ initialQuote = null }) {
     } catch (e) {
       // ignore
     }
-  }, [allCriteria, productScope]);
+  }, [allCriteria, productScope, effectiveInitialQuote]);
 
   // If an initialQuote is provided, populate fields from the database structure
   useEffect(() => {
@@ -264,6 +267,7 @@ export default function BTLcalculator({ initialQuote = null }) {
           funding_line: quote.funding_line,
           dip_date: quote.dip_date,
           dip_expiry_date: quote.dip_expiry_date,
+          applicant_type: quote.applicant_type,
           guarantor_name: quote.guarantor_name,
           lender_legal_fee: quote.lender_legal_fee,
           number_of_applicants: quote.number_of_applicants,
@@ -275,6 +279,9 @@ export default function BTLcalculator({ initialQuote = null }) {
           product_range: quote.product_range
         });
       }
+      
+      // Set flag early to prevent productType from being overridden by useEffect
+      loadedFromSavedQuoteRef.current = true;
       
       if (quote.property_value != null) setPropertyValue(formatCurrencyInput(quote.property_value));
       if (quote.monthly_rent != null) setMonthlyRent(formatCurrencyInput(quote.monthly_rent));
@@ -337,8 +344,7 @@ export default function BTLcalculator({ initialQuote = null }) {
           product: result.product_name,
         }));
         setRelevantRates(loadedRates);
-        // Mark that we loaded from a saved quote to prevent rates_flat fetch from overwriting
-        loadedFromSavedQuoteRef.current = true;
+        // Flag already set earlier to prevent productType override
       }
       
       // Load criteria answers if available
@@ -401,6 +407,13 @@ export default function BTLcalculator({ initialQuote = null }) {
   // Ensure productType defaults to the first product for the selected productScope
   useEffect(() => {
     if (!productScope) return;
+    
+    // Skip auto-setting productType if we just loaded from a saved quote
+    // The saved quote already has the correct productType value
+    if (loadedFromSavedQuoteRef.current || effectiveInitialQuote) {
+      return;
+    }
+    
     try {
       const raw = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
       const parsed = raw ? JSON.parse(raw) : null;
@@ -891,6 +904,46 @@ export default function BTLcalculator({ initialQuote = null }) {
   const productScopes = Array.from(new Set(allCriteria.map((r) => r.product_scope).filter(Boolean)));
 
   // DIP Modal Handlers
+  const handleOpenDipModal = async () => {
+    try {
+      // Always reload quote from database to get latest version
+      if (currentQuoteId) {
+        const response = await getQuote(currentQuoteId, false);
+        if (response && response.quote) {
+          const quote = response.quote;
+          // Update dipData with latest values from database
+          const hasDipData = quote.commercial_or_main_residence || quote.dip_date || quote.dip_expiry_date ||
+                             quote.guarantor_name || quote.lender_legal_fee || quote.number_of_applicants ||
+                             quote.security_properties || quote.fee_type_selection || quote.title_insurance ||
+                             quote.funding_line || quote.product_range || quote.dip_status;
+          
+          if (hasDipData) {
+            setDipData({
+              commercial_or_main_residence: quote.commercial_or_main_residence,
+              funding_line: quote.funding_line,
+              dip_date: quote.dip_date,
+              dip_expiry_date: quote.dip_expiry_date,
+              applicant_type: quote.applicant_type,
+              guarantor_name: quote.guarantor_name,
+              lender_legal_fee: quote.lender_legal_fee,
+              number_of_applicants: quote.number_of_applicants,
+              overpayments_percent: quote.overpayments_percent,
+              security_properties: quote.security_properties,
+              fee_type_selection: quote.fee_type_selection,
+              dip_status: quote.dip_status,
+              title_insurance: quote.title_insurance,
+              product_range: quote.product_range
+            });
+          }
+        }
+      }
+      // Open modal with refreshed data
+      setDipModalOpen(true);
+    } catch (err) {
+      showToast({ kind: 'error', title: 'Failed to load quote data', subtitle: err.message });
+    }
+  };
+
   const handleSaveDipData = async (quoteId, dipData) => {
     try {
       const dataToSave = { ...dipData };
@@ -1269,7 +1322,7 @@ export default function BTLcalculator({ initialQuote = null }) {
         currentTier={currentTier}
         availableScopes={productScopes}
         quoteId={currentQuoteId}
-        onIssueDip={() => setDipModalOpen(true)}
+        onIssueDip={handleOpenDipModal}
         onIssueQuote={handleIssueQuote}
         onCancelQuote={handleCancelQuote}
         onNewQuote={handleCancelQuote}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, View, Text, Image, StyleSheet, Link } from '@react-pdf/renderer';
 import { styles } from './shared/PDFStyles';
 import { btlDipStyles } from './shared/BTLDIPStyles';
 import PDFHeader from './shared/PDFHeader';
@@ -13,10 +13,11 @@ const MFS_LOGO_PATH = '/assets/mfs-logo.png';
 const fixedHeaderStyles = StyleSheet.create({
   fixedHeader: {
     position: 'absolute',
-    top: 20,
+    top: 15,
     right: 40,
     width: 80,
     height: 32,
+    zIndex: 10,
   },
   logo: {
     width: 80,
@@ -85,6 +86,18 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
   const aprc = h.getAPRC(quote);
   const monthlyInterestCost = h.getMonthlyInterestCost(quote);
   
+  // For tracker products: initial_rate contains the margin rate (stored as margin * 100)
+  // For fixed products: initial_rate is the fixed rate itself
+  const currentBBR = h.MARKET_RATES.STANDARD_BBR * 100;
+  const currentMVR = h.MARKET_RATES.CURRENT_MVR * 100;
+  
+  // Get margin from initial_rate for tracker products (divide by 100 to get percentage)
+  // For tracker: annualRate is stored as margin * 100 (e.g., 259 for 2.59%)
+  const trackerMargin = isTracker ? (annualRate / 100) - (currentBBR / 100) : 0;
+  
+  // Calculate rate payable: for tracker it's margin + BBR, for fixed it's just the rate
+  const ratePayable = isTracker ? trackerMargin + currentBBR : annualRate;
+  
   // Interest handling
   const hasRolledMonths = h.hasRolledMonths(quote);
   const rolledMonths = h.getRolledMonths(quote);
@@ -116,8 +129,9 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
   const isSemiCommercial = propertyType === 'Semi-Commercial';
   const isResidentialBTL = propertyType === 'Residential' || propertyType === 'Residential BTL';
   
-  // ICR
+  // ICR and LTV
   const icr = h.getICR(quote);
+  const ltv = h.getLTV(quote);
   
   // Number of applicants for signature blocks
   const numApplicants = h.getNumberOfApplicants(dipData);
@@ -134,18 +148,10 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           <Image style={fixedHeaderStyles.logo} src={MFS_LOGO_PATH} />
         </View>
         
-        {/* Header with branding */}
-        <PDFHeader
-          title="Decision in Principle"
-          subtitle="Buy to Let Mortgage"
-          referenceNumber={quote.reference_number}
-          showLogo={false}
-        />
-
-        {/* Date */}
-        <View style={btlDipStyles.dateRow}>
-          <Text style={btlDipStyles.dateText}>Decision in Principle</Text>
-          <Text style={btlDipStyles.dateValue}>{dipDate}</Text>
+        {/* Date - Compact header */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, paddingBottom: 5, borderBottom: '1pt solid #dddbda' }}>
+          <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000000' }}>Decision in Principle</Text>
+          <Text style={{ fontSize: 9, color: '#706e6b' }}>{dipDate}</Text>
         </View>
 
         {/* Proposed Loan To */}
@@ -175,9 +181,9 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           </Text>
         </View>
 
-        {/* THE SUMMARY Section */}
-        <View style={btlDipStyles.sectionHeader}>
-          <Text style={btlDipStyles.sectionTitle}>The Summary</Text>
+        {/* THE SUMMARY Section - Simple underlined header */}
+        <View style={{ marginTop: 8, marginBottom: 6 }}>
+          <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000', textDecoration: 'underline' }}>The Summary</Text>
         </View>
 
         {/* Borrower */}
@@ -186,11 +192,11 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           <Text style={btlDipStyles.summaryValue}>{borrowerName}</Text>
         </View>
 
-        {/* Product Type - Conditional based on Fixed vs Tracker */}
+        {/* Product Type - Based on property type */}
         <View style={btlDipStyles.summaryRow}>
           <Text style={btlDipStyles.summaryLabel}>Product Type:</Text>
           <Text style={btlDipStyles.summaryValue}>
-            {isTracker ? 'Tracker Rate BTL Mortgage' : 'Fixed Rate BTL Mortgage'}
+            {h.getProductTypeText(quote, dipData)}
           </Text>
         </View>
 
@@ -205,13 +211,13 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           </Text>
         </View>
 
-        {/* Annual Interest Rate - Conditional based on MVR vs BBR revert */}
+        {/* Annual Interest Rate - Conditional based on product type (Tracker vs Fixed) */}
         <View style={btlDipStyles.summaryRow}>
           <Text style={btlDipStyles.summaryLabel}>Annual Interest Rate:</Text>
           <Text style={btlDipStyles.summaryValue}>
             {isTracker 
-              ? `For the first ${initialTerm} years a tracker rate of ${annualRate}% (BBR + margin). ${initialTerm} years from the date of completion, the interest rate will change to ${isMVRRevert ? `the MFS Variable Rate (MVR), currently ${revertRate}%` : `BBR plus a margin, currently ${revertRate}%`} for the remaining ${fullTerm - initialTerm} years.`
-              : `For the first ${initialTerm} years a fixed rate of ${annualRate}%. ${initialTerm} years from the date of completion, the interest rate will change to ${isMVRRevert ? `the MFS Variable Rate (MVR), currently ${revertRate}%` : `BBR plus a margin, currently ${revertRate}%`} for the remaining ${fullTerm - initialTerm} years.`
+              ? `For the first ${initialTerm} ${initialTerm === 1 ? 'year' : 'years'}, a variable rate made up of the Bank of England Base Rate (BBR), currently ${currentBBR.toFixed(2)}% plus a set margin of ${trackerMargin.toFixed(2)}% giving a current rate payable of ${ratePayable.toFixed(2)}%. ${initialTerm} ${initialTerm === 1 ? 'year' : 'years'} from the date of completion, the interest rate will change to the MFS Variable Rate, currently ${currentMVR.toFixed(2)}% for the remaining ${fullTerm - initialTerm} ${(fullTerm - initialTerm) === 1 ? 'year' : 'years'}.`
+              : `For the first ${initialTerm} ${initialTerm === 1 ? 'year' : 'years'} a fixed rate of ${ratePayable.toFixed(2) / 100}%. ${initialTerm} ${initialTerm === 1 ? 'year' : 'years'} from the date of completion, the interest rate will change to the MFS Variable Rate, currently ${currentMVR.toFixed(2)}% for the remaining ${fullTerm - initialTerm} ${(fullTerm - initialTerm) === 1 ? 'year' : 'years'}.`
             }
           </Text>
         </View>
@@ -225,16 +231,15 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
         {/* Monthly Interest Cost */}
         <View style={btlDipStyles.summaryRow}>
           <Text style={btlDipStyles.summaryLabel}>Monthly Interest Cost:</Text>
-          <Text style={btlDipStyles.summaryValue}>{h.formatCurrency(monthlyInterestCost)}</Text>
+          <Text style={btlDipStyles.summaryValue}>{h.formatCurrencyWithPence(monthlyInterestCost)}</Text>
         </View>
 
         {/* Gross Loan Amount */}
         <View style={btlDipStyles.summaryRow}>
           <Text style={btlDipStyles.summaryLabel}>Gross Loan Amount:</Text>
           <Text style={btlDipStyles.summaryValue}>
-            {h.formatCurrency(grossLoan)}, on estimated valuation of {h.formatCurrency(propertyValue)}. 
-            The Gross Loan is the total principal owed at the end of the term, and is made up of the 
-            Net Loan advanced, and the following:
+            {h.formatCurrency(grossLoan)} on estimated valuation of {h.formatCurrency(propertyValue)}. 
+            The Gross Loan is the total principal owed at the end of the term, and is made up of the Net Loan advanced, and the following:
           </Text>
         </View>
 
@@ -250,7 +255,7 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
         <View style={btlDipStyles.summaryRow}>
           <Text style={btlDipStyles.summaryLabel}>Product Fee:</Text>
           <Text style={btlDipStyles.summaryValue}>
-            {productFeePercent}% ({h.formatCurrency(productFeeAmount)}) of the Gross Loan Amount
+            {productFeePercent.toFixed(2)}% ({h.formatCurrency(productFeeAmount)}) of the Gross Loan Amount
           </Text>
         </View>
 
@@ -269,7 +274,7 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           <View style={btlDipStyles.summaryRow}>
             <Text style={btlDipStyles.summaryLabel}>Deferred Interest/Pay Rate:</Text>
             <Text style={btlDipStyles.summaryValue}>
-              {deferredRate}% deferred, equivalent to {h.formatCurrency(deferredAmount)} over {initialTerm * 12} months. 
+              {parseFloat(deferredRate).toFixed(2)}% deferred, equivalent to {h.formatCurrency(deferredAmount)} over {initialTerm * 12} months. 
               Pay Rate now {payRate}% for {isTracker ? 'Initial Tracker Rate Period' : 'Initial Fixed Rate Period'} only 
               (used for Direct Debit payments).
             </Text>
@@ -344,7 +349,9 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
         {/* Legal Fees */}
         <View style={btlDipStyles.summaryRow}>
           <Text style={btlDipStyles.summaryLabel}>Legal Fees:</Text>
-          <Text style={btlDipStyles.summaryValue}>{legalFees}, to be payable by you.</Text>
+          <Text style={btlDipStyles.summaryValue}>
+            {legalFees === 'TBC' || legalFees === 'TBC by the Underwriter' ? legalFees : `${legalFees} to be payable by you.`}
+          </Text>
         </View>
 
         {/* Title Insurance - CONDITIONAL based on dipData.title_insurance dropdown */}
@@ -352,7 +359,7 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           <View style={btlDipStyles.summaryRow}>
             <Text style={btlDipStyles.summaryLabel}>Title Insurance Cost:</Text>
             <Text style={btlDipStyles.summaryValue}>
-              {h.formatCurrency(titleInsuranceCost)} (to be deducted from the net loan amount)
+              {h.formatCurrencyWithPence(titleInsuranceCost)} (to be deducted from the net loan amount)
             </Text>
           </View>
         )}
@@ -365,11 +372,21 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           </Text>
         </View>
 
+        {/* Guarantee (if Corporate) */}
+        {dipData.applicant_type === 'Corporate' && dipData.guarantor_name && (
+          <View style={btlDipStyles.summaryRow}>
+            <Text style={btlDipStyles.summaryLabel}>Guarantee:</Text>
+            <Text style={btlDipStyles.summaryValue}>
+              Personal guarantee from {dipData.guarantor_name}.
+            </Text>
+          </View>
+        )}
+
         {/* Financial Covenants / ICR */}
         <View style={btlDipStyles.summaryRow}>
           <Text style={btlDipStyles.summaryLabel}>Financial Covenants:</Text>
           <Text style={btlDipStyles.summaryValue}>
-            Interest Cover to be at least {icr ? `${(icr * 100).toFixed(0)}%` : 'as per underwriting requirements'}.
+            Loan to Value must not exceed {ltv ? `${Math.round(ltv)}%` : '35%'}. Interest Cover to be at least {icr ? `${(icr * 100).toFixed(0)}%` : '134%'}.
           </Text>
         </View>
 
@@ -383,8 +400,8 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           <Image style={fixedHeaderStyles.logo} src={MFS_LOGO_PATH} />
         </View>
         
-        <View style={btlDipStyles.sectionHeader}>
-          <Text style={btlDipStyles.sectionTitle}>TERMS OF BUSINESS</Text>
+        <View style={{ marginTop: 8, marginBottom: 6 }}>
+          <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000', textDecoration: 'underline' }}>TERMS OF BUSINESS</Text>
         </View>
 
         {/* DIP Expiry */}
@@ -421,13 +438,13 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
             • Data and your evidence documents may also be shared with any of our loan funding providers.
           </Text>
           <Text style={btlDipStyles.termsTextBullet}>
-            • If the Loan is drawn, and whilst any balance of the Loan is outstanding, MFS may exchange information and documents about you (and any Loan guarantors) with CRAs, including recording any outstanding debt if you do not repay in full and on time. CRAs may share your information with other organisations. We may also make periodic searches at CRAs to help manage your account with us. The identities of the CRAs, their role also as fraud prevention agencies, the data they hold, the ways in which they use and share personal information, their data retention periods and your data protection rights with the CRAs are explained in the Credit Reference Agency Information Notice (CRAIN), www.transunion.co.uk/CRAIN. You can also get further information via our privacy policy at www.mfsuk.com/privacy-gdpr/.
+            • If the Loan is drawn, and whilst any balance of the Loan is outstanding, MFS may exchange information and documents about you (and any Loan guarantors) with CRAs, including recording any outstanding debt if you do not repay in full and on time. CRAs may share your information with other organisations. We may also make periodic searches at CRAs to help manage your account with us. The identities of the CRAs, their role also as fraud prevention agencies, the data they hold, the ways in which they use and share personal information, their data retention periods and your data protection rights with the CRAs are explained in the Credit Reference Agency Information Notice (CRAIN), <Link src="https://www.transunion.co.uk/CRAIN" style={btlDipStyles.link}>www.transunion.co.uk/CRAIN</Link>. You can also get further information via our privacy policy at <Link src="https://www.mfsuk.com/privacy-gdpr/" style={btlDipStyles.link}>www.mfsuk.com/privacy-gdpr/</Link>.
           </Text>
           <Text style={btlDipStyles.termsTextBullet}>
-            • The personal information we have collected from you will be shared with fraud prevention agencies who will use it to prevent fraud and money-laundering and to verify your identity. If fraud is detected, you could be refused certain services, finance, or employment. Further details of how your information will be used by us and these fraud prevention agencies, and your data protection rights, can be found via our privacy policy at at www.mfsuk.com/privacy-gdpr/ or by going to www.cifas.org.uk/fpn.
+            • The personal information we have collected from you will be shared with fraud prevention agencies who will use it to prevent fraud and money-laundering and to verify your identity. If fraud is detected, you could be refused certain services, finance, or employment. Further details of how your information will be used by us and these fraud prevention agencies, and your data protection rights, can be found via our privacy policy at <Link src="https://www.mfsuk.com/privacy-gdpr/" style={btlDipStyles.link}>www.mfsuk.com/privacy-gdpr/</Link> or by going to <Link src="https://www.cifas.org.uk/fpn" style={btlDipStyles.link}>www.cifas.org.uk/fpn</Link>.
           </Text>
           <Text style={btlDipStyles.termsTextBullet}>
-            • You have the right to view certain records we hold concerning you and you may request that any inaccuracies are corrected by corresponding with the relevant parties. You may contact our Data Protection Officer at privacy@mfsuk.com or by writing to the Data Protection Officer, Market Financial Solutions, 46 Hertford Street, Mayfair, London, W1J 7DP.
+            • You have the right to view certain records we hold concerning you and you may request that any inaccuracies are corrected by corresponding with the relevant parties. You may contact our Data Protection Officer at <Link src="mailto:privacy@mfsuk.com" style={btlDipStyles.link}>privacy@mfsuk.com</Link> or by writing to the Data Protection Officer, Market Financial Solutions, 46 Hertford Street, Mayfair, London, W1J 7DP.
           </Text>
         </View>
 
@@ -446,6 +463,16 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           <Text style={btlDipStyles.termsTextBold}>
             Do not sign this Decision in Principle or any declaration unless the above paragraphs are true.
           </Text>
+        </View>
+
+        <PDFFooter />
+      </Page>
+
+      {/* PAGE 3 - Loan Amount and Deduction of Fees */}
+      <Page size="A4" style={styles.page}>
+        {/* Fixed Logo on every page */}
+        <View style={fixedHeaderStyles.fixedHeader} fixed>
+          <Image style={fixedHeaderStyles.logo} src={MFS_LOGO_PATH} />
         </View>
 
         {/* Loan Amount and Deduction of Fees - Updated with Title Insurance fee */}
@@ -518,8 +545,8 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
         </View>
         
         {/* Tariff of Charges Header */}
-        <View style={btlDipStyles.sectionHeader}>
-          <Text style={btlDipStyles.sectionTitle}>Tariff of Charges</Text>
+        <View style={{ marginTop: 10, marginBottom: 5 }}>
+          <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000', textAlign: 'center' }}>Fee Structure Table - Post Completion</Text>
         </View>
 
         {/* Fee Structure Table - Post Completion */}
@@ -527,10 +554,6 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           <View style={btlDipStyles.tariffHeader}>
             <Text style={btlDipStyles.tariffHeaderCell}>Fee</Text>
             <Text style={btlDipStyles.tariffHeaderCellRight}>Charges from</Text>
-          </View>
-          
-          <View style={btlDipStyles.tariffSubHeader}>
-            <Text style={btlDipStyles.tariffSubHeaderText}>Fee Structure Table - Post Completion</Text>
           </View>
           
           <View style={btlDipStyles.tariffRow}>
@@ -624,9 +647,14 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
         </View>
 
         {/* Fee Structure Table - In event of Default */}
+        <View style={{ marginTop: 10, marginBottom: 5 }}>
+          <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000', textAlign: 'center' }}>Fee Structure Table - In event of Default</Text>
+        </View>
+        
         <View style={btlDipStyles.tariffTable}>
-          <View style={btlDipStyles.tariffSubHeader}>
-            <Text style={btlDipStyles.tariffSubHeaderText}>Fees Structure Table - In event of Default</Text>
+          <View style={btlDipStyles.tariffHeader}>
+            <Text style={btlDipStyles.tariffHeaderCell}>Fee</Text>
+            <Text style={btlDipStyles.tariffHeaderCellRight}>Charges from</Text>
           </View>
           
           <View style={btlDipStyles.tariffRow}>
@@ -699,6 +727,14 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           Please see the enclosed Appendix – Schedule 1 for the explanation of each charge outlined within the Fee structure tables.
         </Text>
 
+        {/* Valuation Fee and Legal Fees Section - continued on same page */}
+        <View style={{ ...btlDipStyles.termsSection, marginTop: 15 }}>
+          <Text style={btlDipStyles.termsSubtitle}>Valuation Fee and Legal Fees</Text>
+          <Text style={btlDipStyles.termsText}>
+            The fees for the valuation of the Property shall be your cost and will be collected in advance upon acceptance of this Decision in Principle. You will be responsible for our Legal Fees in relation to the Loan. These are set out in the Financial Summary. You will be responsible for these fees whether the Loan proceeds to completion or not. Our solicitors will require payment in full or your solicitors' undertaking to make payment before commencing work. With regards to the Valuation report, unless Title Insurance is used, once our Solicitors have conducted their Report on Title it will need to be sent to the valuer for their comments. Any detrimental impact, or adverse comments from the Valuer may result in MFS not being able to proceed with the Loan or varying the terms offered.
+          </Text>
+        </View>
+
         <PDFFooter />
       </Page>
 
@@ -707,14 +743,6 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
         {/* Fixed Logo on every page */}
         <View style={fixedHeaderStyles.fixedHeader} fixed>
           <Image style={fixedHeaderStyles.logo} src={MFS_LOGO_PATH} />
-        </View>
-        
-        {/* Valuation Fee and Legal Fees Section */}
-        <View style={btlDipStyles.termsSection}>
-          <Text style={btlDipStyles.termsSubtitle}>Valuation Fee and Legal Fees</Text>
-          <Text style={btlDipStyles.termsText}>
-            The fees for the valuation of the Property shall be your cost and will be collected in advance upon acceptance of this Decision in Principle. You will be responsible for our Legal Fees in relation to the Loan. These are set out in the Financial Summary. You will be responsible for these fees whether the Loan proceeds to completion or not. Our solicitors will require payment in full or your solicitors' undertaking to make payment before commencing work. With regards to the Valuation report, unless Title Insurance is used, once our Solicitors have conducted their Report on Title it will need to be sent to the valuer for their comments. Any detrimental impact, or adverse comments from the Valuer may result in MFS not being able to proceed with the Loan or varying the terms offered.
-          </Text>
         </View>
 
         {/* No Legally Binding Agreement */}
@@ -779,8 +807,8 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
         </View>
 
         {/* Signature Section - CONDITIONAL based on number of applicants */}
-        <View style={btlDipStyles.sectionHeader}>
-          <Text style={btlDipStyles.sectionTitle}>Signed by each Borrower</Text>
+        <View style={{ marginTop: 8, marginBottom: 6 }}>
+          <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000', textDecoration: 'underline' }}>Signed by each Borrower</Text>
         </View>
 
         <View style={btlDipStyles.signatureGrid}>
