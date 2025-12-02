@@ -174,7 +174,7 @@ function RatesTable() {
         <div className="error-box">
           <h3>Error Loading Rates</h3>
           <p>{error.message || error}</p>
-          <button className="btn-primary" onClick={() => fetchRates()}>
+          <button className="slds-button slds-button_brand" onClick={() => fetchRates()}>
             Try Again
           </button>
         </div>
@@ -584,7 +584,7 @@ function RatesTable() {
       <>
       <div className="table-header">
         <div className="table-actions-left">
-          <button className="btn-primary" onClick={handleAdd}>
+          <button className="slds-button slds-button_brand" onClick={handleAdd}>
             Add New Product
           </button>
           <input
@@ -594,14 +594,14 @@ function RatesTable() {
             style={{ display: 'none' }}
             id="csv-import"
           />
-          <button className="btn-secondary" onClick={() => document.getElementById('csv-import').click()}>
+          <button className="slds-button slds-button_neutral" onClick={() => document.getElementById('csv-import').click()}>
             Import CSV
           </button>
-          <button className="btn-secondary" onClick={handleExport}>
+          <button className="slds-button slds-button_neutral" onClick={handleExport}>
             Export CSV
           </button>
           {selectedRows.size > 0 && (
-            <button className="btn-danger" onClick={handleBulkDelete}>
+            <button className="slds-button slds-button_destructive" onClick={handleBulkDelete}>
               Delete Selected ({selectedRows.size})
             </button>
           )}
@@ -610,7 +610,7 @@ function RatesTable() {
         <div className="table-actions-right">
           <div className="pagination-controls">
             <button 
-              className="btn-neutral"
+              className="slds-button slds-button_neutral"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
             >
@@ -618,7 +618,7 @@ function RatesTable() {
             </button>
             <span className="pagination-info">Page {currentPage} of {totalPages}</span>
             <button 
-              className="btn-neutral"
+              className="slds-button slds-button_neutral"
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
             >
@@ -825,10 +825,10 @@ function RatesTable() {
                 <td>{rate.proc_fee ?? ''}</td>
                 <td className="sticky-action">
                   <div className="row-actions">
-                    <button className="btn-neutral" onClick={() => handleEdit(rate)}>
+                    <button className="slds-button slds-button_neutral" onClick={() => handleEdit(rate)}>
                       Edit
                     </button>
-                    <button className="btn-danger" onClick={() => handleDelete(rate.id)}>
+                    <button className="slds-button slds-button_destructive" onClick={() => handleDelete(rate.id)}>
                       Delete
                     </button>
                   </div>

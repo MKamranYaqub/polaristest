@@ -1030,3 +1030,75 @@ body,
   box-shadow: none;
   background: transparent;
 }
+
+/* ============================================
+   ACTION BUTTON GROUPS - Consistent layout
+   ============================================ */
+
+/* 
+ * Standard action button container - right-aligned
+ * Use for: Save, Cancel, Submit, Delete actions
+ * Order: Cancel (left) → Save/Submit (right)
+ */
+.slds-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--token-spacing-sm, 0.5rem);
+  padding: var(--token-spacing-md, 1rem) 0;
+}
+
+/* Full-width variant with top border (for page footers) */
+.slds-actions_bordered {
+  border-top: 1px solid var(--slds-color-gray-3, #e5e5e5);
+  margin-top: var(--token-spacing-lg, 1.5rem);
+  padding-top: var(--token-spacing-md, 1rem);
+}
+
+/* 
+ * Navigation buttons container - below actions, right-aligned
+ * Use for: Back, Previous, Next navigation
+ * Order: Back/Previous (left) → Next (right)
+ */
+.slds-actions__nav {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--token-spacing-sm, 0.5rem);
+  margin-top: var(--token-spacing-sm, 0.5rem);
+}
+
+/* 
+ * Combined actions + navigation wrapper
+ * Stacks action buttons on top, navigation below
+ */
+.slds-actions-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--token-spacing-xs, 0.25rem);
+}
+
+/* Modal footer - right-aligned actions */
+.slds-modal__footer {
+  border-top: 1px solid var(--slds-color-gray-3, #e5e5e5);
+  padding: var(--token-spacing-md, 0.75rem) var(--token-spacing-lg, 1rem);
+  background-color: var(--slds-color-gray-1, #f3f3f3);
+  border-bottom-right-radius: 0.25rem;
+  border-bottom-left-radius: 0.25rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--token-spacing-sm, 0.5rem);
+}
+
+/* Page-level actions bar */
+.slds-page-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--token-spacing-sm, 0.5rem);
+  padding: var(--token-spacing-md, 1rem) 0;
+  border-top: 1px solid var(--slds-color-gray-3, #e5e5e5);
+  margin-top: var(--token-spacing-lg, 1.5rem);
+}

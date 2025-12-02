@@ -326,26 +326,26 @@ function BridgeFusionRates() {
   };
 
   if (loading) return (<div className="loading-overlay"><div className="loading-spinner"></div><div className="loading-text">Loading bridge & fusion rates...</div></div>);
-  if (error) return (<div className="error-state"><div className="error-box"><h3>Error Loading Rates</h3><p>{String(error)}</p><button className="btn-primary" onClick={() => fetch()}>Try Again</button></div></div>);
+  if (error) return (<div className="error-state"><div className="error-box"><h3>Error Loading Rates</h3><p>{String(error)}</p><button className="slds-button slds-button_brand" onClick={() => fetch()}>Try Again</button></div></div>);
 
   return (
     <div className="admin-table-container">
       <div className="table-header">
         <div className="table-actions-left">
-          <button className="btn-primary" onClick={handleAdd}>Add Bridge/Fusion Rate</button>
+          <button className="slds-button slds-button_brand" onClick={handleAdd}>Add Bridge/Fusion Rate</button>
           <input type="file" accept=".csv" onChange={handleImport} style={{ display: 'none' }} id="bridge-csv-import" />
-          <button className="btn-secondary" onClick={() => document.getElementById('bridge-csv-import').click()}>Import CSV</button>
-          <button className="btn-secondary" onClick={handleExport}>Export CSV</button>
+          <button className="slds-button slds-button_neutral" onClick={() => document.getElementById('bridge-csv-import').click()}>Import CSV</button>
+          <button className="slds-button slds-button_neutral" onClick={handleExport}>Export CSV</button>
           {selectedRows.size > 0 && (
-            <button className="btn-danger" onClick={handleBulkDelete}>Delete Selected ({selectedRows.size})</button>
+            <button className="slds-button slds-button_destructive" onClick={handleBulkDelete}>Delete Selected ({selectedRows.size})</button>
           )}
           <span className="total-count">Total: {getFilteredRowsCount()}</span>
         </div>
         <div className="table-actions-right">
           <div className="pagination-controls">
-            <button className="btn-neutral" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</button>
+            <button className="slds-button slds-button_neutral" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</button>
             <span className="pagination-info">Page {currentPage} of {totalPages}</span>
-            <button className="btn-neutral" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
+            <button className="slds-button slds-button_neutral" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
             <div className="rows-per-page">
               <label>Rows:</label>
               <select value={itemsPerPage} onChange={(e) => { const v = Number(e.target.value); setItemsPerPage(v); setCurrentPage(1); }}>
@@ -460,8 +460,8 @@ function BridgeFusionRates() {
                 <td className="text-center">{r.erc_2 || '—'}</td>
                 <td className="sticky-action">
                   <div className="row-actions">
-                    <button className="btn-neutral" onClick={() => setEditing(r)}>Edit</button>
-                    <button className="btn-danger" onClick={() => handleDelete(r.id)}>Delete</button>
+                    <button className="slds-button slds-button_neutral" onClick={() => setEditing(r)}>Edit</button>
+                    <button className="slds-button slds-button_destructive" onClick={() => handleDelete(r.id)}>Delete</button>
                   </div>
                 </td>
               </tr>

@@ -244,7 +244,7 @@ const UsersPage = () => {
         <div className="table-header">
           <div className="table-actions-left">
             <button
-              className="btn-primary"
+              className="slds-button slds-button_brand"
               onClick={() => setShowCreateModal(true)}
             >
               Create User
@@ -259,7 +259,7 @@ const UsersPage = () => {
             <div className="error-box">
               <h3>Error</h3>
               <p>{error}</p>
-              <button className="btn-secondary" onClick={() => setError('')}>Dismiss</button>
+              <button className="slds-button slds-button_neutral" onClick={() => setError('')}>Dismiss</button>
             </div>
           </div>
         )}
@@ -268,7 +268,7 @@ const UsersPage = () => {
           <div style={{ background: '#e8f5e9', border: '2px solid #4caf50', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem', textAlign: 'center' }}>
             <h3 style={{ color: '#2e7d32', margin: '0 0 0.5rem 0' }}>Success</h3>
             <p style={{ margin: '0 0 1rem 0' }}>{success}</p>
-            <button className="btn-secondary" onClick={() => setSuccess('')}>Dismiss</button>
+            <button className="slds-button slds-button_neutral" onClick={() => setSuccess('')}>Dismiss</button>
           </div>
         )}
 
@@ -304,19 +304,19 @@ const UsersPage = () => {
                   <td className="sticky-action">
                     <div className="row-actions">
                       <button
-                        className="btn-neutral"
+                        className="slds-button slds-button_neutral"
                         onClick={() => handleEditClick(user)}
                       >
                         Edit
                       </button>
                       <button
-                        className="btn-neutral"
+                        className="slds-button slds-button_neutral"
                         onClick={() => handleResetClick(user.id)}
                       >
                         Reset Password
                       </button>
                       <button
-                        className="btn-danger"
+                        className="slds-button slds-button_destructive"
                         onClick={() => handleDeleteClick(user.id)}
                       >
                         Delete
@@ -422,16 +422,16 @@ const UsersPage = () => {
                     </div>
                   </div>
 
-                  <div className="slds-m-top_large">
-                    <button type="submit" className="slds-button slds-button_brand slds-m-right_small">
-                      Create User
-                    </button>
+                  <div className="slds-modal__footer">
                     <button
                       type="button"
                       className="slds-button slds-button_neutral"
                       onClick={() => setShowCreateModal(false)}
                     >
                       Cancel
+                    </button>
+                    <button type="submit" className="slds-button slds-button_brand">
+                      Create User
                     </button>
                   </div>
                 </form>
@@ -523,16 +523,16 @@ const UsersPage = () => {
                     </label>
                   </div>
 
-                  <div className="slds-m-top_large">
-                    <button type="submit" className="slds-button slds-button_brand slds-m-right_small">
-                      Save Changes
-                    </button>
+                  <div className="slds-modal__footer">
                     <button
                       type="button"
                       className="slds-button slds-button_neutral"
                       onClick={() => setShowEditModal(false)}
                     >
                       Cancel
+                    </button>
+                    <button type="submit" className="slds-button slds-button_brand">
+                      Save Changes
                     </button>
                   </div>
                 </form>
@@ -578,16 +578,16 @@ const UsersPage = () => {
                     </div>
                   </div>
 
-                  <div className="slds-m-top_large">
-                    <button type="submit" className="slds-button slds-button_brand slds-m-right_small">
-                      Reset Password
-                    </button>
+                  <div className="slds-modal__footer">
                     <button
                       type="button"
                       className="slds-button slds-button_neutral"
                       onClick={() => setShowResetModal(false)}
                     >
                       Cancel
+                    </button>
+                    <button type="submit" className="slds-button slds-button_brand">
+                      Reset Password
                     </button>
                   </div>
                 </form>

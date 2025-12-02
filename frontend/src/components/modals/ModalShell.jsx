@@ -40,7 +40,7 @@ export default function ModalShell({ isOpen, onClose, title, children, footer, m
           {children}
         </div>
 
-        <div className="modal-footer" style={{ padding: 'var(--token-spacing-md) var(--token-spacing-xl)', borderTop: '1px solid var(--token-ui-border-subtle)', display: 'flex', justifyContent: 'flex-end', gap: 'var(--token-spacing-sm)', background: 'var(--token-ui-background-neutral)' }}>
+        <div className="modal-footer slds-modal__footer">
           {footer}
         </div>
       </div>

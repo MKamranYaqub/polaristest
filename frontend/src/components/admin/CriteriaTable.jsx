@@ -538,7 +538,7 @@ function CriteriaTable() {
         <div className="error-box">
           <h3>Error Loading Criteria</h3>
           <p>{error}</p>
-          <button className="btn-primary" onClick={fetchCriteria}>
+          <button className="slds-button slds-button_brand" onClick={fetchCriteria}>
             Try Again
           </button>
         </div>
@@ -550,7 +550,7 @@ function CriteriaTable() {
     <div className="admin-table-container">
       <div className="table-header">
         <div className="table-actions-left">
-          <button className="btn-primary" onClick={handleAdd}>
+          <button className="slds-button slds-button_brand" onClick={handleAdd}>
             Add New Criteria
           </button>
           <input
@@ -560,15 +560,15 @@ function CriteriaTable() {
             style={{ display: 'none' }}
             id="criteria-csv-import"
           />
-          <button className="btn-secondary" 
+          <button className="slds-button slds-button_neutral" 
             onClick={() => document.getElementById('criteria-csv-import').click()}>
             Import CSV
           </button>
-          <button className="btn-secondary" onClick={handleExport}>
+          <button className="slds-button slds-button_neutral" onClick={handleExport}>
             Export CSV
           </button>
           {selectedRows.size > 0 && (
-            <button className="btn-danger" onClick={handleBulkDelete}>
+            <button className="slds-button slds-button_destructive" onClick={handleBulkDelete}>
               Delete Selected ({selectedRows.size})
             </button>
           )}
@@ -577,7 +577,7 @@ function CriteriaTable() {
         <div className="table-actions-right">
           <div className="pagination-controls">
             <button
-              className="btn-neutral"
+              className="slds-button slds-button_neutral"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
             >
@@ -585,7 +585,7 @@ function CriteriaTable() {
             </button>
             <span className="pagination-info">Page {currentPage} of {totalPages}</span>
             <button
-              className="btn-neutral"
+              className="slds-button slds-button_neutral"
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
             >
@@ -650,8 +650,8 @@ function CriteriaTable() {
                 </div>
               </div>
               <div className="slds-modal__footer">
-                <button className="btn-neutral" onClick={cancelImport} disabled={importLoading}>Cancel</button>
-                <button className="btn-primary" onClick={confirmImport} disabled={importLoading}>{importLoading ? 'Importing...' : 'Import'}</button>
+                <button className="slds-button slds-button_neutral" onClick={cancelImport} disabled={importLoading}>Cancel</button>
+                <button className="slds-button slds-button_brand" onClick={confirmImport} disabled={importLoading}>{importLoading ? 'Importing...' : 'Import'}</button>
               </div>
             </div>
           </div>
@@ -762,13 +762,13 @@ function CriteriaTable() {
                   <td className="sticky-action">
                     <div className="row-actions">
                       <button
-                        className="btn-neutral"
+                        className="slds-button slds-button_neutral"
                         onClick={() => handleEdit(item)}
                       >
                         Edit
                       </button>
                       <button
-                        className="btn-danger"
+                        className="slds-button slds-button_destructive"
                         onClick={() => handleDelete(item)}
                       >
                         Delete

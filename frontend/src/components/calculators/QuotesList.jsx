@@ -320,7 +320,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         <div className="table-header">
           <div className="table-actions-left">
             <button 
-              className="btn-primary" 
+              className="slds-button slds-button_brand" 
               onClick={handleExport}
               disabled={exporting || loading}
             >
@@ -331,7 +331,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
           <div className="table-actions-right">
             <div className="pagination-controls">
               <button 
-                className="btn-neutral"
+                className="slds-button slds-button_neutral"
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
               >
@@ -339,7 +339,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
               </button>
               <span className="pagination-info">Page {currentPage} of {totalPages}</span>
               <button 
-                className="btn-neutral"
+                className="slds-button slds-button_neutral"
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
               >
@@ -459,7 +459,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
           <div className="filter-field">
             <label style={{ visibility: 'hidden' }}>Actions</label>
             <button 
-              className="btn-secondary" 
+              className="slds-button slds-button_neutral" 
               onClick={() => {
                 setFilterName('');
                 setFilterRef('');
@@ -596,8 +596,8 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                 <td>{q.updated_at ? new Date(q.updated_at).toLocaleString() : '—'}</td>
                 <td className="sticky-action">
                   <div className="row-actions">
-                    <button className="btn-neutral" onClick={() => handleLoad(q.id)}>Load</button>
-                    <button className="btn-danger" onClick={() => handleDelete(q.id)}>Delete</button>
+                    <button className="slds-button slds-button_neutral" onClick={() => handleLoad(q.id)}>Load</button>
+                    <button className="slds-button slds-button_destructive" onClick={() => handleDelete(q.id)}>Delete</button>
                   </div>
                 </td>
               </tr>

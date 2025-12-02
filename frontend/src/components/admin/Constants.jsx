@@ -40,8 +40,6 @@ export default function Constants() {
   const [brokerCommissionTolerance, setBrokerCommissionTolerance] = useState(DEFAULT_BROKER_COMMISSION_TOLERANCE);
   const [fundingLinesBTL, setFundingLinesBTL] = useState([]);
   const [fundingLinesBridge, setFundingLinesBridge] = useState([]);
-  const [uiPreferences, setUiPreferences] = useState(DEFAULT_UI_PREFERENCES);
-  const [jsonInput, setJsonInput] = useState('');
   const [message, setMessage] = useState('');
   const { supabase } = useSupabase();
   const [saving, setSaving] = useState(false);
@@ -80,7 +78,6 @@ export default function Constants() {
       setBrokerCommissionTolerance(overrides.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE);
       setFundingLinesBTL(overrides.fundingLinesBTL || FUNDING_LINES_BTL);
       setFundingLinesBridge(overrides.fundingLinesBridge || FUNDING_LINES_BRIDGE);
-      setUiPreferences(overrides.uiPreferences || DEFAULT_UI_PREFERENCES);
       // initialize temp values
       const tv = {};
       // product lists: tolerate malformed overrides (strings/arrays) and fall back to defaults per key
@@ -212,27 +209,6 @@ export default function Constants() {
     } finally {
       setEditingFields(prev => ({ ...prev, [key]: false }));
     }
-  };
-
-  const exportJson = () => {
-    const payload = { 
-      productLists, 
-      feeColumns, 
-      flatAboveCommercialRule, 
-      marketRates, 
-      brokerRoutes, 
-      brokerCommissionDefaults, 
-      brokerCommissionTolerance,
-      fundingLinesBTL,
-      fundingLinesBridge
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'constants-export.json';
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   // Persist to Supabase (best-effort). Expects a table `app_constants` with columns `key` (text PK) and `value` (jsonb).
@@ -368,31 +344,6 @@ export default function Constants() {
     return () => { mounted = false; };
   }, [supabase]);
 
-  const importJson = () => {
-    try {
-      const parsed = JSON.parse(jsonInput);
-      setProductLists(parsed.productLists || DEFAULT_PRODUCT_TYPES_LIST);
-      setFeeColumns(parsed.feeColumns || DEFAULT_FEE_COLUMNS);
-      setFlatAboveCommercialRule(parsed.flatAboveCommercialRule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE);
-      setMarketRates(parsed.marketRates || DEFAULT_MARKET_RATES);
-      setBrokerRoutes(parsed.brokerRoutes || DEFAULT_BROKER_ROUTES);
-      setBrokerCommissionDefaults(parsed.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS);
-      setBrokerCommissionTolerance(parsed.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE);
-      writeOverrides({ 
-        productLists: parsed.productLists, 
-        feeColumns: parsed.feeColumns, 
-        flatAboveCommercialRule: parsed.flatAboveCommercialRule, 
-        marketRates: parsed.marketRates,
-        brokerRoutes: parsed.brokerRoutes,
-        brokerCommissionDefaults: parsed.brokerCommissionDefaults,
-        brokerCommissionTolerance: parsed.brokerCommissionTolerance
-      });
-      setMessage('Imported and saved to localStorage.');
-    } catch (e) {
-      setMessage('Invalid JSON: ' + (e.message || e));
-    }
-  };
-
   const saveToStorage = async () => {
     const payload = { 
       productLists, 
@@ -403,8 +354,7 @@ export default function Constants() {
       brokerCommissionDefaults, 
       brokerCommissionTolerance,
       fundingLinesBTL,
-      fundingLinesBridge,
-      uiPreferences
+      fundingLinesBridge
     };
     writeOverrides(payload);
     setMessage('Saved to localStorage. This will take effect for open calculator tabs.');
@@ -434,7 +384,6 @@ export default function Constants() {
           broker_commission_tolerance: payload.brokerCommissionTolerance ?? null,
           funding_lines_btl: payload.fundingLinesBTL || null,
           funding_lines_bridge: payload.fundingLinesBridge || null,
-          ui_preferences: payload.uiPreferences || null,
         };
         try {
           const { data: inserted, error: insertErr } = await supabase.from('app_constants').insert([insertRow]).select('*');
@@ -448,7 +397,6 @@ export default function Constants() {
             setMessage('Saved to localStorage and persisted structured constants to Supabase.');
             setNotification({ show: true, type: 'success', title: 'Success', message: 'Save successful — structured constants persisted.' });
             // Dispatch event so other components update immediately
-            window.dispatchEvent(new CustomEvent('uiPreferencesChanged', { detail: payload.uiPreferences }));
             window.dispatchEvent(new StorageEvent('storage', {
               key: LOCALSTORAGE_CONSTANTS_KEY,
               newValue: JSON.stringify(payload),
@@ -465,14 +413,12 @@ export default function Constants() {
                   setFeeColumns(row.fee_columns || DEFAULT_FEE_COLUMNS);
                   setFlatAboveCommercialRule(row.flat_above_commercial_rule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE);
                   setMarketRates(row.market_rates || DEFAULT_MARKET_RATES);
-                  setUiPreferences(row.ui_preferences || DEFAULT_UI_PREFERENCES);
                 } else if (row.value) {
                   const v = row.value;
                   setProductLists(v.productLists || DEFAULT_PRODUCT_TYPES_LIST);
                   setFeeColumns(v.feeColumns || DEFAULT_FEE_COLUMNS);
                   setFlatAboveCommercialRule(v.flatAboveCommercialRule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE);
                   setMarketRates(v.marketRates || DEFAULT_MARKET_RATES);
-                  setUiPreferences(v.uiPreferences || DEFAULT_UI_PREFERENCES);
                 }
               }
             } catch (e) {
@@ -497,7 +443,6 @@ export default function Constants() {
       } else {
         setMessage('Saved to localStorage and persisted to Supabase.');
         // Dispatch event so other components update immediately
-        window.dispatchEvent(new CustomEvent('uiPreferencesChanged', { detail: payload.uiPreferences }));
         window.dispatchEvent(new StorageEvent('storage', {
           key: LOCALSTORAGE_CONSTANTS_KEY,
           newValue: JSON.stringify(payload),
@@ -522,7 +467,6 @@ export default function Constants() {
     setBrokerCommissionTolerance(DEFAULT_BROKER_COMMISSION_TOLERANCE);
     setFundingLinesBTL(FUNDING_LINES_BTL);
     setFundingLinesBridge(FUNDING_LINES_BRIDGE);
-    setUiPreferences(DEFAULT_UI_PREFERENCES);
     const payload = { 
       productLists: DEFAULT_PRODUCT_TYPES_LIST, 
       feeColumns: DEFAULT_FEE_COLUMNS, 
@@ -532,13 +476,11 @@ export default function Constants() {
       brokerCommissionDefaults: DEFAULT_BROKER_COMMISSION_DEFAULTS,
       brokerCommissionTolerance: DEFAULT_BROKER_COMMISSION_TOLERANCE,
       fundingLinesBTL: FUNDING_LINES_BTL,
-      fundingLinesBridge: FUNDING_LINES_BRIDGE,
-      uiPreferences: DEFAULT_UI_PREFERENCES
+      fundingLinesBridge: FUNDING_LINES_BRIDGE
     };
     setMessage('Reset to defaults and removed overrides from localStorage.');
     localStorage.removeItem(LOCALSTORAGE_CONSTANTS_KEY);
     // Dispatch events
-    window.dispatchEvent(new CustomEvent('uiPreferencesChanged', { detail: DEFAULT_UI_PREFERENCES }));
     window.dispatchEvent(new StorageEvent('storage', {
       key: LOCALSTORAGE_CONSTANTS_KEY,
       newValue: null,
@@ -566,7 +508,6 @@ export default function Constants() {
           broker_commission_tolerance: payload.brokerCommissionTolerance,
           funding_lines_btl: payload.fundingLinesBTL,
           funding_lines_bridge: payload.fundingLinesBridge,
-          ui_preferences: payload.uiPreferences,
         };
         const { error: upsertErr } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
         setSaving(false);
@@ -1015,73 +956,6 @@ export default function Constants() {
     }
   };
 
-  // Update UI preferences (keyboard shortcuts toggle)
-  const updateUiPreferences = async (changes) => {
-    const newPrefs = { ...(uiPreferences || {}), ...changes };
-    setUiPreferences(newPrefs);
-    const currentOverrides = {
-      productLists: productLists,
-      feeColumns: feeColumns,
-      flatAboveCommercialRule: flatAboveCommercialRule,
-      marketRates: marketRates,
-      brokerRoutes: brokerRoutes,
-      brokerCommissionDefaults: brokerCommissionDefaults,
-      brokerCommissionTolerance: brokerCommissionTolerance,
-      fundingLinesBTL: fundingLinesBTL,
-      fundingLinesBridge: fundingLinesBridge,
-      uiPreferences: newPrefs
-    };
-    writeOverrides(currentOverrides);
-    // Dispatch custom event so other components can react immediately
-    window.dispatchEvent(new CustomEvent('uiPreferencesChanged', { detail: newPrefs }));
-    // Also dispatch storage event for backwards compatibility
-    window.dispatchEvent(new StorageEvent('storage', {
-      key: LOCALSTORAGE_CONSTANTS_KEY,
-      newValue: JSON.stringify(currentOverrides),
-      url: window.location.href,
-      storageArea: localStorage
-    }));
-    setMessage('UI preferences saved to localStorage and syncing to database...');
-    
-    // Also persist to database immediately
-    try {
-      let tryStructured = structuredSupported;
-      if (tryStructured === null) {
-        tryStructured = await detectStructuredSupport();
-        setStructuredSupported(tryStructured);
-      }
-
-      if (tryStructured && supabase) {
-        const upsertRow = {
-          key: 'app.constants',
-          ui_preferences: newPrefs,
-        };
-        const { error } = await supabase.from('app_constants').upsert([upsertRow], { 
-          onConflict: 'key',
-          ignoreDuplicates: false 
-        });
-        
-        if (error) {
-          
-          setMessage('UI preferences saved locally but failed to sync to database.');
-        } else {
-          setMessage('UI preferences saved and synced to database.');
-        }
-      } else {
-        // Fallback to value column
-        const { error } = await saveToSupabase(currentOverrides);
-        if (error) {
-          setMessage('UI preferences saved locally but failed to sync to database.');
-        } else {
-          setMessage('UI preferences saved and synced to database.');
-        }
-      }
-    } catch (e) {
-      
-      setMessage('UI preferences saved locally but error syncing to database.');
-    }
-  };
-
   // Add new broker route
   const addBrokerRoute = async () => {
     // Validate inputs
@@ -1317,12 +1191,11 @@ export default function Constants() {
     <div className="slds-p-around_medium">
 
       <p className="helper-text">Edit product lists, fee columns and LTV thresholds.</p>
-      <div className="button-group-end">
+      <div className="slds-actions">
+        <button className="slds-button slds-button_destructive" onClick={resetToDefaults}>Reset defaults</button>
         <button className="slds-button slds-button_brand" onClick={saveToStorage} disabled={saving}>
           {saving ? 'Saving...' : 'Save All to Database'}
         </button>
-        <button className="slds-button slds-button_outline-brand" onClick={exportJson}>Export JSON</button>
-        <button className="slds-button slds-button_destructive" onClick={resetToDefaults}>Reset defaults</button>
       </div>
 
       <section className="slds-box slds-m-bottom_medium section-divider">
@@ -1806,75 +1679,13 @@ export default function Constants() {
           </div>
       </section>
 
-      {/* UI Preferences Section */}
-      <section className="slds-card slds-p-around_medium slds-m-bottom_medium">
-        <h3 className="slds-text-heading_small slds-m-bottom_small">UI Preferences</h3>
-        <p className="slds-m-bottom_medium">Control keyboard shortcuts and visual hints throughout the application.</p>
-        
-        <div className="slds-grid slds-gutters slds-wrap">
-          <div className="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
-            <div className="slds-form-element">
-              <label className="slds-checkbox_toggle slds-grid">
-                <span className="slds-form-element__label slds-m-bottom_none">Enable Keyboard Shortcuts</span>
-                <input
-                  type="checkbox"
-                  name="keyboardShortcutsEnabled"
-                  checked={uiPreferences?.keyboardShortcutsEnabled ?? true}
-                  onChange={(e) => updateUiPreferences({ keyboardShortcutsEnabled: e.target.checked })}
-                  aria-describedby="shortcuts-desc"
-                />
-                <span id="slds-toggle-desc-shortcuts" className="slds-checkbox_faux_container" aria-live="assertive">
-                  <span className="slds-checkbox_faux"></span>
-                  <span className="slds-checkbox_on">Enabled</span>
-                  <span className="slds-checkbox_off">Disabled</span>
-                </span>
-              </label>
-              <div id="shortcuts-desc" className="helper-text slds-m-top_x-small">
-                Enable or disable keyboard shortcuts (Ctrl+S to save, Esc to close modals, etc.)
-              </div>
-            </div>
-          </div>
-
-          <div className="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
-            <div className="slds-form-element">
-              <label className="slds-checkbox_toggle slds-grid">
-                <span className="slds-form-element__label slds-m-bottom_none">Show Keyboard Hints</span>
-                <input
-                  type="checkbox"
-                  name="showKeyboardHints"
-                  checked={uiPreferences?.showKeyboardHints ?? true}
-                  onChange={(e) => updateUiPreferences({ showKeyboardHints: e.target.checked })}
-                  aria-describedby="hints-desc"
-                />
-                <span id="slds-toggle-desc-hints" className="slds-checkbox_faux_container" aria-live="assertive">
-                  <span className="slds-checkbox_faux"></span>
-                  <span className="slds-checkbox_on">Visible</span>
-                  <span className="slds-checkbox_off">Hidden</span>
-                </span>
-              </label>
-              <div id="hints-desc" className="helper-text slds-m-top_x-small">
-                Show or hide visual keyboard shortcut hints on buttons (e.g., "Ctrl+S" badges)
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Flat-above-commercial override removed — rule is now hard-coded in calculator logic per user request. */}
 
-      <div className="slds-button-group">
+      <div className="slds-actions">
+        <button className="slds-button slds-button_destructive" onClick={resetToDefaults}>Reset defaults</button>
         <button className="slds-button slds-button_brand" onClick={saveToStorage} disabled={saving}>
           {saving ? 'Saving...' : 'Save All to Database'}
         </button>
-        <button className="slds-button slds-button_outline-brand" onClick={exportJson}>Export JSON</button>
-        <button className="slds-button slds-button_destructive" onClick={resetToDefaults}>Reset defaults</button>
-      </div>
-
-      <hr />
-      <h4>Import JSON</h4>
-      <textarea className="slds-textarea" rows={6} value={jsonInput} onChange={(e) => setJsonInput(e.target.value)} />
-      <div className="slds-m-top_small">
-        <button className="slds-button slds-button_brand" onClick={importJson}>Import & Save</button>
       </div>
 
       {message && <div className="slds-text-title_caps slds-m-top_small">{message}</div>}

@@ -1447,30 +1447,28 @@ export default function GlobalSettings() {
         </>
       )}
 
-      {/* Action Buttons */}
-      <div className="slds-grid slds-gutters slds-m-top_medium">
-        <div className="slds-col slds-size_1-of-1">
-          <button
-            className="slds-button slds-button_brand slds-m-right_small"
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? (
-              <>
-                <InlineLoading description="Saving..." />
-              </>
-            ) : (
-              'Save Settings'
-            )}
-          </button>
-          <button
-            className="slds-button slds-button_neutral"
-            onClick={handleReset}
-            disabled={saving}
-          >
-            Reset to Defaults
-          </button>
-        </div>
+      {/* Action Buttons - right-aligned */}
+      <div className="slds-actions slds-actions_bordered">
+        <button
+          className="slds-button slds-button_neutral"
+          onClick={handleReset}
+          disabled={saving}
+        >
+          Reset to Defaults
+        </button>
+        <button
+          className="slds-button slds-button_brand"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving ? (
+            <>
+              <InlineLoading description="Saving..." />
+            </>
+          ) : (
+            'Save Settings'
+          )}
+        </button>
       </div>
 
       {/* Notification Modal */}
