@@ -84,12 +84,8 @@ const BridgingProductSection = ({
   }
 
   return (
-    <div style={{ 
+    <div className="product-config-section" style={{ 
       marginBottom: 'var(--token-spacing-lg)',
-      backgroundColor: 'white',
-      padding: 'var(--token-spacing-md)',
-      borderRadius: 'var(--token-radius-sm)',
-      boxShadow: 'var(--token-shadow-card)'
     }}>
       {/* Row 1: Product Type and All Action Buttons */}
       <div className="product-section-row-1" style={{ 

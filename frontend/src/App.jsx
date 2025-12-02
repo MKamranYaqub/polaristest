@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Content, Theme } from '@carbon/react';
 import '@carbon/styles/css/styles.css';
@@ -38,6 +38,24 @@ const AppContent = () => {
   
   // Load and apply header colors from Supabase
   useHeaderColors();
+  
+  // Add keyboard shortcut to clear cache (Ctrl+Shift+R or Cmd+Shift+R)
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
+        e.preventDefault();
+        console.log('Clearing cache...');
+        if ('caches' in window) {
+          caches.keys().then(names => {
+            names.forEach(name => caches.delete(name));
+          });
+        }
+        window.location.reload(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
   
   // Public routes that shouldn't show navigation
   const isPublicRoute = ['/login', '/forgot-password', '/reset-password'].includes(location.pathname);

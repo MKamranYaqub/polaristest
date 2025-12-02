@@ -120,6 +120,57 @@ input[type="range"] {
   box-shadow: var(--token-shadow-card);
 }
 
+// Product configuration sections
+.product-config-section {
+  background: $token-color-surface;
+  padding: $spacing-md;
+  border-radius: $token-radius-sm;
+  box-shadow: var(--token-shadow-card);
+  border: 1px solid $token-color-border-subtle;
+}
+
+.btl-product-selector {
+  background: $token-color-surface;
+  padding: $spacing-md;
+  border-radius: $token-radius-sm;
+  box-shadow: var(--token-shadow-card);
+  border: 1px solid $token-color-border-subtle;
+  margin-bottom: $spacing-md;
+  
+  .top-filters {
+    display: flex;
+    gap: $spacing-md;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    
+    .slds-form-element {
+      flex: 1;
+      min-width: 150px;
+    }
+    
+    .tier-display {
+      display: flex;
+      align-items: center;
+      gap: var(--token-spacing-sm);
+      padding: var(--token-spacing-sm) var(--token-spacing-md);
+      background: var(--token-info-bg);
+      border-radius: $token-radius-sm;
+      border: 1px solid var(--token-info);
+      
+      .tier-label {
+        font-size: 0.875rem;
+        color: $token-text-secondary;
+      }
+      
+      .tier-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: $token-text-primary;
+      }
+    }
+  }
+}
+
 .collapsible-header {
   display: flex;
   align-items: center;

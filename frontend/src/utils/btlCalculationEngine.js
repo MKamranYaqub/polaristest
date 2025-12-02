@@ -745,6 +745,7 @@ export class BTLCalculationEngine {
       actualRateUsed: displayRate,
       isRateOverridden: this.overriddenRate != null,
       payRateText,
+      payRate: payRateForDisplay,
       
       // Loan amounts
       grossLoan: bestLoan.grossLoan,

@@ -63,10 +63,21 @@ router.post('/', validate(createQuoteSchema), asyncHandler(async (req, res) => {
   if (savedQuote && results && Array.isArray(results) && results.length > 0) {
     log.info(`💾 Saving ${results.length} results to ${resultsTable}`);
     
-    const resultsToInsert = results.map(result => ({
-      quote_id: savedQuote.id,
-      ...result
-    }));
+    const resultsToInsert = results.map(result => {
+      // Compute serviced_months = initial_term - rolled_months when possible
+      const initialTerm = toNullableNumber(result.initial_term);
+      const rolledMonths = toNullableNumber(result.rolled_months);
+      const servicedMonths = (initialTerm !== null && rolledMonths !== null)
+        ? Math.max(0, initialTerm - rolledMonths)
+        : null;
+
+      return {
+        quote_id: savedQuote.id,
+        ...result,
+        // Add computed serviced_months for downstream consumers (PDFs, exports)
+        serviced_months: servicedMonths,
+      };
+    });
     
     // Log sample of first result to verify title_insurance_cost is present
     if (resultsToInsert.length > 0) {
@@ -244,10 +255,19 @@ router.put('/:id', validate(updateQuoteSchema), asyncHandler(async (req, res) =>
     await supabase.from(resultsTable).delete().eq('quote_id', id);
     
     // Insert new results
-    const resultsToInsert = results.map(result => ({
-      quote_id: id,
-      ...result
-    }));
+    const resultsToInsert = results.map(result => {
+      const initialTerm = toNullableNumber(result.initial_term);
+      const rolledMonths = toNullableNumber(result.rolled_months);
+      const servicedMonths = (initialTerm !== null && rolledMonths !== null)
+        ? Math.max(0, initialTerm - rolledMonths)
+        : null;
+
+      return {
+        quote_id: id,
+        ...result,
+        serviced_months: servicedMonths,
+      };
+    });
     
     // Log sample of first result to verify title_insurance_cost is present
     if (resultsToInsert.length > 0) {

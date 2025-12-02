@@ -22,8 +22,9 @@ import useBrokerSettings from '../../hooks/calculator/useBrokerSettings';
 import { useResultsVisibility } from '../../hooks/useResultsVisibility';
 import { useResultsRowOrder } from '../../hooks/useResultsRowOrder';
 import { useResultsLabelAlias } from '../../hooks/useResultsLabelAlias';
-import { getQuote, upsertQuoteData, requestQuotePdf } from '../../utils/quotes';
+import { getQuote, upsertQuoteData } from '../../utils/quotes';
 import { downloadDIPPDF } from '../../utils/generateDIPPDF';
+import { downloadQuotePDF } from '../../utils/generateQuotePDF';
 import { parseNumber, formatCurrency, formatPercent } from '../../utils/calculator/numberFormatting';
 import { computeTierFromAnswers } from '../../utils/calculator/rateFiltering';
 import { computeBTLLoan } from '../../utils/btlCalculationEngine';
@@ -37,6 +38,37 @@ import {
   LOCALSTORAGE_CONSTANTS_KEY, 
   FLAT_ABOVE_COMMERCIAL_RULE as DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE
 } from '../../config/constants';
+
+/**
+ * Parse rate metadata from product name for historical quote accuracy
+ * Example: "2yr Fix" → { initial_term: 24, revert_rate_type: "MVR" }
+ */
+function parseRateMetadata(rate) {
+  const productName = rate.product || rate.product_name || '';
+  
+  // Extract term from product name (e.g., "2yr", "3yr", "5yr")
+  const termMatch = productName.match(/(\d+)\s*yr/i);
+  const initialTerm = termMatch ? parseInt(termMatch[1]) * 12 : null;
+  
+  // Default full term is 25 years (300 months) for BTL
+  const fullTerm = 300;
+  
+  // Determine revert rate type from product name
+  let revertRateType = 'MVR'; // Default to MVR
+  if (productName.toLowerCase().includes('tracker')) {
+    revertRateType = rate.revert || 'Tracker';
+  } else if (productName.toLowerCase().includes('variable')) {
+    revertRateType = 'SVR';
+  } else if (rate.revert) {
+    revertRateType = rate.revert;
+  }
+  
+  return {
+    initial_term: initialTerm,
+    full_term: fullTerm,
+    revert_rate_type: revertRateType,
+  };
+}
 
 export default function BTLcalculator({ initialQuote = null }) {
   const { supabase } = useSupabase();
@@ -96,10 +128,6 @@ export default function BTLcalculator({ initialQuote = null }) {
   const [propertyValue, setPropertyValue] = useState('');
   const [monthlyRent, setMonthlyRent] = useState('');
   // (Removed additional propertyType state - productScope drives product lists)
-  // Additional fees UI
-  const [addFeesToggle, setAddFeesToggle] = useState(false);
-  const [feeCalculationType, setFeeCalculationType] = useState(''); // '' = 'please select', 'pound' or 'percentage'
-  const [additionalFeeAmount, setAdditionalFeeAmount] = useState('');
   // normalize loanType values to match select option values used in the JSX
   const [loanType, setLoanType] = useState(''); // Start with empty - user must select
   const [specificGrossLoan, setSpecificGrossLoan] = useState('');
@@ -267,7 +295,7 @@ export default function BTLcalculator({ initialQuote = null }) {
           funding_line: quote.funding_line,
           dip_date: quote.dip_date,
           dip_expiry_date: quote.dip_expiry_date,
-          applicant_type: quote.applicant_type,
+          applicant_type: quote.applicant_type || (quote.borrower_type === 'Company' ? 'Corporate' : (quote.borrower_type ? 'Personal' : '')),
           guarantor_name: quote.guarantor_name,
           lender_legal_fee: quote.lender_legal_fee,
           number_of_applicants: quote.number_of_applicants,
@@ -294,12 +322,9 @@ export default function BTLcalculator({ initialQuote = null }) {
       if (quote.retention_choice) setRetentionChoice(quote.retention_choice);
       if (quote.top_slicing != null) setTopSlicing(String(quote.top_slicing));
       if (quote.target_ltv != null) setMaxLtvInput(Number(quote.target_ltv));
-      if (quote.add_fees_toggle != null) setAddFeesToggle(quote.add_fees_toggle);
-      if (quote.fee_calculation_type) setFeeCalculationType(quote.fee_calculation_type);
-      if (quote.additional_fee_amount != null) setAdditionalFeeAmount(String(quote.additional_fee_amount));
       if (quote.selected_range) setSelectedRange(quote.selected_range);
       
-      // Note: Client details are loaded by useBrokerSettings hook
+      // Note: Client details and fee settings are loaded by useBrokerSettings hook
       
       // Load calculated results if available (from quote_results table)
       if (quote.results && Array.isArray(quote.results) && quote.results.length > 0) {
@@ -735,22 +760,25 @@ export default function BTLcalculator({ initialQuote = null }) {
     const specificNet = parseNumber(specificNetLoan);
     const monthlyRentNum = parseNumber(monthlyRent);
     const topSlicingNum = parseNumber(topSlicing);
-    const additionalFeeNum = parseNumber(additionalFeeAmount);
 
     const results = [];
 
     relevantRates.forEach(rate => {
       const derivedProcFeePct = brokerSettings.clientType === 'Broker' ? Number(brokerSettings.brokerCommissionPercent) || 0 : 0;
       
-      const additionalFeeRaw = Number(additionalFeeNum);
-      const derivedBrokerFeePct = (addFeesToggle && feeCalculationType === 'percentage' && Number.isFinite(additionalFeeRaw))
+      const additionalFeeRaw = Number(brokerSettings.additionalFeeAmount);
+      const derivedBrokerFeePct = (brokerSettings.addFeesToggle && brokerSettings.feeCalculationType === 'percentage' && Number.isFinite(additionalFeeRaw))
         ? additionalFeeRaw
         : 0;
-      const derivedBrokerFeeFlat = (addFeesToggle && feeCalculationType === 'fixed' && Number.isFinite(additionalFeeRaw))
+      const derivedBrokerFeeFlat = (brokerSettings.addFeesToggle && brokerSettings.feeCalculationType === 'fixed' && Number.isFinite(additionalFeeRaw))
         ? additionalFeeRaw
         : 0;
 
-      const colKey = `rate_${rate.id || Math.random()}`;
+      // Use the same column key format as the UI table (Fee: 5%, Fee: 6%, etc.)
+      const productFee = rate.product_fee;
+      const colKey = (productFee === undefined || productFee === null || productFee === '') 
+        ? 'Fee: —' 
+        : `Fee: ${productFee}%`;
 
       const calculationParams = {
         colKey,
@@ -783,6 +811,30 @@ export default function BTLcalculator({ initialQuote = null }) {
       const result = computeBTLLoan(calculationParams);
 
       if (result) {
+        // Parse metadata from product name if not present in rate
+        const metadata = parseRateMetadata(rate);
+        
+        // Debug: Log retention fields from rate before saving
+        if (results.length === 0) {
+          console.log('🔍 First rate object retention fields:', {
+            is_retention: rate.is_retention,
+            retention: rate.retention,
+            retention_type: rate.retention_type,
+            isRetention: rate.isRetention,
+            allRateKeys: Object.keys(rate).filter(k => k.toLowerCase().includes('retention'))
+          });
+          console.log('🔍 Broker fee calculation:', {
+            addFeesToggle: brokerSettings.addFeesToggle,
+            feeCalculationType: brokerSettings.feeCalculationType,
+            additionalFeeAmount: brokerSettings.additionalFeeAmount,
+            derivedBrokerFeePct,
+            derivedBrokerFeeFlat,
+            resultBrokerClientFee: result.brokerClientFee,
+            resultBrokerFeeValue: result.brokerFeeValue,
+            grossLoan: result.grossLoan
+          });
+        }
+        
         results.push({
           ...rate,
           fee_column: rate.product_fee !== undefined && rate.product_fee !== null && rate.product_fee !== '' 
@@ -795,7 +847,7 @@ export default function BTLcalculator({ initialQuote = null }) {
           property_value: pv,
           icr: result.icr,
           initial_rate: result.actualRateUsed * 100,
-          pay_rate: result.actualRateUsed * 100,
+          pay_rate: result.payRate * 100,
           full_rate: result.fullRateText,
           revert_rate: result.revertRate,
           revert_rate_dd: result.revertRateDD,
@@ -822,12 +874,48 @@ export default function BTLcalculator({ initialQuote = null }) {
           total_loan_term: result.totalLoanTerm,
           titleInsuranceCost: result.titleInsuranceCost,
           product_name: result.productName,
+          // Complete rate metadata - use parsed values if not in rate
+          initial_term: rate.initial_term || metadata.initial_term,
+          full_term: rate.full_term || metadata.full_term,
+          revert_rate_type: rate.revert_rate_type || metadata.revert_rate_type,
+          // Preserve the actual rate's product_range/rate_type, don't override with selectedRange
+          product_range: rate.product_range || rate.rate_type || null,
+          rate_type: rate.rate_type || rate.product_range || null,
+          revert_index: rate.revert_index || null,
+          revert_margin: rate.revert_margin || null,
+          min_loan: rate.min_loan || null,
+          max_loan: rate.max_loan || null,
+          min_ltv: rate.min_ltv || null,
+          max_ltv: rate.max_ltv || null,
+          max_rolled_months: rate.max_rolled_months || null,
+          max_defer_int: rate.max_defer_int || null,
+          min_icr: rate.min_icr || null,
+          tracker: rate.tracker || null,
+          tracker_flag: rate.tracker === true || rate.tracker === 'Yes',
+          max_top_slicing: rate.max_top_slicing || null,
+          admin_fee_amount: rate.admin_fee_amount || rate.admin_fee || null,
+          erc_1: rate.erc_1 || null,
+          erc_2: rate.erc_2 || null,
+          erc_3: rate.erc_3 || null,
+          erc_4: rate.erc_4 || null,
+          erc_5: rate.erc_5 || null,
+          status: rate.status || null,
+          rate_status: rate.status || null,
+          floor_rate: rate.floor_rate || null,
+          proc_fee: rate.proc_fee || null,
+          tier: rate.tier || null,
+          property_type: rate.property_type || rate.property || null,
+          retention: rate.retention || null,
+          retention_type: rate.retention || null,
+          is_retention: rate.is_retention !== undefined ? rate.is_retention : null,
+          rate_percent: rate.rate || null,
+          id: rate.id || null,
         });
       }
     });
 
     return results;
-  }, [relevantRates, propertyValue, monthlyRent, specificNetLoan, specificGrossLoan, maxLtvInput, topSlicing, loanType, productType, productScope, currentTier, selectedRange, answers, retentionChoice, retentionLtv, rolledMonthsPerColumn, deferredInterestPerColumn, ratesOverrides, productFeeOverrides, brokerSettings, addFeesToggle, feeCalculationType, additionalFeeAmount]);
+  }, [relevantRates, propertyValue, monthlyRent, specificNetLoan, specificGrossLoan, maxLtvInput, topSlicing, loanType, productType, productScope, currentTier, selectedRange, answers, retentionChoice, retentionLtv, rolledMonthsPerColumn, deferredInterestPerColumn, ratesOverrides, productFeeOverrides, brokerSettings]);
 
   const handleAnswerChange = (questionKey, optionIndex) => {
     setAnswers((prev) => {
@@ -923,7 +1011,7 @@ export default function BTLcalculator({ initialQuote = null }) {
               funding_line: quote.funding_line,
               dip_date: quote.dip_date,
               dip_expiry_date: quote.dip_expiry_date,
-              applicant_type: quote.applicant_type,
+              applicant_type: quote.applicant_type || (quote.borrower_type === 'Company' ? 'Corporate' : (quote.borrower_type ? 'Personal' : '')),
               guarantor_name: quote.guarantor_name,
               lender_legal_fee: quote.lender_legal_fee,
               number_of_applicants: quote.number_of_applicants,
@@ -1020,17 +1108,29 @@ export default function BTLcalculator({ initialQuote = null }) {
       if (response && response.quote) {
         setQuoteData(response.quote);
         
+        // Check if the quote has saved results in the database
+        const hasResults = response.quote.results && response.quote.results.length > 0;
+        
+        console.log('🔍 Issue Quote Debug:', {
+          quoteId: currentQuoteId,
+          hasResults,
+          resultsCount: response.quote.results ? response.quote.results.length : 0,
+          relevantRatesCount: relevantRates ? relevantRates.length : 0
+        });
+        
         // Warn if the quote has no saved results in the database
-        if (!response.quote.results || response.quote.results.length === 0) {
+        if (!hasResults) {
+          console.warn('⚠️ Quote has no saved results. This means Update Quote did not save results to quote_results table.');
           showToast({
             kind: 'warning',
             title: 'Quote not fully saved',
-            subtitle: 'Please click "Update Quote" to save your calculations before issuing the quote.'
+            subtitle: 'Please click "Update Quote" to save your calculations before issuing the quote. Check console for debugging info.'
           });
           return;
         }
       }
     } catch (error) {
+      console.error('Error fetching quote for Issue Quote:', error);
       // Continue anyway - use existing data
     }
     
@@ -1098,12 +1198,24 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   const handleSaveQuoteData = async (quoteId, updatedQuoteData) => {
     try {
+      // Increment version when issuing quote
+      const currentVersion = quoteData?.quote_version || 0;
+      const newVersion = currentVersion + 1;
+      
       await upsertQuoteData({
         quoteId,
         calculatorType: 'BTL',
-        payload: updatedQuoteData,
+        payload: {
+          ...updatedQuoteData,
+          quote_version: newVersion,
+        },
         token,
       });
+
+      // Update local quote data with new version
+      if (quoteData) {
+        setQuoteData({ ...quoteData, quote_version: newVersion });
+      }
 
       // Don't close modal or show alert here - let the modal handle it
     } catch (error) {
@@ -1113,19 +1225,9 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   const handleCreateQuotePDF = async (quoteId) => {
     try {
-      // Trigger PDF generation
-      const response = await requestQuotePdf(quoteId, token);
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `quote_${quoteId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
+      // Use React PDF generation (client-side) instead of backend PDF
+      await downloadQuotePDF(quoteId, 'BTL', quoteData?.reference_number || quoteId);
+      
       // Note: Success toast is shown by IssueQuoteModal
       setQuoteModalOpen(false);
     } catch (error) {
@@ -1354,6 +1456,7 @@ export default function BTLcalculator({ initialQuote = null }) {
               rolledMonthsPerColumn,
               deferredInterestPerColumn,
             }}
+            allColumnData={fullComputedResults || []}
             existingQuote={currentQuoteData}
             onSaved={(savedQuote) => {
               if (savedQuote && savedQuote.id) {
@@ -1517,13 +1620,25 @@ export default function BTLcalculator({ initialQuote = null }) {
 
             // Filter rates based on selected range
             const filteredRates = relevantRates.filter(r => {
-              const rateType = (r.rate_type || r.type || '').toString().toLowerCase();
+              // Check product_range field (primary), fallback to rate_type or type
+              const rangeField = (r.product_range || r.rate_type || r.type || '').toString().toLowerCase();
               if (selectedRange === 'core') {
-                return rateType === 'core' || rateType.includes('core');
+                return rangeField === 'core' || rangeField.includes('core');
               } else {
-                return rateType === 'specialist' || rateType.includes('specialist') || !rateType || rateType === '';
+                // Specialist: match 'specialist' or empty/null (defaults to specialist)
+                return rangeField === 'specialist' || rangeField.includes('specialist') || !rangeField || rangeField === '';
               }
             });
+
+            // Debug logging
+            if (filteredRates.length > 0) {
+              console.log(`Range filter: selected="${selectedRange}", found ${filteredRates.length} rates`);
+              console.log('Sample rate fields:', {
+                product_range: filteredRates[0].product_range,
+                rate_type: filteredRates[0].rate_type,
+                type: filteredRates[0].type
+              });
+            }
 
             // Build fee buckets (unique product_fee values). Use 'none' for rows without an explicit fee.
             const feeBucketsSet = new Set((filteredRates || []).map((r) => {
@@ -1689,6 +1804,17 @@ export default function BTLcalculator({ initialQuote = null }) {
                                         ? additionalFeeRaw
                                         : 0;
 
+                                      // Log fee override details for debugging
+                                      if (productFeeOverrides[colKey]) {
+                                        console.log('📊 Calculation with fee override:', {
+                                          colKey,
+                                          baseFee: fb,
+                                          override: productFeeOverrides[colKey],
+                                          manualRolled,
+                                          manualDeferred
+                                        });
+                                      }
+
                                       const calculationParams = {
                                         colKey,
                                         selectedRate: best,
@@ -1727,6 +1853,15 @@ export default function BTLcalculator({ initialQuote = null }) {
                                         if (!result.isManual) {
                                           optimizedValuesRef.current.rolled[colKey] = result.rolledMonths;
                                           optimizedValuesRef.current.deferred[colKey] = result.deferredCapPct;
+                                          // Log optimized values when fee override is active
+                                          if (productFeeOverrides[colKey]) {
+                                            console.log('✅ Optimized values calculated:', {
+                                              colKey,
+                                              rolledMonths: result.rolledMonths,
+                                              deferredCapPct: result.deferredCapPct,
+                                              isManual: result.isManual
+                                            });
+                                          }
                                         }
                                         
                                         // Initial Rate (display only)
@@ -2072,10 +2207,45 @@ export default function BTLcalculator({ initialQuote = null }) {
                                             columnValues={values['Product Fee %'] || {}}
                                             originalValues={originalProductFees}
                                             onValueChange={(newValue, columnKey) => {
-                                              setProductFeeOverrides(prev => ({ ...prev, [columnKey]: newValue }));
+                                              setProductFeeOverrides(prev => ({
+                                                ...prev,
+                                                [columnKey]: newValue
+                                              }));
+                                              // Reset manual mode for this column so it recalculates optimum rolled/deferred
+                                              setRolledMonthsPerColumn(prev => {
+                                                const updated = { ...prev };
+                                                delete updated[columnKey];
+                                                return updated;
+                                              });
+                                              setDeferredInterestPerColumn(prev => {
+                                                const updated = { ...prev };
+                                                delete updated[columnKey];
+                                                return updated;
+                                              });
+                                              setManualModeActivePerColumn(prev => {
+                                                const updated = { ...prev };
+                                                delete updated[columnKey];
+                                                return updated;
+                                              });
                                             }}
                                             onReset={(columnKey) => {
                                               setProductFeeOverrides(prev => {
+                                                const updated = { ...prev };
+                                                delete updated[columnKey];
+                                                return updated;
+                                              });
+                                              // Reset manual mode for this column when product fee is reset
+                                              setRolledMonthsPerColumn(prev => {
+                                                const updated = { ...prev };
+                                                delete updated[columnKey];
+                                                return updated;
+                                              });
+                                              setDeferredInterestPerColumn(prev => {
+                                                const updated = { ...prev };
+                                                delete updated[columnKey];
+                                                return updated;
+                                              });
+                                              setManualModeActivePerColumn(prev => {
                                                 const updated = { ...prev };
                                                 delete updated[columnKey];
                                                 return updated;

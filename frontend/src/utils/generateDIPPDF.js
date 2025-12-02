@@ -124,11 +124,18 @@ function getSelectedResult(quote, results) {
  */
 function prepareQuoteForPDF(quote, selectedResult) {
   // Debug logging
+  console.log('prepareQuoteForPDF - quote before merge:', {
+    rolled_months: quote.rolled_months,
+    rolled_months_interest: quote.rolled_months_interest,
+    deferred_interest_percent: quote.deferred_interest_percent,
+    deferred_interest_pounds: quote.deferred_interest_pounds
+  });
   console.log('prepareQuoteForPDF - selectedResult:', {
     rolled_months: selectedResult.rolled_months,
     rolled_months_interest: selectedResult.rolled_months_interest,
     deferred_interest_percent: selectedResult.deferred_interest_percent,
-    deferred_interest_pounds: selectedResult.deferred_interest_pounds
+    deferred_interest_pounds: selectedResult.deferred_interest_pounds,
+    all_keys: Object.keys(selectedResult)
   });
   
   // Merge selected result data into quote for the PDF component

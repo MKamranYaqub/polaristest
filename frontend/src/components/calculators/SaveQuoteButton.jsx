@@ -194,6 +194,19 @@ export default function SaveQuoteButton({
         
         // Filter rates by selected product range before saving
         let ratesToSave = calculationData.relevantRates || [];
+        console.log('📋 Rates to save:', {
+          totalRelevantRates: calculationData.relevantRates ? calculationData.relevantRates.length : 0,
+          showProductRangeSelection,
+          productRange,
+          firstRateHasMetadata: calculationData.relevantRates && calculationData.relevantRates[0] 
+            ? {
+                has_initial_term: 'initial_term' in calculationData.relevantRates[0],
+                has_revert_rate_type: 'revert_rate_type' in calculationData.relevantRates[0],
+                has_product_range: 'product_range' in calculationData.relevantRates[0]
+              }
+            : null
+        });
+        
         if (showProductRangeSelection && ratesToSave.length > 0) {
           ratesToSave = ratesToSave.filter(rate => {
             const rateType = (rate.rate_type || rate.type || '').toString().toLowerCase();
@@ -251,10 +264,55 @@ export default function SaveQuoteButton({
             total_loan_term: parseNumeric(rate.total_loan_term),
             title_insurance_cost: parseNumeric(rate.titleInsuranceCost || rate.title_insurance_cost),
             product_name: rate.product_name || rate.product || null,
+            // Complete rate metadata fields for historical accuracy
+            initial_term: rate.initial_term ? Number(rate.initial_term) : null,
+            full_term: rate.full_term ? Number(rate.full_term) : null,
+            revert_rate_type: rate.revert_rate_type || null,
+            product_range: rate.product_range || null,
+            rate_id: rate.id || rate.rate_id || null,
+            revert_index: rate.revert_index || null,
+            revert_margin: parseNumeric(rate.revert_margin),
+            min_loan: parseNumeric(rate.min_loan),
+            max_loan: parseNumeric(rate.max_loan),
+            min_ltv: parseNumeric(rate.min_ltv),
+            max_ltv: parseNumeric(rate.max_ltv),
+            max_rolled_months: rate.max_rolled_months ? Number(rate.max_rolled_months) : null,
+            max_defer_int: parseNumeric(rate.max_defer_int),
+            min_icr: parseNumeric(rate.min_icr),
+            tracker_flag: rate.tracker === true || rate.tracker === 'Yes' || rate.tracker_flag === true,
+            max_top_slicing: parseNumeric(rate.max_top_slicing),
+            admin_fee_amount: parseNumeric(rate.admin_fee_amount || rate.admin_fee),
+            erc_1: parseNumeric(rate.erc_1),
+            erc_2: parseNumeric(rate.erc_2),
+            erc_3: parseNumeric(rate.erc_3),
+            erc_4: parseNumeric(rate.erc_4),
+            erc_5: parseNumeric(rate.erc_5),
+            rate_status: rate.status || rate.rate_status || null,
+            floor_rate: parseNumeric(rate.floor_rate),
+            proc_fee: parseNumeric(rate.proc_fee),
+            tier: rate.tier || null,
+            property_type: rate.property_type || rate.property || null,
+            retention_type: rate.retention || rate.retention_type || null,
+            rate_percent: parseNumeric(rate.rate || rate.rate_percent),
+            product_fee_saved: parseNumeric(rate.product_fee),
           }));
           
-          // Log sample result for debugging
+          // Log sample result for debugging rate metadata
           if (quoteData.results.length > 0) {
+            console.log('📊 BTL Quote Results Sample:', {
+              totalResults: quoteData.results.length,
+              firstResult: {
+                fee_column: quoteData.results[0].fee_column,
+                initial_term: quoteData.results[0].initial_term,
+                full_term: quoteData.results[0].full_term,
+                rolled_months: quoteData.results[0].rolled_months,
+                revert_rate_type: quoteData.results[0].revert_rate_type,
+                product_range: quoteData.results[0].product_range,
+                has_all_metadata: !!(quoteData.results[0].initial_term && quoteData.results[0].revert_rate_type)
+              }
+            });
+          } else {
+            console.warn('⚠️ No results to save! Check if relevantRates has data.');
           }
         }
       }
@@ -349,6 +407,33 @@ export default function SaveQuoteButton({
             gross_ltv: parseNumeric(rate.ltv || rate.gross_ltv),
             arrangement_fee_gbp: parseNumeric(rate.product_fee_pounds || rate.arrangement_fee_gbp),
             arrangement_fee_pct: parseNumeric(rate.product_fee_percent || rate.arrangement_fee_pct),
+            
+            // Complete rate metadata fields for historical accuracy (Bridging-specific)
+            initial_term: rate.initial_term ? Number(rate.initial_term) : null,
+            full_term: rate.full_term ? Number(rate.full_term) : null,
+            revert_rate_type: rate.revert_rate_type || null,
+            product_range: rate.product_range || null,
+            rate_id: rate.id || rate.rate_id || null,
+            min_term: rate.min_term ? Number(rate.min_term) : null,
+            max_term: rate.max_term ? Number(rate.max_term) : null,
+            min_rolled: rate.min_rolled ? Number(rate.min_rolled) : null,
+            max_rolled: rate.max_rolled ? Number(rate.max_rolled) : null,
+            min_loan: parseNumeric(rate.min_loan),
+            max_loan: parseNumeric(rate.max_loan),
+            min_ltv: parseNumeric(rate.min_ltv),
+            max_ltv: parseNumeric(rate.max_ltv),
+            min_icr: parseNumeric(rate.min_icr),
+            max_defer: parseNumeric(rate.max_defer),
+            erc_1_percent: parseNumeric(rate.erc_1_percent || rate.erc_1),
+            erc_2_percent: parseNumeric(rate.erc_2_percent || rate.erc_2),
+            rate_percent: parseNumeric(rate.rate || rate.rate_percent),
+            product_fee_saved: parseNumeric(rate.product_fee),
+            charge_type: rate.charge_type || null,
+            type: rate.type || null,
+            product: rate.product || null,
+            property_type: rate.property_type || rate.property || null,
+            rate_status: rate.status || rate.rate_status || null,
+            tier: rate.tier || null,
           }));
           
           // Log sample result for debugging
@@ -358,6 +443,15 @@ export default function SaveQuoteButton({
       }
 
       const sanitizedQuoteData = sanitizeObject(quoteData);
+
+      console.log('💾 Saving quote with results:', {
+        calculatorType: sanitizedQuoteData.calculator_type,
+        hasResults: !!sanitizedQuoteData.results,
+        resultsCount: sanitizedQuoteData.results ? sanitizedQuoteData.results.length : 0,
+        sampleResultKeys: sanitizedQuoteData.results && sanitizedQuoteData.results[0] 
+          ? Object.keys(sanitizedQuoteData.results[0]).length 
+          : 0
+      });
 
       // The backend will handle which table to save to based on calculator_type
       let res;

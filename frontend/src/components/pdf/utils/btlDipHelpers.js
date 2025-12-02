@@ -297,7 +297,7 @@ export const getRolledInterestAmount = (quote) => {
 
 /**
  * Check if deferred interest is used (to show/hide section)
- * BTL quote_results uses deferred_interest_percent
+ * BTL quote_results uses deferred_interest_percent and deferred_interest_pounds
  */
 export const hasDeferredInterest = (quote) => {
   const selectedResult = quote._selectedResult || {};
@@ -337,7 +337,7 @@ export const getDeferredRate = (quote) => {
 
 export const getDeferredAmount = (quote) => {
   const selectedResult = quote._selectedResult || {};
-  return parseNumber(quote.deferred_interest_pounds) || 
+  const amount = parseNumber(quote.deferred_interest_pounds) || 
          parseNumber(quote.deferred_interest_amount) || 
          parseNumber(quote.deferredInterestAmount) ||
          parseNumber(selectedResult.deferred_interest_pounds) ||
@@ -345,6 +345,12 @@ export const getDeferredAmount = (quote) => {
          parseNumber(selectedResult.deferredInterestAmount) ||
          parseNumber(quote.deferred_interest) || 
          0;
+  console.log('getDeferredAmount:', {
+    'quote.deferred_interest_pounds': quote.deferred_interest_pounds,
+    'selectedResult.deferred_interest_pounds': selectedResult.deferred_interest_pounds,
+    'amount': amount
+  });
+  return amount;
 };
 
 /**

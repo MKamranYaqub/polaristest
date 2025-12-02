@@ -27,3 +27,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </SupabaseProvider>
   </React.StrictMode>
 );
+
+// Register service worker for cache control
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {
+      // Silent fail - service worker is optional
+    });
+  });
+}

@@ -30,6 +30,7 @@ export default function IssueQuoteModal({
   const [assumptions, setAssumptions] = useState([...DEFAULT_ASSUMPTIONS]);
   const [borrowerName, setBorrowerName] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
+  const [productRange, setProductRange] = useState('specialist'); // Core/Specialist selector for which quote to issue
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
   const uiPrefs = useUiPreferences();
@@ -67,12 +68,22 @@ export default function IssueQuoteModal({
         } else {
           setAdditionalNotes('');
         }
+
+        // Prefer explicitly saved quote product range, fallback to selected_range on quote
+        if (existingQuoteData.quote_product_range) {
+          setProductRange(existingQuoteData.quote_product_range);
+        } else if (existingQuoteData.selected_range) {
+          setProductRange(existingQuoteData.selected_range);
+        } else {
+          setProductRange('specialist');
+        }
       } else {
         // Reset to defaults for new quote
         setSelectedFeeRanges([]);
         setAssumptions([...DEFAULT_ASSUMPTIONS]);
         setBorrowerName('');
         setAdditionalNotes('');
+        setProductRange('specialist');
       }
     }
   }, [isOpen, existingQuoteData]);
@@ -127,6 +138,10 @@ export default function IssueQuoteModal({
     if (selectedFeeRanges.length === 0) {
       errors.selectedFeeRanges = 'Please select at least one fee range';
     }
+
+    if (!productRange) {
+      errors.productRange = 'Please select a product range';
+    }
     
     setFieldErrors(errors);
     
@@ -155,6 +170,9 @@ export default function IssueQuoteModal({
       case 'selectedFeeRanges':
         if (!value || value.length === 0) error = 'Please select at least one fee range';
         break;
+      case 'productRange':
+        if (!value) error = 'Please select a product range';
+        break;
     }
     
     setFieldErrors(prev => ({
@@ -180,6 +198,7 @@ export default function IssueQuoteModal({
         quote_assumptions: assumptions.filter(a => a.trim() !== ''),
         quote_borrower_name: borrowerName.trim(),
         quote_additional_notes: additionalNotes.trim(),
+        quote_product_range: productRange,
         quote_issued_at: new Date().toISOString(),
         quote_status: 'Issued',
       };
@@ -190,6 +209,10 @@ export default function IssueQuoteModal({
         title: 'Quote data saved successfully!', 
         subtitle: 'The quote information has been saved.' 
       });
+      
+      // Reset selected fee ranges after issuing quote
+      setSelectedFeeRanges([]);
+      
       onClose(); // Close modal on success
     } catch (err) {
       setNotification({ show: true, type: 'error', title: 'Error', message: 'Failed to save quote data: ' + (err.message || String(err)) });
@@ -257,6 +280,26 @@ export default function IssueQuoteModal({
   return (
     <>
       <ModalShell isOpen={isOpen} onClose={onClose} title={`Issue ${calculatorType} Quote`} footer={footerButtons}>
+      {/* Product Range for Quote */}
+      <div className="slds-form-element margin-bottom-15">
+        <label className="slds-form-element__label">
+          <span className="text-color-error">*</span> Product Range to use
+        </label>
+        <div className="slds-form-element__control">
+          <select
+            className={`slds-select ${fieldErrors.productRange ? 'error-border' : ''}`}
+            value={productRange}
+            onChange={(e) => setProductRange(e.target.value)}
+            onBlur={() => validateField('productRange', productRange)}
+          >
+            <option value="specialist">Specialist</option>
+            <option value="core">Core</option>
+          </select>
+        </div>
+        {fieldErrors.productRange && (
+          <div className="field-error-message" role="alert">⚠️ {fieldErrors.productRange}</div>
+        )}
+      </div>
       {/* Borrower Name */}
       <div className="slds-form-element margin-bottom-15">
         <label className="slds-form-element__label">

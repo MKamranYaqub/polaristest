@@ -215,5 +215,54 @@
   --token-z-toast: 9999;
 }
 
-[data-carbon-theme='g90'] { @include theme.theme(themes.$g90); }
-[data-carbon-theme='g100'] { @include theme.theme(themes.$g100); }
+[data-carbon-theme='g90'] { 
+  @include theme.theme(themes.$g90);
+  
+  /* Override colors for dark theme */
+  --token-layer-background: #262626;
+  --token-layer-surface: #393939;
+  --token-layer-hover: #474747;
+  --token-layer-elevated: #525252;
+  --token-border-subtle: #525252;
+  --token-border-strong: #8d8d8d;
+  --token-text-primary: #f4f4f4;
+  --token-text-secondary: #c6c6c6;
+  --token-text-helper: #a8a8a8;
+  --token-text-inverse: #161616;
+  --token-text-muted: #8d8d8d;
+  --token-interactive: #78a9ff;
+  --token-interactive-hover: #a6c8ff;
+  --token-info-bg: #001d6c;
+  --token-success-bg: #044317;
+  --token-error-bg: #4c0a0f;
+  --token-warning-bg: #5c4200;
+  --token-ui-background-neutral: #393939;
+  --token-ui-text-dark: #f4f4f4;
+  --token-shadow-card: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-carbon-theme='g100'] { 
+  @include theme.theme(themes.$g100);
+  
+  /* Override colors for dark theme */
+  --token-layer-background: #161616;
+  --token-layer-surface: #262626;
+  --token-layer-hover: #353535;
+  --token-layer-elevated: #393939;
+  --token-border-subtle: #393939;
+  --token-border-strong: #6f6f6f;
+  --token-text-primary: #f4f4f4;
+  --token-text-secondary: #c6c6c6;
+  --token-text-helper: #a8a8a8;
+  --token-text-inverse: #161616;
+  --token-text-muted: #6f6f6f;
+  --token-interactive: #78a9ff;
+  --token-interactive-hover: #a6c8ff;
+  --token-info-bg: #001141;
+  --token-success-bg: #022d0d;
+  --token-error-bg: #2d0709;
+  --token-warning-bg: #3d2800;
+  --token-ui-background-neutral: #262626;
+  --token-ui-text-dark: #f4f4f4;
+  --token-shadow-card: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
