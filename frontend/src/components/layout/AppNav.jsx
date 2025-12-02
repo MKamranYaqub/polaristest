@@ -2,6 +2,7 @@ import React from 'react';
 import Navigation from './Navigation';
 import ThemeToggle from '../ui/ThemeToggle';
 import UserProfileButton from '../ui/UserProfileButton';
+import { useTheme } from '../../contexts/ThemeContext';
 import '../../styles/app-nav.scss';
 
 /**
@@ -13,10 +14,17 @@ import '../../styles/app-nav.scss';
  * future Salesforce embedding scenarios where the host controls navigation
  */
 function AppNav() {
+  const { resolvedTheme } = useTheme();
+  const isDarkMode = resolvedTheme === 'g100';
+  
   return (
     <header className="app-header">
       <h1 className="app-header__title">
-        <img src="/assets/mfs-logo.png" alt="MFS Logo" className="app-header__logo" />
+        <img 
+          src={isDarkMode ? "/assets/mfs-logo-dark.png" : "/assets/mfs-logo.png"} 
+          alt="MFS Logo" 
+          className="app-header__logo" 
+        />
         Project Polaris
       </h1>
       <div className="margin-left-auto display-flex align-items-center flex-gap-5 margin-right-05">
