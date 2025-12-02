@@ -19,6 +19,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
 
   // Filter states
   const [filterName, setFilterName] = useState('');
+  const [filterRef, setFilterRef] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterBorrowerType, setFilterBorrowerType] = useState('');
   const [filterCreatedFrom, setFilterCreatedFrom] = useState('');
@@ -212,6 +213,11 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
 
   // Apply filters
   const filteredQuotes = quotes.filter(q => {
+    // Ref # filter
+    if (filterRef) {
+      const ref = (q.reference_number || '').toString().toLowerCase();
+      if (!ref.includes(filterRef.toLowerCase())) return false;
+    }
     // Name filter
     if (filterName && !q.name.toLowerCase().includes(filterName.toLowerCase())) {
       return false;
@@ -296,7 +302,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterName, filterType, filterBorrowerType, filterCreatedFrom, filterCreatedTo, filterUpdatedFrom, filterUpdatedTo]);
+  }, [filterRef, filterName, filterType, filterBorrowerType, filterCreatedFrom, filterCreatedTo, filterUpdatedFrom, filterUpdatedTo]);
 
   return (
     <div>
@@ -371,6 +377,16 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         {!loading && !error && (
           <>
             <div className="filters-section">
+          <div className="filter-field" style={{ minWidth: '160px' }}>
+            <label>REF #</label>
+            <input 
+              type="text"
+              placeholder="Search by ref..."
+              value={filterRef}
+              onChange={(e) => setFilterRef(e.target.value)}
+              style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
+            />
+          </div>
           <div className="filter-field" style={{ minWidth: '200px' }}>
             <label>NAME</label>
             <input 
@@ -446,6 +462,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
               className="btn-secondary" 
               onClick={() => {
                 setFilterName('');
+                setFilterRef('');
                 setFilterType('');
                 setFilterBorrowerType('');
                 setFilterCreatedFrom('');
