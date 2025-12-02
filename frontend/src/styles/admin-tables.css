@@ -33,6 +33,115 @@
   order: 1; /* Move pagination to the left */
 }
 
+/* Stacked Header Layout (for admin pages) */
+.table-header-stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--token-spacing-md);
+  margin-bottom: var(--token-spacing-xl);
+}
+
+/* Title row: heading on left, action buttons on right */
+.table-header-stacked .table-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--token-spacing-lg);
+  width: 100%;
+}
+
+.table-header-stacked .table-title-row h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: bold;
+}
+
+.table-header-stacked .table-actions-row {
+  display: flex;
+  gap: var(--token-spacing-md);
+  align-items: center;
+}
+
+/* Pagination row with space above */
+.table-header-stacked .pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: var(--token-spacing-sm);
+}
+
+/* Filter date range grouping */
+.filter-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--token-spacing-xs);
+}
+
+.filter-field-group .filter-group-label {
+  font-size: var(--token-font-size-xs);
+  font-weight: var(--token-font-weight-medium);
+  color: var(--token-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-date-range {
+  display: flex;
+  align-items: center;
+  gap: var(--token-spacing-xs);
+}
+
+.filter-date-range input[type="date"] {
+  padding: 0.5rem 0.625rem;
+  border: 1px solid #dddbda;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  min-width: 130px;
+}
+
+.filter-date-range .date-separator {
+  color: var(--token-text-secondary);
+  font-size: var(--token-font-size-sm);
+  padding: 0 var(--token-spacing-xs);
+}
+
+/* Advanced Filters Section */
+.filters-advanced {
+  background-color: var(--token-layer-surface);
+  border-top: 1px solid var(--token-border-subtle);
+  margin-top: calc(-1 * var(--token-spacing-md));
+  padding-top: var(--token-spacing-lg);
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Text destructive button style */
+.slds-button_text-destructive {
+  background: transparent;
+  color: var(--token-danger);
+  border: none;
+  padding: var(--token-spacing-sm) var(--token-spacing-md);
+  font-size: var(--token-font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.slds-button_text-destructive:hover {
+  color: var(--token-danger-hover, #c23934);
+  text-decoration: underline;
+}
+
 /* ============================================
    ADMIN TABLE BUTTONS
    These are legacy button classes for admin tables.
@@ -509,6 +618,25 @@
 
   .table-actions-left button {
     width: 100%;
+  }
+
+  .table-header-stacked {
+    align-items: stretch;
+  }
+
+  .table-header-stacked .table-actions-row,
+  .table-header-stacked .pagination-row {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .filter-date-range {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-date-range .date-separator {
+    text-align: center;
   }
 
   .professional-table thead th,

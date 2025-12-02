@@ -39,6 +39,7 @@ function RatesTable() {
   });
   const [sortField, setSortField] = useState('set_key');
   const [sortDir, setSortDir] = useState('asc'); // 'asc' or 'desc'
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   
   // Notification state
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
@@ -582,11 +583,13 @@ function RatesTable() {
     <div className="admin-table-container">
       {/* Tabs removed - always showing BTL Rates */}
       <>
-      <div className="table-header">
-        <div className="table-actions-left">
-          <button className="slds-button slds-button_brand" onClick={handleAdd}>
-            Add New Product
-          </button>
+      <div className="table-header-stacked">
+        <div className="table-title-row">
+          <h1>BTL Rate Management</h1>
+          <div className="table-actions-row">
+            <button className="slds-button slds-button_brand" onClick={handleAdd}>
+              Add New Product
+            </button>
           <input
             type="file"
             accept=".csv"
@@ -605,9 +608,10 @@ function RatesTable() {
               Delete Selected ({selectedRows.size})
             </button>
           )}
-          <span className="total-count">Total: {rates.length}</span>
+            <span className="total-count">Total: {rates.length}</span>
+          </div>
         </div>
-        <div className="table-actions-right">
+        <div className="pagination-row">
           <div className="pagination-controls">
             <button 
               className="slds-button slds-button_neutral"
@@ -678,68 +682,93 @@ function RatesTable() {
         </div>
 
         <div className="filter-field">
-          <label>Retention</label>
-          <select
-            value={filters.is_retention}
-            onChange={(e) => handleFilterChange('is_retention', e.target.value)}
-          >
-            <option value="">All</option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
-          </select>
-        </div>
-
-        <div className="filter-field">
-          <label>Tier</label>
-          <select
-            value={filters.tier}
-            onChange={(e) => handleFilterChange('tier', e.target.value)}
-          >
-            <option value="">All Tiers</option>
-            {Array.from(filterOptions.tiers).sort().map(tier => (
-              <option key={tier} value={tier}>{tier}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="filter-field">
-          <label>Product</label>
-          <select
-            value={filters.product}
-            onChange={(e) => handleFilterChange('product', e.target.value)}
-          >
-            <option value="">All Products</option>
-            {Array.from(filterOptions.products).sort().map(product => (
-              <option key={product} value={product}>{product}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="filter-field">
-          <label>Product Fee</label>
-          <select
-            value={filters.product_fee}
-            onChange={(e) => handleFilterChange('product_fee', e.target.value)}
-          >
-            <option value="">All Product Fees</option>
-            {Array.from(filterOptions.productFees).sort((a, b) => a - b).map(fee => (
-              <option key={fee} value={fee}>{fee}</option>
-            ))}
-          </select>
-        </div>
-        <div className="filter-field">
-          <label>Initial Term (months)</label>
-          <select
-            value={filters.initial_term}
-            onChange={(e) => handleFilterChange('initial_term', e.target.value)}
-          >
-            <option value="">All</option>
-            {Array.from(filterOptions.initialTerms).sort((a, b) => a - b).map(t => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
+          <label style={{ visibility: 'hidden' }}>Actions</label>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button 
+              className="slds-button slds-button_neutral" 
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            >
+              {showAdvancedFilters ? 'Hide Filters' : 'More Filters'}
+            </button>
+            {(filters.set_key || filters.property || filters.rate_type || filters.is_retention || filters.tier || filters.product || filters.product_fee || filters.initial_term) && (
+              <button 
+                className="slds-button slds-button_text-destructive" 
+                onClick={() => setFilters({ set_key: '', property: '', rate_type: '', tier: '', product: '', product_fee: '', initial_term: '', full_term: '', is_retention: '' })}
+              >
+                Clear All
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
+      {showAdvancedFilters && (
+        <div className="filters-section filters-advanced">
+          <div className="filter-field">
+            <label>Retention</label>
+            <select
+              value={filters.is_retention}
+              onChange={(e) => handleFilterChange('is_retention', e.target.value)}
+            >
+              <option value="">All</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+
+          <div className="filter-field">
+            <label>Tier</label>
+            <select
+              value={filters.tier}
+              onChange={(e) => handleFilterChange('tier', e.target.value)}
+            >
+              <option value="">All Tiers</option>
+              {Array.from(filterOptions.tiers).sort().map(tier => (
+                <option key={tier} value={tier}>{tier}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-field">
+            <label>Product</label>
+            <select
+              value={filters.product}
+              onChange={(e) => handleFilterChange('product', e.target.value)}
+            >
+              <option value="">All Products</option>
+              {Array.from(filterOptions.products).sort().map(product => (
+                <option key={product} value={product}>{product}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-field">
+            <label>Product Fee</label>
+            <select
+              value={filters.product_fee}
+              onChange={(e) => handleFilterChange('product_fee', e.target.value)}
+            >
+              <option value="">All Product Fees</option>
+              {Array.from(filterOptions.productFees).sort((a, b) => a - b).map(fee => (
+                <option key={fee} value={fee}>{fee}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-field">
+            <label>Initial Term (months)</label>
+            <select
+              value={filters.initial_term}
+              onChange={(e) => handleFilterChange('initial_term', e.target.value)}
+            >
+              <option value="">All</option>
+              {Array.from(filterOptions.initialTerms).sort((a, b) => a - b).map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
 
       <div className="table-wrapper">
         <table className="professional-table">

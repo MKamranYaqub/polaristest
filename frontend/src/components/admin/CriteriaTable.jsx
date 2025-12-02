@@ -29,6 +29,7 @@ function CriteriaTable() {
   });
   const [sortField, setSortField] = useState('question_key');
   const [sortDir, setSortDir] = useState('asc');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   
   // Notification state
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
@@ -548,11 +549,13 @@ function CriteriaTable() {
 
   return (
     <div className="admin-table-container">
-      <div className="table-header">
-        <div className="table-actions-left">
-          <button className="slds-button slds-button_brand" onClick={handleAdd}>
-            Add New Criteria
-          </button>
+      <div className="table-header-stacked">
+        <div className="table-title-row">
+          <h1>BTL Criteria Management</h1>
+          <div className="table-actions-row">
+            <button className="slds-button slds-button_brand" onClick={handleAdd}>
+              Add New Criteria
+            </button>
           <input
             type="file"
             accept=".csv"
@@ -572,9 +575,10 @@ function CriteriaTable() {
               Delete Selected ({selectedRows.size})
             </button>
           )}
-          <span className="total-count">Total: {criteria.length}</span>
+            <span className="total-count">Total: {criteria.length}</span>
+          </div>
         </div>
-        <div className="table-actions-right">
+        <div className="pagination-row">
           <div className="pagination-controls">
             <button
               className="slds-button slds-button_neutral"
@@ -686,18 +690,42 @@ function CriteriaTable() {
         </div>
 
         <div className="filter-field">
-          <label>Question Group</label>
-          <select
-            value={filters.question_group}
-            onChange={(e) => handleFilterChange('question_group', e.target.value)}
-          >
-            <option value="">All Groups</option>
-            {Array.from(filterOptions.questionGroups).sort().map(group => (
-              <option key={group} value={group}>{group}</option>
-            ))}
-          </select>
+          <label style={{ visibility: 'hidden' }}>Actions</label>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button 
+              className="slds-button slds-button_neutral" 
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            >
+              {showAdvancedFilters ? 'Hide Filters' : 'More Filters'}
+            </button>
+            {(filters.criteria_set || filters.product_scope || filters.question_group) && (
+              <button 
+                className="slds-button slds-button_text-destructive" 
+                onClick={() => setFilters({ criteria_set: '', product_scope: '', question_group: '' })}
+              >
+                Clear All
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
+      {showAdvancedFilters && (
+        <div className="filters-section filters-advanced">
+          <div className="filter-field">
+            <label>Question Group</label>
+            <select
+              value={filters.question_group}
+              onChange={(e) => handleFilterChange('question_group', e.target.value)}
+            >
+              <option value="">All Groups</option>
+              {Array.from(filterOptions.questionGroups).sort().map(group => (
+                <option key={group} value={group}>{group}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
 
       <div className="table-wrapper">
         <table className="professional-table">

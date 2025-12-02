@@ -27,6 +27,9 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
   const [filterUpdatedFrom, setFilterUpdatedFrom] = useState('');
   const [filterUpdatedTo, setFilterUpdatedTo] = useState('');
   
+  // Advanced filters toggle
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  
   // Notification state
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
   
@@ -313,22 +316,21 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
       ]} />
       
       <div className="admin-table-container">
-        <h1 style={{ marginBottom: '1.5rem', fontSize: '1.75rem', fontWeight: 'bold' }}>
-          Quotes {calculatorType ? `(${calculatorType})` : ''}
-        </h1>
-        
-        <div className="table-header">
-          <div className="table-actions-left">
-            <button 
-              className="slds-button slds-button_brand" 
-              onClick={handleExport}
-              disabled={exporting || loading}
-            >
-              {exporting ? 'Exporting...' : 'Export to CSV'}
-            </button>
-            <span className="total-count">Total: {sortedQuotes.length}</span>
+        <div className="table-header-stacked">
+          <div className="table-title-row">
+            <h1>Quotes {calculatorType ? `(${calculatorType})` : ''}</h1>
+            <div className="table-actions-row">
+              <button 
+                className="slds-button slds-button_brand" 
+                onClick={handleExport}
+                disabled={exporting || loading}
+              >
+                {exporting ? 'Exporting...' : 'Export to CSV'}
+              </button>
+              <span className="total-count">Total: {sortedQuotes.length}</span>
+            </div>
           </div>
-          <div className="table-actions-right">
+          <div className="pagination-row">
             <div className="pagination-controls">
               <button 
                 className="slds-button slds-button_neutral"
@@ -377,104 +379,118 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
         {!loading && !error && (
           <>
             <div className="filters-section">
-          <div className="filter-field" style={{ minWidth: '160px' }}>
-            <label>REF #</label>
-            <input 
-              type="text"
-              placeholder="Search by ref..."
-              value={filterRef}
-              onChange={(e) => setFilterRef(e.target.value)}
-              style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
-            />
-          </div>
-          <div className="filter-field" style={{ minWidth: '200px' }}>
-            <label>NAME</label>
-            <input 
-              type="text"
-              placeholder="Search by name..."
-              value={filterName} 
-              onChange={(e) => setFilterName(e.target.value)}
-              style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
-            />
-          </div>
+              {/* Primary filters row */}
+              <div className="filter-field" style={{ minWidth: '140px' }}>
+                <label>REF #</label>
+                <input 
+                  type="text"
+                  placeholder="Search by ref..."
+                  value={filterRef}
+                  onChange={(e) => setFilterRef(e.target.value)}
+                  style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
+                />
+              </div>
+              <div className="filter-field" style={{ minWidth: '180px' }}>
+                <label>NAME</label>
+                <input 
+                  type="text"
+                  placeholder="Search by name..."
+                  value={filterName} 
+                  onChange={(e) => setFilterName(e.target.value)}
+                  style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
+                />
+              </div>
 
-          <div className="filter-field">
-            <label>TYPE</label>
-            <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-              <option value="">All Types</option>
-              <option value="BTL">BTL</option>
-              <option value="BRIDGING">BRIDGING</option>
-            </select>
-          </div>
+              <div className="filter-field">
+                <label>TYPE</label>
+                <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+                  <option value="">All Types</option>
+                  <option value="BTL">BTL</option>
+                  <option value="BRIDGING">BRIDGING</option>
+                </select>
+              </div>
 
-          <div className="filter-field">
-            <label>BORROWER TYPE</label>
-            <select value={filterBorrowerType} onChange={(e) => setFilterBorrowerType(e.target.value)}>
-              <option value="">All</option>
-              <option value="Personal">Personal</option>
-              <option value="Company">Company</option>
-            </select>
-          </div>
+              <div className="filter-field">
+                <label>BORROWER TYPE</label>
+                <select value={filterBorrowerType} onChange={(e) => setFilterBorrowerType(e.target.value)}>
+                  <option value="">All</option>
+                  <option value="Personal">Personal</option>
+                  <option value="Company">Company</option>
+                </select>
+              </div>
 
-          <div className="filter-field">
-            <label>CREATED FROM</label>
-            <input 
-              type="date" 
-              value={filterCreatedFrom} 
-              onChange={(e) => setFilterCreatedFrom(e.target.value)}
-              style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
-            />
-          </div>
+              <div className="filter-field">
+                <label style={{ visibility: 'hidden' }}>Actions</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button 
+                    className="slds-button slds-button_neutral" 
+                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                  >
+                    {showAdvancedFilters ? 'Hide Filters' : 'More Filters'}
+                  </button>
+                  {(filterName || filterRef || filterType || filterBorrowerType || filterCreatedFrom || filterCreatedTo || filterUpdatedFrom || filterUpdatedTo) && (
+                    <button 
+                      className="slds-button slds-button_text-destructive" 
+                      onClick={() => {
+                        setFilterName('');
+                        setFilterRef('');
+                        setFilterType('');
+                        setFilterBorrowerType('');
+                        setFilterCreatedFrom('');
+                        setFilterCreatedTo('');
+                        setFilterUpdatedFrom('');
+                        setFilterUpdatedTo('');
+                      }}
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
 
-          <div className="filter-field">
-            <label>CREATED TO</label>
-            <input 
-              type="date" 
-              value={filterCreatedTo} 
-              onChange={(e) => setFilterCreatedTo(e.target.value)}
-              style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
-            />
-          </div>
+            {/* Advanced Filters - Collapsible */}
+            {showAdvancedFilters && (
+              <div className="filters-section filters-advanced">
+                <div className="filter-field-group">
+                  <label className="filter-group-label">CREATED</label>
+                  <div className="filter-date-range">
+                    <input 
+                      type="date" 
+                      value={filterCreatedFrom} 
+                      onChange={(e) => setFilterCreatedFrom(e.target.value)}
+                      title="Created from"
+                    />
+                    <span className="date-separator">to</span>
+                    <input 
+                      type="date" 
+                      value={filterCreatedTo} 
+                      onChange={(e) => setFilterCreatedTo(e.target.value)}
+                      title="Created to"
+                    />
+                  </div>
+                </div>
 
-          <div className="filter-field">
-            <label>UPDATED FROM</label>
-            <input 
-              type="date" 
-              value={filterUpdatedFrom} 
-              onChange={(e) => setFilterUpdatedFrom(e.target.value)}
-              style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
-            />
-          </div>
-
-          <div className="filter-field">
-            <label>UPDATED TO</label>
-            <input 
-              type="date" 
-              value={filterUpdatedTo} 
-              onChange={(e) => setFilterUpdatedTo(e.target.value)}
-              style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
-            />
-          </div>
-
-          <div className="filter-field">
-            <label style={{ visibility: 'hidden' }}>Actions</label>
-            <button 
-              className="slds-button slds-button_neutral" 
-              onClick={() => {
-                setFilterName('');
-                setFilterRef('');
-                setFilterType('');
-                setFilterBorrowerType('');
-                setFilterCreatedFrom('');
-                setFilterCreatedTo('');
-                setFilterUpdatedFrom('');
-                setFilterUpdatedTo('');
-              }}
-            >
-              Clear Filters
-            </button>
-          </div>
-        </div>
+                <div className="filter-field-group">
+                  <label className="filter-group-label">UPDATED</label>
+                  <div className="filter-date-range">
+                    <input 
+                      type="date" 
+                      value={filterUpdatedFrom} 
+                      onChange={(e) => setFilterUpdatedFrom(e.target.value)}
+                      title="Updated from"
+                    />
+                    <span className="date-separator">to</span>
+                    <input 
+                      type="date" 
+                      value={filterUpdatedTo} 
+                      onChange={(e) => setFilterUpdatedTo(e.target.value)}
+                      title="Updated to"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
         <div className="table-wrapper">
           <table className="professional-table">

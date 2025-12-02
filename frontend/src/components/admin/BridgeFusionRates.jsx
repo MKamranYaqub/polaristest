@@ -25,6 +25,7 @@ function BridgeFusionRates() {
     charge_type: ''
   });
   const [filterOptions, setFilterOptions] = useState({ properties: new Set(), products: new Set(), setKeys: new Set(), types: new Set(), chargeTypes: new Set() });
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   
   // Notification state
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
@@ -330,18 +331,21 @@ function BridgeFusionRates() {
 
   return (
     <div className="admin-table-container">
-      <div className="table-header">
-        <div className="table-actions-left">
-          <button className="slds-button slds-button_brand" onClick={handleAdd}>Add Bridge/Fusion Rate</button>
+      <div className="table-header-stacked">
+        <div className="table-title-row">
+          <h1>Bridging Rate Management</h1>
+          <div className="table-actions-row">
+            <button className="slds-button slds-button_brand" onClick={handleAdd}>Add Bridge/Fusion Rate</button>
           <input type="file" accept=".csv" onChange={handleImport} style={{ display: 'none' }} id="bridge-csv-import" />
           <button className="slds-button slds-button_neutral" onClick={() => document.getElementById('bridge-csv-import').click()}>Import CSV</button>
           <button className="slds-button slds-button_neutral" onClick={handleExport}>Export CSV</button>
           {selectedRows.size > 0 && (
             <button className="slds-button slds-button_destructive" onClick={handleBulkDelete}>Delete Selected ({selectedRows.size})</button>
           )}
-          <span className="total-count">Total: {getFilteredRowsCount()}</span>
+            <span className="total-count">Total: {getFilteredRowsCount()}</span>
+          </div>
         </div>
-        <div className="table-actions-right">
+        <div className="pagination-row">
           <div className="pagination-controls">
             <button className="slds-button slds-button_neutral" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</button>
             <span className="pagination-info">Page {currentPage} of {totalPages}</span>
@@ -376,8 +380,6 @@ function BridgeFusionRates() {
           </select>
         </div>
 
-        {/* Tier filter removed: `tier` column does not exist in bridge_fusion_rates_full table */}
-
         <div className="filter-field">
           <label>Product:</label>
           <select value={filters.product} onChange={(e) => setFilters(prev => ({ ...prev, product: e.target.value }))}>
@@ -387,23 +389,45 @@ function BridgeFusionRates() {
         </div>
 
         <div className="filter-field">
-          <label>Type:</label>
-          <select value={filters.type} onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}>
-            <option value="">All Types</option>
-            {Array.from(filterOptions.types).sort().map(t => (<option key={t} value={t}>{t}</option>))}
-          </select>
+          <label style={{ visibility: 'hidden' }}>Actions</label>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button 
+              className="slds-button slds-button_neutral" 
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            >
+              {showAdvancedFilters ? 'Hide Filters' : 'More Filters'}
+            </button>
+            {(filters.set_key || filters.property || filters.product || filters.type || filters.charge_type) && (
+              <button 
+                className="slds-button slds-button_text-destructive" 
+                onClick={() => setFilters({ set_key: '', property: '', product: '', type: '', charge_type: '' })}
+              >
+                Clear All
+              </button>
+            )}
+          </div>
         </div>
-
-        <div className="filter-field">
-          <label>Charge Type:</label>
-          <select value={filters.charge_type} onChange={(e) => setFilters(prev => ({ ...prev, charge_type: e.target.value }))}>
-            <option value="">All Charge Types</option>
-            {Array.from(filterOptions.chargeTypes || []).sort().map(ct => (<option key={ct} value={ct}>{ct}</option>))}
-          </select>
-        </div>
-
-        {/* initial_term/full_term filters removed: not present in bridge_fusion_rates_full schema */}
       </div>
+
+      {showAdvancedFilters && (
+        <div className="filters-section filters-advanced">
+          <div className="filter-field">
+            <label>Type:</label>
+            <select value={filters.type} onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}>
+              <option value="">All Types</option>
+              {Array.from(filterOptions.types).sort().map(t => (<option key={t} value={t}>{t}</option>))}
+            </select>
+          </div>
+
+          <div className="filter-field">
+            <label>Charge Type:</label>
+            <select value={filters.charge_type} onChange={(e) => setFilters(prev => ({ ...prev, charge_type: e.target.value }))}>
+              <option value="">All Charge Types</option>
+              {Array.from(filterOptions.chargeTypes || []).sort().map(ct => (<option key={ct} value={ct}>{ct}</option>))}
+            </select>
+          </div>
+        </div>
+      )}
 
       <div className="table-wrapper">
         <table className="professional-table">

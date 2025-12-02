@@ -1366,7 +1366,8 @@ export default function GlobalSettings() {
   }
 
   return (
-    <div className="slds-p-around_medium">
+    <div className="admin-table-container">
+      <h1 className="font-size-2rem font-weight-bold margin-bottom-1">Global Settings</h1>
       <h4 className="slds-text-heading_large slds-m-bottom_medium">Results Table Configuration</h4>
       
       {/* Tab Navigation */}
