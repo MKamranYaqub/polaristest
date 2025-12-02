@@ -1369,29 +1369,52 @@ export default function GlobalSettings() {
     <div className="slds-p-around_medium">
       <h4 className="slds-text-heading_large slds-m-bottom_medium">Results Table Configuration</h4>
       
-      {/* Tab Buttons */}
-      <div className="slds-m-bottom_large" style={{ display: 'flex', gap: 'var(--token-spacing-sm)', borderBottom: '2px solid var(--token-layer-hover)', paddingBottom: 'var(--token-spacing-sm)', flexWrap: 'wrap' }}>
-        <button
-          className={`slds-button ${activeTab === 'btl' ? 'slds-button_brand' : 'slds-button_neutral'}`}
-          onClick={() => setActiveTab('btl')}
-          style={{ fontSize: 'var(--token-font-size-sm)', padding: 'var(--token-spacing-sm) var(--token-spacing-lg)' }}
-        >
-          BTL Calculator
-        </button>
-        <button
-          className={`slds-button ${activeTab === 'bridge' ? 'slds-button_brand' : 'slds-button_neutral'}`}
-          onClick={() => setActiveTab('bridge')}
-          style={{ fontSize: 'var(--token-font-size-sm)', padding: 'var(--token-spacing-sm) var(--token-spacing-lg)' }}
-        >
-          Bridging Calculator
-        </button>
-        <button
-          className={`slds-button ${activeTab === 'core' ? 'slds-button_brand' : 'slds-button_neutral'}`}
-          onClick={() => setActiveTab('core')}
-          style={{ fontSize: 'var(--token-font-size-sm)', padding: 'var(--token-spacing-sm) var(--token-spacing-lg)' }}
-        >
-          Core Range
-        </button>
+      {/* Tab Navigation */}
+      <div className="slds-tabs_default slds-tabs_default_medium slds-m-bottom_medium">
+        <ul className="slds-tabs_default__nav" role="tablist">
+          <li 
+            className={`slds-tabs_default__item ${activeTab === 'btl' ? 'slds-is-active' : ''}`}
+            role="presentation"
+          >
+            <button
+              className="slds-tabs_default__link"
+              onClick={() => setActiveTab('btl')}
+              role="tab"
+              aria-selected={activeTab === 'btl'}
+              type="button"
+            >
+              BTL Calculator
+            </button>
+          </li>
+          <li 
+            className={`slds-tabs_default__item ${activeTab === 'bridge' ? 'slds-is-active' : ''}`}
+            role="presentation"
+          >
+            <button
+              className="slds-tabs_default__link"
+              onClick={() => setActiveTab('bridge')}
+              role="tab"
+              aria-selected={activeTab === 'bridge'}
+              type="button"
+            >
+              Bridging Calculator
+            </button>
+          </li>
+          <li 
+            className={`slds-tabs_default__item ${activeTab === 'core' ? 'slds-is-active' : ''}`}
+            role="presentation"
+          >
+            <button
+              className="slds-tabs_default__link"
+              onClick={() => setActiveTab('core')}
+              role="tab"
+              aria-selected={activeTab === 'core'}
+              type="button"
+            >
+              Core Range
+            </button>
+          </li>
+        </ul>
       </div>
 
       {/* BTL Tab Content */}

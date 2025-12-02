@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { Content, Theme } from '@carbon/react';
-import '@carbon/styles/css/styles.css';
+// Removed Carbon Content/Theme; using SLDS + app styles
 import Calculator from './components/calculators/Calculator';
 import BTLCalculator from './components/calculators/BTL_Calculator';
 import BridgingCalculator from './components/calculators/BridgingCalculator';
@@ -67,7 +66,7 @@ const AppContent = () => {
   const showNavigation = !isPublicRoute && !isEmbedded;
 
   return (
-    <Theme theme={resolvedTheme}>
+    <div data-theme={resolvedTheme}>
       <UserProvider>
         <ErrorBoundary title="Application Error" message="The application encountered an unexpected error.">
           <AppShell>
@@ -78,7 +77,7 @@ const AppContent = () => {
                 </ErrorBoundary>
               )}
               
-              <Content className="app-content">
+              <div className="app-content">
                 <Routes>
                 {/* Public routes */}
                 <Route path="/login" element={<LoginPage />} />
@@ -195,12 +194,12 @@ const AppContent = () => {
                 
                 <Route path="/" element={<Navigate to="/calculator/btl" replace />} />
               </Routes>
-            </Content>
+            </div>
           </div>
           </AppShell>
         </ErrorBoundary>
       </UserProvider>
-    </Theme>
+    </div>
   );
 };
 

@@ -6,7 +6,7 @@
   @include theme.theme(themes.$g10);
 
   /* Typography */
-  --token-font-family-base: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+  --token-font-family-base: 'Inter', 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
   --token-font-weight-regular: 400;
   --token-font-weight-medium: 500;
   --token-font-weight-semibold: 600;
@@ -29,6 +29,7 @@
   --token-space-48: 3rem;
   
   /* Spacing semantic aliases for common use cases */
+  --token-spacing-0: 0.0rem;
   --token-spacing-xs: 0.25rem;
   --token-spacing-sm: 0.5rem;
   --token-spacing-md: 0.75rem;
@@ -47,7 +48,9 @@
   /* Radii */
   --token-radius-sm: 0.25rem;
   --token-radius-md: 0.5rem;
-
+  --token-radius-btn: 88px;
+  --token-radius-btn-left: 88px 0 0 88px;
+  --token-radius-btn-right: 0 88px 88px 0;
   /* Elevation */
   --token-shadow-soft: 0 2px 6px rgba(11, 20, 26, 0.08);
   --token-shadow-strong: 0 6px 18px rgba(11, 20, 26, 0.14);
@@ -76,6 +79,8 @@
   --token-critical-hover: #a61a14;
   --token-success: #04844B;
   --token-success-bg: #E8F5E9;
+  --token-success-action: #00a89d; /* Teal for positive action buttons */
+  --token-success-action-hover: #008c82;
   --token-error: #C23934;
   --token-error-bg: #FFEBEE;
   --token-warning: #F59E0B;

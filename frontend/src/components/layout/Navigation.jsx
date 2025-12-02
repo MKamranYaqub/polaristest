@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { SideNav, SideNavItems, SideNavLink, SideNavMenu, SideNavMenuItem } from '@carbon/react';
 import { useAuth } from '../../contexts/AuthContext';
 import '../../styles/navigation.scss';
+
+/**
+ * SLDS Vertical Navigation Tree
+ * Hierarchical tree structure with expand/collapse interactions
+ * following Salesforce Lightning Design System patterns
+ */
 
 function Navigation() {
   const location = useLocation();
@@ -17,29 +22,56 @@ function Navigation() {
   // Only admins (level 1) can access user management
   const showUserManagement = user && isAdmin();
 
-  const calculatorItems = [
-    { label: 'BTL Calculator', path: '/calculator/btl' },
-    { label: 'Bridging Calculator', path: '/calculator/bridging' }
+  // Navigation tree structure
+  const navTree = [
+    {
+      id: 'calculator',
+      label: 'Calculator',
+      icon: 'utility:calculator',
+      children: [
+        { id: 'btl', label: 'BTL Calculator', path: '/calculator/btl' },
+        { id: 'bridging', label: 'Bridging Calculator', path: '/calculator/bridging' }
+      ]
+    },
+    {
+      id: 'quotes',
+      label: 'Quotes',
+      icon: 'utility:quote',
+      path: '/quotes'
+    },
+    ...(showAdminMenu ? [{
+      id: 'admin',
+      label: 'Admin',
+      icon: 'utility:settings',
+      children: [
+        { id: 'constants', label: 'Constants', path: '/admin/constants' },
+        { id: 'criteria', label: 'BTL Criteria', path: '/admin/criteria' },
+        { id: 'btl-rates', label: 'BTL Rates', path: '/admin/btl-rates' },
+        { id: 'bridging-rates', label: 'Bridging Rates', path: '/admin/bridging-rates' },
+        { id: 'global-settings', label: 'Global Settings', path: '/admin/global-settings' },
+        ...(showUserManagement ? [{ id: 'users', label: 'Users', path: '/admin/users' }] : [])
+      ]
+    }] : [])
   ];
 
-  const adminItems = [
-    { label: 'Constants', path: '/admin/constants' },
-    { label: 'BTL Criteria', path: '/admin/criteria' },
-    { label: 'BTL Rates', path: '/admin/btl-rates' },
-    { label: 'Bridging Rates', path: '/admin/bridging-rates' },
-    { label: 'Global Settings', path: '/admin/global-settings' },
-    ...(showUserManagement ? [{ label: 'Users', path: '/admin/users' }] : [])
-  ];
+  // Section expand/collapse state
+  const [expandedSections, setExpandedSections] = useState(() => {
+    const initial = {};
+    navTree.forEach(item => {
+      if (item.children) {
+        // Auto-expand if current path matches any child
+        initial[item.id] = item.children.some(child => location.pathname === child.path);
+      }
+    });
+    return initial;
+  });
 
   useEffect(() => {
     const handleResize = () => {
       const desktop = window.innerWidth > 900;
       setIsDesktop(desktop);
-      if (desktop) {
-        setMobileOpen(false);
-      }
+      if (desktop) setMobileOpen(false);
     };
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -47,111 +79,120 @@ function Navigation() {
   const toggleMobile = () => setMobileOpen(v => !v);
   const closeMobile = () => setMobileOpen(false);
 
-  
-  useEffect(() => {
-    const fixInertFalse = () => {
-      const navs = document.querySelectorAll('nav[class*="--side-nav__navigation"]');
-      navs.forEach((el) => {
-        if (el.getAttribute('inert') === 'false') {
-          el.removeAttribute('inert');
-        }
-      });
-    };
-    fixInertFalse();
-  }, [isDesktop, mobileOpen]);
+  const toggleSection = (id) => {
+    setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleNavigate = (path) => {
+    navigate(path);
+    if (!isDesktop) setMobileOpen(false);
+  };
+
+  const isActive = (path) => location.pathname === path;
+
+  // Chevron icon component
+  const ChevronIcon = ({ expanded }) => (
+    <svg 
+      className={`slds-tree__toggle-icon ${expanded ? 'slds-is-expanded' : ''}`} 
+      aria-hidden="true" 
+      viewBox="0 0 52 52"
+    >
+      <path d="M19.5 13l12 12c.7.7.7 1.8 0 2.5l-12 12c-1 1-2.7.3-2.7-1.2V14.2c0-1.5 1.7-2.2 2.7-1.2z"/>
+    </svg>
+  );
+
+  // Render tree item (recursive for nested items)
+  const renderTreeItem = (item, level = 0) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedSections[item.id];
+    const itemIsActive = item.path && isActive(item.path);
+
+    return (
+      <li 
+        key={item.id} 
+        className="slds-tree__item" 
+        role="treeitem"
+        aria-expanded={hasChildren ? isExpanded : undefined}
+        aria-level={level + 1}
+        aria-selected={itemIsActive}
+      >
+        {hasChildren ? (
+          <button 
+            className={`slds-tree__item-content slds-tree__item-branch-btn`}
+            style={{ paddingLeft: `${level * 1}rem` }}
+            onClick={() => toggleSection(item.id)}
+            aria-label={isExpanded ? `Collapse ${item.label}` : `Expand ${item.label}`}
+            type="button"
+          >
+            <span className="slds-tree__item-toggle-icon">
+              <ChevronIcon expanded={isExpanded} />
+            </span>
+            <span className="slds-tree__item-label slds-tree__item-branch">{item.label}</span>
+          </button>
+        ) : (
+          <button
+            className={`slds-tree__item-content slds-tree__item-link ${itemIsActive ? 'slds-is-selected' : ''}`}
+            style={{ paddingLeft: `${level * 1}rem` }}
+            onClick={() => handleNavigate(item.path)}
+            type="button"
+          >
+            <span className="slds-tree__item-label">{item.label}</span>
+          </button>
+        )}
+
+        {hasChildren && (
+          <ul 
+            className={`slds-tree__group ${isExpanded ? 'slds-is-expanded' : 'slds-is-collapsed'}`} 
+            role="group"
+          >
+            {item.children.map(child => renderTreeItem(child, level + 1))}
+          </ul>
+        )}
+      </li>
+    );
+  };
 
   return (
     <>
-      {/* Mobile toggle button - visible via CSS on small screens */}
-      <button className="mobile-nav-toggle" onClick={toggleMobile} aria-expanded={mobileOpen} aria-label="Toggle navigation">
+      {/* Mobile toggle button */}
+      <button 
+        className="mobile-nav-toggle" 
+        onClick={toggleMobile} 
+        aria-expanded={mobileOpen} 
+        aria-label="Toggle navigation"
+        type="button"
+      >
         <span className="hamburger" />
       </button>
 
-      {/* Backdrop overlay - click to close */}
+      {/* Backdrop overlay for mobile */}
       {mobileOpen && !isDesktop && (
         <div className="nav-backdrop" onClick={closeMobile} />
       )}
 
-      <SideNav
-        aria-label="Primary navigation"
-        expanded={isDesktop || mobileOpen}
-        /* Offset below header only on mobile */
-        isChildOfHeader={!isDesktop}
-        className={`app-sidenav ${mobileOpen ? 'mobile-open' : 'mobile-closed'}`}
+      {/* SLDS Tree Navigation */}
+      <nav 
+        aria-label="Primary navigation" 
+        className={`app-sidenav slds-tree-container ${isDesktop || mobileOpen ? 'is-open' : 'is-closed'}`}
       >
-        <SideNavItems>
-          <SideNavMenu 
-            title="Calculator"
-            defaultExpanded={location.pathname.startsWith('/calculator')}
-          >
-            {calculatorItems.map((item) => (
-              <SideNavMenuItem
-                key={item.path}
-                isActive={location.pathname === item.path}
-                onClick={() => {
-                  navigate(item.path);
-                  // close on mobile after navigation
-                  if (!isDesktop) {
-                    setMobileOpen(false);
-                  }
-                }}
-              >
-                {item.label}
-              </SideNavMenuItem>
-            ))}
-          </SideNavMenu>
-
-          <SideNavLink
-            isActive={location.pathname === '/quotes'}
-            onClick={() => {
-              navigate('/quotes');
-              // close on mobile after navigation
-              if (!isDesktop) {
-                setMobileOpen(false);
-              }
-            }}
-          >
-            Quotes
-          </SideNavLink>
+               
+        <ul className="slds-tree" role="tree" aria-label="Site Navigation">
+          {navTree.map(item => renderTreeItem(item))}
           
-          {showAdminMenu && (
-            <SideNavMenu 
-              title="Admin"
-              defaultExpanded={location.pathname.startsWith('/admin')}
-            >
-              {adminItems.map((item) => (
-                <SideNavMenuItem
-                  key={item.path}
-                  isActive={location.pathname === item.path}
-                  onClick={() => {
-                    navigate(item.path);
-                    // close on mobile after navigation
-                    if (!isDesktop) {
-                      setMobileOpen(false);
-                    }
-                  }}
-                >
-                  {item.label}
-                </SideNavMenuItem>
-              ))}
-            </SideNavMenu>
-          )}
-
+          {/* Logout - always at bottom */}
           {user && (
-            <SideNavLink
-              onClick={() => {
-                logout();
-                navigate('/login');
-                if (!isDesktop) {
-                  setMobileOpen(false);
-                }
-              }}
-            >
-              Logout
-            </SideNavLink>
+            <li className="slds-tree__item slds-tree__item--logout" role="treeitem" aria-level={1}>
+              <button
+                className="slds-tree__item-content slds-tree__item-link"
+                onClick={() => { logout(); navigate('/login'); if (!isDesktop) setMobileOpen(false); }}
+                type="button"
+              >
+                <span className="slds-tree__item-label">Logout</span>
+              </button>
+            </li>
           )}
-        </SideNavItems>
-      </SideNav>
+        </ul>
+      </nav>
     </>
   );
 }

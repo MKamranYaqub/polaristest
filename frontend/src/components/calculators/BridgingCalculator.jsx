@@ -1582,9 +1582,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
             
             if (!hasRequiredFields) {
               return (
-                <div className="no-rates" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
-                  <p style={{ fontSize: '1.1rem', marginBottom: 'var(--token-spacing-sm)' }}>Please enter Property Value and Gross Loan (or Net Loan if using specific net) to see results.</p>
-                  <p style={{ fontSize: '0.9rem' }}>Both fields are required to calculate loan options.</p>
+                <div className="no-rates">
+                  <p className="no-rates__title">Please enter Property Value and Gross Loan (or Net Loan if using specific net) to see results.</p>
+                  <p className="no-rates__subtitle">Both fields are required to calculate loan options.</p>
                 </div>
               );
             }
@@ -1629,7 +1629,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
                         if (!bestFusion && !bestVariable && !bestFixed) {
                           return (
                             <tr>
-                              <td colSpan={4} className="slds-text-body_small" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
+                              <td colSpan={4} className="slds-text-body_small no-rates__cell">
                                 No results match the selected criteria. Please adjust your loan details or criteria answers.
                               </td>
                             </tr>

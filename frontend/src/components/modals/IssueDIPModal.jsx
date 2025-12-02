@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { InlineLoading } from '@carbon/react';
+import Spinner from '../ui/Spinner';
 import { useSaveShortcut, useEscapeKey } from '../../hooks/useKeyboardShortcut';
 import { useUiPreferences } from '../../hooks/useUiPreferences';
 import { useToast } from '../../contexts/ToastContext';
@@ -398,7 +398,7 @@ export default function IssueDIPModal({
         onClick={handleSaveData}
         disabled={saving}
       >
-        {saving && <InlineLoading description="Saving..." />}
+        {saving && <Spinner label="Saving..." />}
         {!saving && 'Save Data'}
       </button>
       <button
@@ -406,7 +406,7 @@ export default function IssueDIPModal({
         onClick={handleCreatePDF}
         disabled={saving}
       >
-        {saving && <InlineLoading description="Creating..." />}
+        {saving && <Spinner label="Creating..." />}
         {!saving && 'Create PDF'}
       </button>
     </>

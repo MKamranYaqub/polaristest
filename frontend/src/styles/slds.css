@@ -85,7 +85,7 @@ body,
   align-items: center;
   padding: 0 1rem;
   border: 1px solid transparent;
-  border-radius: var(--slds-border-radius);
+  border-radius: var(--token-radius-btn);
   font-size: 0.8125rem;
   line-height: 1.875rem;
   text-decoration: none;
@@ -142,6 +142,133 @@ body,
   background-color: var(--token-interactive, #0250d9);
   border-color: var(--token-interactive, #0250d9);
   color: var(--token-text-inverse, white);
+}
+
+/* Success Button - for positive actions like "New Quote" */
+.slds-button_success {
+  padding: 0 1rem;
+  background-color: var(--token-success-action, #00a89d);
+  border-color: var(--token-success-action, #00a89d);
+  color: var(--token-text-inverse, white);
+  font-weight: var(--token-font-weight-semibold, 600);
+  box-shadow: var(--token-shadow-soft);
+}
+
+.slds-button_success:hover {
+  background-color: var(--token-success-action-hover, #008c82);
+  border-color: var(--token-success-action-hover, #008c82);
+  transform: translateY(-1px);
+}
+
+.slds-button_success:active {
+  transform: translateY(0);
+}
+
+/* Disabled state for all button variants */
+.slds-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.slds-button:disabled:hover {
+  transform: none;
+}
+
+/* ============================================
+   BUTTON GROUPS - Toggle & Segmented Controls
+   ============================================ */
+
+/* Toggle Button Group - for binary choices (Direct Client/Broker) */
+.slds-button-group_toggle {
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--token-border-subtle, #d8dde6);
+  border-radius: var(--token-radius-btn);
+}
+
+.slds-button-group_toggle .slds-button {
+  flex: 1;
+  border: none;
+  border-right: 1px solid var(--token-border-subtle, #d8dde6);
+  background: var(--token-layer-surface, white);
+  color: var(--token-text-primary, #181818);
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+/* Left button - rounded on left side */
+.slds-button-group_toggle > .slds-button:first-child {
+  border-radius: var(--token-radius-btn-left, 88px 0 0 88px) !important;
+}
+
+/* Right button - rounded on right side */
+.slds-button-group_toggle > .slds-button:last-child {
+  border-right: none;
+  border-radius: var(--token-radius-btn-right, 0 88px 88px 0) !important;
+}
+
+/* Middle buttons (if any) - no radius */
+.slds-button-group_toggle > .slds-button:not(:first-child):not(:last-child) {
+  border-radius: 0 !important;
+}
+
+.slds-button-group_toggle .slds-button:hover:not(.slds-is-selected) {
+  background: var(--token-layer-hover, #f3f3f3);
+}
+
+.slds-button-group_toggle .slds-button.slds-is-selected {
+  background: var(--token-interactive, #0176d3);
+  color: var(--token-text-inverse, white);
+  font-weight: 600;
+}
+
+/* Segmented Button Group - for range selection (Specialist/Core range) */
+.slds-button-group_segmented {
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--token-border-subtle, #d8dde6);
+  border-radius: var(--token-radius-btn);
+  background: var(--token-layer-surface, white);
+}
+
+.slds-button-group_segmented .slds-button {
+  flex: 1;
+  border: none;
+  border-right: 1px solid var(--token-border-subtle, #d8dde6);
+  background: var(--token-layer-surface, white);
+  color: var(--token-text-primary, #181818);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  padding: var(--token-spacing-md, 0.75rem) var(--token-spacing-xl, 1.5rem);
+  transition: all 0.15s ease;
+}
+
+/* Left button - rounded on left side */
+.slds-button-group_segmented > .slds-button:first-child {
+  border-radius: var(--token-radius-btn-left, 88px 0 0 88px) !important;
+}
+
+/* Right button - rounded on right side */
+.slds-button-group_segmented > .slds-button:last-child {
+  border-right: none;
+  border-radius: var(--token-radius-btn-right, 0 88px 88px 0) !important;
+}
+
+/* Middle buttons (if any) - no radius */
+.slds-button-group_segmented > .slds-button:not(:first-child):not(:last-child) {
+  border-radius: 0 !important;
+}
+
+.slds-button-group_segmented .slds-button:hover:not(.slds-is-selected) {
+  background: var(--token-layer-hover, #f3f3f3);
+}
+
+.slds-button-group_segmented .slds-button.slds-is-selected {
+  background: var(--token-interactive, #0176d3);
+  color: var(--token-text-inverse, white);
+  font-weight: 600;
 }
 
 /* Form Elements */
@@ -681,4 +808,225 @@ body,
 .slds-icon_large {
   width: 3rem;
   height: 3rem;
+}
+
+/* ============================================
+   SLDS TABS - Horizontal tabs with underline
+   ============================================ */
+
+/* Tab container */
+.slds-tabs_default {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab list - horizontal row of tabs */
+.slds-tabs_default__nav {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--slds-color-gray-3, #e5e5e5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Individual tab item */
+.slds-tabs_default__item {
+  display: flex;
+  margin-bottom: -1px; /* overlap the border */
+}
+
+/* Tab link/button - Default size */
+.slds-tabs_default__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  height: 2.5rem;
+  color: var(--slds-color-text-weak, #3e3e3c);
+  font-size: 0.875rem;
+  font-weight: 400;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  transition: color 0.1s ease, border-color 0.1s ease;
+}
+
+.slds-tabs_default__link:hover {
+  color: var(--token-interactive, #0176d3);
+  text-decoration: none;
+}
+
+.slds-tabs_default__link:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Active tab state */
+.slds-tabs_default__item.slds-is-active .slds-tabs_default__link,
+.slds-tabs_default__link.slds-is-active {
+  color: var(--token-interactive, #0176d3);
+  font-weight: 700;
+  border-bottom-color: var(--token-interactive, #0176d3);
+}
+
+/* Tab content panel */
+.slds-tabs_default__content {
+  padding: 1rem 0;
+}
+
+.slds-tabs_default__content.slds-hide {
+  display: none;
+}
+
+.slds-tabs_default__content.slds-show {
+  display: block;
+}
+
+/* ============================================
+   SLDS TABS - Medium size variant
+   ============================================ */
+.slds-tabs_default_medium .slds-tabs_default__link {
+  padding: 0 1rem;
+  height: 3rem;
+  font-size: 1rem;
+}
+
+/* ============================================
+   SLDS TABS - Large size variant
+   ============================================ */
+.slds-tabs_default_large .slds-tabs_default__link {
+  padding: 0 1.25rem;
+  height: 3.5rem;
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+.slds-tabs_default_large .slds-tabs_default__item.slds-is-active .slds-tabs_default__link,
+.slds-tabs_default_large .slds-tabs_default__link.slds-is-active {
+  font-weight: 700;
+}
+
+/* ============================================
+   SLDS TABS - Scoped variant (bordered tabs)
+   ============================================ */
+.slds-tabs_scoped {
+  display: flex;
+  flex-direction: column;
+}
+
+.slds-tabs_scoped__nav {
+  display: flex;
+  align-items: stretch;
+  background-color: var(--slds-color-gray-1, #f3f3f3);
+  border: 1px solid var(--slds-color-gray-3, #e5e5e5);
+  border-radius: var(--slds-border-radius, 0.25rem) var(--slds-border-radius, 0.25rem) 0 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slds-tabs_scoped__item {
+  display: flex;
+  margin-bottom: -1px;
+}
+
+.slds-tabs_scoped__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  height: 2.5rem;
+  color: var(--slds-color-text-weak, #3e3e3c);
+  font-size: 0.875rem;
+  font-weight: 400;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.1s ease, background-color 0.1s ease;
+}
+
+.slds-tabs_scoped__link:hover {
+  background-color: var(--slds-color-gray-2, #fafafa);
+}
+
+.slds-tabs_scoped__item.slds-is-active .slds-tabs_scoped__link {
+  background-color: white;
+  color: var(--slds-color-text-default, #080707);
+  font-weight: 700;
+  border-bottom-color: white;
+}
+
+.slds-tabs_scoped__content {
+  background-color: white;
+  border: 1px solid var(--slds-color-gray-3, #e5e5e5);
+  border-top: none;
+  border-radius: 0 0 var(--slds-border-radius, 0.25rem) var(--slds-border-radius, 0.25rem);
+  padding: 1rem;
+}
+
+.slds-tabs_scoped__content.slds-hide {
+  display: none;
+}
+
+.slds-tabs_scoped__content.slds-show {
+  display: block;
+}
+
+/* ============================================
+   SLDS TABS - Card variant (tabs + content as one unit)
+   ============================================ */
+.slds-tabs_card {
+  background: var(--token-layer-surface, white);
+  border: 1px solid var(--slds-color-gray-3, #e5e5e5);
+  border-radius: var(--token-radius-card, 12px);
+  overflow: hidden;
+  box-shadow: var(--token-shadow-soft, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+/* Tabs nav inside card - no outer border, flush with card edges */
+.slds-tabs_card .slds-tabs_default__nav {
+  background: var(--slds-color-gray-1, #f3f3f3);
+  border-bottom: 1px solid var(--slds-color-gray-3, #e5e5e5);
+  padding: 0 1rem;
+}
+
+/* Tab items inside card */
+.slds-tabs_card .slds-tabs_default__item {
+  margin-bottom: 0;
+}
+
+/* Tab links inside card */
+.slds-tabs_card .slds-tabs_default__link {
+  border-bottom-width: 3px;
+  margin-bottom: -1px;
+}
+
+/* Active tab in card - white background to connect with content */
+.slds-tabs_card .slds-tabs_default__item.slds-is-active .slds-tabs_default__link {
+  background: var(--token-layer-surface, white);
+  border-bottom-color: var(--token-layer-surface, white);
+  color: var(--token-interactive, #0176d3);
+}
+
+/* Card content area - minimal padding for tight layout */
+.slds-tabs_card__content {
+  padding: var(--token-spacing-0) ;
+  background: var(--token-layer-surface, white);
+}
+
+/* Remove extra margin/padding from nested results-section */
+.slds-tabs_card__content .results-section {
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
 }

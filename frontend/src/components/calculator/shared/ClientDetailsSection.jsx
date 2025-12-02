@@ -73,17 +73,17 @@ export default function ClientDetailsSection({
     >
       <div className="slds-grid slds-gutters align-items-stretch margin-bottom-05">
         <div className="slds-col width-100">
-          <div className="slds-button-group display-flex width-100" role="group">
+          <div className="slds-button-group_toggle" role="group">
             <button 
               type="button" 
-              className={`slds-button flex-1 display-flex align-items-center justify-content-center ${clientType === 'Direct' ? 'slds-button_brand' : 'slds-button_neutral'}`} 
+              className={`slds-button ${clientType === 'Direct' ? 'slds-is-selected' : ''}`} 
               onClick={() => setClientType('Direct')}
             >
               Direct Client
             </button>
             <button 
               type="button" 
-              className={`slds-button flex-1 display-flex align-items-center justify-content-center ${clientType === 'Broker' ? 'slds-button_brand' : 'slds-button_neutral'}`} 
+              className={`slds-button ${clientType === 'Broker' ? 'slds-is-selected' : ''}`} 
               onClick={() => setClientType('Broker')}
             >
               Broker

@@ -47,11 +47,17 @@
   }
 }
 
+/* ============================================
+   RANGE TOGGLE - Segmented Button Group
+   For Specialist/Core range selection
+   DEPRECATED: Use slds-button-group_segmented instead
+   ============================================ */
+
 .range-toggle-container {
   margin-top: $spacing-md;
   background: $token-color-surface;
   border: 1px solid $token-color-border-subtle;
-  border-radius: $token-radius-sm;
+  border-radius: var(--token-radius-btn, 88px);
   overflow: hidden;
 }
 
@@ -73,17 +79,29 @@
     transition: all 0.15s ease;
     font-family: $token-font-family;
     
+    /* Left button - rounded on left side */
+    &:first-child {
+      border-radius: var(--token-radius-btn-left, 88px 0 0 88px) !important;
+    }
+    
+    /* Right button - rounded on right side */
     &:last-child {
       border-right: none;
+      border-radius: var(--token-radius-btn-right, 0 88px 88px 0) !important;
+    }
+    
+    /* Middle buttons (if any) */
+    &:not(:first-child):not(:last-child) {
+      border-radius: 0 !important;
     }
     
     &:hover:not(.active) {
-      background: $token-color-surface;
+      background: var(--token-layer-hover, #f3f3f3);
     }
     
     &.active {
-      background: $token-color-interactive;
-      color: white;
+      background: var(--token-interactive, #0176d3);
+      color: var(--token-text-inverse, white);
       font-weight: 600;
     }
   }

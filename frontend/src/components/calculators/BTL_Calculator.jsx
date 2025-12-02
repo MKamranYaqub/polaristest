@@ -1572,22 +1572,21 @@ export default function BTLcalculator({ initialQuote = null }) {
 
       
 
-      {/* Range toggle buttons - Core / Specialist */}
+      {/* Range toggle tabs with results as unified card */}
       <RangeToggle
         selectedRange={selectedRange}
         onRangeChange={setSelectedRange}
-      />
-
-      <div className="range-toggle-container">
+      >
+        <div className="results-section">
         {/* Rates display */}
         <div className="rates-display">
           {(() => {
             // Check if loan type is selected
             if (!loanType || loanType === '') {
               return (
-                <div className="no-rates" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
-                  <p style={{ fontSize: '1.1rem', marginBottom: 'var(--token-spacing-sm)' }}>Please select a loan calculation type above to view rates and results.</p>
-                  <p style={{ fontSize: '0.9rem' }}>Choose from Max Gross Loan, Net loan required, Specific LTV Required, or Specific Gross Loan.</p>
+                <div className="no-rates">
+                  <p className="no-rates__title">Please select a loan calculation type above to view rates and results.</p>
+                  <p className="no-rates__subtitle">Choose from Max Gross Loan, Net loan required, Specific LTV Required, or Specific Gross Loan.</p>
                 </div>
               );
             }
@@ -1595,25 +1594,25 @@ export default function BTLcalculator({ initialQuote = null }) {
             // Check if property value and monthly rent are entered
             if (!propertyValue || propertyValue <= 0 || !monthlyRent || monthlyRent <= 0) {
               return (
-                <div className="no-rates" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
-                  <p style={{ fontSize: '1.1rem', marginBottom: 'var(--token-spacing-sm)' }}>Please enter property value and monthly rent to view rates and results.</p>
-                  <p style={{ fontSize: '0.9rem' }}>Both fields are required to calculate loan options.</p>
+                <div className="no-rates">
+                  <p className="no-rates__title">Please enter property value and monthly rent to view rates and results.</p>
+                  <p className="no-rates__subtitle">Both fields are required to calculate loan options.</p>
                 </div>
               );
             }
 
             if (loanType === 'Net loan required' && !specificNetLoan) {
                 return (
-                  <div className="no-rates" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
-                    <p style={{ fontSize: '1.1rem', marginBottom: 'var(--token-spacing-sm)' }}>Please enter a required net loan amount to view rates and results.</p>
+                  <div className="no-rates">
+                    <p className="no-rates__title">Please enter a required net loan amount to view rates and results.</p>
                   </div>
                 );
               }
   
               if (loanType === 'Specific gross loan' && !specificGrossLoan) {
                 return (
-                  <div className="no-rates" style={{ padding: 'var(--token-spacing-2xl)', textAlign: 'center', color: 'var(--token-text-muted)' }}>
-                    <p style={{ fontSize: '1.1rem', marginBottom: 'var(--token-spacing-sm)' }}>Please enter a specific gross loan amount to view rates and results.</p>
+                  <div className="no-rates">
+                    <p className="no-rates__title">Please enter a specific gross loan amount to view rates and results.</p>
                   </div>
                 );
               }
@@ -1659,13 +1658,10 @@ export default function BTLcalculator({ initialQuote = null }) {
 
                     return (
                       <>
-                        <div className="rates-count">
-                          Found {filteredRates.length} matching {selectedRange} rates for {productType}, Tier {currentTier}
-                        </div>
                         {feeBuckets.length === 0 ? (
                           <div className="no-rates">No {selectedRange} range rates available for the selected criteria.</div>
                         ) : (
-                          <div className="results-table-wrapper" data-calculator-type={calculatorTypeForSettings} style={{ marginTop: 'var(--token-spacing-lg)' }}>
+                          <div className="results-table-wrapper" data-calculator-type={calculatorTypeForSettings}>
                             <table className="slds-table slds-table_cell-buffer slds-table_bordered" style={{ minWidth: Math.max(600, feeBuckets.length * 220) }}>
                               <thead>
                                 <tr>
@@ -2282,6 +2278,7 @@ export default function BTLcalculator({ initialQuote = null }) {
           })()}
         </div>
       </div>
+      </RangeToggle>
 
       {/* Issue DIP Modal */}
       <IssueDIPModal

@@ -427,10 +427,24 @@ input[type="range"] {
 }
 
 
+/* ============================================
+   RESULTS DISPLAY SECTION
+   Distinct from range toggle buttons
+   ============================================ */
+
+// Results container - card-like appearance
+.results-section {
+  background: var(--token-layer-surface, white);
+  border: 1px solid var(--token-border-subtle, #d8dde6);
+  border-radius: var(--token-radius-lg, 12px);
+  margin-top: var(--token-spacing-lg, 1rem);
+  overflow: hidden;
+  box-shadow: var(--token-shadow-soft, 0 2px 4px rgba(0, 0, 0, 0.05));
+}
+
 // Rates display
 .rates-display {
-  padding: $spacing-md;
-  border-top: 1px solid $token-color-border-subtle;
+  padding: $spacing-xs;
 
   .rates-count {
     font-size: 0.875rem;
@@ -458,12 +472,35 @@ input[type="range"] {
     }
   }
 
+  // Empty state / prompts
   .no-rates {
-    padding: $spacing-md;
+    padding: var(--token-spacing-2xl, 2rem);
     text-align: center;
-    color: $token-text-secondary;
+    color: var(--token-text-muted, #6b6b6b);
     font-style: italic;
+    
+    .no-rates__title {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: var(--token-spacing-sm, 0.5rem);
+      font-style: normal;
+      color: var(--token-text-primary, #181818);
+    }
+    
+    .no-rates__subtitle {
+      font-size: 0.9rem;
+      color: var(--token-text-secondary, #6b6b6b);
+      font-style: italic;
+    }
   }
+}
+
+// Empty state for table cells
+.no-rates__cell {
+  padding: var(--token-spacing-2xl, 2rem) !important;
+  text-align: center !important;
+  color: var(--token-text-muted, #6b6b6b);
+  font-style: italic;
 }
 
 // Info icon + tooltip

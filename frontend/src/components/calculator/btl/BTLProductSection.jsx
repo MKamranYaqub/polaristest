@@ -47,21 +47,9 @@ const BTLProductSection = ({
           {quoteId && (
             <>
               <button 
-                className="slds-button"
+                className="btn-new-quote"
                 onClick={onNewQuote}
                 title="Start a new quote"
-                style={{
-                  backgroundColor: '#00a89d',
-                  color: 'white',
-                  fontWeight: '600',
-                  border: 'none',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '4px',
-                  boxShadow: '0 2px 4px rgba(0, 168, 157, 0.3)',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#008c82'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#00a89d'}
               >
                 + New Quote
               </button>
