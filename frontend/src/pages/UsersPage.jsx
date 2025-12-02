@@ -234,22 +234,25 @@ const UsersPage = () => {
   return (
     <div className="slds-p-around_large">
       <div className="admin-table-container">
-        <h1 style={{ marginBottom: '1.5rem', fontSize: '1.75rem', fontWeight: 'bold' }}>
-          User Management
-        </h1>
-        <p style={{ marginBottom: '1.5rem', color: '#706e6b' }}>
-          Manage user accounts, access levels, and permissions
-        </p>
-        
-        <div className="table-header">
-          <div className="table-actions-left">
-            <button
-              className="slds-button slds-button_brand"
-              onClick={() => setShowCreateModal(true)}
-            >
-              Create User
-            </button>
-            <span className="total-count">Total: {users.length}</span>
+        <div className="table-header-stacked">
+          <div className="table-title-row">
+            <div>
+              <h1 style={{ marginBottom: '0.5rem', fontSize: '1.75rem', fontWeight: 'bold' }}>
+                User Management
+              </h1>
+              <p style={{ margin: 0, color: '#706e6b' }}>
+                Manage user accounts, access levels, and permissions
+              </p>
+            </div>
+            <div className="table-actions-row">
+              <button
+                className="slds-button slds-button_brand"
+                onClick={() => setShowCreateModal(true)}
+              >
+                Create User
+              </button>
+              <span className="total-count">Total: {users.length}</span>
+            </div>
           </div>
         </div>
 
