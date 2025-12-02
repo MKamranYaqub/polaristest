@@ -14,6 +14,7 @@ import {
   UI_PREFERENCES as DEFAULT_UI_PREFERENCES,
   LOCALSTORAGE_CONSTANTS_KEY,
 } from '../../config/constants';
+import useTypography from '../../hooks/useTypography';
 import '../../styles/slds.css';
 
 function readOverrides() {
@@ -48,6 +49,9 @@ export default function Constants() {
   // per-field editing state and temporary values
   const [editingFields, setEditingFields] = useState({});
   const [tempValues, setTempValues] = useState({});
+  
+  // Typography toggle
+  const { enabled: typographyEnabled, toggle: toggleTypography } = useTypography();
   
   // Broker route add/delete state
   const [showAddRouteForm, setShowAddRouteForm] = useState(false);
@@ -1677,6 +1681,66 @@ export default function Constants() {
               <div className="helper-text">Update options used in the Bridge DIP "Funding Line" dropdown.</div>
             </div>
           </div>
+      </section>
+
+      {/* Typography Settings */}
+      <section className="slds-box slds-m-bottom_medium section-divider">
+        <h3 className="section-header">Typography Settings</h3>
+        <div className="slds-form-element">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <label className="slds-checkbox_toggle slds-grid">
+              <span className="slds-form-element__label slds-assistive-text">Inter Typography</span>
+              <input
+                type="checkbox"
+                checked={typographyEnabled}
+                onChange={() => toggleTypography()}
+                aria-describedby="typography-toggle-desc"
+              />
+              <span className="slds-checkbox_faux_container" aria-live="assertive">
+                <span className="slds-checkbox_faux"></span>
+                <span className="slds-checkbox_on">On</span>
+                <span className="slds-checkbox_off">Off</span>
+              </span>
+            </label>
+            <div>
+              <span style={{ fontWeight: '500' }}>Use Inter Font</span>
+              <p id="typography-toggle-desc" className="helper-text" style={{ margin: 0 }}>
+                Switch from Salesforce Sans to Inter font with a modern modular scale typography system.
+              </p>
+            </div>
+          </div>
+          
+          {/* Typography Preview */}
+          <div style={{ 
+            marginTop: '1rem', 
+            padding: '1rem', 
+            backgroundColor: 'var(--token-ui-background-subtle, #f4f6f9)', 
+            borderRadius: '4px',
+            border: '1px solid var(--token-ui-border-light, #e5e5e5)'
+          }}>
+            <p style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.5rem', fontWeight: '500' }}>
+              PREVIEW ({typographyEnabled ? 'Inter' : 'Salesforce Sans'})
+            </p>
+            <div style={{ fontFamily: typographyEnabled ? '"Inter", sans-serif' : 'inherit' }}>
+              <h4 style={{ 
+                fontSize: typographyEnabled ? '1.728rem' : '1.25rem', 
+                fontWeight: '600', 
+                margin: '0 0 0.25rem 0',
+                fontFamily: typographyEnabled ? '"Inter", sans-serif' : 'inherit'
+              }}>
+                Heading Example
+              </h4>
+              <p style={{ 
+                fontSize: typographyEnabled ? '1rem' : '0.875rem', 
+                lineHeight: typographyEnabled ? '1.6' : '1.5',
+                margin: 0,
+                fontFamily: typographyEnabled ? '"Inter", sans-serif' : 'inherit'
+              }}>
+                Body text example showing the {typographyEnabled ? 'Inter' : 'Salesforce Sans'} font family.
+              </p>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Flat-above-commercial override removed — rule is now hard-coded in calculator logic per user request. */}

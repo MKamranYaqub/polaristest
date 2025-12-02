@@ -26,9 +26,11 @@ import ProtectedRoute from './pages/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import { isEmbeddedMode } from './utils/embedding';
 import useHeaderColors from './hooks/useHeaderColors';
+import useTypography from './hooks/useTypography';
 import './styles/index.scss';
 import './styles/accessibility.css';
 import './styles/utilities.css';
+import './styles/typography-inter.css'; // Inter typography (toggled via body class)
 
 // AppContent component to use theme context
 const AppContent = () => {
@@ -37,6 +39,9 @@ const AppContent = () => {
   
   // Load and apply header colors from Supabase
   useHeaderColors();
+  
+  // Initialize typography system (applies body class based on localStorage)
+  useTypography();
   
   // Add keyboard shortcut to clear cache (Ctrl+Shift+R or Cmd+Shift+R)
   useEffect(() => {
