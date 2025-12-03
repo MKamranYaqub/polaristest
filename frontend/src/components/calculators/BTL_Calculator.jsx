@@ -1286,7 +1286,7 @@ export default function BTLcalculator({ initialQuote = null }) {
   if (!supabase) {
     return (
       <div className="slds-p-around_medium">
-        <div className="slds-text-color_error">Supabase client not available. Calculator cannot load data.</div>
+        <div className="slds-text-color_error">Database client not available. Calculator cannot load data.</div>
       </div>
     );
   }

@@ -164,7 +164,7 @@ function RatesTable() {
     return (
       <div className="loading-overlay">
         <div className="loading-spinner"></div>
-        <div className="loading-text">Loading rates from Supabase...</div>
+        <div className="loading-text">Loading rates...</div>
       </div>
     );
   }

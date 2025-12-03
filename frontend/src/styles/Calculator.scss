@@ -9,6 +9,8 @@
   max-width: none; /* allow the container to fill the available content column */
   margin: 0;
   box-sizing: border-box;
+  background: var(--slds-g-color-surface-container-1);
+  border-radius: var(--slds-g-radius-border-3);
 }
 
 // Slider input styling
@@ -73,12 +75,12 @@ input[type="range"] {
 .top-filters {
   display: flex;
   align-items: flex-end;
-  gap: $spacing-md;
-  margin-bottom: $spacing-md;
-  padding: $spacing-md;
-  background: $token-color-surface;
-  border: 1px solid $token-color-border-subtle;
-  border-radius: $token-radius-sm;
+  gap: var(--slds-g-spacing-3);
+  margin-bottom: var(--slds-g-spacing-3);
+  padding: var(--slds-g-spacing-3);
+  background: var(--slds-g-color-surface-container-1);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
   flex-wrap: wrap;
 
   .slds-form-element {
@@ -112,30 +114,24 @@ input[type="range"] {
 
 // Collapsible section (accordion-like)
 .collapsible-section {
-  background: $token-color-surface;
-  border: 1px solid $token-color-border-subtle;
-  border-radius: $token-radius-sm;
-  margin-bottom: $spacing-md;
+  background: var(--slds-g-color-surface-container-1);
+  border-radius: var(--slds-g-radius-border-3);
+  margin-bottom: var(--slds-g-spacing-3);
   overflow: hidden;
-  box-shadow: var(--token-shadow-card);
 }
 
 // Product configuration sections
 .product-config-section {
-  background: $token-color-surface;
-  padding: $spacing-md;
-  border-radius: $token-radius-sm;
-  box-shadow: var(--token-shadow-card);
-  border: 1px solid $token-color-border-subtle;
+  background: var(--slds-g-color-surface-container-1);
+  padding: var(--slds-g-spacing-4);
+  border-radius: var(--slds-g-radius-border-3);
 }
 
 .btl-product-selector {
-  background: $token-color-surface;
-  padding: $spacing-md;
-  border-radius: $token-radius-sm;
-  box-shadow: var(--token-shadow-card);
-  border: 1px solid $token-color-border-subtle;
-  margin-bottom: $spacing-md;
+  background: var(--slds-g-color-surface-container-1);
+  padding: var(--slds-g-spacing-4);
+  border-radius: var(--slds-g-radius-border-3);
+  margin-bottom: var(--slds-g-spacing-3);
   
   .top-filters {
     display: flex;
@@ -151,10 +147,10 @@ input[type="range"] {
     .tier-display {
       display: flex;
       align-items: center;
-      gap: var(--token-spacing-sm);
-      padding: var(--token-spacing-sm) var(--token-spacing-md);
+      gap: var(--slds-g-spacing-2);
+      padding: var(--slds-g-spacing-2) var(--slds-g-spacing-3);
       background: var(--token-info-bg);
-      border-radius: $token-radius-sm;
+      border-radius: var(--slds-g-radius-border-2);
       border: 1px solid var(--token-info);
       
       .tier-label {
@@ -173,27 +169,34 @@ input[type="range"] {
 
 .collapsible-header {
   display: flex;
+  height: var(--slds-g-sizing-9);
+  padding: var(--slds-g-spacing-2) var(--slds-g-spacing-3);
   align-items: center;
+  gap: var(--slds-g-spacing-2);
+  align-self: stretch;
   justify-content: space-between;
-  padding: var(--token-spacing-md) $spacing-md;
-  background: $token-color-surface;
+  border-radius: var(--slds-g-radius-border-3);
+  border: 1px solid var(--slds-g-color-border-1);
+  background: transparent;
   cursor: pointer;
   user-select: none;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
   
   &:hover {
-    background: var(--token-layer-hover, #f3f2f2);
+    background: var(--slds-g-color-neutral-base-80);
+    border-color: var(--slds-g-color-border-2);
   }
   
-  // When section is expanded, use same color as hover state
+  // When section is expanded, use accent color
   &.expanded {
-    background: var(--token-layer-hover, #f3f2f2);
+    background: var(--slds-g-color-surface-container-3);
+    border-color: var(--slds-g-color-accent-2);
   }
   
   .header-title {
     font-size: 0.9375rem;
     font-weight: 600;
-    color: $token-text-primary;
+    color: var(--slds-g-color-on-surface-2);
     margin: 0;
   }
   
@@ -202,14 +205,14 @@ input[type="range"] {
     height: 1rem;
     transition: transform 0.2s ease;
     fill: currentColor;
-    color: $token-text-secondary;
+    color: var(--slds-g-color-on-surface-1);
     flex-shrink: 0;
   }
 }
 
 .collapsible-body {
-  padding: $spacing-md;
-  background: $token-color-surface;
+  padding: var(--slds-g-spacing-4);
+  background: var(--slds-g-color-surface-container-1);
   
   &.collapsed {
     display: none;
@@ -220,7 +223,7 @@ input[type="range"] {
 .criteria-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: $spacing-md;
+  gap: var(--slds-g-spacing-4);
   
   @media (max-width: 1200px) {
     grid-template-columns: repeat(3, 1fr);

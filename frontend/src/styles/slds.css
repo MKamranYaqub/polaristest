@@ -50,8 +50,6 @@ body,
 
 .slds-table {
   background-color: white;
-  border: 1px solid var(--slds-color-gray-3);
-  border-radius: var(--slds-border-radius);
   border-collapse: separate;
   width: 100%;
   font-family: var(--slds-font-family);
@@ -83,9 +81,9 @@ body,
   position: relative;
   display: inline-flex;
   align-items: center;
-  padding: 0 1rem;
+  padding: 0 var(--slds-g-spacing-4);
   border: 1px solid transparent;
-  border-radius: var(--token-radius-btn);
+  border-radius: var(--slds-g-radius-border-2);
   font-size: 0.8125rem;
   line-height: 1.875rem;
   text-decoration: none;
@@ -96,27 +94,26 @@ body,
 }
 
 .slds-button_brand {
-  padding: 0 1rem;
-  /* Use the app interactive token so brand buttons match range-toggle active color */
-  background-color: var(--token-interactive, #0250d9);
-  border-color: var(--token-interactive, #0250d9);
-  color: white;
+  padding: 0 var(--slds-g-spacing-4);
+  background-color: var(--slds-g-color-accent-2);
+  border-color: var(--slds-g-color-accent-2);
+  color: var(--slds-g-color-on-surface-inverse-1);
 }
 
 .slds-button_brand:hover {
-  background-color: var(--token-interactive-hover, #022ac0);
-  border-color: var(--token-interactive-hover, #022ac0);
+  background-color: var(--slds-g-color-accent-3);
+  border-color: var(--slds-g-color-accent-3);
 }
 
 .slds-button_neutral {
-  padding: 0 1rem;
-  background-color: white;
-  border: 1px solid var(--slds-color-gray-4);
-  color: var(--slds-color-text-weak);
+  padding: 0 var(--slds-g-spacing-4);
+  background-color: var(--slds-g-color-surface-container-1);
+  border: 1px solid var(--slds-g-color-border-1);
+  color: var(--slds-g-color-on-surface-1);
 }
 
 .slds-button_neutral:hover {
-  background-color: var(--slds-color-gray-1);
+  background-color: var(--slds-g-color-surface-container-2);
 }
 
 .slds-button_destructive {
@@ -132,16 +129,16 @@ body,
 }
 
 .slds-button_outline-brand {
-  padding: 0 1rem;
+  padding: 0 var(--slds-g-spacing-4);
   background-color: transparent;
-  border: 1px solid var(--token-interactive, #0250d9);
-  color: var(--token-interactive, #0250d9);
+  border: 1px solid var(--slds-g-color-accent-2);
+  color: var(--slds-g-color-accent-2);
 }
 
 .slds-button_outline-brand:hover {
-  background-color: var(--token-interactive, #0250d9);
-  border-color: var(--token-interactive, #0250d9);
-  color: var(--token-text-inverse, white);
+  background-color: var(--slds-g-color-accent-2);
+  border-color: var(--slds-g-color-accent-2);
+  color: var(--slds-g-color-on-surface-inverse-1);
 }
 
 /* Success Button - for positive actions like "New Quote" */
@@ -183,16 +180,16 @@ body,
   display: flex;
   width: 100%;
   overflow: hidden;
-  border: 1px solid var(--token-border-subtle, #d8dde6);
+  border: 1px solid var(--slds-g-color-border-1);
   border-radius: var(--token-radius-btn);
 }
 
 .slds-button-group_toggle .slds-button {
   flex: 1;
   border: none;
-  border-right: 1px solid var(--token-border-subtle, #d8dde6);
-  background: var(--token-layer-surface, white);
-  color: var(--token-text-primary, #181818);
+  border-right: 1px solid var(--slds-g-color-border-1);
+  background: var(--slds-g-color-surface-container-1);
+  color: var(--slds-g-color-on-surface-2);
   font-weight: 500;
   transition: all 0.15s ease;
 }
@@ -214,12 +211,12 @@ body,
 }
 
 .slds-button-group_toggle .slds-button:hover:not(.slds-is-selected) {
-  background: var(--token-layer-hover, #f3f3f3);
+  background: var(--slds-g-color-surface-container-3);
 }
 
 .slds-button-group_toggle .slds-button.slds-is-selected {
-  background: var(--token-interactive, #0176d3);
-  color: var(--token-text-inverse, white);
+  background: var(--slds-g-color-accent-2);
+  color: var(--slds-g-color-on-surface-inverse-1);
   font-weight: 600;
 }
 
@@ -228,20 +225,20 @@ body,
   display: flex;
   width: 100%;
   overflow: hidden;
-  border: 1px solid var(--token-border-subtle, #d8dde6);
+  border: 1px solid var(--slds-g-color-border-1);
   border-radius: var(--token-radius-btn);
-  background: var(--token-layer-surface, white);
+  background: var(--slds-g-color-surface-container-1);
 }
 
 .slds-button-group_segmented .slds-button {
   flex: 1;
   border: none;
-  border-right: 1px solid var(--token-border-subtle, #d8dde6);
-  background: var(--token-layer-surface, white);
-  color: var(--token-text-primary, #181818);
+  border-right: 1px solid var(--slds-g-color-border-1);
+  background: var(--slds-g-color-surface-container-1);
+  color: var(--slds-g-color-on-surface-2);
   font-size: 0.9375rem;
   font-weight: 500;
-  padding: var(--token-spacing-md, 0.75rem) var(--token-spacing-xl, 1.5rem);
+  padding: var(--slds-g-spacing-3) var(--slds-g-spacing-6);
   transition: all 0.15s ease;
 }
 
@@ -314,48 +311,48 @@ body,
 
 .slds-input {
   width: 100%;
-  padding: 0 1rem 0 0.75rem;
+  padding: 0 var(--slds-g-spacing-3);
   line-height: 1.875rem;
-  min-height: calc(1.875rem + (1px * 2));
-  border: 1px solid var(--slds-color-gray-4);
-  border-radius: var(--slds-border-radius);
-  background-color: white;
-  color: var(--slds-color-text-default);
+  min-height: var(--slds-g-sizing-10);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
+  background-color: var(--slds-g-color-surface-container-1);
+  color: var(--slds-g-color-on-surface-2);
   transition: border 0.1s linear, background-color 0.1s linear;
 }
 
 .slds-input:focus {
   outline: 0;
-  border-color: var(--slds-color-blue-20);
-  box-shadow: 0 0 3px var(--slds-color-blue-20);
+  border-color: var(--slds-g-color-accent-2);
+  box-shadow: 0 0 0 2px rgba(2, 80, 217, 0.2);
 }
 
 .slds-select {
   width: 100%;
-  padding: 0 1rem 0 0.75rem;
+  padding: 0 var(--slds-g-spacing-4) 0 var(--slds-g-spacing-3);
   line-height: 1.875rem;
-  min-height: calc(1.875rem + (1px * 2));
-  border: 1px solid var(--slds-color-gray-4);
-  border-radius: var(--slds-border-radius);
-  background-color: white;
-  color: var(--slds-color-text-default);
+  min-height: var(--slds-g-sizing-10);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
+  background-color: var(--slds-g-color-surface-container-1);
+  color: var(--slds-g-color-on-surface-2);
   transition: border 0.1s linear, background-color 0.1s linear;
   font-family: var(--slds-font-family);
 }
 
 .slds-select:focus {
   outline: 0;
-  border-color: var(--slds-color-blue-20);
-  box-shadow: 0 0 3px var(--slds-color-blue-20);
+  border-color: var(--slds-g-color-accent-2);
+  box-shadow: 0 0 0 2px rgba(2, 80, 217, 0.2);
 }
 
 .slds-textarea {
   width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--slds-color-gray-4);
-  border-radius: var(--slds-border-radius);
-  background-color: white;
-  color: var(--slds-color-text-default);
+  padding: var(--slds-g-spacing-2) var(--slds-g-spacing-3);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
+  background-color: var(--slds-g-color-surface-container-1);
+  color: var(--slds-g-color-on-surface-2);
   transition: border 0.1s linear, background-color 0.1s linear;
   font-family: var(--slds-font-family);
   resize: vertical;
@@ -363,8 +360,8 @@ body,
 
 .slds-textarea:focus {
   outline: 0;
-  border-color: var(--slds-color-blue-20);
-  box-shadow: 0 0 3px var(--slds-color-blue-20);
+  border-color: var(--slds-g-color-accent-2);
+  box-shadow: 0 0 0 2px rgba(2, 80, 217, 0.2);
 }
 
 .slds-form_stacked .slds-form-element {
@@ -386,8 +383,8 @@ body,
 
 .slds-modal__container {
   position: relative;
-  background: var(--token-layer-surface, white);
-  border-radius: 0.25rem;
+  background: var(--slds-g-color-surface-container-1);
+  border-radius: var(--slds-g-radius-border-2);
   box-shadow: var(--token-shadow-modal, 0 4px 8px rgba(0, 0, 0, 0.12));
   width: 50%;
   max-width: 40rem;
@@ -396,25 +393,25 @@ body,
 
 .slds-modal__header {
   position: relative;
-  border-top-right-radius: 0.25rem;
-  border-top-left-radius: 0.25rem;
-  border-bottom: 2px solid var(--slds-color-gray-3);
-  padding: 1rem;
+  border-top-right-radius: var(--slds-g-radius-border-2);
+  border-top-left-radius: var(--slds-g-radius-border-2);
+  border-bottom: 1px solid var(--slds-g-color-border-1);
+  padding: var(--slds-g-spacing-4);
   text-align: center;
 }
 
 .slds-modal__content {
-  padding: 1rem;
+  padding: var(--slds-g-spacing-4);
   overflow: auto;
   max-height: 70vh;
 }
 
 .slds-modal__footer {
-  border-top: 2px solid var(--slds-color-gray-3);
-  padding: 0.75rem 1rem;
-  background-color: var(--slds-color-gray-1);
-  border-bottom-right-radius: 0.25rem;
-  border-bottom-left-radius: 0.25rem;
+  border-top: 1px solid var(--slds-g-color-border-1);
+  padding: var(--slds-g-spacing-3) var(--slds-g-spacing-4);
+  background-color: var(--slds-g-color-surface-container-2);
+  border-bottom-right-radius: var(--slds-g-radius-border-2);
+  border-bottom-left-radius: var(--slds-g-radius-border-2);
   text-align: right;
 }
 
@@ -751,6 +748,7 @@ body,
 /* Accent color for inputs and selects to match screenshot */
 .slds-input, .slds-select {
   border: 1px solid #d8dbe0;
+  border-color: var(--slds-color-text-weak);
 }
 .slds-input:focus, .slds-select:focus {
   border-color: var(--token-interactive-brand, #1072d8);

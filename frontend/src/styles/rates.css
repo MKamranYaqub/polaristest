@@ -17,21 +17,21 @@
 
 .filters input,
 .filters select {
-  padding: var(--token-space-12) var(--token-space-16);
-  border: 1px solid var(--token-border-subtle);
-  border-radius: var(--token-radius-sm);
+  padding: var(--slds-g-spacing-2) var(--slds-g-spacing-3);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
   font-size: var(--token-font-size-sm);
   min-width: 200px;
-  background-color: var(--token-layer-background);
-  color: var(--token-text-primary);
+  background-color: var(--slds-g-color-surface-container-1);
+  color: var(--slds-g-color-on-surface-2);
+  box-sizing: border-box;
 }
 
 .filters input:focus,
 .filters select:focus {
-  outline: 2px solid var(--token-focus);
-  outline-offset: 1px;
-  border-color: var(--token-focus);
-  box-shadow: none;
+  outline: none;
+  border-color: var(--slds-g-color-accent-2);
+  box-shadow: 0 0 0 3px rgba(2,80,217,0.08);
 }
 
 .table-container {

@@ -528,7 +528,7 @@ function CriteriaTable() {
     return (
       <div className="loading-overlay">
         <div className="loading-spinner"></div>
-        <div className="loading-text">Loading criteria from Supabase...</div>
+        <div className="loading-text">Loading criteria...</div>
       </div>
     );
   }

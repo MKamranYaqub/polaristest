@@ -215,9 +215,9 @@ export default function Constants() {
     }
   };
 
-  // Persist to Supabase (best-effort). Expects a table `app_constants` with columns `key` (text PK) and `value` (jsonb).
+  // Persist to database (best-effort). Expects a table `app_constants` with columns `key` (text PK) and `value` (jsonb).
   const saveToSupabase = async (payload) => {
-    if (!supabase) return { error: 'Supabase client unavailable' };
+    if (!supabase) return { error: 'Database client unavailable' };
     try {
       const row = { key: 'app.constants', value: payload };
       const { error } = await supabase.from('app_constants').upsert([row], { returning: 'minimal' });
@@ -393,12 +393,12 @@ export default function Constants() {
           const { data: inserted, error: insertErr } = await supabase.from('app_constants').insert([insertRow]).select('*');
           setSaving(false);
           if (insertErr) {
-            setMessage('Saved locally, but failed to persist structured constants to Supabase. See console.');
+            setMessage('Saved locally, but failed to persist structured constants to database. See console.');
             // fallback to storing as `value`
             const { error: fallbackErr } = await saveToSupabase(payload);
-            setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Save failed: could not persist structured constants to Supabase. Falling back to legacy storage.' });
+            setNotification({ show: true, type: 'warning', title: 'Warning', message: 'Save failed: could not persist structured constants to database. Falling back to legacy storage.' });
           } else {
-            setMessage('Saved to localStorage and persisted structured constants to Supabase.');
+            setMessage('Saved to localStorage and persisted structured constants to database.');
             setNotification({ show: true, type: 'success', title: 'Success', message: 'Save successful — structured constants persisted.' });
             // Dispatch event so other components update immediately
             window.dispatchEvent(new StorageEvent('storage', {
@@ -443,9 +443,9 @@ export default function Constants() {
       setSaving(false);
       if (error) {
         
-        setMessage('Saved locally, but failed to persist to Supabase. See console for details.');
+        setMessage('Saved locally, but failed to persist to database. See console for details.');
       } else {
-        setMessage('Saved to localStorage and persisted to Supabase.');
+        setMessage('Saved to localStorage and persisted to database.');
         // Dispatch event so other components update immediately
         window.dispatchEvent(new StorageEvent('storage', {
           key: LOCALSTORAGE_CONSTANTS_KEY,
@@ -457,7 +457,7 @@ export default function Constants() {
     } catch (e) {
       setSaving(false);
       
-      setMessage('Saved locally, but an unexpected error occurred while persisting to Supabase. See console.');
+      setMessage('Saved locally, but an unexpected error occurred while persisting to database. See console.');
     }
   };
 
@@ -572,7 +572,7 @@ export default function Constants() {
           
           setMessage('Saved locally but failed to persist product lists to database. See console.');
         } else {
-          setMessage('Product list saved locally and persisted to Supabase.');
+          setMessage('Product list saved locally and persisted to database.');
         }
         return { error };
       }
@@ -584,7 +584,7 @@ export default function Constants() {
         
         setMessage('Saved locally but failed to persist product lists to database. See console.');
       } else {
-        setMessage('Product list saved locally and persisted to Supabase.');
+        setMessage('Product list saved locally and persisted to database.');
       }
       return { error };
     } catch (e) {
@@ -634,7 +634,7 @@ export default function Constants() {
           
           setMessage('Saved locally but failed to persist fee columns to database. See console.');
         } else {
-          setMessage('Fee columns saved locally and persisted to Supabase.');
+          setMessage('Fee columns saved locally and persisted to database.');
         }
         return { error };
       }
@@ -646,7 +646,7 @@ export default function Constants() {
         
         setMessage('Saved locally but failed to persist fee columns to database. See console.');
       } else {
-        setMessage('Fee columns saved locally and persisted to Supabase.');
+        setMessage('Fee columns saved locally and persisted to database.');
       }
       return { error };
     } catch (e) {
@@ -695,7 +695,7 @@ export default function Constants() {
           
           setMessage('Saved locally but failed to persist flat-above-commercial rule to database. See console.');
         } else {
-          setMessage('Flat-above-commercial rule saved locally and persisted to Supabase.');
+          setMessage('Flat-above-commercial rule saved locally and persisted to database.');
         }
         return { error };
       }
@@ -707,7 +707,7 @@ export default function Constants() {
         
         setMessage('Saved locally but failed to persist flat-above-commercial rule to database. See console.');
       } else {
-        setMessage('Flat-above-commercial rule saved locally and persisted to Supabase.');
+        setMessage('Flat-above-commercial rule saved locally and persisted to database.');
       }
       return { error };
     } catch (e) {
@@ -759,7 +759,7 @@ export default function Constants() {
           
           setMessage('Saved locally but failed to persist market rates to database. See console.');
         } else {
-          setMessage('Market rates saved locally and persisted to Supabase.');
+          setMessage('Market rates saved locally and persisted to database.');
         }
         return { error };
       }
@@ -771,7 +771,7 @@ export default function Constants() {
         
         setMessage('Saved locally but failed to persist market rates to database. See console.');
       } else {
-        setMessage('Market rates saved locally and persisted to Supabase.');
+        setMessage('Market rates saved locally and persisted to database.');
       }
       return { error };
     } catch (e) {
@@ -873,7 +873,7 @@ export default function Constants() {
           
           setMessage('Saved locally but failed to persist BTL funding lines to database. See console.');
         } else {
-          setMessage('BTL funding lines saved locally and persisted to Supabase.');
+          setMessage('BTL funding lines saved locally and persisted to database.');
         }
         return { error };
       }
@@ -884,7 +884,7 @@ export default function Constants() {
       if (error) {
         setMessage('Saved locally but failed to persist BTL funding lines to database.');
       } else {
-        setMessage('BTL funding lines saved locally and persisted to Supabase.');
+        setMessage('BTL funding lines saved locally and persisted to database.');
       }
       return { error };
     } catch (e) {
@@ -938,7 +938,7 @@ export default function Constants() {
           
           setMessage('Saved locally but failed to persist Bridge funding lines to database. See console.');
         } else {
-          setMessage('Bridge funding lines saved locally and persisted to Supabase.');
+          setMessage('Bridge funding lines saved locally and persisted to database.');
         }
         return { error };
       }
@@ -949,7 +949,7 @@ export default function Constants() {
       if (error) {
         setMessage('Saved locally but failed to persist Bridge funding lines to database.');
       } else {
-        setMessage('Bridge funding lines saved locally and persisted to Supabase.');
+        setMessage('Bridge funding lines saved locally and persisted to database.');
       }
       return { error };
     } catch (e) {
@@ -1052,12 +1052,12 @@ export default function Constants() {
     setDeleteConfirmation({ show: false, routeKey: '', displayName: '' });
   };
 
-  // Save a single named column to Supabase table `app_constants`.
+  // Save a single named column to database table `app_constants`.
   // Column names used: product_lists, fee_columns, flat_above_commercial_rule, market_rates
   const saveFieldToSupabase = async (column, value) => {
     if (!supabase) {
       
-      return { error: 'Supabase client unavailable' };
+      return { error: 'Database client unavailable' };
     }
     
     

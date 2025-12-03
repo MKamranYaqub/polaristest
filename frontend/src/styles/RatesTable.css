@@ -92,11 +92,13 @@ input[type="checkbox"] {
 
 .filters input,
 .filters select {
-  padding: 8px 12px;
-  border: 1px solid var(--token-border-subtle, #ddd);
-  border-radius: 4px;
+  padding: var(--slds-g-spacing-2) var(--slds-g-spacing-3);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
   font-size: 14px;
-  background-color: var(--token-layer-surface, white);
+  background-color: var(--slds-g-color-surface-container-1);
+  color: var(--slds-g-color-on-surface-2);
+  box-sizing: border-box;
 }
 
 .filters select {
@@ -106,12 +108,12 @@ input[type="checkbox"] {
 .filters input:focus,
 .filters select:focus {
   outline: none;
-  border-color: var(--token-interactive, #007bff);
-  box-shadow: 0 0 0 2px var(--token-focus-ring, rgba(0,123,255,0.25));
+  border-color: var(--slds-g-color-accent-2);
+  box-shadow: 0 0 0 3px rgba(2,80,217,0.08);
 }
 
 .filters select:hover {
-  border-color: var(--token-interactive, #007bff);
+  border-color: var(--slds-g-color-border-2);
 }
 
 .table-container {

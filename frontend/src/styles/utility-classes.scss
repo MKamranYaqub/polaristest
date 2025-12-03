@@ -211,10 +211,11 @@
 }
 
 .card {
-  background: var(--token-layer-surface);
-  border: 1px solid var(--token-border-subtle);
-  border-radius: var(--token-radius-md);
+  background: var(--slds-g-color-surface-container-1);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-3);
   box-shadow: var(--token-shadow-soft);
+  padding: var(--slds-g-spacing-4);
 }
 
 .clickable {
@@ -230,7 +231,7 @@
 
 /* Interactive states */
 .hover-bg:hover {
-  background-color: var(--token-layer-hover);
+  background-color: var(--slds-g-color-neutral-base-90);
 }
 
 .hover-interactive:hover {

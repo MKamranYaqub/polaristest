@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSupabase } from '../../contexts/SupabaseContext';
 import NotificationModal from '../modals/NotificationModal';
-import { InlineLoading } from '@carbon/react';
 import { LOCALSTORAGE_CONSTANTS_KEY } from '../../config/constants';
 
 // Default label aliases for BTL Calculator (28 labels)
@@ -833,10 +832,10 @@ export default function GlobalSettings() {
           style={{ 
             maxHeight: '350px', 
             overflowY: 'auto',
-            border: '1px solid var(--token-ui-border-light)',
+            border: '1px solid var(--token-border-subtle)',
             borderRadius: 'var(--token-spacing-xs)',
             padding: 'var(--token-spacing-md)',
-            backgroundColor: 'var(--token-ui-background-subtle)'
+            backgroundColor: 'var(--token-layer-background)'
           }}
         >
           <div 
@@ -880,10 +879,10 @@ export default function GlobalSettings() {
           style={{ 
             maxHeight: '500px', 
             overflowY: 'auto',
-            border: '1px solid var(--token-ui-border-medium)',
+            border: '1px solid var(--token-border-subtle)',
             borderRadius: 'var(--token-spacing-xs)',
             padding: 'var(--token-spacing-sm)',
-            backgroundColor: 'var(--token-ui-background-light)'
+            backgroundColor: 'var(--token-layer-background)'
           }}
         >
           {rowOrder.map((row, index) => (
@@ -895,22 +894,22 @@ export default function GlobalSettings() {
                 alignItems: 'center',
                 padding: 'var(--token-spacing-sm) var(--token-spacing-md)',
                 marginBottom: 'var(--token-spacing-xs)',
-                backgroundColor: visibleRows[row] === false ? 'var(--token-ui-background-disabled)' : 'white',
-                border: '1px solid var(--token-ui-border-medium)',
+                backgroundColor: visibleRows[row] === false ? 'var(--token-layer-surface-hover)' : 'var(--token-layer-surface)',
+                border: '1px solid var(--token-border-subtle)',
                 borderRadius: 'var(--token-spacing-xs)',
                 transition: 'all 0.1s ease'
               }}
             >
               <span style={{ 
                 flex: 1,
-                color: visibleRows[row] === false ? 'var(--token-ui-text-disabled)' : 'var(--token-text-primary)',
+                color: visibleRows[row] === false ? 'var(--token-text-secondary)' : 'var(--token-text-primary)',
                 fontSize: 'var(--token-font-size-sm)',
                 fontWeight: '400'
               }}>
                 <span style={{ 
                   display: 'inline-block',
                   width: '2rem',
-                  color: 'var(--token-text-muted)',
+                  color: 'var(--token-text-secondary)',
                   fontWeight: '500'
                 }}>
                   {index + 1}.
@@ -920,7 +919,7 @@ export default function GlobalSettings() {
                   <span style={{ 
                     marginLeft: 'var(--token-spacing-sm)', 
                     fontSize: 'var(--token-font-size-xs)',
-                    color: 'var(--token-ui-text-disabled)',
+                    color: 'var(--token-text-secondary)',
                     fontStyle: 'italic'
                   }}>
                     (Hidden)
@@ -998,10 +997,10 @@ export default function GlobalSettings() {
           style={{ 
             maxHeight: '350px', 
             overflowY: 'auto',
-            border: '1px solid var(--token-ui-border-light)',
+            border: '1px solid var(--token-border-subtle)',
             borderRadius: 'var(--token-spacing-xs)',
             padding: 'var(--token-spacing-md)',
-            backgroundColor: 'var(--token-ui-background-subtle)'
+            backgroundColor: 'var(--token-layer-background)'
           }}
         >
           <div 
@@ -1020,8 +1019,8 @@ export default function GlobalSettings() {
                   key={key} 
                   style={{ 
                     padding: 'var(--token-spacing-sm)',
-                    backgroundColor: isModified ? '#fffde7' : 'white',
-                    border: isModified ? '1px solid #ffc107' : '1px solid var(--token-ui-border-light)',
+                    backgroundColor: isModified ? 'var(--token-warning-bg)' : 'var(--token-layer-surface)',
+                    border: isModified ? '1px solid var(--token-warning)' : '1px solid var(--token-border-subtle)',
                     borderRadius: 'var(--token-spacing-xs)'
                   }}
                 >
@@ -1034,7 +1033,7 @@ export default function GlobalSettings() {
                     <span style={{ 
                       fontFamily: 'monospace', 
                       fontSize: '0.7rem', 
-                      color: '#666',
+                      color: 'var(--token-text-secondary)',
                       fontWeight: '500'
                     }}>
                       {key}
@@ -1042,8 +1041,8 @@ export default function GlobalSettings() {
                     {isModified && (
                       <span style={{ 
                         fontSize: '0.6rem', 
-                        backgroundColor: '#ffc107', 
-                        color: '#333',
+                        backgroundColor: 'var(--token-warning)', 
+                        color: 'var(--token-text-inverse)',
                         padding: '2px 6px',
                         borderRadius: '3px'
                       }}>
@@ -1090,13 +1089,14 @@ export default function GlobalSettings() {
                         style={{ 
                           flex: 1,
                           padding: 'var(--token-spacing-xs) var(--token-spacing-sm)',
-                          backgroundColor: '#f3f3f3',
+                          backgroundColor: 'var(--token-layer-surface-hover)',
                           borderRadius: 'var(--token-spacing-xs)',
                           cursor: 'pointer',
                           fontSize: 'var(--token-font-size-sm)',
                           minHeight: '32px',
                           display: 'flex',
-                          alignItems: 'center'
+                          alignItems: 'center',
+                          color: 'var(--token-text-primary)'
                         }}
                         title="Click to edit"
                       >
@@ -1359,8 +1359,9 @@ export default function GlobalSettings() {
 
   if (loading) {
     return (
-      <div className="slds-p-around_medium" style={{ textAlign: 'center' }}>
-        <InlineLoading description="Loading settings..." />
+      <div className="loading-overlay">
+        <div className="loading-spinner"></div>
+        <div className="loading-text">Loading settings...</div>
       </div>
     );
   }
@@ -1462,13 +1463,7 @@ export default function GlobalSettings() {
           onClick={handleSave}
           disabled={saving}
         >
-          {saving ? (
-            <>
-              <InlineLoading description="Saving..." />
-            </>
-          ) : (
-            'Save Settings'
-          )}
+          {saving ? 'Saving...' : 'Save Settings'}
         </button>
       </div>
 

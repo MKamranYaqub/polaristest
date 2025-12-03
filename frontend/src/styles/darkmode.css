@@ -39,19 +39,13 @@
   --token-error: #ff8389;
   --token-error-bg: #3a1f1f;
   --token-error-text: #ffb3b3;
+  --token-warning: #F59E0B;
   --token-warning-bg: #3a321f;
   --token-warning-text: #ffd9b3;
   --token-danger: #da1e28;
   --token-danger-hover: #ba1b23;
   --token-critical: #ff8389;
   --token-critical-hover: #ba1b23;
-  --token-success: #42be65;
-  --token-success-bg: #1f3a1f;
-  --token-error: #ff8389;
-  --token-error-bg: #3a1f1f;
-  --token-warning: #F59E0B;
-  --token-warning-bg: #3a321f;
-  --token-warning-text: #ffd9b3;
   --token-info: #78a9ff;
   --token-info-bg: #1e3a5f;
   
@@ -542,6 +536,11 @@ body.dark-mode #root {
 
 .dark-mode .collapsible-header:hover {
   background: var(--token-layer-active) !important;
+  border-color: var(--slds-g-color-border-2) !important;
+}
+
+.dark-mode .collapsible-header.expanded {
+  border-color: var(--slds-g-color-accent-2) !important;
 }
 
 /* Toggle Switches */
@@ -1183,5 +1182,134 @@ body.dark-mode #root {
 [data-carbon-theme="g100"] .slds-p-around_medium [style*="border: 1px solid #c9c7c5"],
 [data-carbon-theme="g100"] .slds-p-around_medium [style*="border:1px solid #c9c7c5"] {
   border-color: var(--token-border-subtle) !important;
+}
+
+/* ============================================
+   16. GLOBAL SETTINGS — Row Display Order & Label Aliases
+   ============================================ */
+
+/* Row Display Order - Container with token background */
+.dark-mode .slds-box div[style*="backgroundColor: 'var(--token-ui-background-light)'"],
+.dark-mode .slds-box div[style*="background-color: var(--token-ui-background-light)"],
+[data-carbon-theme="g100"] .slds-box div[style*="backgroundColor: 'var(--token-ui-background-light)'"],
+[data-carbon-theme="g100"] .slds-box div[style*="background-color: var(--token-ui-background-light)"] {
+  background-color: var(--token-layer-background) !important;
+}
+
+/* Row items with white background */
+.dark-mode .slds-box div[style*="backgroundColor: 'white'"],
+.dark-mode .slds-box div[style*="background-color: white"],
+[data-carbon-theme="g100"] .slds-box div[style*="backgroundColor: 'white'"],
+[data-carbon-theme="g100"] .slds-box div[style*="background-color: white"] {
+  background-color: var(--token-layer-surface) !important;
+  border-color: var(--token-border-subtle) !important;
+}
+
+/* Label Aliases - Container with subtle background */
+.dark-mode .slds-box div[style*="backgroundColor: 'var(--token-ui-background-subtle)'"],
+.dark-mode .slds-box div[style*="background-color: var(--token-ui-background-subtle)"],
+[data-carbon-theme="g100"] .slds-box div[style*="backgroundColor: 'var(--token-ui-background-subtle)'"],
+[data-carbon-theme="g100"] .slds-box div[style*="background-color: var(--token-ui-background-subtle)"] {
+  background-color: var(--token-layer-background) !important;
+}
+
+/* Label alias cards - white and modified (#fffde7) backgrounds */
+.dark-mode .slds-box div[style*="backgroundColor: '#fffde7'"],
+.dark-mode .slds-box div[style*="background-color: #fffde7"],
+[data-carbon-theme="g100"] .slds-box div[style*="backgroundColor: '#fffde7'"],
+[data-carbon-theme="g100"] .slds-box div[style*="background-color: #fffde7"] {
+  background-color: #3d3200 !important;
+  border-color: #665200 !important;
+}
+
+/* Label value display with #f3f3f3 background */
+.dark-mode .slds-box span[style*="backgroundColor: '#f3f3f3'"],
+.dark-mode .slds-box span[style*="background-color: #f3f3f3"],
+[data-carbon-theme="g100"] .slds-box span[style*="backgroundColor: '#f3f3f3'"],
+[data-carbon-theme="g100"] .slds-box span[style*="background-color: #f3f3f3"] {
+  background-color: var(--token-layer-surface-hover) !important;
+  color: var(--token-text-primary) !important;
+}
+
+/* Key labels with #666 color */
+.dark-mode .slds-box span[style*="color: '#666'"],
+.dark-mode .slds-box span[style*="color: #666"],
+[data-carbon-theme="g100"] .slds-box span[style*="color: '#666'"],
+[data-carbon-theme="g100"] .slds-box span[style*="color: #666"] {
+  color: var(--token-text-secondary) !important;
+}
+
+/* Modified badge with #ffc107 background */
+.dark-mode .slds-box span[style*="backgroundColor: '#ffc107'"],
+.dark-mode .slds-box span[style*="background-color: #ffc107"],
+[data-carbon-theme="g100"] .slds-box span[style*="backgroundColor: '#ffc107'"],
+[data-carbon-theme="g100"] .slds-box span[style*="background-color: #ffc107"] {
+  background-color: #b38600 !important;
+  color: #ffffff !important;
+}
+
+/* Modified badge text */
+.dark-mode .slds-box span[style*="color: '#333'"],
+.dark-mode .slds-box span[style*="color: #333"],
+[data-carbon-theme="g100"] .slds-box span[style*="color: '#333'"],
+[data-carbon-theme="g100"] .slds-box span[style*="color: #333"] {
+  color: #ffffff !important;
+}
+
+/* Fix slds-box sections in GlobalSettings */
+.dark-mode .slds-box,
+[data-carbon-theme="g100"] .slds-box {
+  background-color: var(--token-layer-surface) !important;
+  border-color: var(--token-border-subtle) !important;
+}
+
+/* Row Display Order and Label Aliases scroll containers */
+.dark-mode .slds-box > div[style*="maxHeight"],
+.dark-mode .slds-box > div[style*="max-height"],
+[data-carbon-theme="g100"] .slds-box > div[style*="maxHeight"],
+[data-carbon-theme="g100"] .slds-box > div[style*="max-height"] {
+  background-color: var(--token-layer-background) !important;
+  border-color: var(--token-border-subtle) !important;
+}
+
+/* All direct child divs with flex display (row items) */
+.dark-mode .slds-box > div > div[style*="display: 'flex'"],
+.dark-mode .slds-box > div > div[style*="display: flex"],
+[data-carbon-theme="g100"] .slds-box > div > div[style*="display: 'flex'"],
+[data-carbon-theme="g100"] .slds-box > div > div[style*="display: flex"] {
+  border-color: var(--token-border-subtle) !important;
+}
+
+/* Grid items in Label Aliases section */
+.dark-mode .slds-box > div > div[style*="display: 'grid'"] > div,
+.dark-mode .slds-box > div > div[style*="display: grid"] > div,
+[data-carbon-theme="g100"] .slds-box > div > div[style*="display: 'grid'"] > div,
+[data-carbon-theme="g100"] .slds-box > div > div[style*="display: grid"] > div {
+  background-color: var(--token-layer-surface) !important;
+  border-color: var(--token-border-subtle) !important;
+}
+
+/* Muted text override */
+.dark-mode .slds-box span[style*="color: 'var(--token-text-muted)'"],
+.dark-mode .slds-box span[style*="color: var(--token-text-muted)"],
+[data-carbon-theme="g100"] .slds-box span[style*="color: 'var(--token-text-muted)'"],
+[data-carbon-theme="g100"] .slds-box span[style*="color: var(--token-text-muted)"] {
+  color: var(--token-text-secondary) !important;
+}
+
+/* Disabled background for hidden rows */
+.dark-mode .slds-box div[style*="backgroundColor: 'var(--token-ui-background-disabled)'"],
+.dark-mode .slds-box div[style*="background-color: var(--token-ui-background-disabled)"],
+[data-carbon-theme="g100"] .slds-box div[style*="backgroundColor: 'var(--token-ui-background-disabled)'"],
+[data-carbon-theme="g100"] .slds-box div[style*="background-color: var(--token-ui-background-disabled)"] {
+  background-color: #1e1e1e !important;
+}
+
+/* Text colors for disabled items */
+.dark-mode .slds-box span[style*="color: 'var(--token-ui-text-disabled)'"],
+.dark-mode .slds-box span[style*="color: var(--token-ui-text-disabled)"],
+[data-carbon-theme="g100"] .slds-box span[style*="color: 'var(--token-ui-text-disabled)'"],
+[data-carbon-theme="g100"] .slds-box span[style*="color: var(--token-ui-text-disabled)"] {
+  color: #6f6f6f !important;
 }
 

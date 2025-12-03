@@ -1383,7 +1383,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
     return bridgeFeeTypes;
   };
 
-  if (!supabase) return <div className="slds-p-around_medium">Supabase client missing</div>;
+  if (!supabase) return <div className="slds-p-around_medium">Database client missing</div>;
   if (loading) return (
     <div className="slds-spinner_container">
       <div className="slds-spinner slds-spinner_medium">

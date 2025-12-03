@@ -93,11 +93,15 @@
 }
 
 .filter-date-range input[type="date"] {
-  padding: 0.5rem 0.625rem;
-  border: 1px solid #dddbda;
-  border-radius: 6px;
+  /* Use SLDS tokens so admin inputs match app-wide controls */
+  padding: var(--slds-g-spacing-2) var(--slds-g-spacing-3);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
   font-size: 0.85rem;
   min-width: 130px;
+  background-color: var(--slds-g-color-surface-container-1);
+  color: var(--slds-g-color-on-surface-2);
+  box-sizing: border-box;
 }
 
 .filter-date-range .date-separator {
@@ -275,14 +279,16 @@
 }
 
 .rows-per-page select {
-  padding: var(--token-spacing-sm) var(--token-spacing-md);
-  border: 1px solid var(--token-border-subtle);
-  border-radius: var(--token-radius-sm);
+  /* Use SLDS tokens to match app controls */
+  padding: var(--slds-g-spacing-2) var(--slds-g-spacing-3);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
   font-size: var(--token-font-size-sm);
-  background: var(--token-layer-surface);
-  color: var(--token-text-primary);
+  background: var(--slds-g-color-surface-container-1);
+  color: var(--slds-g-color-on-surface-2);
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
 }
 
 .rows-per-page select:hover {
@@ -291,8 +297,8 @@
 
 .rows-per-page select:focus {
   outline: none;
-  border-color: var(--token-interactive);
-  box-shadow: 0 0 0 3px var(--token-focus-ring);
+  border-color: var(--slds-g-color-accent-2);
+  box-shadow: 0 0 0 3px rgba(2,80,217,0.08);
 }
 
 /* Filters Section */
@@ -325,14 +331,15 @@
 }
 
 .filter-field select {
-  padding: var(--token-spacing-sm) var(--token-spacing-md);
-  border: 1px solid var(--token-border-subtle);
-  border-radius: var(--token-radius-md);
+  padding: var(--slds-g-spacing-2) var(--slds-g-spacing-3);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
   font-size: var(--token-font-size-sm);
-  background: var(--token-layer-surface);
-  color: var(--token-text-primary);
+  background: var(--slds-g-color-surface-container-1);
+  color: var(--slds-g-color-on-surface-2);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
 }
 
 .filter-field select:hover {
@@ -341,8 +348,8 @@
 
 .filter-field select:focus {
   outline: none;
-  border-color: var(--token-interactive);
-  box-shadow: 0 0 0 3px var(--token-focus-ring);
+  border-color: var(--slds-g-color-accent-2);
+  box-shadow: 0 0 0 3px rgba(2,80,217,0.08);
 }
 
 /* Table Container */
