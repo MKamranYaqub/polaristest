@@ -182,6 +182,7 @@ body,
   overflow: hidden;
   border: 1px solid var(--slds-g-color-border-1);
   border-radius: var(--token-radius-btn);
+  min-height: var(--slds-g-sizing-10) ;
 }
 
 .slds-button-group_toggle .slds-button {
@@ -192,6 +193,8 @@ body,
   color: var(--slds-g-color-on-surface-2);
   font-weight: 500;
   transition: all 0.15s ease;
+  justify-content: center;
+  text-align: center;
 }
 
 /* Left button - rounded on left side */
@@ -240,6 +243,8 @@ body,
   font-weight: 500;
   padding: var(--slds-g-spacing-3) var(--slds-g-spacing-6);
   transition: all 0.15s ease;
+  justify-content: center;
+  text-align: center;
 }
 
 /* Left button - rounded on left side */
@@ -313,7 +318,7 @@ body,
   width: 100%;
   padding: 0 var(--slds-g-spacing-3);
   line-height: 1.875rem;
-  min-height: var(--slds-g-sizing-10);
+  min-height: var(--slds-g-sizing-9);
   border: 1px solid var(--slds-g-color-border-1);
   border-radius: var(--slds-g-radius-border-2);
   background-color: var(--slds-g-color-surface-container-1);
@@ -331,7 +336,7 @@ body,
   width: 100%;
   padding: 0 var(--slds-g-spacing-4) 0 var(--slds-g-spacing-3);
   line-height: 1.875rem;
-  min-height: var(--slds-g-sizing-10);
+  min-height: var(--slds-g-sizing-9);
   border: 1px solid var(--slds-g-color-border-1);
   border-radius: var(--slds-g-radius-border-2);
   background-color: var(--slds-g-color-surface-container-1);
@@ -745,13 +750,13 @@ body,
   line-height: 1.75rem;
 }
 
-/* Accent color for inputs and selects to match screenshot */
+/* Restore input/select border to canonical token color */
 .slds-input, .slds-select {
-  border: 1px solid #d8dbe0;
-  border-color: var(--slds-color-text-weak);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-color: var(--slds-g-color-border-1);
 }
 .slds-input:focus, .slds-select:focus {
-  border-color: var(--token-interactive-brand, #1072d8);
+  border-color: var(--slds-g-color-accent-2);
   box-shadow: 0 0 0 3px var(--token-focus-ring, rgba(16,114,216,0.08));
 }
 
@@ -1010,6 +1015,14 @@ body,
 .slds-tabs_card .slds-tabs_default__item.slds-is-active .slds-tabs_default__link {
   background: var(--token-layer-surface, white);
   border-bottom-color: var(--token-layer-surface, white);
+  color: var(--token-interactive, #0176d3);
+}
+
+/* Variant: show visible interactive underline for specific card tabs (opt-in)
+   Use modifier class `slds-tabs_card--underline` on the card container */
+.slds-tabs_card.slds-tabs_card--underline .slds-tabs_default__item.slds-is-active .slds-tabs_default__link,
+.slds-tabs_card.slds-tabs_card--underline .slds-tabs_default__link.slds-is-active {
+  border-bottom-color: var(--token-interactive, #0176d3);
   color: var(--token-interactive, #0176d3);
 }
 

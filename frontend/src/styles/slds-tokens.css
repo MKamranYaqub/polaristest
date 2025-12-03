@@ -22,7 +22,8 @@
   --slds-g-sizing-5: 1rem;        /* 16px */
   --slds-g-sizing-7: 1.5rem;      /* 24px */
   --slds-g-sizing-9: 2rem;        /* 32px */
-  --slds-g-sizing-10: 3rem;       /* 48px */
+  --slds-g-sizing-10: 2.25rem;    /* 36px */
+  --slds-g-sizing-11: 3rem;       /* 48px */
 
   /* ========================================
      BORDER RADIUS TOKENS

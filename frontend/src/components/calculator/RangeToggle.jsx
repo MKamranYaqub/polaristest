@@ -23,7 +23,7 @@ export default function RangeToggle({
   // If children provided, wrap in a card-like container
   if (children) {
     return (
-      <div className="slds-tabs_card">
+      <div className="slds-tabs_card slds-tabs_card--underline">
         <div className={`slds-tabs_default ${sizeClass}`}>
           <ul className="slds-tabs_default__nav" role="tablist">
             <li 
