@@ -19,13 +19,13 @@ export default function QuoteReferenceHeader({ reference }) {
         <SalesforceIcon
           category="utility"
           name="file"
-          size="small"
+          size="x-small"
         />
         <div className="display-flex flex-direction-column flex-gap-2px">
-          <span className="text-color-white-semi font-weight-400 font-size-075rem">
+          <span className="text-color-white-semi font-weight-400" style={{ fontSize: '0.6875rem' }}>
             Quote Reference
           </span>
-          <span className="text-color-white font-weight-700 font-monospace font-size-1rem letter-spacing-05">
+          <span className="text-color-white font-weight-600 font-monospace" style={{ fontSize: '0.8125rem', letterSpacing: '0.02em' }}>
             {reference}
           </span>
         </div>

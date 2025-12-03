@@ -85,12 +85,12 @@ export default function SliderResultRow({
                     flex: 1,
                     minWidth: '100px',
                     height: '6px',
-                    borderRadius: '3px',
+                    borderRadius: 'var(--token-radius-sm)',
                     background: isManuallyChanged
-                      ? `linear-gradient(to right, #ff9800 0%, #ff9800 ${percentage}%, #dddbda ${percentage}%, #dddbda 100%)`
+                      ? `linear-gradient(to right, var(--token-warning, #ff9800) 0%, var(--token-warning, #ff9800) ${percentage}%, var(--token-border-subtle) ${percentage}%, var(--token-border-subtle) 100%)`
                       : colDisabled
-                      ? '#cccccc'
-                      : `linear-gradient(to right, #0176d3 0%, #0176d3 ${percentage}%, #dddbda ${percentage}%, #dddbda 100%)`,
+                      ? 'var(--token-border-subtle)'
+                      : `linear-gradient(to right, var(--token-interactive) 0%, var(--token-interactive) ${percentage}%, var(--token-border-subtle) ${percentage}%, var(--token-border-subtle) 100%)`,
                     outline: 'none',
                     cursor: colDisabled ? 'not-allowed' : 'pointer',
                     WebkitAppearance: 'none',
@@ -103,8 +103,8 @@ export default function SliderResultRow({
                     minWidth: '60px', 
                     textAlign: 'center',
                     fontWeight: '600',
-                    fontSize: '0.875rem',
-                    color: colDisabled ? '#999999' : (isManuallyChanged ? '#ff9800' : '#080707'),
+                    fontSize: 'var(--token-font-size-sm)',
+                    color: colDisabled ? 'var(--token-text-secondary)' : (isManuallyChanged ? 'var(--token-warning)' : 'var(--token-text-primary)'),
                     opacity: colDisabled ? 0.6 : 1
                   }}
                 >
@@ -119,8 +119,8 @@ export default function SliderResultRow({
                       border: 'none',
                       cursor: colDisabled ? 'not-allowed' : 'pointer',
                       fontSize: '1.2rem',
-                      color: '#0176d3',
-                      padding: '0 0.25rem',
+                      color: 'var(--token-interactive)',
+                      padding: '0 var(--token-spacing-xs)',
                       lineHeight: 1,
                       opacity: colDisabled ? 0.5 : 1
                     }}
@@ -165,8 +165,8 @@ export default function SliderResultRow({
               flex: 1,
               minWidth: '100px',
               height: '6px',
-              borderRadius: '3px',
-              background: `linear-gradient(to right, #0176d3 0%, #0176d3 ${percentage}%, #dddbda ${percentage}%, #dddbda 100%)`,
+              borderRadius: 'var(--token-radius-sm)',
+              background: `linear-gradient(to right, var(--token-interactive) 0%, var(--token-interactive) ${percentage}%, var(--token-border-subtle) ${percentage}%, var(--token-border-subtle) 100%)`,
               outline: 'none',
               cursor: disabled ? 'not-allowed' : 'pointer',
               WebkitAppearance: 'none',
@@ -178,8 +178,8 @@ export default function SliderResultRow({
               minWidth: '60px', 
               textAlign: 'center',
               fontWeight: '600',
-              fontSize: '0.875rem',
-              color: '#080707'
+              fontSize: 'var(--token-font-size-sm)',
+              color: 'var(--token-text-primary)'
             }}
           >
             {display(value)}{suffix}

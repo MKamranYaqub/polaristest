@@ -98,6 +98,7 @@ body,
   background-color: var(--slds-g-color-accent-2);
   border-color: var(--slds-g-color-accent-2);
   color: var(--slds-g-color-on-surface-inverse-1);
+  border-radius: var(--token-radius-btn);
 }
 
 .slds-button_brand:hover {
@@ -110,6 +111,7 @@ body,
   background-color: var(--slds-g-color-surface-container-1);
   border: 1px solid var(--slds-g-color-border-1);
   color: var(--slds-g-color-on-surface-1);
+  border-radius: var(--token-radius-btn);
 }
 
 .slds-button_neutral:hover {
@@ -121,6 +123,7 @@ body,
   background-color: var(--token-danger, #c23934);
   border-color: var(--token-danger, #c23934);
   color: var(--token-text-inverse, white);
+  border-radius: var(--token-radius-btn)
 }
 
 .slds-button_destructive:hover {
@@ -149,6 +152,7 @@ body,
   color: var(--token-text-inverse, white);
   font-weight: var(--token-font-weight-semibold, 600);
   box-shadow: var(--token-shadow-soft);
+  border-radius: var(--token-radius-btn)
 }
 
 .slds-button_success:hover {
@@ -831,6 +835,7 @@ body,
   margin: 0;
   padding: 0;
   list-style: none;
+  
 }
 
 /* Individual tab item */
@@ -995,7 +1000,7 @@ body,
 
 /* Tabs nav inside card - no outer border, flush with card edges */
 .slds-tabs_card .slds-tabs_default__nav {
-  background: var(--slds-color-gray-1, #f3f3f3);
+  background: var(--token-color-transparent);
   border-bottom: 1px solid var(--slds-color-gray-3, #e5e5e5);
   padding: 0 1rem;
 }

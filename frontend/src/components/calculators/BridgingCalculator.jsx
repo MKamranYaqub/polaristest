@@ -1403,8 +1403,19 @@ export default function BridgingCalculator({ initialQuote = null }) {
         { label: 'Bridging', path: '/calculator/bridging' }
       ]} />
       
-      {/* Quote Reference Badge */}
-      <QuoteReferenceHeader reference={currentQuoteRef} />
+      {/* Quote Reference Badge and New Quote Button */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--token-spacing-md)' }}>
+        <QuoteReferenceHeader reference={currentQuoteRef} />
+        {currentQuoteId && (
+          <button 
+            className="btn-new-quote"
+            onClick={handleCancelQuote}
+            title="Start a new quote"
+          >
+            + New Quote
+          </button>
+        )}
+      </div>
 
       {/* Product Configuration section */}
       <BridgingProductSection

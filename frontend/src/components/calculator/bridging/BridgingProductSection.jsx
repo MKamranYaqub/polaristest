@@ -87,7 +87,7 @@ const BridgingProductSection = ({
     <div className="product-config-section" style={{ 
       marginBottom: 'var(--token-spacing-lg)',
     }}>
-      {/* Row 1: Product Type and All Action Buttons */}
+      {/* Row 1: Product Type and Action Buttons */}
       <div className="product-section-row-1" style={{ 
         display: 'flex', 
         justifyContent: 'space-between',
@@ -107,13 +107,6 @@ const BridgingProductSection = ({
         <div style={{ display: 'flex', gap: 'var(--token-spacing-sm)', alignItems: 'center' }}>
           {quoteId && (
             <>
-              <button 
-                className="btn-new-quote"
-                onClick={onNewQuote}
-                title="Start a new quote"
-              >
-                + New Quote
-              </button>
               <button 
                 className="slds-button slds-button_neutral"
                 onClick={onIssueDip}
@@ -239,8 +232,8 @@ const BridgingProductSection = ({
           <div className="loan-info-box" style={{
             padding: 'var(--token-spacing-xs)',
             backgroundColor: 'var(--token-info-bg)',
-            border: '1px solid var(--token-info-border, #b3d4fc)',
-            borderRadius: 'var(--token-radius-sm)',
+            
+            borderRadius: 'var(--token-radius-md)',
             display: 'flex',
             gap: 'var(--token-spacing-xs)',
             alignItems: 'center',
