@@ -247,13 +247,16 @@ input[type="range"] {
 
   .loan-info-box {
     padding: var(--token-spacing-xs) var(--token-spacing-sm);
+    font-size: var(--token-font-size-sm);
+    color: var(--token-text-secondary);
+    line-height: var(--token-line-height-tight);
     background-color: var(--token-info-bg);
-    border: 1px solid var(--token-info);
-    border-radius: var(--token-radius-sm);
+    border-radius: var(--token-radius-md);
     display: flex;
     align-items: center;
     gap: var(--token-spacing-xs);
     min-height: 50px;
+
 
     .help-icon {
       flex-shrink: 0;
@@ -596,12 +599,15 @@ input[type="range"] {
   
   // Label column (first column header)
   thead th.th-label {
-    color: var(--results-header-label-text) !important;
-    background: var(--results-header-label-bg) !important;
+    background: var(--token-color-transparent) !important;
+    color: var(--token-color-transparent) !important;
     text-align: left;
     position: sticky;
     left: 0;
     z-index: calc(var(--token-z-sticky, 1020) + 1);
+    font-size: 0;
+    line-height: 0;
+    visibility: hidden;
   }
   
   // Data column headers - colors set via inline styles for dynamic support

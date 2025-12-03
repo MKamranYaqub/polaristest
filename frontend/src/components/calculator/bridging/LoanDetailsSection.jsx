@@ -148,18 +148,7 @@ const LoanDetailsSection = ({
 
         {/* Info box - spans 2 columns */}
         <div className="slds-form-element" style={{ gridColumn: 'span 2' }}>
-          <div className="loan-info-box" style={{
-            padding: 'var(--token-spacing-xs)',
-            backgroundColor: 'var(--token-info-bg)',
-            border: '1px solid var(--token-info-border, #b3d4fc)',
-            borderRadius: 'var(--token-radius-sm)',
-            display: 'flex',
-            gap: 'var(--token-spacing-xs)',
-            alignItems: 'center',
-            fontSize: 'var(--token-font-size-sm)',
-            lineHeight: 'var(--token-line-height-tight)',
-            color: 'var(--token-text-secondary)'
-          }}>
+          <div className="loan-info-box " >
             <svg style={{ width: '20px', height: '20px', flexShrink: 0, fill: 'var(--token-interactive)' }} viewBox="0 0 24 24">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
             </svg>

@@ -26,7 +26,7 @@ const BTLProductSection = ({
     <div className="product-config-section" style={{ 
       marginBottom: 'var(--token-spacing-lg)',
     }}>
-      {/* Row 1: Product Type and All Action Buttons */}
+      {/* Row 1: Product Type and Action Buttons */}
       <div className="product-section-row-1" style={{ 
         display: 'flex', 
         justifyContent: 'space-between',
@@ -46,13 +46,6 @@ const BTLProductSection = ({
         <div style={{ display: 'flex', gap: 'var(--token-spacing-sm)', alignItems: 'center' }}>
           {quoteId && (
             <>
-              <button 
-                className="btn-new-quote"
-                onClick={onNewQuote}
-                title="Start a new quote"
-              >
-                + New Quote
-              </button>
               <button 
                 className="slds-button slds-button_neutral"
                 onClick={onIssueDip}

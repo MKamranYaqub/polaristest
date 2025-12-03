@@ -244,12 +244,12 @@ table.slds-table.max-width-1200 {
 .quote-reference-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--token-spacing-sm);
   background: var(--token-interactive-brand, #0176d3);
-  padding: 0.75rem 1.25rem;
-  border-radius: var(--token-radius-btn);
+  padding: var(--token-spacing-sm) var(--token-spacing-md);
+  border-radius: var(--token-radius-sm);
   border: 1px solid var(--token-interactive-brand-hover, #014486);
-  font-size: 0.875rem;
+  font-size: var(--token-font-size-sm);
   box-shadow: var(--token-shadow-soft, 0 2px 4px rgba(1, 118, 211, 0.2));
 }
 
@@ -284,13 +284,13 @@ table.slds-table.max-width-1200 {
 .quote-reference-copy-btn {
   background: var(--token-layer-overlay-subtle, rgba(255, 255, 255, 0.2));
   border: 1px solid var(--token-layer-overlay, rgba(255, 255, 255, 0.3));
-  border-radius: var(--token-radius-btn);
+  border-radius: var(--token-radius-sm);
   cursor: pointer;
-  padding: 0.375rem 0.5rem;
+  padding: var(--token-spacing-xs);
   display: flex;
   align-items: center;
   color: var(--token-text-inverse, white);
-  transition: background 0.2s;
+  transition: background var(--token-duration-fast, 0.2s);
 }
 
 .quote-reference-copy-btn:hover {
@@ -476,9 +476,12 @@ table.slds-table.max-width-1200 {
   padding: var(--token-spacing-md) var(--token-spacing-lg);
 }
 .results-table-wrapper__table thead th.th-label {
-  color: var(--token-ui-text-dark);
-  background: var(--token-ui-background-neutral);
+  background: var(--token-color-transparent);
+  color: var(--token-color-transparent);
   text-align: left;
+  font-size: 0;
+  line-height: 0;
+  visibility: hidden;
 }
 .results-table-wrapper__table thead th.th-fusion { background: var(--mfs-brand-navy); }
 .results-table-wrapper__table thead th.th-variable { background: var(--mfs-brand-navy-500); }

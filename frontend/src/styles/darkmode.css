@@ -534,13 +534,32 @@ body.dark-mode #root {
   color: var(--token-text-primary) !important;
 }
 
+.dark-mode .collapsible-section {
+  background: var(--token-layer-background) !important;
+}
+
+.dark-mode .collapsible-header {
+  background: transparent !important;
+  border-color: var(--token-border-strong) !important;
+}
+
 .dark-mode .collapsible-header:hover {
   background: var(--token-layer-active) !important;
   border-color: var(--slds-g-color-border-2) !important;
 }
 
 .dark-mode .collapsible-header.expanded {
+  background: var(--token-layer-active) !important;
   border-color: var(--slds-g-color-accent-2) !important;
+}
+
+.dark-mode .collapsible-body {
+  background: var(--token-layer-background) !important;
+}
+
+.dark-mode .product-config-section,
+.dark-mode .btl-product-selector {
+  background: var(--token-layer-background) !important;
 }
 
 /* Toggle Switches */
