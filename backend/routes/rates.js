@@ -5,8 +5,11 @@ import log from '../utils/logger.js';
 
 const router = express.Router();
 
+// Bridging/Fusion set keys use a different table
+const BRIDGING_SET_KEYS = ['Bridging_Var', 'Bridging_Fix', 'Fusion'];
+
 // GET /api/rates
-// Returns rows from rates_flat with optional filters, sorting, and pagination
+// Returns rows from rates_flat (BTL) or bridge_fusion_rates_full (Bridging/Fusion)
 router.get('/', asyncHandler(async (req, res) => {
   const {
     // filters
@@ -27,9 +30,13 @@ router.get('/', asyncHandler(async (req, res) => {
     offset = '0'
   } = req.query;
 
-  log.info('GET /api/rates - fetching rates', { set_key, property, rate_type, tier, product, sort, order, limit, offset });
+  // Determine which table to query based on set_key
+  const isBridgingRate = set_key && BRIDGING_SET_KEYS.includes(set_key);
+  const tableName = isBridgingRate ? 'bridge_fusion_rates_full' : 'rates_flat';
 
-  let query = supabase.from('rates_flat').select('*');
+  log.info('GET /api/rates - fetching rates', { set_key, property, tableName, rate_type, tier, product, sort, order, limit, offset });
+
+  let query = supabase.from(tableName).select('*');
 
   // Simple equals filters (numeric fields coerced when safe)
   const applyEq = (field, value, coerceNumber = false) => {

@@ -14,6 +14,7 @@ const Products = () => {
   const { showToast } = useToast();
   const [mainTab, setMainTab] = useState('btl'); // 'btl' or 'bridging'
   const [subTab, setSubTab] = useState('core');
+  const [bridgingPropertyTab, setBridgingPropertyTab] = useState('residential'); // 'residential' or 'commercial'
   const [ratesData, setRatesData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -116,6 +117,7 @@ const Products = () => {
           params.append('property', 'Semi-Commercial');
         }
       } else if (mainTab === 'bridging') {
+        // Determine set_key based on sub-tab
         if (subTab === 'variable') {
           params.append('set_key', 'Bridging_Var');
         } else if (subTab === 'fixed') {
@@ -123,8 +125,17 @@ const Products = () => {
         } else if (subTab === 'fusion') {
           params.append('set_key', 'Fusion');
         }
+        
+        // Add property filter based on bridging property tab
+        // For Residential tab, we fetch Residential property
+        // For Commercial tab, we fetch Semi-Commercial and Commercial properties
+        if (bridgingPropertyTab === 'residential') {
+          params.append('property', 'Residential');
+        }
+        // For commercial, we'll fetch all and filter client-side to get Semi-Commercial and Commercial
       }
 
+      console.log('fetchRates - API call:', `${API_BASE}/api/rates?${params.toString()}`);
       const response = await fetch(`${API_BASE}/api/rates?${params.toString()}`);
       
       if (!response.ok) {
@@ -132,6 +143,10 @@ const Products = () => {
       }
 
       const { rates } = await response.json();
+      console.log('fetchRates - received:', rates?.length, 'rates');
+      if (rates?.length > 0) {
+        console.log('fetchRates - first rate:', rates[0]);
+      }
       setRatesData(rates || []);
     } catch (err) {
       console.error('Error fetching rates:', err);
@@ -139,7 +154,7 @@ const Products = () => {
     } finally {
       setLoading(false);
     }
-  }, [mainTab, subTab]);
+  }, [mainTab, subTab, bridgingPropertyTab]);
 
   useEffect(() => {
     fetchRates();
@@ -149,6 +164,15 @@ const Products = () => {
   const handleMainTabChange = (tab) => {
     setMainTab(tab);
     setSubTab(tab === 'btl' ? 'core' : 'variable');
+    // Reset property tab to residential when switching main tabs
+    setBridgingPropertyTab('residential');
+  };
+
+  // Handle bridging sub-tab change (Variable, Fixed, Fusion)
+  const handleBridgingSubTabChange = (tab) => {
+    setSubTab(tab);
+    // Reset property tab to residential when switching between bridging sub-tabs
+    setBridgingPropertyTab('residential');
   };
 
   // Transform rates data into structured format for BTL
@@ -424,6 +448,619 @@ const Products = () => {
     );
   };
 
+  // =============================================
+  // BRIDGING RATES FUNCTIONS
+  // =============================================
+
+  // Transform bridging rates data into structured format
+  const transformBridgingData = useCallback(() => {
+    const structured = {};
+    
+    // Debug: Log incoming data
+    console.log('transformBridgingData - ratesData:', ratesData?.length, 'items');
+    console.log('transformBridgingData - bridgingPropertyTab:', bridgingPropertyTab);
+    
+    // Filter data based on property tab
+    const filteredData = bridgingPropertyTab === 'residential' 
+      ? ratesData.filter(r => r.property === 'Residential')
+      : ratesData.filter(r => r.property === 'Semi-Commercial' || r.property === 'Commercial');
+
+    console.log('transformBridgingData - filteredData:', filteredData?.length, 'items');
+    if (filteredData.length > 0) {
+      console.log('transformBridgingData - sample item:', filteredData[0]);
+    }
+
+    filteredData.forEach(rate => {
+      const product = rate.product || 'Unknown';
+      // Parse as numbers to ensure proper comparison
+      const minLtv = parseInt(rate.min_ltv, 10) || 0;
+      const maxLtv = parseInt(rate.max_ltv, 10) || 0;
+      const rateValue = rate.rate || 0;
+      const minLoan = rate.min_loan || '';
+      const maxLoan = rate.max_loan || '';
+      const chargeType = rate.charge_type || 'First Charge';
+      const minTerm = rate.min_term || 3;
+      const maxTerm = rate.max_term || 18;
+      const productFee = rate.product_fee || 2;
+
+      if (!structured[product]) {
+        structured[product] = {
+          ltvRates: {},
+          minLoan,
+          maxLoan,
+          chargeType,
+          minTerm,
+          maxTerm,
+          productFee,
+          maxLtv: 0
+        };
+      }
+
+      // Track highest max LTV for this product
+      if (maxLtv > structured[product].maxLtv) {
+        structured[product].maxLtv = maxLtv;
+      }
+
+      // Store rate by LTV bracket
+      const ltvKey = `${minLtv}-${maxLtv}`;
+      structured[product].ltvRates[ltvKey] = {
+        minLtv,
+        maxLtv,
+        rate: rateValue
+      };
+    });
+
+    console.log('transformBridgingData - structured:', Object.keys(structured));
+    return structured;
+  }, [ratesData, bridgingPropertyTab]);
+
+  // Transform Fusion rates data into structured format
+  const transformFusionData = useCallback(() => {
+    const structured = {};
+    
+    // Filter data based on property tab
+    const filteredData = bridgingPropertyTab === 'residential' 
+      ? ratesData.filter(r => r.property === 'Residential')
+      : ratesData.filter(r => r.property === 'Semi-Commercial' || r.property === 'Commercial');
+
+    filteredData.forEach(rate => {
+      const product = rate.product || 'Unknown';
+      const rateValue = rate.rate || 0;
+      const minLoan = rate.min_loan || '';
+      const maxLoan = rate.max_loan || '';
+      const maxLtv = rate.max_ltv || 70;
+      const productFee = rate.product_fee || 2;
+      const minTerm = rate.min_term || 24;
+      const maxTerm = rate.max_term || 24;
+      const minRolledMonths = rate.min_rolled_months || 6;
+      const maxRolledMonths = rate.max_rolled_months || 12;
+      const maxDeferInt = rate.max_defer_int || 2;
+      const erc1 = rate.erc_1 || 3;
+      const erc2 = rate.erc_2 || 1.5;
+
+      if (!structured[product]) {
+        structured[product] = {
+          rate: rateValue,
+          minLoan,
+          maxLoan,
+          maxLtv,
+          productFee,
+          minTerm,
+          maxTerm,
+          minRolledMonths,
+          maxRolledMonths,
+          maxDeferInt,
+          erc1,
+          erc2
+        };
+      }
+    });
+
+    return structured;
+  }, [ratesData, bridgingPropertyTab]);
+
+  // Get product display order for bridging tables - dynamically from data
+  const getBridgingProducts = useCallback((structured, isCommercial) => {
+    // Get all products that exist in the structured data
+    const availableProducts = Object.keys(structured);
+    
+    if (availableProducts.length === 0) {
+      return [];
+    }
+    
+    // Define preferred display order (products not in this list will be added at the end)
+    const preferredOrder = isCommercial
+      ? [
+          'Semi-Commercial',
+          'Semi-Commercial Large Loan',
+          'Permitted & Light Development Finance',
+          'Developer Exit Bridge (Multiple Units)',
+          'Commercial',
+          'Commercial Large Loan'
+        ]
+      : [
+          'BTL Single Property Investment',
+          'Large Single Property Investment',
+          'BTL Portfolio Investment',
+          'Developer Exit Bridge (Multiple Units)',
+          'Permitted & Light Development Finance',
+          'Second Charge'
+        ];
+    
+    // Sort available products: first by preferred order, then alphabetically for any extras
+    const orderedProducts = [];
+    
+    // Add products in preferred order if they exist
+    preferredOrder.forEach(product => {
+      if (availableProducts.includes(product)) {
+        orderedProducts.push(product);
+      }
+    });
+    
+    // Add any remaining products not in preferred order (alphabetically)
+    availableProducts
+      .filter(p => !preferredOrder.includes(p))
+      .sort()
+      .forEach(product => {
+        orderedProducts.push(product);
+      });
+    
+    return orderedProducts;
+  }, []);
+
+  // Get Fusion product display order
+  const getFusionProductOrder = () => {
+    return ['Small', 'Medium', 'Large'];
+  };
+
+  // Format loan range for display
+  const formatLoanRange = (minLoan, maxLoan) => {
+    const formatValue = (val) => {
+      if (!val) return '';
+      // Clean up the value and format
+      const cleaned = String(val).replace(/[£?,]/g, '');
+      const num = parseInt(cleaned, 10);
+      if (isNaN(num)) return val;
+      if (num >= 1000000) return `£${(num / 1000000).toFixed(0)}m`;
+      if (num >= 1000) return `£${(num / 1000).toFixed(0)}k`;
+      return `£${num}`;
+    };
+    
+    const min = formatValue(minLoan);
+    const max = formatValue(maxLoan);
+    if (max.includes('+') || maxLoan === '£10m+' || maxLoan === '10m+') {
+      return `${min}+`;
+    }
+    return `${min} - ${max}`;
+  };
+
+  // Render Bridging rates table (Variable or Fixed)
+  const renderBridgingTable = () => {
+    const structured = transformBridgingData();
+    const isCommercial = bridgingPropertyTab === 'commercial';
+    
+    // Get products dynamically from the data
+    const products = getBridgingProducts(structured, isCommercial);
+
+    if (products.length === 0) {
+      return (
+        <div className="slds-text-align_center slds-p-around_large">
+          <p className="slds-text-body_regular">No rates available for this category</p>
+        </div>
+      );
+    }
+
+    // Determine header color based on tab
+    const isVariable = subTab === 'variable';
+    const headerStyle = isVariable 
+      ? { background: 'linear-gradient(135deg, #00205B 0%, #003d8f 100%)', color: '#ffffff' }
+      : { background: 'linear-gradient(135deg, #dd7a01 0%, #fe9339 100%)', color: '#ffffff' };
+
+    // LTV brackets to display
+    const ltvBrackets = [
+      { label: 'Rates: 60% LTV', key: '0-60' },
+      { label: 'Rates: 70% LTV', key: '60-70' },
+      { label: 'Rates: 75% LTV', key: '70-75' }
+    ];
+
+    return (
+      <div className="slds-scrollable_x">
+        <table className="slds-table slds-table_bordered slds-table_cell-buffer products-rates-table products-bridging-table">
+          <thead>
+            <tr>
+              <th 
+                scope="col" 
+                className="products-rates-table__label-col"
+                style={headerStyle}
+              >
+                <div style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>Our Products</div>
+              </th>
+              {products.map(product => (
+                <th 
+                  key={product} 
+                  scope="col" 
+                  className="slds-text-align_center products-bridging-table__product-header"
+                  style={{ 
+                    backgroundColor: '#e5e5e5', 
+                    fontWeight: 600,
+                    padding: '0.5rem 0.25rem'
+                  }}
+                >
+                  <div className="products-bridging-table__product-name">{product}</div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {/* Rate rows by LTV */}
+            {ltvBrackets.map(ltv => (
+              <tr key={ltv.key} className="products-rates-table__rate-row">
+                <th scope="row" className="products-rates-table__label-cell">
+                  <div className="slds-truncate">{ltv.label}</div>
+                </th>
+                {products.map(product => {
+                  const productData = structured[product];
+                  const rateData = productData?.ltvRates[ltv.key];
+                  const rateValue = rateData?.rate;
+                  // Check if this LTV bracket exceeds product's max LTV
+                  const maxLtvNum = parseInt(ltv.key.split('-')[1], 10);
+                  const productMaxLtv = productData?.maxLtv || 75;
+                  const isNA = maxLtvNum > productMaxLtv || !rateValue;
+                  
+                  return (
+                    <td key={`${product}-${ltv.key}`} className="slds-text-align_center">
+                      <div className="slds-truncate">
+                        {isNA ? 'N/a' : `${rateValue}%`}
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+
+            {/* Separator row */}
+            <tr style={{ height: '0.5rem', backgroundColor: '#f3f3f3' }}>
+              <td colSpan={products.length + 1}></td>
+            </tr>
+
+            {/* Loan Size row */}
+            <tr className="products-rates-table__info-row">
+              <th scope="row" className="products-rates-table__label-cell">
+                <div className="slds-truncate">Loan Size</div>
+              </th>
+              {products.map(product => {
+                const productData = structured[product];
+                return (
+                  <td key={`${product}-loan`} className="slds-text-align_center">
+                    <div className="slds-truncate">
+                      {formatLoanRange(productData?.minLoan, productData?.maxLoan)}
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+
+            {/* Max LTV row */}
+            <tr className="products-rates-table__info-row">
+              <th scope="row" className="products-rates-table__label-cell">
+                <div className="slds-truncate">Max. LTV</div>
+              </th>
+              {products.map((product, idx) => {
+                const productData = structured[product];
+                const maxLtv = productData?.maxLtv || 75;
+                // Check if all products have same max LTV for colspan
+                const allSame = products.every(p => (structured[p]?.maxLtv || 75) === maxLtv);
+                if (idx === 0) {
+                  return (
+                    <td 
+                      key={`${product}-maxltv`} 
+                      className="slds-text-align_center"
+                      colSpan={allSame ? products.length : 1}
+                    >
+                      <div className="slds-truncate">{maxLtv}%</div>
+                    </td>
+                  );
+                }
+                if (allSame) return null;
+                return (
+                  <td key={`${product}-maxltv`} className="slds-text-align_center">
+                    <div className="slds-truncate">{maxLtv}%</div>
+                  </td>
+                );
+              })}
+            </tr>
+
+            {/* Charge Type row */}
+            <tr className="products-rates-table__info-row">
+              <th scope="row" className="products-rates-table__label-cell">
+                <div className="slds-truncate">Charge Type</div>
+              </th>
+              {products.map((product, idx) => {
+                const productData = structured[product];
+                const chargeType = productData?.chargeType || 'First Charge';
+                const displayCharge = chargeType.includes('Second') ? '2nd' : '1st';
+                // Check if all products have same charge type
+                const allSame = products.every(p => {
+                  const ct = structured[p]?.chargeType || 'First Charge';
+                  return ct === chargeType;
+                });
+                if (idx === 0) {
+                  return (
+                    <td 
+                      key={`${product}-charge`} 
+                      className="slds-text-align_center"
+                      colSpan={allSame ? products.length : 1}
+                    >
+                      <div className="slds-truncate">{displayCharge}</div>
+                    </td>
+                  );
+                }
+                if (allSame) return null;
+                return (
+                  <td key={`${product}-charge`} className="slds-text-align_center">
+                    <div className="slds-truncate">{displayCharge}</div>
+                  </td>
+                );
+              })}
+            </tr>
+
+            {/* Term row */}
+            <tr className="products-rates-table__info-row">
+              <th scope="row" className="products-rates-table__label-cell">
+                <div className="slds-truncate">Term <span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(months)</span></div>
+              </th>
+              {products.map((product, idx) => {
+                const productData = structured[product];
+                const minTerm = productData?.minTerm || 3;
+                const maxTerm = productData?.maxTerm || 18;
+                const termText = `${minTerm} - ${maxTerm}`;
+                // All bridging products have same term
+                if (idx === 0) {
+                  return (
+                    <td 
+                      key={`${product}-term`} 
+                      className="slds-text-align_center"
+                      colSpan={products.length}
+                    >
+                      <div className="slds-truncate">{termText}</div>
+                    </td>
+                  );
+                }
+                return null;
+              })}
+            </tr>
+
+            {/* Arrangement Fee row */}
+            <tr className="products-rates-table__info-row">
+              <th scope="row" className="products-rates-table__label-cell">
+                <div className="slds-truncate">Arrangement Fee <span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(from)</span></div>
+              </th>
+              {products.map((product, idx) => {
+                const productData = structured[product];
+                const fee = productData?.productFee || 2;
+                // All bridging products have same fee
+                if (idx === 0) {
+                  return (
+                    <td 
+                      key={`${product}-fee`} 
+                      className="slds-text-align_center"
+                      colSpan={products.length}
+                    >
+                      <div className="slds-truncate">{fee}%</div>
+                    </td>
+                  );
+                }
+                return null;
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  // Render Fusion rates table
+  const renderFusionTable = () => {
+    const structured = transformFusionData();
+    const productOrder = getFusionProductOrder();
+    
+    // Filter to only products that exist in data
+    const products = productOrder.filter(p => structured[p]);
+
+    if (products.length === 0) {
+      return (
+        <div className="slds-text-align_center slds-p-around_large">
+          <p className="slds-text-body_regular">No Fusion rates available for this category</p>
+        </div>
+      );
+    }
+
+    // Fusion header colors - teal gradient
+    const headerColors = {
+      'Small': { bg: '#0d9488', letter: 'S' },
+      'Medium': { bg: '#f59e0b', letter: 'M' },
+      'Large': { bg: '#0d9488', letter: 'L' }
+    };
+
+    return (
+      <div className="slds-scrollable_x">
+        <table className="slds-table slds-table_bordered slds-table_cell-buffer products-rates-table">
+          <thead>
+            <tr>
+              <th 
+                scope="col" 
+                className="products-rates-table__label-col"
+                style={{ background: 'linear-gradient(135deg, #0d9488 0%, #14b8a6 100%)', color: '#ffffff' }}
+              >
+                <div style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>Our Products</div>
+              </th>
+              {products.map(product => {
+                const colorConfig = headerColors[product] || { bg: '#0d9488', letter: product.slice(-1) };
+                return (
+                  <th 
+                    key={product} 
+                    scope="col" 
+                    className="slds-text-align_center"
+                    style={{ 
+                      padding: '0.75rem 0.5rem',
+                      minWidth: '10rem',
+                      backgroundColor: '#f8fafc'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                      <span style={{ 
+                        color: '#0d9488', 
+                        fontWeight: 700, 
+                        fontSize: '1.25rem' 
+                      }}>
+                        Fusion
+                      </span>
+                      <span style={{ 
+                        backgroundColor: colorConfig.bg,
+                        color: '#ffffff',
+                        padding: '0.25rem 0.5rem',
+                        borderRadius: '0.25rem',
+                        fontWeight: 700,
+                        fontSize: '1rem'
+                      }}>
+                        {colorConfig.letter}
+                      </span>
+                    </div>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {/* Coupon Rate row */}
+            <tr className="products-rates-table__rate-row">
+              <th scope="row" className="products-rates-table__label-cell">
+                <div className="slds-truncate">Coupon Rate <span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(+BBR)</span></div>
+              </th>
+              {products.map(product => {
+                const productData = structured[product];
+                return (
+                  <td key={`${product}-rate`} className="slds-text-align_center" style={{ backgroundColor: '#ecfdf5' }}>
+                    <div className="slds-truncate" style={{ fontWeight: 600 }}>
+                      {productData?.rate ? `${productData.rate}%` : '—'}
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+
+            {/* Loan Size row */}
+            <tr className="products-rates-table__info-row">
+              <th scope="row" className="products-rates-table__label-cell">
+                <div className="slds-truncate">Loan Size</div>
+              </th>
+              {products.map(product => {
+                const productData = structured[product];
+                return (
+                  <td key={`${product}-loan`} className="slds-text-align_center" style={{ backgroundColor: '#ecfdf5' }}>
+                    <div className="slds-truncate">
+                      {formatLoanRange(productData?.minLoan, productData?.maxLoan)}
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+
+            {/* Separator */}
+            <tr style={{ height: '0.5rem', backgroundColor: '#f3f3f3' }}>
+              <td colSpan={products.length + 1}></td>
+            </tr>
+
+            {/* Max LTV row */}
+            <tr className="products-rates-table__info-row">
+              <th scope="row" className="products-rates-table__label-cell">
+                <div className="slds-truncate">Max LTV</div>
+              </th>
+              <td className="slds-text-align_center" colSpan={products.length}>
+                <div className="slds-truncate">{structured[products[0]]?.maxLtv || 70}%</div>
+              </td>
+            </tr>
+
+            {/* Arrangement Fee row */}
+            <tr className="products-rates-table__info-row">
+              <th scope="row" className="products-rates-table__label-cell">
+                <div className="slds-truncate">Arrangement Fee</div>
+              </th>
+              <td className="slds-text-align_center" colSpan={products.length}>
+                <div className="slds-truncate">{structured[products[0]]?.productFee || 2}%</div>
+              </td>
+            </tr>
+
+            {/* Initial Term row */}
+            <tr className="products-rates-table__info-row">
+              <th scope="row" className="products-rates-table__label-cell">
+                <div className="slds-truncate">Initial Term</div>
+              </th>
+              <td className="slds-text-align_center" colSpan={products.length}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <span>{structured[products[0]]?.minTerm || 24} months</span>
+                  <span style={{ fontSize: '0.7rem', color: '#706e6b' }}>(+12 month discretionary extension available)</span>
+                </div>
+              </td>
+            </tr>
+
+            {/* Min Rolled Interest row */}
+            <tr className="products-rates-table__info-row">
+              <th scope="row" className="products-rates-table__label-cell">
+                <div className="slds-truncate">Min. Rolled Interest</div>
+              </th>
+              <td className="slds-text-align_center" colSpan={products.length}>
+                <div className="slds-truncate">{structured[products[0]]?.minRolledMonths || 6} months</div>
+              </td>
+            </tr>
+
+            {/* Max Rolled Interest row */}
+            <tr className="products-rates-table__info-row">
+              <th scope="row" className="products-rates-table__label-cell">
+                <div className="slds-truncate">Max Rolled Interest</div>
+              </th>
+              <td className="slds-text-align_center" colSpan={products.length}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <span>{structured[products[0]]?.maxRolledMonths || 12} months</span>
+                  <span style={{ fontSize: '0.7rem', color: '#706e6b' }}>(then serviced)</span>
+                </div>
+              </td>
+            </tr>
+
+            {/* Deferred Interest row */}
+            <tr className="products-rates-table__info-row">
+              <th scope="row" className="products-rates-table__label-cell">
+                <div className="slds-truncate">Deferred Interest</div>
+              </th>
+              <td className="slds-text-align_center" colSpan={products.length}>
+                <div className="slds-truncate">{structured[products[0]]?.maxDeferInt || 2}%</div>
+              </td>
+            </tr>
+
+            {/* Separator */}
+            <tr style={{ height: '0.5rem', backgroundColor: '#f3f3f3' }}>
+              <td colSpan={products.length + 1}></td>
+            </tr>
+
+            {/* ERC row */}
+            <tr className="products-rates-table__info-row">
+              <th scope="row" className="products-rates-table__label-cell">
+                <div className="slds-truncate">ERC</div>
+              </th>
+              <td className="slds-text-align_center" colSpan={products.length}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <span>{structured[products[0]]?.erc1 || 3}% in year 1</span>
+                  <span>{structured[products[0]]?.erc2 || 1.5}% in year 2</span>
+                  <span style={{ fontSize: '0.65rem', color: '#706e6b', marginTop: '0.25rem' }}>25% ERC free after 6 months, no ERC after 21 months</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   return (
     <div className="slds-container_fluid">
       {/* Header with Products title and actions */}
@@ -604,7 +1241,7 @@ const Products = () => {
                   className="slds-tabs_scoped__link"
                   role="tab"
                   aria-selected={subTab === 'variable'}
-                  onClick={() => setSubTab('variable')}
+                  onClick={() => handleBridgingSubTabChange('variable')}
                 >
                   Bridge Variable
                 </button>
@@ -617,7 +1254,7 @@ const Products = () => {
                   className="slds-tabs_scoped__link"
                   role="tab"
                   aria-selected={subTab === 'fixed'}
-                  onClick={() => setSubTab('fixed')}
+                  onClick={() => handleBridgingSubTabChange('fixed')}
                 >
                   Bridge Fix
                 </button>
@@ -630,12 +1267,30 @@ const Products = () => {
                   className="slds-tabs_scoped__link"
                   role="tab"
                   aria-selected={subTab === 'fusion'}
-                  onClick={() => setSubTab('fusion')}
+                  onClick={() => handleBridgingSubTabChange('fusion')}
                 >
                   Fusion
                 </button>
               </li>
             </ul>
+          </div>
+
+          {/* Residential / Commercial Property Tabs */}
+          <div className="slds-m-top_small slds-m-horizontal_medium">
+            <div className="slds-button-group" role="group">
+              <button
+                className={`slds-button ${bridgingPropertyTab === 'residential' ? 'slds-button_brand' : 'slds-button_neutral'}`}
+                onClick={() => setBridgingPropertyTab('residential')}
+              >
+                Residential
+              </button>
+              <button
+                className={`slds-button ${bridgingPropertyTab === 'commercial' ? 'slds-button_brand' : 'slds-button_neutral'}`}
+                onClick={() => setBridgingPropertyTab('commercial')}
+              >
+                Commercial
+              </button>
+            </div>
           </div>
 
           {/* Bridging Content */}
@@ -658,9 +1313,25 @@ const Products = () => {
               </div>
             )}
             {!loading && !error && (
-              <div className="slds-text-align_center slds-p-around_large">
-                <p className="slds-text-body_regular">Bridging rates table will be implemented here</p>
-              </div>
+              <>
+                {/* Title based on current selection */}
+                <h2 className="slds-text-heading_medium slds-m-bottom_medium" style={{ 
+                  color: subTab === 'variable' ? '#00205B' : subTab === 'fixed' ? '#dd7a01' : '#0d9488',
+                  fontWeight: 700
+                }}>
+                  {subTab === 'variable' && 'Variable Bridging Loan Rates'}
+                  {subTab === 'fixed' && 'Fixed Bridging Loan Rates'}
+                  {subTab === 'fusion' && 'Fusion Rates'}
+                </h2>
+                
+                {/* Render appropriate table */}
+                {subTab === 'fusion' ? renderFusionTable() : renderBridgingTable()}
+                
+                {/* Version footer */}
+                <div className="slds-text-align_center slds-m-top_medium">
+                  <span style={{ fontSize: '0.75rem', color: '#706e6b' }}>(Version 12/2025-1)</span>
+                </div>
+              </>
             )}
           </div>
         </div>
