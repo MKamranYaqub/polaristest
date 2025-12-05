@@ -12,6 +12,7 @@ import exportRouter from './routes/export.js';
 import authRouter from './routes/auth.js';
 import postcodeLookupRouter from './routes/postcodeLookup.js';
 import ratesRouter from './routes/rates.js';
+import supportRouter from './routes/support.js';
 // Rate limiting middleware
 import { apiLimiter, exportLimiter, pdfLimiter } from './middleware/rateLimiter.js';
 
@@ -81,6 +82,9 @@ app.use('/api/auth', authRouter);
 
 // Postcode lookup endpoint
 app.use('/api/postcode-lookup', postcodeLookupRouter);
+
+// Support requests endpoint
+app.use('/api/support', supportRouter);
 
 // DIP PDF generation endpoint
 app.use('/api/dip/pdf', pdfLimiter);

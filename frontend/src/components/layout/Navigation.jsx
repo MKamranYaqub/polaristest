@@ -63,7 +63,10 @@ function Navigation() {
         { id: 'btl-rates', label: 'BTL Rates', path: '/admin/btl-rates' },
         { id: 'bridging-rates', label: 'Bridging Rates', path: '/admin/bridging-rates' },
         { id: 'global-settings', label: 'Global Settings', path: '/admin/global-settings' },
-        ...(showUserManagement ? [{ id: 'users', label: 'Users', path: '/admin/users' }] : [])
+        ...(showUserManagement ? [
+          { id: 'users', label: 'Users', path: '/admin/users' },
+          { id: 'support-requests', label: 'Support Requests', path: '/admin/support-requests' }
+        ] : [])
       ]
     }] : [])
   ];

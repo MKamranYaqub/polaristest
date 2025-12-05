@@ -20,6 +20,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import AdminPage from './pages/AdminPage';
 import UsersPage from './pages/UsersPage';
 import SettingsPage from './pages/SettingsPage';
+import SupportRequestsPage from './pages/SupportRequestsPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import HomePage from './pages/HomePage';
@@ -216,6 +217,18 @@ const AppContent = () => {
                     element={
                       <ErrorBoundary>
                         <UsersPage />
+                      </ErrorBoundary>
+                    } 
+                  />
+                </Route>
+                
+                {/* Support requests - Admin only (access level 1) */}
+                <Route path="/admin/support-requests" element={<ProtectedRoute requiredAccessLevel={1} allowedAccessLevels={[1]} />}>
+                  <Route 
+                    index
+                    element={
+                      <ErrorBoundary>
+                        <SupportRequestsPage />
                       </ErrorBoundary>
                     } 
                   />

@@ -59,6 +59,15 @@ const AdminLandingPage = () => {
       link: '/admin/users',
       gradient: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
       stats: { label: 'Users', value: '7' }
+    },
+    {
+      id: 'support',
+      title: 'Support Requests',
+      description: 'View and manage user support requests, bug reports, and suggestions.',
+      icon: 'question',
+      link: '/admin/support-requests',
+      gradient: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+      stats: { label: 'Requests', value: 'New' }
     }
   ];
 
