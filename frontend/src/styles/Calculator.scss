@@ -190,7 +190,7 @@ input[type="range"] {
 .product-criteria-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--slds-g-spacing-4);
+  gap: var(--token-form-field-gap);
 
   @media (max-width: 1024px) {
     grid-template-columns: repeat(3, 1fr);

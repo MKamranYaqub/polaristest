@@ -25,7 +25,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import HomePage from './pages/HomePage';
 import CalculatorLandingPage from './pages/CalculatorLandingPage';
 import AdminLandingPage from './pages/AdminLandingPage';
-// Products page removed
+import Products from './pages/Products';
 import ProtectedRoute from './pages/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import { isEmbeddedMode } from './utils/embedding';
@@ -128,6 +128,18 @@ const AppContent = () => {
                     element={
                       <ErrorBoundary>
                         <CalculatorLandingPage />
+                      </ErrorBoundary>
+                    } 
+                  />
+                </Route>
+                
+                {/* Protected products page - require authentication */}
+                <Route path="/products" element={<ProtectedRoute requiredAccessLevel={5} />}>
+                  <Route 
+                    index
+                    element={
+                      <ErrorBoundary>
+                        <Products />
                       </ErrorBoundary>
                     } 
                   />

@@ -256,7 +256,7 @@
 .filters-section {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--token-spacing-lg);
+  gap: var(--token-form-field-gap, 2rem);
   padding: var(--token-spacing-lg);
   background: var(--token-layer-surface);
   border-radius: var(--token-radius-md);

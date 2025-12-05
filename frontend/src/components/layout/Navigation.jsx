@@ -30,7 +30,12 @@ function Navigation() {
       icon: 'utility:home',
       path: '/home'
     },
-    // Products entry removed
+    {
+      id: 'products',
+      label: 'Products',
+      icon: 'utility:apps',
+      path: '/products'
+    },
     {
       id: 'calculator',
       label: 'Calculator',
