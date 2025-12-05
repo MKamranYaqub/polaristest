@@ -5,10 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 const HomePage = () => {
   const { user } = useAuth();
 
-  useEffect(() => {
-    console.log('HomePage mounted');
-  }, []);
-
   // Key Benefits - Simplified
   const benefits = [
     { icon: 'shield', title: 'FCA Regulated', color: '#10b981' },

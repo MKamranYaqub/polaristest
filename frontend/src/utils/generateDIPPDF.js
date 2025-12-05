@@ -16,33 +16,12 @@ import React from 'react';
 async function fetchQuoteData(quoteId) {
   const response = await getQuote(quoteId, true);
   
-  console.log('fetchQuoteData response:', response);
-  
   if (!response || !response.quote) {
     throw new Error('Quote not found');
   }
   
   // Results are nested inside quote.results (backend puts them there)
   const results = response.quote.results || [];
-  
-  // Debug: Log the results
-  console.log('fetchQuoteData results:', results);
-  if (results && results.length > 0) {
-    console.log('First result rolled/deferred:', {
-      rolled_months: results[0].rolled_months,
-      rolled_months_interest: results[0].rolled_months_interest,
-      deferred_interest_percent: results[0].deferred_interest_percent,
-      deferred_interest_pounds: results[0].deferred_interest_pounds
-    });
-    // Log ALL results' rolled/deferred values
-    console.log('ALL results rolled/deferred values:');
-    results.forEach((r, i) => {
-      console.log(`  Result ${i} (${r.fee_column}):`, {
-        rolled_months: r.rolled_months,
-        deferred_interest_percent: r.deferred_interest_percent
-      });
-    });
-  }
   
   return {
     quote: response.quote,
@@ -60,7 +39,6 @@ function getSelectedResult(quote, results) {
   }
   
   const feeSelection = quote.fee_type_selection;
-  console.log('getSelectedResult - fee_type_selection:', feeSelection);
   
   if (!feeSelection) {
     // No selection - return the latest result (last in array, as they're ordered by created_at ascending)
@@ -74,8 +52,6 @@ function getSelectedResult(quote, results) {
       const feeCol = String(r.fee_column || '');
       return feeSelection.includes(feeCol) || feeSelection.includes(`${feeCol}%`);
     });
-    
-    console.log('getSelectedResult - matching results:', matchingResults.length);
     
     if (matchingResults.length === 0) {
       // No match - return last result
@@ -95,11 +71,6 @@ function getSelectedResult(quote, results) {
     
     // Return the one with values, or the last matching result (most recent)
     const selected = withValues || matchingResults[matchingResults.length - 1];
-    console.log('getSelectedResult - selected result:', {
-      fee_column: selected.fee_column,
-      rolled_months: selected.rolled_months,
-      deferred_interest_percent: selected.deferred_interest_percent
-    });
     return selected;
   }
   
@@ -123,21 +94,6 @@ function getSelectedResult(quote, results) {
  * Combines quote fields with selected result fields
  */
 function prepareQuoteForPDF(quote, selectedResult) {
-  // Debug logging
-  console.log('prepareQuoteForPDF - quote before merge:', {
-    rolled_months: quote.rolled_months,
-    rolled_months_interest: quote.rolled_months_interest,
-    deferred_interest_percent: quote.deferred_interest_percent,
-    deferred_interest_pounds: quote.deferred_interest_pounds
-  });
-  console.log('prepareQuoteForPDF - selectedResult:', {
-    rolled_months: selectedResult.rolled_months,
-    rolled_months_interest: selectedResult.rolled_months_interest,
-    deferred_interest_percent: selectedResult.deferred_interest_percent,
-    deferred_interest_pounds: selectedResult.deferred_interest_pounds,
-    all_keys: Object.keys(selectedResult)
-  });
-  
   // Merge selected result data into quote for the PDF component
   return {
     ...quote,

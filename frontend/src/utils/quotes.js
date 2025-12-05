@@ -116,3 +116,59 @@ export async function requestQuotePdf(quoteId, token) {
 
   return res;
 }
+
+/**
+ * Save UW checklist state for a quote
+ * @param {string} quoteId - Quote UUID
+ * @param {Object} checkedItems - Object with requirement IDs as keys and boolean values
+ * @param {string} stage - 'DIP', 'Indicative', or 'Both'
+ * @param {string} token - Optional auth token override
+ */
+export async function saveUWChecklistState(quoteId, checkedItems, stage = 'Both', token) {
+  const res = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}/uw-checklist`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders(token),
+    },
+    body: JSON.stringify({
+      checked_items: checkedItems,
+      stage,
+    }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    const message = errorData.error || 'Failed to save UW checklist state';
+    throw new Error(message);
+  }
+
+  return res.json().catch(() => ({}));
+}
+
+/**
+ * Load UW checklist state for a quote
+ * @param {string} quoteId - Quote UUID
+ * @param {string} stage - 'DIP', 'Indicative', or 'Both'
+ * @param {string} token - Optional auth token override
+ */
+export async function loadUWChecklistState(quoteId, stage = 'Both', token) {
+  const params = new URLSearchParams();
+  if (stage) params.append('stage', stage);
+  
+  const res = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}/uw-checklist?${params.toString()}`, {
+    headers: authHeaders(token),
+  });
+
+  if (!res.ok) {
+    // Return empty state if not found (404 is expected for new quotes)
+    if (res.status === 404) {
+      return { checked_items: {} };
+    }
+    const errorData = await res.json().catch(() => ({}));
+    const message = errorData.error || 'Failed to load UW checklist state';
+    throw new Error(message);
+  }
+
+  return res.json();
+}

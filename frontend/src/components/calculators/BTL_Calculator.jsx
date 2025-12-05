@@ -22,13 +22,14 @@ import useBrokerSettings from '../../hooks/calculator/useBrokerSettings';
 import { useResultsVisibility } from '../../hooks/useResultsVisibility';
 import { useResultsRowOrder } from '../../hooks/useResultsRowOrder';
 import { useResultsLabelAlias } from '../../hooks/useResultsLabelAlias';
-import { getQuote, upsertQuoteData } from '../../utils/quotes';
+import { getQuote, upsertQuoteData, saveUWChecklistState, loadUWChecklistState } from '../../utils/quotes';
 import { downloadDIPPDF } from '../../utils/generateDIPPDF';
 import { downloadQuotePDF } from '../../utils/generateQuotePDF';
 import { parseNumber, formatCurrency, formatPercent } from '../../utils/calculator/numberFormatting';
 import { computeTierFromAnswers } from '../../utils/calculator/rateFiltering';
 import { computeBTLLoan } from '../../utils/btlCalculationEngine';
 import CollapsibleSection from '../calculator/CollapsibleSection';
+import UWRequirementsChecklist from '../shared/UWRequirementsChecklist';
 import BTLCriteriaSection from '../calculator/btl/BTLCriteriaSection';
 import BTLLoanDetailsSection from '../calculator/btl/BTLLoanDetailsSection';
 import BTLProductSection from '../calculator/btl/BTLProductSection';
@@ -167,6 +168,10 @@ export default function BTLcalculator({ initialQuote = null }) {
   // Quote Modal state
   const [quoteModalOpen, setQuoteModalOpen] = useState(false);
   const [quoteData, setQuoteData] = useState({});
+
+  // UW Requirements checklist state
+  const [uwChecklistExpanded, setUwChecklistExpanded] = useState(false);
+  const [uwCheckedItems, setUwCheckedItems] = useState({});
 
   useEffect(() => {
     async function loadAll() {
@@ -428,6 +433,73 @@ export default function BTLcalculator({ initialQuote = null }) {
       // eslint-disable-next-line no-console
     }
   }, [effectiveInitialQuote]);
+
+  // Load UW checklist state when quote changes
+  useEffect(() => {
+    async function loadChecklistState() {
+      if (!currentQuoteId || !token) return;
+      try {
+        const data = await loadUWChecklistState(currentQuoteId, 'both', token);
+        // eslint-disable-next-line no-console
+        console.log('[BTL] loadChecklistState raw response', { currentQuoteId, data });
+        const raw = data && data.checked_items ? data.checked_items : {};
+
+        let normalized = {};
+        if (Array.isArray(raw)) {
+          raw.forEach((id) => {
+            if (id) normalized[id] = true;
+          });
+        } else if (raw && typeof raw === 'object') {
+          Object.entries(raw).forEach(([id, v]) => {
+            if (id && v === true) normalized[id] = true;
+          });
+        }
+
+        // eslint-disable-next-line no-console
+        console.log('[BTL] loadChecklistState normalized', { normalized });
+        setUwCheckedItems(normalized);
+      } catch (e) {
+        // Silently fail - checklist will start empty
+      }
+    }
+    loadChecklistState();
+  }, [currentQuoteId, token]);
+
+  // Auto-save UW checklist state when items change (debounced)
+  useEffect(() => {
+    if (!currentQuoteId || !token) return;
+    if (!uwCheckedItems || typeof uwCheckedItems !== 'object') return;
+    if (Object.keys(uwCheckedItems).length === 0) return;
+
+    const payload = { ...uwCheckedItems };
+
+    // eslint-disable-next-line no-console
+    console.log('[BTL] autosave effect scheduled', { currentQuoteId, payload });
+
+    const timeoutId = setTimeout(() => {
+      try {
+        Promise.resolve()
+          .then(() => {
+            // eslint-disable-next-line no-console
+            console.log('[BTL] autosave firing', { currentQuoteId, payload });
+            return saveUWChecklistState(currentQuoteId, payload, 'both', token);
+          })
+          .then((response) => {
+            // eslint-disable-next-line no-console
+            console.log('[BTL] autosave success', { response });
+          })
+          .catch((error) => {
+            // eslint-disable-next-line no-console
+            console.error('[BTL] autosave error', error);
+            // Ignore save errors; do not crash UI
+          });
+      } catch {
+        // Absolute safety: never let this effect crash React
+      }
+    }, 500); // Debounce by 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [currentQuoteId, uwCheckedItems, token]);
 
   // Ensure productType defaults to the first product for the selected productScope
   useEffect(() => {
@@ -814,25 +886,7 @@ export default function BTLcalculator({ initialQuote = null }) {
         // Parse metadata from product name if not present in rate
         const metadata = parseRateMetadata(rate);
         
-        // Debug: Log retention fields from rate before saving
         if (results.length === 0) {
-          console.log('🔍 First rate object retention fields:', {
-            is_retention: rate.is_retention,
-            retention: rate.retention,
-            retention_type: rate.retention_type,
-            isRetention: rate.isRetention,
-            allRateKeys: Object.keys(rate).filter(k => k.toLowerCase().includes('retention'))
-          });
-          console.log('🔍 Broker fee calculation:', {
-            addFeesToggle: brokerSettings.addFeesToggle,
-            feeCalculationType: brokerSettings.feeCalculationType,
-            additionalFeeAmount: brokerSettings.additionalFeeAmount,
-            derivedBrokerFeePct,
-            derivedBrokerFeeFlat,
-            resultBrokerClientFee: result.brokerClientFee,
-            resultBrokerFeeValue: result.brokerFeeValue,
-            grossLoan: result.grossLoan
-          });
         }
         
         results.push({
@@ -1111,13 +1165,6 @@ export default function BTLcalculator({ initialQuote = null }) {
         // Check if the quote has saved results in the database
         const hasResults = response.quote.results && response.quote.results.length > 0;
         
-        console.log('🔍 Issue Quote Debug:', {
-          quoteId: currentQuoteId,
-          hasResults,
-          resultsCount: response.quote.results ? response.quote.results.length : 0,
-          relevantRatesCount: relevantRates ? relevantRates.length : 0
-        });
-        
         // Warn if the quote has no saved results in the database
         if (!hasResults) {
           console.warn('⚠️ Quote has no saved results. This means Update Quote did not save results to quote_results table.');
@@ -1175,6 +1222,9 @@ export default function BTLcalculator({ initialQuote = null }) {
     // Reset DIP data
     setDipData({});
     setFilteredRatesForDip([]);
+    
+    // Reset UW checklist
+    setUwCheckedItems({});
     
     // Reset broker settings using setters from hook
     brokerSettings.setClientType('Direct');
@@ -1640,16 +1690,6 @@ export default function BTLcalculator({ initialQuote = null }) {
               }
             });
 
-            // Debug logging
-            if (filteredRates.length > 0) {
-              console.log(`Range filter: selected="${selectedRange}", found ${filteredRates.length} rates`);
-              console.log('Sample rate fields:', {
-                product_range: filteredRates[0].product_range,
-                rate_type: filteredRates[0].rate_type,
-                type: filteredRates[0].type
-              });
-            }
-
             // Build fee buckets (unique product_fee values). Use 'none' for rows without an explicit fee.
             const feeBucketsSet = new Set((filteredRates || []).map((r) => {
               if (r.product_fee === undefined || r.product_fee === null || r.product_fee === '') return 'none';
@@ -1811,17 +1851,6 @@ export default function BTLcalculator({ initialQuote = null }) {
                                         ? additionalFeeRaw
                                         : 0;
 
-                                      // Log fee override details for debugging
-                                      if (productFeeOverrides[colKey]) {
-                                        console.log('📊 Calculation with fee override:', {
-                                          colKey,
-                                          baseFee: fb,
-                                          override: productFeeOverrides[colKey],
-                                          manualRolled,
-                                          manualDeferred
-                                        });
-                                      }
-
                                       const calculationParams = {
                                         colKey,
                                         selectedRate: best,
@@ -1860,15 +1889,6 @@ export default function BTLcalculator({ initialQuote = null }) {
                                         if (!result.isManual) {
                                           optimizedValuesRef.current.rolled[colKey] = result.rolledMonths;
                                           optimizedValuesRef.current.deferred[colKey] = result.deferredCapPct;
-                                          // Log optimized values when fee override is active
-                                          if (productFeeOverrides[colKey]) {
-                                            console.log('✅ Optimized values calculated:', {
-                                              colKey,
-                                              rolledMonths: result.rolledMonths,
-                                              deferredCapPct: result.deferredCapPct,
-                                              isManual: result.isManual
-                                            });
-                                          }
                                         }
                                         
                                         // Initial Rate (display only)
@@ -2289,6 +2309,43 @@ export default function BTLcalculator({ initialQuote = null }) {
         </div>
       </div>
       </RangeToggle>
+
+      {/* UW Requirements Checklist */}
+      <CollapsibleSection
+        title="UW Requirements Checklist"
+        expanded={uwChecklistExpanded}
+        onToggle={() => setUwChecklistExpanded(prev => !prev)}
+      >
+        <UWRequirementsChecklist
+          stage="Both"
+          quoteData={{
+            // Pass all answers for condition evaluation
+            ...answers,
+            // Map to standard field names used in UW conditions
+            // Database question keys: hmo, mufb, holiday, flatAboveComm, expat, etc.
+            property_type: answers['hmo'] || answers['Property type'] || '',
+            hmo: answers['hmo'] || '',
+            mufb: answers['mufb'] || '',
+            holiday: answers['holiday'] || '',
+            // borrower_type comes from saved quote, not criteria answers
+            // Values are 'Personal' or 'Company'
+            borrower_type: currentQuoteData?.borrower_type || '',
+            loan_purpose: answers['Loan purpose'] || ''
+          }}
+          checkedItems={uwCheckedItems || {}}
+          onCheckChange={(itemId, checked) => {
+            try {
+              if (itemId) {
+                setUwCheckedItems(prev => ({ ...(prev || {}), [itemId]: checked }));
+              }
+            } catch (e) {
+              // Prevent crash on checkbox change
+            }
+          }}
+          showExportButton={true}
+          showGuidance={true}
+        />
+      </CollapsibleSection>
 
       {/* Issue DIP Modal */}
       <IssueDIPModal

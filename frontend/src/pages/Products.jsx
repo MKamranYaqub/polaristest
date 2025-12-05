@@ -105,13 +105,10 @@ const Products = () => {
 
   // Start editing a rate cell
   const handleStartEdit = (rateId, field, currentValue, context) => {
-    console.log('handleStartEdit called:', { rateId, field, currentValue, context, isAdmin });
     if (!isAdmin) {
-      console.log('Not admin, ignoring edit');
       return;
     }
     if (!rateId) {
-      console.log('No rateId provided, ignoring edit');
       return;
     }
     setEditingCell({ rateId, field, context });
@@ -146,8 +143,6 @@ const Products = () => {
     try {
       const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
       const token = localStorage.getItem('auth_token');
-
-      console.log('Saving rate - token exists:', !!token);
 
       // Determine table name based on current tab
       let tableName = 'rates_flat';
@@ -256,7 +251,6 @@ const Products = () => {
         // For commercial, we'll fetch all and filter client-side to get Semi-Commercial and Commercial
       }
 
-      console.log('fetchRates - API call:', `${API_BASE}/api/rates?${params.toString()}`);
       const response = await fetch(`${API_BASE}/api/rates?${params.toString()}`);
       
       if (!response.ok) {
@@ -264,10 +258,6 @@ const Products = () => {
       }
 
       const { rates } = await response.json();
-      console.log('fetchRates - received:', rates?.length, 'rates');
-      if (rates?.length > 0) {
-        console.log('fetchRates - first rate:', rates[0]);
-      }
       setRatesData(rates || []);
     } catch (err) {
       console.error('Error fetching rates:', err);
@@ -644,19 +634,10 @@ const Products = () => {
   const transformBridgingData = useCallback(() => {
     const structured = {};
     
-    // Debug: Log incoming data
-    console.log('transformBridgingData - ratesData:', ratesData?.length, 'items');
-    console.log('transformBridgingData - bridgingPropertyTab:', bridgingPropertyTab);
-    
     // Filter data based on property tab
     const filteredData = bridgingPropertyTab === 'residential' 
       ? ratesData.filter(r => r.property === 'Residential')
       : ratesData.filter(r => r.property === 'Semi-Commercial' || r.property === 'Commercial');
-
-    console.log('transformBridgingData - filteredData:', filteredData?.length, 'items');
-    if (filteredData.length > 0) {
-      console.log('transformBridgingData - sample item:', filteredData[0]);
-    }
 
     filteredData.forEach(rate => {
       const product = rate.product || 'Unknown';
@@ -699,7 +680,6 @@ const Products = () => {
       };
     });
 
-    console.log('transformBridgingData - structured:', Object.keys(structured));
     return structured;
   }, [ratesData, bridgingPropertyTab]);
 

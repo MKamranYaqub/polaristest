@@ -43,6 +43,15 @@ const AdminLandingPage = () => {
       stats: { label: 'Rates', value: '28' }
     },
     {
+      id: 'uw-requirements',
+      title: 'UW Requirements',
+      description: 'Configure underwriting document checklist for DIP and Quote issuance.',
+      icon: 'checklist',
+      link: '/admin/uw-requirements',
+      gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+      stats: { label: 'Items', value: '40+' }
+    },
+    {
       id: 'global-settings',
       title: 'Global Settings',
       description: 'Configure system-wide settings, feature toggles, and environment variables.',

@@ -53,7 +53,6 @@ const AppContent = () => {
     const handleKeyPress = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
         e.preventDefault();
-        console.log('Clearing cache...');
         if ('caches' in window) {
           caches.keys().then(names => {
             names.forEach(name => caches.delete(name));
@@ -197,6 +196,14 @@ const AppContent = () => {
                     element={
                       <ErrorBoundary>
                         <AdminPage tab="globalSettings" />
+                      </ErrorBoundary>
+                    } 
+                  />
+                  <Route 
+                    path="uw-requirements" 
+                    element={
+                      <ErrorBoundary>
+                        <AdminPage tab="uwRequirements" />
                       </ErrorBoundary>
                     } 
                   />

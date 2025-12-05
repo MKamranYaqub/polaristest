@@ -371,8 +371,8 @@ export default function BTLCalculator({ initialQuote = null }) {
               <BTLResultsSummary
                 results={calculation.results}
                 columnsHeaders={calculation.columnsHeaders || []}
-                onAddAsDIP={(idx) => console.log('Add as DIP:', idx)}
-                onDeleteColumn={(idx) => console.log('Delete column:', idx)}
+                onAddAsDIP={() => {}}
+                onDeleteColumn={() => {}}
                 isReadOnly={isReadOnly}
               />
             ) : (

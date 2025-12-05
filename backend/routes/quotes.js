@@ -307,4 +307,132 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   return res.json({ deleted: data && data[0] ? data[0] : null });
 }));
 
+// ==================== UW CHECKLIST STATE ROUTES ====================
+
+// Get UW checklist state for a quote
+router.get('/:id/uw-checklist', asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { stage } = req.query;
+  
+  log.info('📋 GET /api/quotes/:id/uw-checklist', { quote_id: id, stage });
+  
+  let query = supabase
+    .from('uw_checklist_state')
+    .select('*')
+    .eq('quote_id', id);
+  
+  if (stage && stage !== 'Both') {
+    query = query.eq('stage', stage);
+  }
+  
+  const { data, error } = await query.maybeSingle();
+  
+  if (error) {
+    log.error('❌ Error fetching UW checklist state', error);
+    throw ErrorTypes.database('Failed to fetch UW checklist state', error);
+  }
+  
+  if (!data) {
+    // Return empty state for new quotes
+    return res.json({ checked_items: {}, stage: stage || 'Both' });
+  }
+  
+  // Convert checked_items from array to object if needed
+  let checkedItems = data.checked_items || {};
+  if (Array.isArray(checkedItems)) {
+    // Convert array format ['id1', 'id2'] to object format { id1: true, id2: true }
+    checkedItems = checkedItems.reduce((acc, id) => {
+      acc[id] = true;
+      return acc;
+    }, {});
+  }
+  
+  return res.json({
+    id: data.id,
+    quote_id: data.quote_id,
+    checked_items: checkedItems,
+    stage: data.stage,
+    last_updated_by: data.last_updated_by,
+    updated_at: data.updated_at
+  });
+}));
+
+// Save/Update UW checklist state for a quote
+router.put('/:id/uw-checklist', asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { checked_items, stage = 'Both' } = req.body;
+  
+  log.info('💾 PUT /api/quotes/:id/uw-checklist', { 
+    quote_id: id, 
+    stage, 
+    checked_count: Object.keys(checked_items || {}).filter(k => checked_items[k]).length 
+  });
+  
+  // Convert object format to array format for storage
+  let itemsToStore = checked_items;
+  if (checked_items && typeof checked_items === 'object' && !Array.isArray(checked_items)) {
+    // Convert { id1: true, id2: false } to ['id1'] (only true values)
+    itemsToStore = Object.entries(checked_items)
+      .filter(([, checked]) => checked === true)
+      .map(([id]) => id);
+  }
+  
+  // Calculate progress for quick access on quotes table
+  const checkedCount = Array.isArray(itemsToStore) ? itemsToStore.length : 0;
+  
+  // Upsert the checklist state
+  const { data, error } = await supabase
+    .from('uw_checklist_state')
+    .upsert({
+      quote_id: id,
+      stage,
+      checked_items: itemsToStore,
+      last_updated_by: req.user?.email || 'system'
+    }, {
+      onConflict: 'quote_id,stage'
+    })
+    .select('*')
+    .single();
+  
+  if (error) {
+    log.error('❌ Error saving UW checklist state', error);
+    throw ErrorTypes.database('Failed to save UW checklist state', error);
+  }
+  
+  // Also update the quotes table with progress info
+  // Try BTL quotes first, then bridge quotes
+  const progressUpdate = {
+    uw_checklist_progress: checkedCount
+  };
+  
+  let { error: quoteError } = await supabase
+    .from('quotes')
+    .update(progressUpdate)
+    .eq('id', id);
+  
+  if (quoteError) {
+    // Try bridge_quotes table
+    await supabase
+      .from('bridge_quotes')
+      .update(progressUpdate)
+      .eq('id', id);
+  }
+  
+  log.info('✅ UW checklist state saved', { quote_id: id, checked_count: checkedCount });
+  
+  // Convert back to object format for response
+  const responseItems = Array.isArray(itemsToStore) 
+    ? itemsToStore.reduce((acc, id) => { acc[id] = true; return acc; }, {})
+    : itemsToStore;
+  
+  return res.json({
+    id: data.id,
+    quote_id: data.quote_id,
+    checked_items: responseItems,
+    stage: data.stage,
+    last_updated_by: data.last_updated_by,
+    updated_at: data.updated_at
+  });
+}));
+
 export default router;

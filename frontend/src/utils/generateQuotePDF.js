@@ -15,16 +15,12 @@ import React from 'react';
 async function fetchQuoteData(quoteId) {
   const response = await getQuote(quoteId, true);
   
-  console.log('fetchQuoteData response:', response);
-  
   if (!response || !response.quote) {
     throw new Error('Quote not found');
   }
   
   // Results are nested inside quote.results (backend puts them there)
   const results = response.quote.results || [];
-  
-  console.log('fetchQuoteData results:', results);
   
   // Defensive normalization: map DB fields to names expected by PDF helpers
   const normalizeNum = (v) => {
@@ -121,13 +117,6 @@ export async function generateBTLQuotePDF(quoteId) {
       clientType: brokerSettings.clientType,
     };
     
-    console.log('Generating Quote PDF with:', {
-      quote: quote.id,
-      resultsCount: results.length,
-      brokerSettings,
-      clientDetails,
-    });
-    
     // Create React element
     const element = React.createElement(BTLQuotePDF, {
       quote,
@@ -176,8 +165,6 @@ export async function downloadQuotePDF(quoteId, calculatorType, referenceNumber)
     // Cleanup
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
-    
-    console.log('Quote PDF downloaded successfully');
   } catch (error) {
     console.error('Error downloading Quote PDF:', error);
     throw error;

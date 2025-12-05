@@ -266,12 +266,6 @@ export const hasRolledMonths = (quote) => {
                  parseNumber(selectedResult.rolled_months) ||
                  parseNumber(quote.rolledMonths) ||
                  parseNumber(selectedResult.rolledMonths) || 0;
-  console.log('hasRolledMonths check:', { 
-    'quote.rolled_months': quote.rolled_months, 
-    'selectedResult.rolled_months': selectedResult.rolled_months,
-    'parsed': rolled,
-    'result': rolled > 0
-  });
   return rolled > 0;
 };
 
@@ -311,13 +305,6 @@ export const hasDeferredInterest = (quote) => {
                    parseNumber(selectedResult.deferred_cap_pct) ||
                    parseNumber(selectedResult.deferredCapPct) ||
                    parseNumber(selectedResult.deferredRate) || 0;
-  console.log('hasDeferredInterest check:', { 
-    'quote.deferred_interest_percent': quote.deferred_interest_percent, 
-    'quote.deferred_rate': quote.deferred_rate,
-    'selectedResult.deferred_interest_percent': selectedResult.deferred_interest_percent,
-    'parsed': deferred,
-    'result': deferred > 0
-  });
   return deferred > 0;
 };
 
@@ -345,11 +332,6 @@ export const getDeferredAmount = (quote) => {
          parseNumber(selectedResult.deferredInterestAmount) ||
          parseNumber(quote.deferred_interest) || 
          0;
-  console.log('getDeferredAmount:', {
-    'quote.deferred_interest_pounds': quote.deferred_interest_pounds,
-    'selectedResult.deferred_interest_pounds': selectedResult.deferred_interest_pounds,
-    'amount': amount
-  });
   return amount;
 };
 

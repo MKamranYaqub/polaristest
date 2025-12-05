@@ -43,26 +43,6 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
   // Extract all values using helpers
   const h = BTLDIPHelpers;
   
-  // Debug: Log the quote data to see what we're receiving
-  console.log('BTLDIPPDF quote data:', {
-    rolled_months: quote.rolled_months,
-    rolled_months_interest: quote.rolled_months_interest,
-    deferred_rate: quote.deferred_rate,
-    deferred_interest_percent: quote.deferred_interest_percent,
-    deferred_interest_pounds: quote.deferred_interest_pounds,
-    _selectedResult: quote._selectedResult
-  });
-  
-  // Debug: Check what helpers return
-  const debugHasRolled = h.hasRolledMonths(quote);
-  const debugHasDeferred = h.hasDeferredInterest(quote);
-  console.log('BTLDIPPDF helper checks:', {
-    hasRolledMonths: debugHasRolled,
-    getRolledMonths: h.getRolledMonths(quote),
-    hasDeferredInterest: debugHasDeferred,
-    getDeferredRate: h.getDeferredRate(quote)
-  });
-  
   const borrowerName = h.getBorrowerName(quote, dipData, brokerSettings);
   const securityAddress = h.getSecurityAddress(dipData);
   const dipDate = h.formatDateLong(dipData.dip_date);

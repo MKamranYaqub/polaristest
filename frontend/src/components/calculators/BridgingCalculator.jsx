@@ -21,12 +21,13 @@ import useBrokerSettings from '../../hooks/calculator/useBrokerSettings';
 import { useResultsVisibility } from '../../hooks/useResultsVisibility';
 import { useResultsRowOrder } from '../../hooks/useResultsRowOrder';
 import { useResultsLabelAlias } from '../../hooks/useResultsLabelAlias';
-import { getQuote, upsertQuoteData, requestDipPdf, requestQuotePdf } from '../../utils/quotes';
+import { getQuote, upsertQuoteData, requestDipPdf, requestQuotePdf, saveUWChecklistState, loadUWChecklistState } from '../../utils/quotes';
 import { parseNumber, formatCurrencyInput } from '../../utils/calculator/numberFormatting';
 import { computeLoanLtv, computeLoanSize } from '../../utils/calculator/loanCalculations';
 import { pickBestRate, computeModeFromAnswers } from '../../utils/calculator/rateFiltering';
 import { LOCALSTORAGE_CONSTANTS_KEY, MARKET_RATES } from '../../config/constants';
 import { BridgeFusionCalculator } from '../../utils/bridgeFusionCalculationEngine';
+import UWRequirementsChecklist from '../shared/UWRequirementsChecklist';
 
 const getNumericValue = (value) => {
   const parsed = parseNumber(value);
@@ -120,6 +121,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
   const [multiPropertyRows, setMultiPropertyRows] = useState([
     { id: Date.now(), property_address: '', property_type: 'Residential', property_value: '', charge_type: 'First charge', first_charge_amount: '', gross_loan: 0 }
   ]);
+
+  // UW Requirements checklist state
+  const [uwChecklistExpanded, setUwChecklistExpanded] = useState(false);
+  const [uwCheckedItems, setUwCheckedItems] = useState({});
 
   // Multi-property helper functions
   const calculateMultiPropertyGrossLoan = (propertyType, propertyValue, firstChargeAmount) => {
@@ -539,6 +544,73 @@ export default function BridgingCalculator({ initialQuote = null }) {
       // Failed to apply initial quote
     }
   }, [effectiveInitialQuote]);
+
+  // Load UW checklist state when quote changes
+  useEffect(() => {
+    async function loadChecklistState() {
+      if (!currentQuoteId || !token) return;
+      try {
+        const data = await loadUWChecklistState(currentQuoteId, 'both', token);
+        // eslint-disable-next-line no-console
+        console.log('[Bridge] loadChecklistState raw response', { currentQuoteId, data });
+        const raw = data && data.checked_items ? data.checked_items : {};
+
+        let normalized = {};
+        if (Array.isArray(raw)) {
+          raw.forEach((id) => {
+            if (id) normalized[id] = true;
+          });
+        } else if (raw && typeof raw === 'object') {
+          Object.entries(raw).forEach(([id, v]) => {
+            if (id && v === true) normalized[id] = true;
+          });
+        }
+
+        // eslint-disable-next-line no-console
+        console.log('[Bridge] loadChecklistState normalized', { normalized });
+        setUwCheckedItems(normalized);
+      } catch (e) {
+        // Silently fail - checklist will start empty
+      }
+    }
+    loadChecklistState();
+  }, [currentQuoteId, token]);
+
+  // Auto-save UW checklist state when items change (debounced)
+  useEffect(() => {
+    if (!currentQuoteId || !token) return;
+    if (!uwCheckedItems || typeof uwCheckedItems !== 'object') return;
+    if (Object.keys(uwCheckedItems).length === 0) return;
+
+    const payload = { ...uwCheckedItems };
+
+    // eslint-disable-next-line no-console
+    console.log('[Bridge] autosave effect scheduled', { currentQuoteId, payload });
+
+    const timeoutId = setTimeout(() => {
+      try {
+        Promise.resolve()
+          .then(() => {
+            // eslint-disable-next-line no-console
+            console.log('[Bridge] autosave firing', { currentQuoteId, payload });
+            return saveUWChecklistState(currentQuoteId, payload, 'both', token);
+          })
+          .then((response) => {
+            // eslint-disable-next-line no-console
+            console.log('[Bridge] autosave success', { response });
+          })
+          .catch((error) => {
+            // eslint-disable-next-line no-console
+            console.error('[Bridge] autosave error', error);
+            // Ignore save errors; do not crash UI
+          });
+      } catch {
+        // Absolute safety: never let this effect crash React
+      }
+    }, 500); // Debounce by 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [currentQuoteId, uwCheckedItems, token]);
 
   const handleAnswerChange = (key, idx) => {
     setAnswers(prev => ({ ...prev, [key]: questions[key].options[idx] }));
@@ -1321,6 +1393,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
     setDipData({});
     setFilteredRatesForDip([]);
     
+    // Reset UW checklist
+    setUwCheckedItems({});
+    
     // Reset broker settings using setters from hook
     brokerSettings.setClientType('Direct');
     brokerSettings.setClientFirstName('');
@@ -2089,6 +2164,34 @@ export default function BridgingCalculator({ initialQuote = null }) {
       </section>
 
       {/* Placeholders are injected into the results table as rows (see above) */}
+
+      {/* UW Requirements Checklist */}
+      <CollapsibleSection
+        title="UW Requirements Checklist"
+        expanded={uwChecklistExpanded}
+        onToggle={() => setUwChecklistExpanded(prev => !prev)}
+      >
+        <UWRequirementsChecklist
+          stage="Both"
+          quoteData={{
+            property_type: answers['Property type'] || '',
+            loan_purpose: answers['Loan purpose'] || '',
+            borrower_type: answers['Borrower type'] || ''
+          }}
+          checkedItems={uwCheckedItems || {}}
+          onCheckChange={(itemId, checked) => {
+            try {
+              if (itemId) {
+                setUwCheckedItems(prev => ({ ...(prev || {}), [itemId]: checked }));
+              }
+            } catch (e) {
+              // Prevent crash on checkbox change
+            }
+          }}
+          showExportButton={true}
+          showGuidance={true}
+        />
+      </CollapsibleSection>
 
       {/* Issue DIP Modal */}
       <IssueDIPModal

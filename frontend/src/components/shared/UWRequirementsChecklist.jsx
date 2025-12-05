@@ -1,0 +1,392 @@
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import PropTypes from 'prop-types';
+import SalesforceIcon from './SalesforceIcon';
+import {
+  DEFAULT_UW_REQUIREMENTS,
+  UW_STAGES,
+  CATEGORY_ORDER,
+  LOCALSTORAGE_UW_REQUIREMENTS_KEY,
+  filterByStage,
+  filterByConditions
+} from '../../config/uwRequirements';
+import { downloadUWRequirementsPDF } from '../../utils/generateUWRequirementsPDF';
+import '../../styles/slds.css';
+import '../../styles/UWRequirementsChecklist.css';
+
+/**
+ * Read UW requirements from localStorage (merged with defaults to include new items)
+ */
+function getRequirements() {
+  try {
+    const raw = localStorage.getItem(LOCALSTORAGE_UW_REQUIREMENTS_KEY);
+    if (raw) {
+      const overrides = JSON.parse(raw);
+      if (Array.isArray(overrides)) {
+        // Merge overrides with defaults
+        const overrideMap = new Map(overrides.map(r => [r.id, r]));
+        const defaultIds = new Set(DEFAULT_UW_REQUIREMENTS.map(r => r.id));
+        
+        // Update defaults with any overrides
+        const merged = DEFAULT_UW_REQUIREMENTS.map(defaultReq => {
+          const override = overrideMap.get(defaultReq.id);
+          return override ? { ...defaultReq, ...override } : defaultReq;
+        });
+        
+        // Add any custom requirements from overrides that aren't in defaults
+        overrides.forEach(override => {
+          if (!defaultIds.has(override.id)) {
+            merged.push(override);
+          }
+        });
+        
+        return merged;
+      }
+    }
+  } catch {
+    // Fall through to defaults
+  }
+  return DEFAULT_UW_REQUIREMENTS;
+}
+
+/**
+ * UW Requirements Checklist Component
+ * Displays the applicable UW requirements for a DIP or Quote
+ * 
+ * Props:
+ * - stage: 'DIP' or 'Indicative' (which stage to show requirements for)
+ * - quoteData: Quote/DIP data object for evaluating conditional requirements
+ * - checkedItems: Array of requirement IDs that have been checked/received
+ * - onCheckChange: Callback when a checkbox is toggled (id, checked)
+ * - readOnly: If true, checkboxes are disabled
+ * - compact: If true, shows a condensed view
+ * - showGuidance: If true, shows internal guidance notes (UW view)
+ */
+export default function UWRequirementsChecklist({
+  stage = UW_STAGES.DIP,
+  quoteData = {},
+  checkedItems = [],
+  onCheckChange,
+  readOnly = false,
+  compact = false,
+  showGuidance = false,
+  showExportButton = true,
+  title = 'Document Checklist'
+}) {
+  const [requirements, setRequirements] = useState(DEFAULT_UW_REQUIREMENTS);
+  const [expandedCategories, setExpandedCategories] = useState({});
+  const [exporting, setExporting] = useState(false);
+  const [selectedStage, setSelectedStage] = useState(stage);
+
+  // Update selectedStage when prop changes
+  useEffect(() => {
+    setSelectedStage(stage);
+  }, [stage]);
+
+  // Normalize checkedItems to always work as a lookup
+  // Supports both array format ['id1', 'id2'] and object format { id1: true, id2: true }
+  const isChecked = (id) => {
+    if (!id) return false; // Defensive check
+    if (Array.isArray(checkedItems)) {
+      const result = checkedItems.includes(id);
+      // Debug: track checklist state evaluation
+      // eslint-disable-next-line no-console
+      console.log('[UWChecklist] isChecked(array)', { id, result, checkedItems });
+      return result;
+    }
+    const result = !!(checkedItems && checkedItems[id] === true);
+    // Debug: track checklist state evaluation
+    // eslint-disable-next-line no-console
+    console.log('[UWChecklist] isChecked(object)', { id, result, checkedItems });
+    return result;
+  };
+
+  // Get checked items as array for PDF export and counting
+  const checkedItemsArray = useMemo(() => {
+    if (Array.isArray(checkedItems)) {
+      return checkedItems;
+    }
+    // Convert object to array of checked IDs
+    return Object.entries(checkedItems || {})
+      .filter(([, checked]) => checked === true)
+      .map(([id]) => id);
+  }, [checkedItems]);
+
+  // Load requirements on mount and listen for changes
+  useEffect(() => {
+    setRequirements(getRequirements());
+    
+    // Initialize all categories as expanded (use both UW_CATEGORIES and CATEGORY_ORDER)
+    const expanded = {};
+    CATEGORY_ORDER.forEach(cat => {
+      expanded[cat] = true;
+    });
+    setExpandedCategories(expanded);
+
+    // Listen for localStorage changes (e.g., admin updates)
+    const handleStorage = (e) => {
+      if (e.key === LOCALSTORAGE_UW_REQUIREMENTS_KEY) {
+        setRequirements(getRequirements());
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  // Filter requirements by stage and conditions
+  const applicableRequirements = useMemo(() => {
+    const filtered = filterByConditions(filterByStage(requirements, selectedStage), quoteData);
+    
+    // Group by category
+    const grouped = {};
+    filtered.forEach(req => {
+      if (!grouped[req.category]) {
+        grouped[req.category] = [];
+      }
+      grouped[req.category].push(req);
+    });
+
+    // Sort each group by order
+    Object.keys(grouped).forEach(cat => {
+      grouped[cat].sort((a, b) => a.order - b.order);
+    });
+
+    return grouped;
+  }, [requirements, selectedStage, quoteData]);
+
+  // Calculate progress
+  const totalCount = useMemo(() => {
+    try {
+      return Object.values(applicableRequirements || {}).flat().filter(Boolean).length;
+    } catch {
+      return 0;
+    }
+  }, [applicableRequirements]);
+
+  const checkedCount = useMemo(() => {
+    try {
+      return Object.values(applicableRequirements || {})
+        .flat()
+        .filter(req => req && req.id && isChecked(req.id))
+        .length;
+    } catch {
+      return 0;
+    }
+  }, [applicableRequirements, checkedItemsArray]);
+
+  const progressPercent = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
+
+  // Toggle category
+  const toggleCategory = (category) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
+  // Handle checkbox change
+  const handleCheck = (id, checked) => {
+    // Debug: log checkbox interactions
+    // eslint-disable-next-line no-console
+    console.log('[UWChecklist] handleCheck', { id, checked, readOnly });
+    if (!id) return; // Defensive check
+    if (onCheckChange && !readOnly) {
+      onCheckChange(id, checked);
+    }
+  };
+
+  // Handle PDF export
+  const handleExportPDF = useCallback(async () => {
+    setExporting(true);
+    try {
+      await downloadUWRequirementsPDF({
+        checkedItems: checkedItemsArray,
+        quoteData,
+        stage: selectedStage,
+        showGuidance
+      });
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+    } finally {
+      setExporting(false);
+    }
+  }, [checkedItemsArray, quoteData, selectedStage, showGuidance]);
+
+  // Get display categories in order
+  const displayCategories = CATEGORY_ORDER.filter(cat => applicableRequirements[cat]?.length > 0);
+
+  if (totalCount === 0) {
+    return (
+      <div className="uw-checklist uw-checklist--empty">
+        <p className="slds-text-body_regular slds-text-color_weak">
+          No requirements applicable for this {stage}.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`uw-checklist ${compact ? 'uw-checklist--compact' : ''}`}>
+      {/* Header with progress */}
+      <div className="uw-checklist__header">
+        <div className="uw-checklist__header-left">
+          <h3 className="slds-text-heading_small">
+            <SalesforceIcon name="checklist" size="small" className="slds-m-right_x-small" />
+            {title}
+          </h3>
+          {/* Stage Filter */}
+          <div className="uw-checklist__stage-filter slds-m-left_medium">
+            <select
+              className="slds-select slds-select_x-small"
+              value={selectedStage}
+              onChange={(e) => setSelectedStage(e.target.value)}
+            >
+              <option value="Both">All Stages</option>
+              <option value={UW_STAGES.INDICATIVE}>Indicative</option>
+              <option value={UW_STAGES.DIP}>DIP</option>
+            </select>
+          </div>
+        </div>
+        <div className="uw-checklist__header-actions">
+          {showExportButton && !compact && (
+            <button
+              className="slds-button slds-button_icon slds-button_icon-border-filled uw-checklist__export-btn"
+              onClick={handleExportPDF}
+              disabled={exporting}
+              title="Export to PDF"
+            >
+              {exporting ? (
+                <span className="slds-spinner slds-spinner_x-small slds-spinner_inline" role="status">
+                  <span className="slds-assistive-text">Exporting</span>
+                </span>
+              ) : (
+                <SalesforceIcon name="download" size="x-small" />
+              )}
+              <span className="slds-assistive-text">Export to PDF</span>
+            </button>
+          )}
+          <div className="uw-checklist__progress">
+            <div className="slds-progress-bar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={progressPercent}>
+              <span className="slds-progress-bar__value" style={{ width: `${progressPercent}%` }}>
+                <span className="slds-assistive-text">Progress: {progressPercent}%</span>
+              </span>
+            </div>
+            <span className="uw-checklist__progress-text">
+              {checkedCount} / {totalCount} ({progressPercent}%)
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Requirements by category */}
+      <div className="uw-checklist__categories">
+        {displayCategories.map(category => {
+          const catReqs = applicableRequirements[category] || [];
+          if (catReqs.length === 0) return null;
+          
+          const catCheckedCount = catReqs.filter(r => r && isChecked(r.id)).length;
+          const isExpanded = expandedCategories[category];
+
+          return (
+            <div key={category} className="uw-checklist__category">
+              <div 
+                className="uw-checklist__category-header"
+                onClick={() => toggleCategory(category)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && toggleCategory(category)}
+              >
+                <SalesforceIcon 
+                  name={isExpanded ? 'chevrondown' : 'chevronright'} 
+                  size="x-small" 
+                  className="slds-m-right_x-small"
+                />
+                <span className="uw-checklist__category-title">{category}</span>
+                <span className={`slds-badge ${catCheckedCount === catReqs.length ? 'slds-badge--complete' : ''}`}>
+                  {catCheckedCount}/{catReqs.length}
+                </span>
+              </div>
+
+              {isExpanded && (
+                <ul className="uw-checklist__items">
+                  {catReqs.map(req => {
+                    if (!req || !req.id) return null;
+                    const itemChecked = isChecked(req.id);
+                    return (
+                      <li 
+                        key={req.id} 
+                        className={`uw-checklist__item ${itemChecked ? 'uw-checklist__item--checked' : ''} ${!req.required ? 'uw-checklist__item--optional' : ''}`}
+                      >
+                        <label className="uw-checklist__item-label">
+                          <input
+                            type="checkbox"
+                            checked={itemChecked}
+                            onChange={(e) => handleCheck(req.id, e.target.checked)}
+                            disabled={readOnly}
+                            className="slds-checkbox"
+                          />
+                          <span className="uw-checklist__item-checkbox">
+                            {itemChecked ? (
+                              <SalesforceIcon name="check" size="x-small" />
+                            ) : (
+                              <span className="uw-checklist__item-checkbox-empty" />
+                            )}
+                          </span>
+                          <span className="uw-checklist__item-text">
+                            {req.description}
+                            {!req.required && (
+                              <span className="uw-checklist__item-optional-tag">(Optional)</span>
+                            )}
+                          </span>
+                        </label>
+                        {showGuidance && req.guidance && (
+                          <div className="uw-checklist__item-guidance">
+                            <SalesforceIcon name="info" size="xx-small" />
+                            {req.guidance}
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Summary footer */}
+      {!compact && (
+        <div className="uw-checklist__footer">
+          <div className={`uw-checklist__status ${progressPercent === 100 ? 'uw-checklist__status--complete' : ''}`}>
+            {progressPercent === 100 ? (
+              <>
+                <SalesforceIcon name="success" size="small" className="slds-m-right_x-small" />
+                All requirements received
+              </>
+            ) : (
+              <>
+                <SalesforceIcon name="warning" size="small" className="slds-m-right_x-small" />
+                {totalCount - checkedCount} item{totalCount - checkedCount !== 1 ? 's' : ''} outstanding
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+UWRequirementsChecklist.propTypes = {
+  stage: PropTypes.oneOf([UW_STAGES.DIP, UW_STAGES.INDICATIVE, 'Both']),
+  quoteData: PropTypes.object,
+  checkedItems: PropTypes.oneOfType([
+    PropTypes.arrayOf(PropTypes.string),
+    PropTypes.object
+  ]),
+  onCheckChange: PropTypes.func,
+  readOnly: PropTypes.bool,
+  compact: PropTypes.bool,
+  showGuidance: PropTypes.bool,
+  showExportButton: PropTypes.bool,
+  title: PropTypes.string
+};

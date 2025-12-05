@@ -12,7 +12,6 @@ const CacheBuster = () => {
     
     if (storedVersion && storedVersion !== currentVersion) {
       // Version changed, clear caches and reload
-      console.log('Clearing cache and reloading...');
       
       // Clear localStorage except for important data
       const keysToKeep = ['supabase.auth.token', 'app.constants.override.v1'];

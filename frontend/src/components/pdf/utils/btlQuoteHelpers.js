@@ -193,9 +193,7 @@ export const getServicePeriod = (result) => {
   // Prefer serviced_months when present, else fall back to initial_term
   const serviced = parseNumber(result.serviced_months);
   const term = serviced > 0 ? serviced : parseNumber(result.initial_term);
-  console.log('getServicePeriod - result.serviced_months:', result.serviced_months, 'initial_term:', result.initial_term, 'parsed:', term);
   if (!term || term === 0) {
-    console.log('getServicePeriod returning N/A - no term found');
     return 'N/A';
   }
   
@@ -217,7 +215,6 @@ export const getDeferredPercent = (result) => {
 export const getRolledMonths = (result) => {
   if (!result) return 'N/A';
   const rolled = parseNumber(result.rolled_months);
-  console.log('getRolledMonths - result.rolled_months:', result.rolled_months, 'parsed:', rolled);
   if (rolled === null || rolled === undefined || isNaN(rolled)) return 'N/A';
   return `${rolled} months`;
 };

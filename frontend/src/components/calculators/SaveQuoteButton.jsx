@@ -194,18 +194,6 @@ export default function SaveQuoteButton({
         
         // Filter rates by selected product range before saving
         let ratesToSave = calculationData.relevantRates || [];
-        console.log('📋 Rates to save:', {
-          totalRelevantRates: calculationData.relevantRates ? calculationData.relevantRates.length : 0,
-          showProductRangeSelection,
-          productRange,
-          firstRateHasMetadata: calculationData.relevantRates && calculationData.relevantRates[0] 
-            ? {
-                has_initial_term: 'initial_term' in calculationData.relevantRates[0],
-                has_revert_rate_type: 'revert_rate_type' in calculationData.relevantRates[0],
-                has_product_range: 'product_range' in calculationData.relevantRates[0]
-              }
-            : null
-        });
         
         if (showProductRangeSelection && ratesToSave.length > 0) {
           ratesToSave = ratesToSave.filter(rate => {
@@ -297,23 +285,6 @@ export default function SaveQuoteButton({
             product_fee_saved: parseNumeric(rate.product_fee),
           }));
           
-          // Log sample result for debugging rate metadata
-          if (quoteData.results.length > 0) {
-            console.log('📊 BTL Quote Results Sample:', {
-              totalResults: quoteData.results.length,
-              firstResult: {
-                fee_column: quoteData.results[0].fee_column,
-                initial_term: quoteData.results[0].initial_term,
-                full_term: quoteData.results[0].full_term,
-                rolled_months: quoteData.results[0].rolled_months,
-                revert_rate_type: quoteData.results[0].revert_rate_type,
-                product_range: quoteData.results[0].product_range,
-                has_all_metadata: !!(quoteData.results[0].initial_term && quoteData.results[0].revert_rate_type)
-              }
-            });
-          } else {
-            console.warn('⚠️ No results to save! Check if relevantRates has data.');
-          }
         }
       }
 
@@ -443,15 +414,6 @@ export default function SaveQuoteButton({
       }
 
       const sanitizedQuoteData = sanitizeObject(quoteData);
-
-      console.log('💾 Saving quote with results:', {
-        calculatorType: sanitizedQuoteData.calculator_type,
-        hasResults: !!sanitizedQuoteData.results,
-        resultsCount: sanitizedQuoteData.results ? sanitizedQuoteData.results.length : 0,
-        sampleResultKeys: sanitizedQuoteData.results && sanitizedQuoteData.results[0] 
-          ? Object.keys(sanitizedQuoteData.results[0]).length 
-          : 0
-      });
 
       // The backend will handle which table to save to based on calculator_type
       let res;
