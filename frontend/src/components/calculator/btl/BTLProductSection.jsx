@@ -23,27 +23,14 @@ const BTLProductSection = ({
   isReadOnly = false
 }) => {
   return (
-    <div className="product-config-section" style={{ 
-      marginBottom: 'var(--token-spacing-lg)',
-    }}>
+    <div className="product-config-section">
       {/* Row 1: Product Type and Action Buttons */}
-      <div className="product-section-row-1" style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between',
-        gap: 'var(--token-spacing-md)', 
-        marginBottom: 'var(--token-spacing-md)',
-        alignItems: 'center'
-      }}>
-        <div style={{
-          fontWeight: 'var(--token-font-weight-semibold)',
-          fontSize: 'var(--token-font-size-md)',
-          display: 'flex',
-          alignItems: 'center'
-        }}>
+      <div className="product-section-row-1">
+        <div className="product-type-label">
           <span style={{ color: 'var(--token-text-primary)' }}>Product Type: </span>
           <span style={{ marginLeft: '0.5rem', color: 'var(--token-text-primary)' }}>Buy to Let</span>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--token-spacing-sm)', alignItems: 'center' }}>
+        <div className="product-actions">
           {quoteId && (
             <>
               <button 
@@ -67,11 +54,7 @@ const BTLProductSection = ({
       </div>
 
       {/* Row 2: 4-column grid for Product Scope, Retention, Retention LTV, Tier */}
-      <div className="product-criteria-grid" style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(4, 1fr)', 
-        gap: 'var(--token-form-field-gap)'
-      }}>
+      <div className="product-criteria-grid">
         <div className="slds-form-element">
           <label className="slds-form-element__label">
             <span className="required-asterisk">*</span>What type of quote is this for?

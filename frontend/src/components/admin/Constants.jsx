@@ -16,6 +16,8 @@ import {
 } from '../../config/constants';
 import useTypography from '../../hooks/useTypography';
 import '../../styles/slds.css';
+import '../../styles/GlobalSettings.css';
+import SalesforceIcon from '../shared/SalesforceIcon';
 
 function readOverrides() {
   try {
@@ -62,6 +64,26 @@ export default function Constants() {
   
   // Notification state
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
+
+  // Accordion state
+  const [expandedSections, setExpandedSections] = useState({
+    productLists: true,
+    feeColumns: false,
+    flatAbove: false,
+    marketRates: false,
+    brokerSettings: false,
+    fundingLines: false,
+    typography: false
+  });
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => {
+      const willExpand = !prev[section];
+      // collapse all, then expand only the selected if toggling on
+      const allCollapsed = Object.keys(prev).reduce((acc, key) => { acc[key] = false; return acc; }, {});
+      return { ...allCollapsed, [section]: willExpand };
+    });
+  };
 
   // defensive: if someone saved an invalid shape to localStorage or constants,
   // ensure rendering doesn't throw. Treat non-object productLists/feeColumns as missing.
@@ -337,7 +359,8 @@ export default function Constants() {
               tv[`brokerCommission:${k}`] = String(loadedData.brokerCommissionDefaults[k]);
             });
             tv['brokerTolerance'] = String(loadedData.brokerCommissionTolerance);
-            tv['fundingLines'] = (loadedData.fundingLines || FUNDING_LINES).join(', ');
+            tv['fundingLinesBTL'] = (loadedData.fundingLinesBTL || FUNDING_LINES_BTL).join(', ');
+            tv['fundingLinesBridge'] = (loadedData.fundingLinesBridge || FUNDING_LINES_BRIDGE).join(', ');
             setTempValues(tv);
           }
         }
@@ -858,16 +881,20 @@ export default function Constants() {
       }
 
       if (tryStructured && supabase) {
-        const upsertRow = {
-          key: 'app.constants',
+        const key = `app.constants:${new Date().toISOString()}`;
+        const insertRow = {
+          key,
           product_lists: productLists,
           fee_columns: feeColumns,
           flat_above_commercial_rule: flatAboveCommercialRule,
           market_rates: marketRates,
+          broker_routes: brokerRoutes,
+          broker_commission_defaults: brokerCommissionDefaults,
+          broker_commission_tolerance: brokerCommissionTolerance,
           funding_lines_btl: arr,
           funding_lines_bridge: fundingLinesBridge,
         };
-        const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
+        const { error } = await supabase.from('app_constants').insert([insertRow]);
         setSaving(false);
         if (error) {
           
@@ -923,16 +950,20 @@ export default function Constants() {
       }
 
       if (tryStructured && supabase) {
-        const upsertRow = {
-          key: 'app.constants',
+        const key = `app.constants:${new Date().toISOString()}`;
+        const insertRow = {
+          key,
           product_lists: productLists,
           fee_columns: feeColumns,
           flat_above_commercial_rule: flatAboveCommercialRule,
           market_rates: marketRates,
+          broker_routes: brokerRoutes,
+          broker_commission_defaults: brokerCommissionDefaults,
+          broker_commission_tolerance: brokerCommissionTolerance,
           funding_lines_btl: fundingLinesBTL,
           funding_lines_bridge: arr,
         };
-        const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
+        const { error } = await supabase.from('app_constants').insert([insertRow]);
         setSaving(false);
         if (error) {
           
@@ -1202,428 +1233,500 @@ export default function Constants() {
         </button>
       </div>
 
-      <section className="slds-box slds-m-bottom_medium section-divider">
-        <h3 className="section-header">Product lists per property type</h3>
-        <div className="grid-auto-fit">
-          {Object.keys(safeProductLists).map((pt) => {
-            const key = `productLists:${pt}`;
-            return (
-              <div key={pt} className="slds-form-element">
-                <label className="slds-form-element__label">{pt}</label>
-                <div className="slds-form-element__control form-control-inline">
-                  <input
-                    className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
-                    value={editingFields[key] ? (tempValues[key] ?? '') : String(Array.isArray(productLists[pt]) ? productLists[pt].join(', ') : (productLists[pt] ?? ''))}
-                    onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
-                    disabled={!editingFields[key]}
-                  />
-                  {!editingFields[key] ? (
-                    <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (Array.isArray(safeProductLists[pt]) ? safeProductLists[pt].join(', ') : String(safeProductLists[pt] ?? '')))}>Edit</button>
-                  ) : (
-                    <>
-                      <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
-                      <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
-                    </>
-                  )}
-                </div>
-                {/*<div className="helper-text">Comma-separated list of product names shown in the calculator product select.</div>*/}
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      <div className="settings-accordion-section">
+        <section className="slds-accordion__section">
+          <div 
+            className={`slds-accordion__summary ${expandedSections.productLists ? 'slds-is-open' : ''}`}
+            onClick={() => toggleSection('productLists')}
+          >
+            <h3 className="slds-accordion__summary-heading">
+              <span className="slds-accordion__summary-content">Product lists per property type</span>
+              <SalesforceIcon name="chevrondown" size="xx-small" className="slds-accordion__summary-action-icon" />
+            </h3>
+          </div>
+          <div className="slds-accordion__content" hidden={!expandedSections.productLists}>
+            <div className="grid-auto-fit">
+              {Object.keys(safeProductLists).map((pt) => {
+                const key = `productLists:${pt}`;
+                return (
+                  <div key={pt} className="slds-form-element">
+                    <label className="slds-form-element__label">{pt}</label>
+                    <div className="slds-form-element__control form-control-inline">
+                      <input
+                        className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                        value={editingFields[key] ? (tempValues[key] ?? '') : String(Array.isArray(productLists[pt]) ? productLists[pt].join(', ') : (productLists[pt] ?? ''))}
+                        onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                        disabled={!editingFields[key]}
+                      />
+                      {!editingFields[key] ? (
+                        <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (Array.isArray(safeProductLists[pt]) ? safeProductLists[pt].join(', ') : String(safeProductLists[pt] ?? '')))}>Edit</button>
+                      ) : (
+                        <>
+                          <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                          <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                        </>
+                      )}
+                    </div>
+                    {/*<div className="helper-text">Comma-separated list of product names shown in the calculator product select.</div>*/}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      </div>
 
-      <section className="slds-box slds-m-bottom_medium section-divider">
-        <h3 className="section-header">Fee columns</h3>
-        <div className="grid-auto-fit">
-          {Object.keys(safeFeeColumns).map((k) => {
-            const key = `feeColumns:${k}`;
-            return (
-              <div key={k} className="slds-form-element">
-                <label className="slds-form-element__label">{k}</label>
-                <div className="slds-form-element__control form-control-inline">
-                  <input
-                    className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
-                    value={editingFields[key] ? (tempValues[key] ?? '') : String(Array.isArray(feeColumns[k]) ? feeColumns[k].join(', ') : (feeColumns[k] ?? ''))}
-                    onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
-                    disabled={!editingFields[key]}
-                  />
-                  {!editingFields[key] ? (
-                    <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (Array.isArray(safeFeeColumns[k]) ? safeFeeColumns[k].join(', ') : String(safeFeeColumns[k] ?? '')))}>Edit</button>
-                  ) : (
-                    <>
-                      <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
-                      <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
-                    </>
-                  )}
-                </div>
-                {/*<div className="helper-text">Comma-separated numbers used to render fee columns in results for this key.</div>*/}
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      <div className="settings-accordion-section">
+        <section className="slds-accordion__section">
+          <div 
+            className={`slds-accordion__summary ${expandedSections.feeColumns ? 'slds-is-open' : ''}`}
+            onClick={() => toggleSection('feeColumns')}
+          >
+            <h3 className="slds-accordion__summary-heading">
+              <span className="slds-accordion__summary-content">Fee columns</span>
+              <SalesforceIcon name="chevrondown" size="xx-small" className="slds-accordion__summary-action-icon" />
+            </h3>
+          </div>
+          <div className="slds-accordion__content" hidden={!expandedSections.feeColumns}>
+            <div className="grid-auto-fit">
+              {Object.keys(safeFeeColumns).map((k) => {
+                const key = `feeColumns:${k}`;
+                return (
+                  <div key={k} className="slds-form-element">
+                    <label className="slds-form-element__label">{k}</label>
+                    <div className="slds-form-element__control form-control-inline">
+                      <input
+                        className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                        value={editingFields[key] ? (tempValues[key] ?? '') : String(Array.isArray(feeColumns[k]) ? feeColumns[k].join(', ') : (feeColumns[k] ?? ''))}
+                        onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                        disabled={!editingFields[key]}
+                      />
+                      {!editingFields[key] ? (
+                        <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, (Array.isArray(safeFeeColumns[k]) ? safeFeeColumns[k].join(', ') : String(safeFeeColumns[k] ?? '')))}>Edit</button>
+                      ) : (
+                        <>
+                          <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                          <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                        </>
+                      )}
+                    </div>
+                    {/*<div className="helper-text">Comma-separated numbers used to render fee columns in results for this key.</div>*/}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      </div>
 
       {/* Max LTV by Tier removed from Constants per user request; values are maintained in the rates table. */}
 
-      <section className="slds-box slds-m-bottom_medium section-divider">
-        <h3 className="section-header">Flat-above-commercial override</h3>
-        <div className="grid-3-col">
-          <div className="slds-form-element">
-            <label className="slds-form-element__label">Scope matcher</label>
-            <div className="slds-form-element__control form-control-inline">
-              {(() => {
-                const key = 'flatAbove:scopeMatcher';
-                return (
-                  <>
-                    <input className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`} value={editingFields[key] ? (tempValues[key] ?? '') : (flatAboveCommercialRule.scopeMatcher || '')} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
-                    {!editingFields[key] ? (
-                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, flatAboveCommercialRule.scopeMatcher || '')}>Edit</button>
-                    ) : (
-                      <>
-                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
-                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
-                      </>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-            <div className="helper-text">Comma-separated tokens or phrase used to detect the product scope (case-insensitive). Example: "flat,commercial"</div>
+      <div className="settings-accordion-section">
+        <section className="slds-accordion__section">
+          <div 
+            className={`slds-accordion__summary ${expandedSections.flatAbove ? 'slds-is-open' : ''}`}
+            onClick={() => toggleSection('flatAbove')}
+          >
+            <h3 className="slds-accordion__summary-heading">
+              <span className="slds-accordion__summary-content">Flat-above-commercial override</span>
+              <SalesforceIcon name="chevrondown" size="xx-small" className="slds-accordion__summary-action-icon" />
+            </h3>
           </div>
-
-          <div>
-            <label className="slds-form-element__label">Tier 2 (Effective max LTV)</label>
-            <div className="slds-form-element__control form-control-inline">
-              {(() => {
-                const key = 'flatAbove:tier2';
-                return (
-                  <>
-                    <input className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`} value={editingFields[key] ? (tempValues[key] ?? '') : (String(flatAboveCommercialRule.tierLtv?.['2'] ?? ''))} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
-                    {!editingFields[key] ? (
-                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(flatAboveCommercialRule.tierLtv?.['2'] ?? ''))}>Edit</button>
-                    ) : (
+          <div className="slds-accordion__content" hidden={!expandedSections.flatAbove}>
+            <div className="grid-3-col">
+              <div className="slds-form-element">
+                <label className="slds-form-element__label">Scope matcher</label>
+                <div className="slds-form-element__control form-control-inline">
+                  {(() => {
+                    const key = 'flatAbove:scopeMatcher';
+                    return (
                       <>
-                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
-                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                        <input className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`} value={editingFields[key] ? (tempValues[key] ?? '') : (flatAboveCommercialRule.scopeMatcher || '')} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
+                        {!editingFields[key] ? (
+                          <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, flatAboveCommercialRule.scopeMatcher || '')}>Edit</button>
+                        ) : (
+                          <>
+                            <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                            <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                          </>
+                        )}
                       </>
-                    )}
-                  </>
-                );
-              })()}
+                    );
+                  })()}
+                </div>
+                <div className="helper-text">Comma-separated tokens or phrase used to detect the product scope (case-insensitive). Example: "flat,commercial"</div>
+              </div>
+
+              <div>
+                <label className="slds-form-element__label">Tier 2 (Effective max LTV)</label>
+                <div className="slds-form-element__control form-control-inline">
+                  {(() => {
+                    const key = 'flatAbove:tier2';
+                    return (
+                      <>
+                        <input className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`} value={editingFields[key] ? (tempValues[key] ?? '') : (String(flatAboveCommercialRule.tierLtv?.['2'] ?? ''))} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
+                        {!editingFields[key] ? (
+                          <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(flatAboveCommercialRule.tierLtv?.['2'] ?? ''))}>Edit</button>
+                        ) : (
+                          <>
+                            <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                            <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              <div>
+                <label className="slds-form-element__label">Tier 3 (Effective max LTV)</label>
+                <div className="slds-form-element__control form-control-inline">
+                  {(() => {
+                    const key = 'flatAbove:tier3';
+                    return (
+                      <>
+                        <input className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`} value={editingFields[key] ? (tempValues[key] ?? '') : (String(flatAboveCommercialRule.tierLtv?.['3'] ?? ''))} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
+                        {!editingFields[key] ? (
+                          <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(flatAboveCommercialRule.tierLtv?.['3'] ?? ''))}>Edit</button>
+                        ) : (
+                          <>
+                            <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                            <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
             </div>
           </div>
+        </section>
+      </div>
 
-          <div>
-            <label className="slds-form-element__label">Tier 3 (Effective max LTV)</label>
-            <div className="slds-form-element__control form-control-inline">
-              {(() => {
-                const key = 'flatAbove:tier3';
-                return (
-                  <>
-                    <input className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`} value={editingFields[key] ? (tempValues[key] ?? '') : (String(flatAboveCommercialRule.tierLtv?.['3'] ?? ''))} disabled={!editingFields[key]} onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))} />
-                    {!editingFields[key] ? (
-                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(flatAboveCommercialRule.tierLtv?.['3'] ?? ''))}>Edit</button>
-                    ) : (
-                      <>
-                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
-                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
-                      </>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
+      <div className="settings-accordion-section">
+        <section className="slds-accordion__section">
+          <div 
+            className={`slds-accordion__summary ${expandedSections.marketRates ? 'slds-is-open' : ''}`}
+            onClick={() => toggleSection('marketRates')}
+          >
+            <h3 className="slds-accordion__summary-heading">
+              <span className="slds-accordion__summary-content">Market / Base Rates</span>
+              <SalesforceIcon name="chevrondown" size="xx-small" className="slds-accordion__summary-action-icon" />
+            </h3>
           </div>
-        </div>
-      </section>
+          <div className="slds-accordion__content" hidden={!expandedSections.marketRates}>
+            <p className="helper-text"></p>
 
-      <section className="slds-box slds-m-bottom_medium section-divider">
-        <h3 className="section-header">Market / Base Rates</h3>
-  <p className="helper-text"></p>
-
-        <div className="slds-grid slds-wrap slds-gutters_small flex-gap-1">
-          <div className="slds-col min-width-260">
-            <label className="slds-form-element__label">Standard BBR</label>
-            <div className="slds-form-element__control slds-grid grid-align-center-gap">
-              {(() => {
-                const key = 'marketRates:STANDARD_BBR';
-                return (
-                  <>
-                    <input
-                      className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={editingFields[key] ? (tempValues[key] ?? '') : ((marketRates?.STANDARD_BBR ?? 0) * 100).toFixed(2)}
-                      onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
-                      disabled={!editingFields[key]}
-                    />
-                    <div className="percent-unit">%</div>
-                    {!editingFields[key] ? (
-                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, ((marketRates?.STANDARD_BBR ?? 0) * 100).toFixed(2))}>Edit</button>
-                    ) : (
+            <div className="slds-grid slds-wrap slds-gutters_small flex-gap-1">
+              <div className="slds-col min-width-260">
+                <label className="slds-form-element__label">Standard BBR</label>
+                <div className="slds-form-element__control slds-grid grid-align-center-gap">
+                  {(() => {
+                    const key = 'marketRates:STANDARD_BBR';
+                    return (
                       <>
-                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
-                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                        <input
+                          className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={editingFields[key] ? (tempValues[key] ?? '') : ((marketRates?.STANDARD_BBR ?? 0) * 100).toFixed(2)}
+                          onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                          disabled={!editingFields[key]}
+                        />
+                        <div className="percent-unit">%</div>
+                        {!editingFields[key] ? (
+                          <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, ((marketRates?.STANDARD_BBR ?? 0) * 100).toFixed(2))}>Edit</button>
+                        ) : (
+                          <>
+                            <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                            <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                          </>
+                        )}
                       </>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-            <div className="helper-text">Standard Bank Base Rate used in loan calculations (showing as percent).</div>
-          </div>
+                    );
+                  })()}
+                </div>
+                <div className="helper-text">Standard Bank Base Rate used in loan calculations (showing as percent).</div>
+              </div>
 
-          <div className="slds-col min-width-260">
-            <label className="slds-form-element__label">Stress BBR</label>
-            <div className="slds-form-element__control slds-grid grid-align-center-gap">
-              {(() => {
-                const key = 'marketRates:STRESS_BBR';
-                return (
-                  <>
-                    <input
-                      className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={editingFields[key] ? (tempValues[key] ?? '') : ((marketRates?.STRESS_BBR ?? 0) * 100).toFixed(2)}
-                      onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
-                      disabled={!editingFields[key]}
-                    />
-                    <div className="percent-unit">%</div>
-                    {!editingFields[key] ? (
-                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, ((marketRates?.STRESS_BBR ?? 0) * 100).toFixed(2))}>Edit</button>
-                    ) : (
+              <div className="slds-col min-width-260">
+                <label className="slds-form-element__label">Stress BBR</label>
+                <div className="slds-form-element__control slds-grid grid-align-center-gap">
+                  {(() => {
+                    const key = 'marketRates:STRESS_BBR';
+                    return (
                       <>
-                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
-                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                        <input
+                          className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={editingFields[key] ? (tempValues[key] ?? '') : ((marketRates?.STRESS_BBR ?? 0) * 100).toFixed(2)}
+                          onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                          disabled={!editingFields[key]}
+                        />
+                        <div className="percent-unit">%</div>
+                        {!editingFields[key] ? (
+                          <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, ((marketRates?.STRESS_BBR ?? 0) * 100).toFixed(2))}>Edit</button>
+                        ) : (
+                          <>
+                            <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                            <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                          </>
+                        )}
                       </>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-            <div className="helper-text">Stress BBR value used for stress-testing assumptions.</div>
-          </div>
+                    );
+                  })()}
+                </div>
+                <div className="helper-text">Stress BBR value used for stress-testing assumptions.</div>
+              </div>
 
-          <div className="slds-col min-width-260">
-            <label className="slds-form-element__label">Current MVR</label>
-            <div className="slds-form-element__control slds-grid grid-align-center-gap">
-              {(() => {
-                const key = 'marketRates:CURRENT_MVR';
-                return (
-                  <>
-                    <input
-                      className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={editingFields[key] ? (tempValues[key] ?? '') : ((marketRates?.CURRENT_MVR ?? 0) * 100).toFixed(2)}
-                      onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
-                      disabled={!editingFields[key]}
-                    />
-                    <div className="percent-unit">%</div>
-                    {!editingFields[key] ? (
-                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, ((marketRates?.CURRENT_MVR ?? 0) * 100).toFixed(2))}>Edit</button>
-                    ) : (
+              <div className="slds-col min-width-260">
+                <label className="slds-form-element__label">Current MVR</label>
+                <div className="slds-form-element__control slds-grid grid-align-center-gap">
+                  {(() => {
+                    const key = 'marketRates:CURRENT_MVR';
+                    return (
                       <>
-                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
-                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                        <input
+                          className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={editingFields[key] ? (tempValues[key] ?? '') : ((marketRates?.CURRENT_MVR ?? 0) * 100).toFixed(2)}
+                          onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                          disabled={!editingFields[key]}
+                        />
+                        <div className="percent-unit">%</div>
+                        {!editingFields[key] ? (
+                          <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, ((marketRates?.CURRENT_MVR ?? 0) * 100).toFixed(2))}>Edit</button>
+                        ) : (
+                          <>
+                            <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                            <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                          </>
+                        )}
                       </>
-                    )}
-                  </>
-                );
-              })()}
+                    );
+                  })()}
+                </div>
+                <div className="helper-text">Current Mortgage Valuation Rate (shown as percent).</div>
+              </div>
             </div>
-            <div className="helper-text">Current Mortgage Valuation Rate (shown as percent).</div>
+
+            {/* Preview removed as requested */}
           </div>
-        </div>
+        </section>
+      </div>
 
-        {/* Preview removed as requested */}
-      </section>
-
-      <section className="slds-box slds-m-bottom_medium section-divider">
-        <h3 className="section-header">Broker Settings</h3>
-        <p className="helper-text">Configure broker routes, commission defaults, and tolerance settings.</p>
+      <div className="settings-accordion-section">
+        <section className="slds-accordion__section">
+          <div 
+            className={`slds-accordion__summary ${expandedSections.brokerSettings ? 'slds-is-open' : ''}`}
+            onClick={() => toggleSection('brokerSettings')}
+          >
+            <h3 className="slds-accordion__summary-heading">
+              <span className="slds-accordion__summary-content">Broker Settings</span>
+              <SalesforceIcon name="chevrondown" size="xx-small" className="slds-accordion__summary-action-icon" />
+            </h3>
+          </div>
+          <div className="slds-accordion__content" hidden={!expandedSections.brokerSettings}>
+            <p className="helper-text">Configure broker routes, commission defaults, and tolerance settings.</p>
 <br></br>
-        <div className="slds-m-bottom_medium">
-          <div className="display-flex justify-content-space-between align-items-center margin-bottom-1">
-            
-            <h5>Broker Routes</h5>
-            <button 
-              className="slds-button slds-button_brand" 
-              onClick={() => setShowAddRouteForm(!showAddRouteForm)}
-            >
-              {showAddRouteForm ? 'Cancel' : 'Add New Route'}
-            </button>
-          </div>
-
-          {showAddRouteForm && (
-            <div className="slds-box slds-box_small slds-m-bottom_small padding-1 background-gray-light">
-              <h5 className="margin-bottom-1">Add New Broker Route</h5>
-              <div className="slds-grid slds-wrap slds-gutters_small flex-gap-1 margin-bottom-1">
-                <div className="slds-col min-width-200">
-                  <label className="slds-form-element__label">Route Key (e.g., SOLICITOR)</label>
-                  <input
-                    className="slds-input"
-                    type="text"
-                    placeholder="SOLICITOR"
-                    value={newRouteKey}
-                    onChange={(e) => setNewRouteKey(e.target.value)}
-                  />
-                  <div className="helper-text">Uppercase, underscores for spaces</div>
-                </div>
-                <div className="slds-col min-width-200">
-                  <label className="slds-form-element__label">Display Name</label>
-                  <input
-                    className="slds-input"
-                    type="text"
-                    placeholder="Solicitor"
-                    value={newRouteDisplayName}
-                    onChange={(e) => setNewRouteDisplayName(e.target.value)}
-                  />
-                  <div className="helper-text">Name shown in dropdown</div>
-                </div>
-                <div className="slds-col min-width-150">
-                  <label className="slds-form-element__label">Default Commission (%)</label>
-                  <input
-                    className="slds-input"
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    placeholder="0.9"
-                    value={newRouteCommission}
-                    onChange={(e) => setNewRouteCommission(e.target.value)}
-                  />
-                  <div className="helper-text">Default percentage</div>
-                </div>
-              </div>
-              <div className="slds-button-group">
-                <button className="slds-button slds-button_brand" onClick={addBrokerRoute}>
-                  Add Route
-                </button>
-                <button className="slds-button slds-button_neutral" onClick={() => {
-                  setShowAddRouteForm(false);
-                  setNewRouteKey('');
-                  setNewRouteDisplayName('');
-                  setNewRouteCommission('0.9');
-                }}>
-                  Cancel
+            <div className="slds-m-bottom_medium">
+              <div className="display-flex justify-content-space-between align-items-center margin-bottom-1">
+                
+                <h5>Broker Routes</h5>
+                <button 
+                  className="slds-button slds-button_brand" 
+                  onClick={() => setShowAddRouteForm(!showAddRouteForm)}
+                >
+                  {showAddRouteForm ? 'Cancel' : 'Add New Route'}
                 </button>
               </div>
-            </div>
-          )}
 
-          <div className="slds-grid slds-wrap slds-gutters_small flex-gap-1">
-            {Object.keys(brokerRoutes || DEFAULT_BROKER_ROUTES).map(routeKey => {
-              const key = `brokerRoutes:${routeKey}`;
-              return (
-                <div key={routeKey} className="slds-col min-width-260">
-                  <label className="slds-form-element__label">{routeKey}</label>
-                  <div className="slds-form-element__control slds-grid align-items-center flex-gap-05">
-                    <input
-                      className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
-                      type="text"
-                      value={editingFields[key] ? (tempValues[key] ?? '') : (brokerRoutes[routeKey] ?? DEFAULT_BROKER_ROUTES[routeKey])}
-                      onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
-                      disabled={!editingFields[key]}
-                    />
-                    {!editingFields[key] ? (
-                      <>
-                        <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, brokerRoutes[routeKey] ?? DEFAULT_BROKER_ROUTES[routeKey])}>Edit</button>
-                        <button className="slds-button slds-button_destructive" onClick={() => deleteBrokerRoute(routeKey)}>Delete</button>
-                      </>
-                    ) : (
-                      <>
-                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
-                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
-                      </>
-                    )}
+              {showAddRouteForm && (
+                <div className="slds-box slds-box_small slds-m-bottom_small padding-1 background-gray-light">
+                  <h5 className="margin-bottom-1">Add New Broker Route</h5>
+                  <div className="slds-grid slds-wrap slds-gutters_small flex-gap-1 margin-bottom-1">
+                    <div className="slds-col min-width-200">
+                      <label className="slds-form-element__label">Route Key (e.g., SOLICITOR)</label>
+                      <input
+                        className="slds-input"
+                        type="text"
+                        placeholder="SOLICITOR"
+                        value={newRouteKey}
+                        onChange={(e) => setNewRouteKey(e.target.value)}
+                      />
+                      <div className="helper-text">Uppercase, underscores for spaces</div>
+                    </div>
+                    <div className="slds-col min-width-200">
+                      <label className="slds-form-element__label">Display Name</label>
+                      <input
+                        className="slds-input"
+                        type="text"
+                        placeholder="Solicitor"
+                        value={newRouteDisplayName}
+                        onChange={(e) => setNewRouteDisplayName(e.target.value)}
+                      />
+                      <div className="helper-text">Name shown in dropdown</div>
+                    </div>
+                    <div className="slds-col min-width-150">
+                      <label className="slds-form-element__label">Default Commission (%)</label>
+                      <input
+                        className="slds-input"
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        placeholder="0.9"
+                        value={newRouteCommission}
+                        onChange={(e) => setNewRouteCommission(e.target.value)}
+                      />
+                      <div className="helper-text">Default percentage</div>
+                    </div>
                   </div>
-                  {/*<div className="helper-text">Display name for {routeKey} broker route.</div>*/}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="slds-m-bottom_medium">
-          <br/>
-          <h5>Broker Commission Defaults (%)</h5>
-          <div className="slds-grid slds-wrap slds-gutters_small flex-gap-1">
-            {Object.keys(brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS).map(route => {
-              const key = `brokerCommission:${route}`;
-              return (
-                <div key={route} className="slds-col min-width-260">
-                  <label className="slds-form-element__label">{route}</label>
-                  <div className="slds-form-element__control slds-grid align-items-center flex-gap-05">
-                    <input
-                      className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="100"
-                      value={editingFields[key] ? (tempValues[key] ?? '') : (brokerCommissionDefaults[route] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[route] ?? 0.9)}
-                      onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
-                      disabled={!editingFields[key]}
-                    />
-                    <div className="percent-unit">%</div>
-                    {!editingFields[key] ? (
-                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(brokerCommissionDefaults[route] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[route] ?? 0.9))}>Edit</button>
-                    ) : (
-                      <>
-                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
-                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
-                      </>
-                    )}
+                  <div className="slds-button-group">
+                    <button className="slds-button slds-button_brand" onClick={addBrokerRoute}>
+                      Add Route
+                    </button>
+                    <button className="slds-button slds-button_neutral" onClick={() => {
+                      setShowAddRouteForm(false);
+                      setNewRouteKey('');
+                      setNewRouteDisplayName('');
+                      setNewRouteCommission('0.9');
+                    }}>
+                      Cancel
+                    </button>
                   </div>
-                  {/*<div className="helper-text">Default commission percentage for {route}.</div>*/}
                 </div>
-              );
-            })}
-          </div>
-        </div>
+              )}
 
-        <div>
-          <h5>Commission Tolerance</h5>
-          <div className="slds-col min-width-260 max-width-400">
-            <label className="slds-form-element__label">Tolerance (±%)</label>
-            <div className="slds-form-element__control slds-grid align-items-center flex-gap-05">
-              {(() => {
-                const key = 'brokerTolerance';
-                return (
-                  <>
-                    <input
-                      className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="10"
-                      value={editingFields[key] ? (tempValues[key] ?? '') : (brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE)}
-                      onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
-                      disabled={!editingFields[key]}
-                    />
-                    <div className="percent-unit">%</div>
-                    {!editingFields[key] ? (
-                      <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE))}>Edit</button>
-                    ) : (
-                      <>
-                        <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
-                        <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
-                      </>
-                    )}
-                  </>
-                );
-              })()}
+              <div className="slds-grid slds-wrap slds-gutters_small flex-gap-1">
+                {Object.keys(brokerRoutes || DEFAULT_BROKER_ROUTES).map(routeKey => {
+                  const key = `brokerRoutes:${routeKey}`;
+                  return (
+                    <div key={routeKey} className="slds-col min-width-260">
+                      <label className="slds-form-element__label">{routeKey}</label>
+                      <div className="slds-form-element__control slds-grid align-items-center flex-gap-05">
+                        <input
+                          className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                          type="text"
+                          value={editingFields[key] ? (tempValues[key] ?? '') : (brokerRoutes[routeKey] ?? DEFAULT_BROKER_ROUTES[routeKey])}
+                          onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                          disabled={!editingFields[key]}
+                        />
+                        {!editingFields[key] ? (
+                          <>
+                            <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, brokerRoutes[routeKey] ?? DEFAULT_BROKER_ROUTES[routeKey])}>Edit</button>
+                            <button className="slds-button slds-button_destructive" onClick={() => deleteBrokerRoute(routeKey)}>Delete</button>
+                          </>
+                        ) : (
+                          <>
+                            <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                            <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                          </>
+                        )}
+                      </div>
+                      {/*<div className="helper-text">Display name for {routeKey} broker route.</div>*/}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="helper-text">Allowable deviation from default commission (e.g., 0.2 means ±0.2%).</div>
+
+            <div className="slds-m-bottom_medium">
+              <br/>
+              <h5>Broker Commission Defaults (%)</h5>
+              <div className="slds-grid slds-wrap slds-gutters_small flex-gap-1">
+                {Object.keys(brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS).map(route => {
+                  const key = `brokerCommission:${route}`;
+                  return (
+                    <div key={route} className="slds-col min-width-260">
+                      <label className="slds-form-element__label">{route}</label>
+                      <div className="slds-form-element__control slds-grid align-items-center flex-gap-05">
+                        <input
+                          className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="100"
+                          value={editingFields[key] ? (tempValues[key] ?? '') : (brokerCommissionDefaults[route] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[route] ?? 0.9)}
+                          onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                          disabled={!editingFields[key]}
+                        />
+                        <div className="percent-unit">%</div>
+                        {!editingFields[key] ? (
+                          <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(brokerCommissionDefaults[route] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[route] ?? 0.9))}>Edit</button>
+                        ) : (
+                          <>
+                            <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                            <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                          </>
+                        )}
+                      </div>
+                      {/*<div className="helper-text">Default commission percentage for {route}.</div>*/}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <h5>Commission Tolerance</h5>
+              <div className="slds-col min-width-260 max-width-400">
+                <label className="slds-form-element__label">Tolerance (±%)</label>
+                <div className="slds-form-element__control slds-grid align-items-center flex-gap-05">
+                  {(() => {
+                    const key = 'brokerTolerance';
+                    return (
+                      <>
+                        <input
+                          className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="10"
+                          value={editingFields[key] ? (tempValues[key] ?? '') : (brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE)}
+                          onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
+                          disabled={!editingFields[key]}
+                        />
+                        <div className="percent-unit">%</div>
+                        {!editingFields[key] ? (
+                          <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE))}>Edit</button>
+                        ) : (
+                          <>
+                            <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
+                            <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+                <div className="helper-text">Allowable deviation from default commission (e.g., 0.2 means ±0.2%).</div>
+              </div>
+            </div>
           </div>
-        </div>
-        
-          <div className="slds-m-top_small">
-            <h5>Funding Lines</h5>
+        </section>
+      </div>
+
+      <div className="settings-accordion-section">
+        <section className="slds-accordion__section">
+          <div 
+            className={`slds-accordion__summary ${expandedSections.fundingLines ? 'slds-is-open' : ''}`}
+            onClick={() => toggleSection('fundingLines')}
+          >
+            <h3 className="slds-accordion__summary-heading">
+              <span className="slds-accordion__summary-content">Funding Lines</span>
+              <SalesforceIcon name="chevrondown" size="xx-small" className="slds-accordion__summary-action-icon" />
+            </h3>
+          </div>
+          <div className="slds-accordion__content" hidden={!expandedSections.fundingLines}>
+            <p className="helper-text">Configure funding line options available in DIP issuance.</p>
             
             <div className="slds-form-element slds-m-bottom_small">
               <label className="slds-form-element__label">BTL Funding Lines (comma-separated)</label>
@@ -1681,67 +1784,82 @@ export default function Constants() {
               <div className="helper-text">Update options used in the Bridge DIP "Funding Line" dropdown.</div>
             </div>
           </div>
-      </section>
+        </section>
+      </div>
 
       {/* Typography Settings */}
-      <section className="slds-box slds-m-bottom_medium section-divider">
-        <h3 className="section-header">Typography Settings</h3>
-        <div className="slds-form-element">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <label className="slds-checkbox_toggle slds-grid">
-              <span className="slds-form-element__label slds-assistive-text">Inter Typography</span>
-              <input
-                type="checkbox"
-                checked={typographyEnabled}
-                onChange={() => toggleTypography()}
-                aria-describedby="typography-toggle-desc"
-              />
-              <span className="slds-checkbox_faux_container" aria-live="assertive">
-                <span className="slds-checkbox_faux"></span>
-                <span className="slds-checkbox_on">On</span>
-                <span className="slds-checkbox_off">Off</span>
-              </span>
-            </label>
-            <div>
-              <span style={{ fontWeight: '500' }}>Use Inter Font</span>
-              <p id="typography-toggle-desc" className="helper-text" style={{ margin: 0 }}>
-                Switch from Salesforce Sans to Inter font with a modern modular scale typography system.
-              </p>
+      <div className="settings-accordion-section">
+        <section className="slds-accordion__section">
+          <div 
+            className={`slds-accordion__summary ${expandedSections.typography ? 'slds-is-open' : ''}`}
+            onClick={() => toggleSection('typography')}
+          >
+            <h3 className="slds-accordion__summary-heading">
+              <span className="slds-accordion__summary-content">Typography Settings</span>
+              <SalesforceIcon name="chevrondown" size="xx-small" className="slds-accordion__summary-action-icon" />
+            </h3>
+          </div>
+          <div className="slds-accordion__content" hidden={!expandedSections.typography}>
+            <div className="slds-form-element">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <label className="slds-checkbox_toggle slds-grid">
+                  <span className="slds-form-element__label slds-assistive-text">Inter Typography</span>
+                  <input
+                    type="checkbox"
+                    checked={typographyEnabled}
+                    onChange={() => toggleTypography()}
+                    aria-describedby="typography-toggle-desc"
+                  />
+                  <span className="slds-checkbox_faux_container" aria-live="assertive">
+                    <span className="slds-checkbox_faux"></span>
+                    <span className="slds-checkbox_on">On</span>
+                    <span className="slds-checkbox_off">Off</span>
+                  </span>
+                </label>
+                <div>
+                  <span style={{ fontWeight: '500' }}>Use Inter Font</span>
+                  <p id="typography-toggle-desc" className="helper-text" style={{ margin: 0 }}>
+                    Switch from Salesforce Sans to Inter font with a modern modular scale typography system.
+                  </p>
+                </div>
+              </div>
+              
+              {/* Typography Preview */}
+              <div style={{ 
+                marginTop: '1rem', 
+                padding: '1rem', 
+                backgroundColor: 'var(--token-ui-background-subtle, #f4f6f9)', 
+                borderRadius: '4px',
+                border: '1px solid var(--token-ui-border-light, #e5e5e5)'
+              }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--token-text-secondary, #666)', marginBottom: '0.5rem', fontWeight: '500' }}>
+                  PREVIEW ({typographyEnabled ? 'Inter' : 'Salesforce Sans'})
+                </p>
+                <div style={{ fontFamily: typographyEnabled ? '"Inter", sans-serif' : 'inherit', color: 'var(--token-text-primary, #181818)' }}>
+                  <h4 style={{ 
+                    fontSize: typographyEnabled ? '1.728rem' : '1.25rem', 
+                    fontWeight: '600', 
+                    margin: '0 0 0.25rem 0',
+                    fontFamily: typographyEnabled ? '"Inter", sans-serif' : 'inherit',
+                    color: 'inherit'
+                  }}>
+                    Heading Example
+                  </h4>
+                  <p style={{ 
+                    fontSize: typographyEnabled ? '1rem' : '0.875rem', 
+                    lineHeight: typographyEnabled ? '1.6' : '1.5',
+                    margin: 0,
+                    fontFamily: typographyEnabled ? '"Inter", sans-serif' : 'inherit',
+                    color: 'inherit'
+                  }}>
+                    Body text example showing the {typographyEnabled ? 'Inter' : 'Salesforce Sans'} font family.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-          
-          {/* Typography Preview */}
-          <div style={{ 
-            marginTop: '1rem', 
-            padding: '1rem', 
-            backgroundColor: 'var(--token-ui-background-subtle, #f4f6f9)', 
-            borderRadius: '4px',
-            border: '1px solid var(--token-ui-border-light, #e5e5e5)'
-          }}>
-            <p style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.5rem', fontWeight: '500' }}>
-              PREVIEW ({typographyEnabled ? 'Inter' : 'Salesforce Sans'})
-            </p>
-            <div style={{ fontFamily: typographyEnabled ? '"Inter", sans-serif' : 'inherit' }}>
-              <h4 style={{ 
-                fontSize: typographyEnabled ? '1.728rem' : '1.25rem', 
-                fontWeight: '600', 
-                margin: '0 0 0.25rem 0',
-                fontFamily: typographyEnabled ? '"Inter", sans-serif' : 'inherit'
-              }}>
-                Heading Example
-              </h4>
-              <p style={{ 
-                fontSize: typographyEnabled ? '1rem' : '0.875rem', 
-                lineHeight: typographyEnabled ? '1.6' : '1.5',
-                margin: 0,
-                fontFamily: typographyEnabled ? '"Inter", sans-serif' : 'inherit'
-              }}>
-                Body text example showing the {typographyEnabled ? 'Inter' : 'Salesforce Sans'} font family.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
       {/* Flat-above-commercial override removed — rule is now hard-coded in calculator logic per user request. */}
 

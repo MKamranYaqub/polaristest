@@ -61,7 +61,7 @@ a {
   object-fit: contain;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .app-header {
     padding: var(--token-space-12) var(--token-space-16);
   }
@@ -78,7 +78,7 @@ a {
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .app-header {
     padding: var(--token-space-12);
     padding-left: var(--token-spacing-2xl);
@@ -108,7 +108,8 @@ a {
 }
 
 /* Mobile/Tablet: Stack navigation and make it toggleable */
-@media (max-width: 900px) {
+/* Uses standard breakpoint: tablet (768px) */
+@media (max-width: 768px) {
   .app-layout {
     flex-direction: column;
   }
@@ -126,13 +127,13 @@ a {
   margin-left: 0 !important;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .app-content {
     padding: var(--token-space-16);
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .app-content {
     padding: var(--token-space-12);
   }

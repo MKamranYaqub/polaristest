@@ -25,10 +25,18 @@ function Navigation() {
   // Navigation tree structure
   const navTree = [
     {
+      id: 'home',
+      label: 'Home',
+      icon: 'utility:home',
+      path: '/home'
+    },
+    // Products entry removed
+    {
       id: 'calculator',
       label: 'Calculator',
       icon: 'utility:calculator',
       children: [
+        { id: 'calc-overview', label: 'Overview', path: '/calculator' },
         { id: 'btl', label: 'BTL Calculator', path: '/calculator/btl' },
         { id: 'bridging', label: 'Bridging Calculator', path: '/calculator/bridging' }
       ]
@@ -44,6 +52,7 @@ function Navigation() {
       label: 'Admin',
       icon: 'utility:settings',
       children: [
+        { id: 'admin-overview', label: 'Overview', path: '/admin' },
         { id: 'constants', label: 'Constants', path: '/admin/constants' },
         { id: 'criteria', label: 'BTL Criteria', path: '/admin/criteria' },
         { id: 'btl-rates', label: 'BTL Rates', path: '/admin/btl-rates' },
@@ -167,13 +176,18 @@ function Navigation() {
 
       {/* Backdrop overlay for mobile */}
       {mobileOpen && !isDesktop && (
-        <div className="nav-backdrop" onClick={closeMobile} />
+        <div 
+          className="nav-backdrop" 
+          onClick={closeMobile}
+          role="presentation"
+          aria-hidden="true"
+        />
       )}
 
-      {/* SLDS Tree Navigation */}
+      {/* SLDS Tree Navigation - Rendered AFTER backdrop to be in front */}
       <nav 
         aria-label="Primary navigation" 
-        className={`app-sidenav slds-tree-container ${isDesktop || mobileOpen ? 'is-open' : 'is-closed'}`}
+        className={`app-sidenav slds-tree-container ${mobileOpen && !isDesktop ? 'mobile-open' : ''}`}
       >
                
         <ul className="slds-tree" role="tree" aria-label="Site Navigation">

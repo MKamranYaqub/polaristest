@@ -2,6 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { useSupabase } from '../../contexts/SupabaseContext';
 import NotificationModal from '../modals/NotificationModal';
 import { LOCALSTORAGE_CONSTANTS_KEY } from '../../config/constants';
+import '../../styles/GlobalSettings.css';
+import SalesforceIcon from '../shared/SalesforceIcon';
+
+// Inline icons to ensure visibility without class conflicts
+const ICON_PATHS = {
+  chevronup: 'M26 13.3c-.5 0-1 .2-1.4.6l-15 15c-.8.8-.8 2 0 2.8.8.8 2 .8 2.8 0L26 18.1l13.6 13.6c.8.8 2 .8 2.8 0 .8-.8.8-2 0-2.8l-15-15c-.4-.4-.9-.6-1.4-.6z',
+  chevrondown: 'M26 32.7c.5 0 1-.2 1.4-.6l15-15c.8-.8.8-2 0-2.8-.8-.8-2-.8-2.8 0L26 27.9 12.4 14.3c-.8-.8-2-.8-2.8 0-.8.8-.8 2 0 2.8l15 15c.4.4.9.6 1.4.6z',
+  delete: 'M32.7 9.3h-5.4V8c0-2.2-1.8-4-4-4h-6.6c-2.2 0-4 1.8-4 4v1.3H7.3c-.7 0-1.3.6-1.3 1.4v2.6c0 .7.6 1.4 1.3 1.4h1.4v25.9c0 2.2 1.7 4 3.9 4h16.7c2.2 0 4-1.8 4-4V14.7h1.4c.7 0 1.3-.7 1.3-1.4v-2.6c0-.8-.6-1.4-1.3-1.4zM16 8c0-.7.6-1.3 1.3-1.3h5.4c.7 0 1.3.6 1.3 1.3v1.3H16V8zm14.7 32.7c0 .7-.6 1.3-1.4 1.3H12.7c-.7 0-1.4-.6-1.4-1.3V14.7h19.4v26zM18 38c.7 0 1.3-.6 1.3-1.3V20c0-.7-.6-1.3-1.3-1.3s-1.3.6-1.3 1.3v16.7c0 .7.6 1.3 1.3 1.3zm8 0c.7 0 1.3-.6 1.3-1.3V20c0-.7-.6-1.3-1.3-1.3S24.7 19.3 24.7 20v16.7c0 .7.6 1.3 1.3 1.3z',
+  edit: 'M37.5 28.8L24.3 15.6c-.6-.6-1.5-.6-2.1 0L8.7 29c-.2.2-.3.4-.3.7v9.4c0 .6.4 1 1 1h9.4c.3 0 .5-.1.7-.3l13.5-13.5 4.4 4.4c.6.6 1.5.6 2.1 0 .6-.6.6-1.6 0-2.2l-2-1.7zm-4.2-2.1L20.7 39.3h-7.4v-7.4l12.6-12.6 7.4 7.4z',
+  check: 'M20.6 33.4l-8-8c-.8-.8-2-.8-2.8 0l-1.4 1.4c-.8.8-.8 2 0 2.8l10.1 10.1c.8.8 2 .8 2.8 0L44.7 16.3c.8-.8.8-2 0-2.8l-1.4-1.4c-.8-.8-2-.8-2.8 0L20.6 33.4z',
+  refresh: 'M45.9 19.1C43.7 12.2 37.4 7.3 30 7.1c-8.7-.3-16 6.6-16.3 15.3h4.8c.3-6.1 5.3-11 11.5-11 5.1 0 9.5 3.3 11 7.9l-3.6-1c-1-.3-2 .3-2.2 1.3-.3 1 .3 2 1.3 2.2l8.2 2.3c.8.2 1.6-.3 1.8-1.1l2.3-8.2c.3-1-.3-2-1.3-2.2-1-.3-2 .3-2.2 1.3l-.9 3.2zM6.1 32.9C8.3 39.8 14.6 44.7 22 44.9c8.7.3 16-6.6 16.3-15.3h-4.8c-.3 6.1-5.3 11-11.5 11-5.1 0-9.5-3.3-11-7.9l3.6 1c1 .3 2-.3 2.2-1.3.3-1-.3-2-1.3-2.2L9.3 28c-.8-.2-1.6.3-1.8 1.1L5.2 37.3c-.3 1 .3 2 1.3 2.2 1 .3 2-.3 2.2-1.3l.9-3.2z'
+};
+
+const SimpleIcon = ({ path, color = 'currentColor', size = '0.875rem' }) => (
+  <svg
+    viewBox="0 0 52 52"
+    aria-hidden="true"
+    focusable="false"
+    style={{
+      width: size,
+      height: size,
+      fill: color,
+      display: 'block',
+      minWidth: size,
+      minHeight: size
+    }}
+  >
+    <path d={path} fill={color} />
+  </svg>
+);
 
 // Default label aliases for BTL Calculator (28 labels)
 const DEFAULT_LABEL_ALIASES_BTL = {
@@ -152,6 +182,23 @@ export default function GlobalSettings() {
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
   const [activeTab, setActiveTab] = useState('btl'); // 'btl', 'bridge', or 'core'
+  
+  // Accordion state - track which sections are expanded
+  const [expandedSections, setExpandedSections] = useState({
+    visibility: true,
+    rowOrder: false,
+    labelAliases: false,
+    headerColors: false
+  });
+
+  const toggleSection = (section) => {
+    setExpandedSections({
+      visibility: section === 'visibility' ? !expandedSections[section] : false,
+      rowOrder: section === 'rowOrder' ? !expandedSections[section] : false,
+      labelAliases: section === 'labelAliases' ? !expandedSections[section] : false,
+      headerColors: section === 'headerColors' ? !expandedSections[section] : false
+    });
+  };
   
   // Default rows for BTL Calculator
   const DEFAULT_BTL_ROWS = [
@@ -802,18 +849,30 @@ export default function GlobalSettings() {
 
   // Helper function to render visibility checkboxes
   const renderVisibilitySection = (rows, visibleRows, toggleHandler, selectAllHandler, deselectAllHandler) => (
-    <div className="slds-m-bottom_x-large">
-      <div className="slds-box">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--token-spacing-lg)' }}>
-          <h4 className="slds-text-heading_small" style={{ fontWeight: '600', margin: 0 }}>
-            Row Visibility
-          </h4>
-          <div style={{ display: 'flex', gap: 'var(--token-spacing-sm)' }}>
+    <div className="settings-accordion-section">
+      <section className="slds-accordion__section">
+        <div 
+          className={`slds-accordion__summary ${expandedSections.visibility ? 'slds-is-open' : ''}`}
+          onClick={() => toggleSection('visibility')}
+          aria-controls="accordion-visibility-content"
+          aria-expanded={expandedSections.visibility}
+        >
+          <h3 className="slds-accordion__summary-heading">
+            <span className="slds-accordion__summary-content">Row Visibility</span>
+            <SalesforceIcon name="chevrondown" size="xx-small" className="slds-accordion__summary-action-icon" />
+          </h3>
+        </div>
+        <div
+          id="accordion-visibility-content"
+          className="slds-accordion__content"
+          hidden={!expandedSections.visibility}
+        >
+          <div className="visibility-actions">
             <button
               className="slds-button slds-button_brand"
               onClick={selectAllHandler}
               disabled={saving}
-              style={{ fontSize: 'var(--token-font-size-xs)', padding: 'var(--token-spacing-xs) var(--token-spacing-md)' }}
+              type="button"
             >
               Select All
             </button>
@@ -821,195 +880,145 @@ export default function GlobalSettings() {
               className="slds-button slds-button_neutral"
               onClick={deselectAllHandler}
               disabled={saving}
-              style={{ fontSize: 'var(--token-font-size-xs)', padding: 'var(--token-spacing-xs) var(--token-spacing-md)' }}
+              type="button"
             >
               Deselect All
             </button>
           </div>
-        </div>
-
-        <div 
-          style={{ 
-            maxHeight: '350px', 
-            overflowY: 'auto',
-            border: '1px solid var(--token-border-subtle)',
-            borderRadius: 'var(--token-spacing-xs)',
-            padding: 'var(--token-spacing-md)',
-            backgroundColor: 'var(--token-layer-background)'
-          }}
-        >
-          <div 
-            style={{ 
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: 'var(--token-spacing-sm)'
-            }}
-          >
+          <div className="visibility-grid">
             {rows.map(row => (
-              <div key={row} className="slds-checkbox">
-                <input
-                  type="checkbox"
-                  id={`${activeTab}-${row}`}
-                  checked={visibleRows[row] || false}
-                  onChange={() => toggleHandler(row)}
-                  disabled={saving}
-                />
-                <label className="slds-checkbox__label" htmlFor={`${activeTab}-${row}`}>
-                  <span className="slds-checkbox_faux" style={{ marginRight: 'var(--token-spacing-sm)' }}></span>
-                  <span className="slds-form-element__label" style={{ fontSize: 'var(--token-font-size-sm)' }}>{row}</span>
-                </label>
+              <div key={row} className="slds-form-element">
+                <div className="slds-form-element__control">
+                  <div className="slds-checkbox">
+                    <input
+                      type="checkbox"
+                      id={`${activeTab}-${row}`}
+                      checked={visibleRows[row] || false}
+                      onChange={() => toggleHandler(row)}
+                      disabled={saving}
+                    />
+                    <label className="slds-checkbox__label" htmlFor={`${activeTab}-${row}`}>
+                      <span className="slds-checkbox_faux"></span>
+                      <span className="slds-form-element__label">{row}</span>
+                    </label>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 <br />
   // Helper function to render row order section
   const renderRowOrderSection = (rowOrder, visibleRows, type) => (
-    <div className="slds-m-bottom_x-large">
-      <br />
-      <div className="slds-box">
-        <h4 className="slds-text-heading_small slds-m-bottom_medium" style={{ fontWeight: '600' }}>
-          Row Display Order
-        </h4>
-        
+    <div className="settings-accordion-section">
+      <section className="slds-accordion__section">
         <div 
-          style={{ 
-            maxHeight: '500px', 
-            overflowY: 'auto',
-            border: '1px solid var(--token-border-subtle)',
-            borderRadius: 'var(--token-spacing-xs)',
-            padding: 'var(--token-spacing-sm)',
-            backgroundColor: 'var(--token-layer-background)'
-          }}
+          className={`slds-accordion__summary ${expandedSections.rowOrder ? 'slds-is-open' : ''}`}
+          onClick={() => toggleSection('rowOrder')}
+          aria-controls="accordion-order-content"
+          aria-expanded={expandedSections.rowOrder}
         >
-          {rowOrder.map((row, index) => (
-            <div 
-              key={row} 
-              style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                padding: 'var(--token-spacing-sm) var(--token-spacing-md)',
-                marginBottom: 'var(--token-spacing-xs)',
-                backgroundColor: visibleRows[row] === false ? 'var(--token-layer-surface-hover)' : 'var(--token-layer-surface)',
-                border: '1px solid var(--token-border-subtle)',
-                borderRadius: 'var(--token-spacing-xs)',
-                transition: 'all 0.1s ease'
-              }}
-            >
-              <span style={{ 
-                flex: 1,
-                color: visibleRows[row] === false ? 'var(--token-text-secondary)' : 'var(--token-text-primary)',
-                fontSize: 'var(--token-font-size-sm)',
-                fontWeight: '400'
-              }}>
-                <span style={{ 
-                  display: 'inline-block',
-                  width: '2rem',
-                  color: 'var(--token-text-secondary)',
-                  fontWeight: '500'
-                }}>
-                  {index + 1}.
-                </span>
-                {row}
-                {visibleRows[row] === false && (
-                  <span style={{ 
-                    marginLeft: 'var(--token-spacing-sm)', 
-                    fontSize: 'var(--token-font-size-xs)',
-                    color: 'var(--token-text-secondary)',
-                    fontStyle: 'italic'
-                  }}>
-                    (Hidden)
-                  </span>
-                )}
-              </span>
-              <div style={{ display: 'flex', gap: 'var(--token-spacing-xs)' }}>
-                <button
-                  className="slds-button slds-button_neutral"
-                  onClick={() => handleMoveRowUp(index, type)}
-                  disabled={saving || index === 0}
-                  title="Move up"
-                  style={{
-                    width: '2rem',
-                    height: '2rem',
-                    padding: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1rem',
-                    opacity: index === 0 ? 0.4 : 1
-                  }}
-                >
-                  ▲
-                </button>
-                <button
-                  className="slds-button slds-button_neutral"
-                  onClick={() => handleMoveRowDown(index, type)}
-                  disabled={saving || index === rowOrder.length - 1}
-                  title="Move down"
-                  style={{
-                    width: '2rem',
-                    height: '2rem',
-                    padding: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1rem',
-                    opacity: index === rowOrder.length - 1 ? 0.4 : 1
-                  }}
-                >
-                  ▼
-                </button>
-              </div>
-            </div>
-          ))}
+          <h3 className="slds-accordion__summary-heading">
+            <span className="slds-accordion__summary-content">Row Display Order</span>
+            <SalesforceIcon name="chevrondown" size="xx-small" className="slds-accordion__summary-action-icon" />
+          </h3>
         </div>
-      </div>
+        <div id="accordion-order-content" className="slds-accordion__content" hidden={!expandedSections.rowOrder}>
+          {(() => {
+            const half = Math.ceil(rowOrder.length / 2);
+            const left = rowOrder.slice(0, half);
+            const right = rowOrder.slice(half);
+
+            const renderColumn = (list, offset) => (
+              <div className="row-order-container">
+                {list.map((row, i) => {
+                  const index = i + offset;
+                  return (
+                    <div
+                      key={row}
+                      className={`row-order-item ${visibleRows[row] === false ? 'row-order-item--hidden' : ''}`}
+                    >
+                      <span className="row-order-label">
+                        <span className="row-order-number">{index + 1}.</span>
+                        {row}
+                        {visibleRows[row] === false && (
+                          <span className="row-order-hidden-badge">(Hidden)</span>
+                        )}
+                      </span>
+                      <div className="row-order-actions">
+                        <button
+                          className="slds-button slds-button_icon slds-button_icon-border"
+                          onClick={() => handleMoveRowUp(index, type)}
+                          disabled={saving || index === 0}
+                          title="Move up"
+                          type="button"
+                        >
+                          <SimpleIcon path={ICON_PATHS.chevronup} />
+                          <span className="slds-assistive-text">Move up</span>
+                        </button>
+                        <button
+                          className="slds-button slds-button_icon slds-button_icon-border"
+                          onClick={() => handleMoveRowDown(index, type)}
+                          disabled={saving || index === rowOrder.length - 1}
+                          title="Move down"
+                          type="button"
+                        >
+                          <SimpleIcon path={ICON_PATHS.chevrondown} />
+                          <span className="slds-assistive-text">Move down</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+
+            return (
+              <div className="row-order-columns">
+                {renderColumn(left, 0)}
+                {renderColumn(right, half)}
+              </div>
+            );
+          })()}
+        </div>
+      </section>
     </div>
   );
 
   // Helper function to render label aliases section
   const renderLabelAliasSection = (type, labelAliases, defaultAliases) => (
-    <div className="slds-m-bottom_x-large">
-      <br />
-      <div className="slds-box">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--token-spacing-lg)' }}>
-          <h4 className="slds-text-heading_small" style={{ fontWeight: '600', margin: 0 }}>
-            Label Aliases
-          </h4>
-          <button
-            className="slds-button slds-button_text-destructive"
-            onClick={() => handleResetAllLabels(type)}
-            disabled={saving}
-            style={{ fontSize: 'var(--token-font-size-xs)' }}
-          >
-            Reset All Labels
-          </button>
-        </div>
-        <p style={{ fontSize: 'var(--token-font-size-sm)', color: 'var(--token-text-muted)', marginBottom: 'var(--token-spacing-md)' }}>
-          Customize how field names appear in the results table. Click on a label to edit it.
-        </p>
-        
+    <div className="settings-accordion-section">
+      <section className="slds-accordion__section">
         <div 
-          style={{ 
-            maxHeight: '350px', 
-            overflowY: 'auto',
-            border: '1px solid var(--token-border-subtle)',
-            borderRadius: 'var(--token-spacing-xs)',
-            padding: 'var(--token-spacing-md)',
-            backgroundColor: 'var(--token-layer-background)'
-          }}
+          className={`slds-accordion__summary ${expandedSections.labelAliases ? 'slds-is-open' : ''}`}
+          onClick={() => toggleSection('labelAliases')}
+          aria-controls="accordion-labels-content"
+          aria-expanded={expandedSections.labelAliases}
         >
-          <div 
-            style={{ 
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: 'var(--token-spacing-sm)'
-            }}
-          >
+          <h3 className="slds-accordion__summary-heading">
+            <span className="slds-accordion__summary-content">Label Aliases</span>
+            <SalesforceIcon name="chevrondown" size="xx-small" className="slds-accordion__summary-action-icon" />
+          </h3>
+        </div>
+        <div id="accordion-labels-content" className="slds-accordion__content" hidden={!expandedSections.labelAliases}>
+          <div className="label-alias-header">
+            <p className="label-alias-description">
+              Customize how field names appear in the results table. Click on a label to edit it.
+            </p>
+            <button
+              className="slds-button slds-button_neutral"
+              onClick={() => handleResetAllLabels(type)}
+              disabled={saving}
+              type="button"
+            >
+              Reset All Labels
+            </button>
+          </div>
+          
+          <div className="label-alias-grid">
             {Object.keys(defaultAliases).map(key => {
               const isModified = labelAliases[key] !== defaultAliases[key];
               const isEditing = editingLabel === key;
@@ -1017,42 +1026,17 @@ export default function GlobalSettings() {
               return (
                 <div 
                   key={key} 
-                  style={{ 
-                    padding: 'var(--token-spacing-sm)',
-                    backgroundColor: isModified ? 'var(--token-warning-bg)' : 'var(--token-layer-surface)',
-                    border: isModified ? '1px solid var(--token-warning)' : '1px solid var(--token-border-subtle)',
-                    borderRadius: 'var(--token-spacing-xs)'
-                  }}
+                  className={`label-alias-item ${isModified ? 'label-alias-item--modified' : ''}`}
                 >
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'space-between',
-                    marginBottom: 'var(--token-spacing-xs)'
-                  }}>
-                    <span style={{ 
-                      fontFamily: 'monospace', 
-                      fontSize: '0.7rem', 
-                      color: 'var(--token-text-secondary)',
-                      fontWeight: '500'
-                    }}>
-                      {key}
-                    </span>
+                  <div className="label-alias-item-header">
+                    <span className="label-alias-key">{key}</span>
                     {isModified && (
-                      <span style={{ 
-                        fontSize: '0.6rem', 
-                        backgroundColor: 'var(--token-warning)', 
-                        color: 'var(--token-text-inverse)',
-                        padding: '2px 6px',
-                        borderRadius: '3px'
-                      }}>
-                        Modified
-                      </span>
+                      <span className="label-alias-modified-badge">Modified</span>
                     )}
                   </div>
                   
                   {isEditing ? (
-                    <div style={{ display: 'flex', gap: 'var(--token-spacing-xs)' }}>
+                    <div className="label-alias-edit-actions">
                       <input
                         type="text"
                         className="slds-input"
@@ -1063,61 +1047,40 @@ export default function GlobalSettings() {
                           if (e.key === 'Escape') handleCancelEditLabel();
                         }}
                         autoFocus
-                        style={{ flex: 1, fontSize: 'var(--token-font-size-sm)' }}
                       />
                       <button
-                        className="slds-button slds-button_brand"
+                        className="slds-button slds-button_icon slds-button_icon-brand"
                         onClick={() => handleSaveLabel(type)}
-                        style={{ minWidth: '32px', padding: '0 8px' }}
                         title="Save"
+                        type="button"
                       >
-                        ✓
-                      </button>
-                      <button
-                        className="slds-button slds-button_neutral"
-                        onClick={handleCancelEditLabel}
-                        style={{ minWidth: '32px', padding: '0 8px' }}
-                        title="Cancel"
-                      >
-                        ✕
+                        <SimpleIcon path={ICON_PATHS.check} />
+                        <span className="slds-assistive-text">Save</span>
                       </button>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', gap: 'var(--token-spacing-xs)', alignItems: 'center' }}>
-                      <span 
-                        onClick={() => handleStartEditLabel(key, labelAliases[key])}
-                        style={{ 
-                          flex: 1,
-                          padding: 'var(--token-spacing-xs) var(--token-spacing-sm)',
-                          backgroundColor: 'var(--token-layer-surface-hover)',
-                          borderRadius: 'var(--token-spacing-xs)',
-                          cursor: 'pointer',
-                          fontSize: 'var(--token-font-size-sm)',
-                          minHeight: '32px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          color: 'var(--token-text-primary)'
-                        }}
-                        title="Click to edit"
-                      >
+                    <div className="label-alias-view-actions">
+                      <span className="label-alias-value">
                         {labelAliases[key]}
                       </span>
                       <button
-                        className="slds-button slds-button_neutral"
+                        className="slds-button slds-button_icon slds-button_icon-border"
                         onClick={() => handleStartEditLabel(key, labelAliases[key])}
-                        style={{ minWidth: '32px', padding: '0 8px' }}
                         title="Edit"
+                        type="button"
                       >
-                        ✎
+                        <SimpleIcon path={ICON_PATHS.edit} />
+                        <span className="slds-assistive-text">Edit</span>
                       </button>
                       {isModified && (
                         <button
-                          className="slds-button slds-button_text-destructive"
+                          className="slds-button slds-button_icon slds-button_icon-border"
                           onClick={() => handleResetLabel(type, key)}
-                          style={{ minWidth: '32px', padding: '0 8px' }}
                           title="Reset to default"
+                          type="button"
                         >
-                          ↺
+                          <SimpleIcon path={ICON_PATHS.refresh} />
+                          <span className="slds-assistive-text">Reset to default</span>
                         </button>
                       )}
                     </div>
@@ -1127,7 +1090,7 @@ export default function GlobalSettings() {
             })}
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 
@@ -1186,173 +1149,161 @@ export default function GlobalSettings() {
     };
     
     return (
-      <div className="slds-m-bottom_x-large">
-        <br />
-        <div className="slds-box">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--token-spacing-lg)' }}>
-            <h4 className="slds-text-heading_small" style={{ fontWeight: '600', margin: 0 }}>
-              Header Column Colors
-            </h4>
-            <div style={{ display: 'flex', gap: 'var(--token-spacing-sm)' }}>
-              <button
-                className="slds-button slds-button_neutral"
-                onClick={addColumn}
-                disabled={saving || columns.length >= 10}
-                style={{ fontSize: 'var(--token-font-size-xs)' }}
-              >
-                + Add Column
-              </button>
-              <button
-                className="slds-button slds-button_text-destructive"
-                onClick={resetColors}
-                disabled={saving}
-                style={{ fontSize: 'var(--token-font-size-xs)' }}
-              >
-                Reset Colors
-              </button>
-            </div>
+      <div className="settings-accordion-section">
+        <section className="slds-accordion__section">
+          <div 
+            className={`slds-accordion__summary ${expandedSections.headerColors ? 'slds-is-open' : ''}`}
+            onClick={() => toggleSection('headerColors')}
+            aria-controls="accordion-colors-content"
+            aria-expanded={expandedSections.headerColors}
+          >
+            <h3 className="slds-accordion__summary-heading">
+              <span className="slds-accordion__summary-content">Header Column Colors</span>
+              <SalesforceIcon name="chevrondown" size="xx-small" className="slds-accordion__summary-action-icon" />
+            </h3>
           </div>
-          <p style={{ fontSize: 'var(--token-font-size-sm)', color: 'var(--token-text-muted)', marginBottom: 'var(--token-spacing-md)' }}>
-            Customize the header colors for this calculator's results table. Add or remove columns as needed.
-          </p>
-          
-          {/* Preview */}
-          <div className="slds-m-bottom_large">
-            <h5 style={{ fontWeight: '500', marginBottom: 'var(--token-spacing-sm)', fontSize: 'var(--token-font-size-sm)' }}>
-              Preview
-            </h5>
-            <div style={{ display: 'flex', borderRadius: 'var(--token-radius-sm)', overflow: 'hidden', border: '1px solid var(--token-ui-border-medium)', flexWrap: 'wrap' }}>
-              <div style={{ 
-                padding: 'var(--token-spacing-md) var(--token-spacing-lg)', 
-                backgroundColor: colors.labelBg || '#f4f6f9',
-                color: colors.labelText || '#181818',
-                fontWeight: '600',
-                fontSize: 'var(--token-font-size-sm)',
-                minWidth: '100px'
-              }}>
-                Label
+          <div id="accordion-colors-content" className="slds-accordion__content" hidden={!expandedSections.headerColors}>
+            <div className="color-section-header">
+              <p className="color-section-description">
+                Customize the header colors for this calculator's results table. Add or remove columns as needed.
+              </p>
+              <div className="color-section-actions">
+                <button
+                  className="slds-button slds-button_neutral"
+                  onClick={addColumn}
+                  disabled={saving || columns.length >= 10}
+                  type="button"
+                >
+                  + Add Column
+                </button>
+                <button
+                  className="slds-button slds-button_text-destructive"
+                  onClick={resetColors}
+                  disabled={saving}
+                  type="button"
+                >
+                  Reset Colors
+                </button>
               </div>
+            </div>
+            
+            {/* Preview */}
+            <div className="color-preview-section">
+              <h5 className="color-preview-title">Preview</h5>
+              <div className="color-preview-header">
+                <div 
+                  className="color-preview-label"
+                  style={{ 
+                    backgroundColor: colors.labelBg || '#f4f6f9',
+                    color: colors.labelText || '#181818'
+                  }}
+                >
+                  Label
+                </div>
+                {columns.map((col, idx) => (
+                  <div 
+                    key={idx} 
+                    className="color-preview-column"
+                    style={{ 
+                      backgroundColor: col.bg,
+                      color: col.text
+                    }}
+                  >
+                    Col {idx + 1}
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Color Pickers */}
+            <div className="color-picker-grid">
+              {/* Label Column */}
+              <div className="color-column-item">
+                <h5 className="color-column-title">Label Column</h5>
+                <div className="color-picker-row">
+                  <label className="color-picker-label">BG:</label>
+                  <input 
+                    type="color" 
+                    value={colors.labelBg || '#f4f6f9'}
+                    onChange={(e) => updateLabelColor('labelBg', e.target.value)}
+                    className="color-picker-input"
+                  />
+                  <input 
+                    type="text" 
+                    value={colors.labelBg || '#f4f6f9'}
+                    onChange={(e) => updateLabelColor('labelBg', e.target.value)}
+                    className="slds-input color-picker-text"
+                  />
+                </div>
+                <div className="color-picker-row">
+                  <label className="color-picker-label">Text:</label>
+                  <input 
+                    type="color" 
+                    value={colors.labelText || '#181818'}
+                    onChange={(e) => updateLabelColor('labelText', e.target.value)}
+                    className="color-picker-input"
+                  />
+                  <input 
+                    type="text" 
+                    value={colors.labelText || '#181818'}
+                    onChange={(e) => updateLabelColor('labelText', e.target.value)}
+                    className="slds-input color-picker-text"
+                  />
+                </div>
+              </div>
+              
+              {/* Data Columns */}
               {columns.map((col, idx) => (
-                <div key={idx} style={{ 
-                  padding: 'var(--token-spacing-md) var(--token-spacing-lg)', 
-                  backgroundColor: col.bg,
-                  color: col.text,
-                  fontWeight: '600',
-                  fontSize: 'var(--token-font-size-sm)',
-                  minWidth: '80px',
-                  textAlign: 'center'
-                }}>
-                  Col {idx + 1}
+                <div key={idx} className="color-column-item">
+                  <div className="color-column-header">
+                    <h5 className="color-column-title">Column {idx + 1}</h5>
+                    {columns.length > 1 && (
+                      <button
+                        className="slds-button slds-button_icon slds-button_icon-border"
+                        onClick={() => removeColumn(idx)}
+                        title="Delete column"
+                        type="button"
+                      >
+                        <SimpleIcon path={ICON_PATHS.delete} />
+                        <span className="slds-assistive-text">Delete column</span>
+                      </button>
+                    )}
+                  </div>
+                  <div className="color-picker-row">
+                    <label className="color-picker-label">BG:</label>
+                    <input 
+                      type="color" 
+                      value={col.bg}
+                      onChange={(e) => updateColumnColor(idx, 'bg', e.target.value)}
+                      className="color-picker-input"
+                    />
+                    <input 
+                      type="text" 
+                      value={col.bg}
+                      onChange={(e) => updateColumnColor(idx, 'bg', e.target.value)}
+                      className="slds-input color-picker-text"
+                    />
+                  </div>
+                  <div className="color-picker-row">
+                    <label className="color-picker-label">Text:</label>
+                    <input 
+                      type="color" 
+                      value={col.text}
+                      onChange={(e) => updateColumnColor(idx, 'text', e.target.value)}
+                      className="color-picker-input"
+                    />
+                    <input 
+                      type="text" 
+                      value={col.text}
+                      onChange={(e) => updateColumnColor(idx, 'text', e.target.value)}
+                      className="slds-input color-picker-text"
+                    />
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-          
-          {/* Color Pickers */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', 
-            gap: 'var(--token-spacing-md)'
-          }}>
-            {/* Label Column */}
-            <div className="slds-box" style={{ backgroundColor: 'var(--token-ui-background-subtle)', padding: 'var(--token-spacing-md)' }}>
-              <h5 style={{ fontWeight: '600', marginBottom: 'var(--token-spacing-sm)', fontSize: 'var(--token-font-size-sm)' }}>
-                Label Column
-              </h5>
-              <div style={{ display: 'flex', gap: 'var(--token-spacing-sm)', alignItems: 'center', marginBottom: 'var(--token-spacing-xs)' }}>
-                <label style={{ width: '40px', fontSize: 'var(--token-font-size-xs)' }}>BG:</label>
-                <input 
-                  type="color" 
-                  value={colors.labelBg || '#f4f6f9'}
-                  onChange={(e) => updateLabelColor('labelBg', e.target.value)}
-                  style={{ width: '40px', height: '28px', cursor: 'pointer', border: '1px solid var(--token-ui-border-medium)', borderRadius: '4px' }}
-                />
-                <input 
-                  type="text" 
-                  value={colors.labelBg || '#f4f6f9'}
-                  onChange={(e) => updateLabelColor('labelBg', e.target.value)}
-                  className="slds-input"
-                  style={{ width: '80px', fontSize: 'var(--token-font-size-xs)' }}
-                />
-              </div>
-              <div style={{ display: 'flex', gap: 'var(--token-spacing-sm)', alignItems: 'center' }}>
-                <label style={{ width: '40px', fontSize: 'var(--token-font-size-xs)' }}>Text:</label>
-                <input 
-                  type="color" 
-                  value={colors.labelText || '#181818'}
-                  onChange={(e) => updateLabelColor('labelText', e.target.value)}
-                  style={{ width: '40px', height: '28px', cursor: 'pointer', border: '1px solid var(--token-ui-border-medium)', borderRadius: '4px' }}
-                />
-                <input 
-                  type="text" 
-                  value={colors.labelText || '#181818'}
-                  onChange={(e) => updateLabelColor('labelText', e.target.value)}
-                  className="slds-input"
-                  style={{ width: '80px', fontSize: 'var(--token-font-size-xs)' }}
-                />
-              </div>
-            </div>
-            
-            {/* Data Columns */}
-            {columns.map((col, idx) => (
-              <div key={idx} className="slds-box" style={{ backgroundColor: 'var(--token-ui-background-subtle)', padding: 'var(--token-spacing-md)', position: 'relative' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--token-spacing-sm)' }}>
-                  <h5 style={{ fontWeight: '600', fontSize: 'var(--token-font-size-sm)', margin: 0 }}>
-                    Column {idx + 1}
-                  </h5>
-                  {columns.length > 1 && (
-                    <button
-                      onClick={() => removeColumn(idx)}
-                      style={{ 
-                        background: 'none', 
-                        border: 'none', 
-                        color: '#d32f2f', 
-                        cursor: 'pointer',
-                        fontSize: 'var(--token-font-size-sm)',
-                        padding: '2px 6px'
-                      }}
-                      title="Remove column"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-                <div style={{ display: 'flex', gap: 'var(--token-spacing-sm)', alignItems: 'center', marginBottom: 'var(--token-spacing-xs)' }}>
-                  <label style={{ width: '40px', fontSize: 'var(--token-font-size-xs)' }}>BG:</label>
-                  <input 
-                    type="color" 
-                    value={col.bg}
-                    onChange={(e) => updateColumnColor(idx, 'bg', e.target.value)}
-                    style={{ width: '40px', height: '28px', cursor: 'pointer', border: '1px solid var(--token-ui-border-medium)', borderRadius: '4px' }}
-                  />
-                  <input 
-                    type="text" 
-                    value={col.bg}
-                    onChange={(e) => updateColumnColor(idx, 'bg', e.target.value)}
-                    className="slds-input"
-                    style={{ width: '80px', fontSize: 'var(--token-font-size-xs)' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: 'var(--token-spacing-sm)', alignItems: 'center' }}>
-                  <label style={{ width: '40px', fontSize: 'var(--token-font-size-xs)' }}>Text:</label>
-                  <input 
-                    type="color" 
-                    value={col.text}
-                    onChange={(e) => updateColumnColor(idx, 'text', e.target.value)}
-                    style={{ width: '40px', height: '28px', cursor: 'pointer', border: '1px solid var(--token-ui-border-medium)', borderRadius: '4px' }}
-                  />
-                  <input 
-                    type="text" 
-                    value={col.text}
-                    onChange={(e) => updateColumnColor(idx, 'text', e.target.value)}
-                    className="slds-input"
-                    style={{ width: '80px', fontSize: 'var(--token-font-size-xs)' }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        </section>
       </div>
     );
   };
@@ -1367,9 +1318,11 @@ export default function GlobalSettings() {
   }
 
   return (
-    <div className="admin-table-container">
-      <h1 className="font-size-2rem font-weight-bold margin-bottom-1">Global Settings</h1>
-      <h4 className="slds-text-heading_large slds-m-bottom_medium">Results Table Configuration</h4>
+    <div className="global-settings-container">
+      <div className="global-settings-header">
+        <h1 className="global-settings-title">Global Settings</h1>
+        <p className="global-settings-subtitle">Configure calculator results table display and customize how data appears to users</p>
+      </div>
       
       {/* Tab Navigation */}
       <div className="slds-tabs_default slds-tabs_default_medium slds-m-bottom_medium">
@@ -1421,40 +1374,41 @@ export default function GlobalSettings() {
 
       {/* BTL Tab Content */}
       {activeTab === 'btl' && (
-        <>
+        <div className="slds-accordion">
           {renderVisibilitySection(DEFAULT_BTL_ROWS, btlVisibleRows, handleToggleBtlRow, handleSelectAllBtl, handleDeselectAllBtl)}
           {renderRowOrderSection(btlRowOrder, btlVisibleRows, 'btl')}
           {renderLabelAliasSection('btl', btlLabelAliases, DEFAULT_LABEL_ALIASES_BTL)}
           {renderHeaderColorsSection('btl')}
-        </>
+        </div>
       )}
 
       {/* Bridge Tab Content */}
       {activeTab === 'bridge' && (
-        <>
+        <div className="slds-accordion">
           {renderVisibilitySection(DEFAULT_BRIDGE_ROWS, bridgeVisibleRows, handleToggleBridgeRow, handleSelectAllBridge, handleDeselectAllBridge)}
           {renderRowOrderSection(bridgeRowOrder, bridgeVisibleRows, 'bridge')}
           {renderLabelAliasSection('bridge', bridgeLabelAliases, DEFAULT_LABEL_ALIASES_BRIDGE)}
           {renderHeaderColorsSection('bridge')}
-        </>
+        </div>
       )}
 
       {/* Core Tab Content */}
       {activeTab === 'core' && (
-        <>
+        <div className="slds-accordion">
           {renderVisibilitySection(DEFAULT_CORE_ROWS, coreVisibleRows, handleToggleCoreRow, handleSelectAllCore, handleDeselectAllCore)}
           {renderRowOrderSection(coreRowOrder, coreVisibleRows, 'core')}
           {renderLabelAliasSection('core', coreLabelAliases, DEFAULT_LABEL_ALIASES_CORE)}
           {renderHeaderColorsSection('core')}
-        </>
+        </div>
       )}
 
-      {/* Action Buttons - right-aligned */}
-      <div className="slds-actions slds-actions_bordered">
+      {/* Action Buttons */}
+      <div className="settings-actions-footer">
         <button
           className="slds-button slds-button_neutral"
           onClick={handleReset}
           disabled={saving}
+          type="button"
         >
           Reset to Defaults
         </button>
@@ -1462,6 +1416,7 @@ export default function GlobalSettings() {
           className="slds-button slds-button_brand"
           onClick={handleSave}
           disabled={saving}
+          type="button"
         >
           {saving ? 'Saving...' : 'Save Settings'}
         </button>

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import '../styles/Toast.css';
 // SLDS toast markup replacement for Carbon ToastNotification
 
 const ToastContext = createContext();
@@ -28,11 +29,11 @@ export function ToastProvider({ children }) {
       {children}
       
       {/* Toast Container - Fixed position at top-right */}
-      <div style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '400px' }}>
+      <div className="toast-container">
         {toasts.map(t => {
           const kindClass = t.kind === 'error' ? 'slds-theme_error' : t.kind === 'warning' ? 'slds-theme_warning' : t.kind === 'info' ? 'slds-theme_info' : 'slds-theme_success';
           return (
-            <div key={t.id} className={`slds-notify slds-notify_toast ${kindClass}`} role="status" style={{ minWidth: '300px' }}>
+            <div key={t.id} className={`slds-notify slds-notify_toast ${kindClass} toast-notification`} role="status">
               <div className="slds-notify__close">
                 <button className="slds-button slds-button_icon" aria-label="Close" title="Close" onClick={() => removeToast(t.id)}>
                   <svg className="slds-button__icon" aria-hidden="true" viewBox="0 0 52 52">
@@ -42,8 +43,8 @@ export function ToastProvider({ children }) {
                 </button>
               </div>
               <div className="slds-notify__content">
-                <h2 className="slds-text-heading_small" style={{ margin: 0 }}>{t.title}</h2>
-                {t.subtitle && <p className="slds-text-body_small" style={{ marginTop: '0.25rem' }}>{t.subtitle}</p>}
+                <h2 className="slds-text-heading_small toast-title">{t.title}</h2>
+                {t.subtitle && <p className="slds-text-body_small toast-subtitle">{t.subtitle}</p>}
               </div>
             </div>
           );

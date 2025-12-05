@@ -11,6 +11,7 @@ import quotePdfRouter from './routes/quotePdf.js';
 import exportRouter from './routes/export.js';
 import authRouter from './routes/auth.js';
 import postcodeLookupRouter from './routes/postcodeLookup.js';
+import ratesRouter from './routes/rates.js';
 // Rate limiting middleware
 import { apiLimiter, exportLimiter, pdfLimiter } from './middleware/rateLimiter.js';
 
@@ -68,23 +69,9 @@ app.get('/health', (req, res) => {
 app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'API root - use /health or /api/rates' });
 });
-// Rates endpoint - returns all rates stored in Supabase 'rates' table
-app.get('/api/rates', async (req, res) => {
-  try {
-    const { data, error } = await supabase.from('rates').select('key, data');
-    if (error) throw error;
 
-    const result = {};
-    data.forEach((row) => {
-      result[row.key] = row.data;
-    });
-
-    res.json(result);
-  } catch (err) {
-
-    res.status(500).json({ error: err.message ?? String(err) });
-  }
-});
+// Rates endpoints - fetches rates from rates_flat table
+app.use('/api/rates', ratesRouter);
 
 // Quotes endpoints (CRUD)
 app.use('/api/quotes', quotesRouter);

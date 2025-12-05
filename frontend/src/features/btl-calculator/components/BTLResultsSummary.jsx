@@ -27,7 +27,7 @@ export default function BTLResultsSummary({
 }) {
   if (!results || results.length === 0) {
     return (
-      <div className="slds-text-align_center" style={{ padding: '2rem' }}>
+      <div className="no-results">
         <p className="slds-text-body_regular slds-text-color_weak">
           No results to display. Calculate to see results.
         </p>
@@ -82,7 +82,7 @@ export default function BTLResultsSummary({
             <table className="slds-table slds-table_cell-buffer slds-table_bordered">
               <thead>
                 <tr className="slds-line-height_reset">
-                  <th scope="col" className="th-label" style={{ width: '200px' }}>
+                  <th scope="col" className="th-label">
                     <div className="slds-truncate" title="Field">Field</div>
                   </th>
                   {columnsHeaders.map((header, idx) => {
@@ -126,7 +126,7 @@ export default function BTLResultsSummary({
 
           {/* Action Buttons Row */}
           {!isReadOnly && (
-            <div className="slds-grid slds-gutters slds-wrap" style={{ marginTop: '1rem' }}>
+            <div className="slds-grid slds-gutters slds-wrap action-buttons-row">
               {columnsHeaders.map((header, idx) => (
                 <div key={idx} className="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
                   <div className="slds-button-group" role="group">
@@ -155,7 +155,7 @@ export default function BTLResultsSummary({
       </div>
 
       {/* Implementation Note */}
-      <div className="slds-box slds-theme_warning" style={{ marginTop: '1rem' }}>
+      <div className="slds-box slds-theme_warning slds-m-top_medium">
         <p className="slds-text-body_small">
           <strong>Note:</strong> This is a summary view showing key fields. The full results table 
           would include 28+ calculated fields with expandable sections, slider controls, editable 

@@ -53,3 +53,39 @@ This repository is a small full-stack app that uses a Vite + React frontend and 
 
 ---
 If you'd like, I can (A) open a short PR that adds a small checklist for DB migrations, or (B) add a brief DEV_NOTES.md with exact env examples per-OS. Which would you prefer?
+
+## Coding Standards - MANDATORY
+
+### CSS & Styling Rules (CRITICAL)
+- **NEVER use inline styles** - Use CSS classes only (exception: dynamic values like `width: ${val}%`, PDF, SVG)
+- **ALWAYS use SLDS components first** - Check [SLDS documentation](https://www.lightningdesignsystem.com/) before creating custom components
+- **ALL CSS values MUST use design tokens** - No hardcoded colors, spacing, or sizes
+  - Spacing: `var(--slds-g-spacing-*)` or `var(--token-spacing-*)`
+  - Colors: `var(--slds-g-color-*)` or `var(--token-color-*)`
+  - Typography: `var(--slds-g-font-size-*)` or `var(--token-font-size-*)`
+
+### React Component Rules (CRITICAL)
+- **ALWAYS use SLDS classes**: `.slds-button`, `.slds-table`, `.slds-modal`, `.slds-form-element`
+- **ALWAYS add PropTypes** for all components
+- **ALWAYS handle loading and error states** - Never render data without checking if it exists
+- **Use React.memo** for expensive components
+- **Use useCallback/useMemo** to prevent unnecessary re-renders
+
+### Before Writing Code - MANDATORY CHECKS
+1. **Read these docs FIRST**: 
+   - `docs/CSS_STYLE_GUIDE.md` - For all CSS/styling work
+   - `docs/COMPONENT_DEVELOPMENT.md` - For all React components
+   - `docs/DESIGN_TOKENS.md` - For token values
+2. **Check if SLDS has the component** - Don't reinvent the wheel
+3. **Use existing patterns** - Search codebase for similar components
+4. **Think long-term** - Is this reusable? Maintainable? Token-based?
+
+### Quality Checklist (Run Before Committing)
+- [ ] No inline styles (check with `npm run lint`)
+- [ ] All SLDS classes used correctly
+- [ ] All values use design tokens
+- [ ] PropTypes defined
+- [ ] Loading/error states handled
+- [ ] Component is reusable
+- [ ] Responsive at 480px/768px/1024px/1440px
+- [ ] No console.log() statements

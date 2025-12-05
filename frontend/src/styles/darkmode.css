@@ -1332,3 +1332,100 @@ body.dark-mode #root {
   color: #6f6f6f !important;
 }
 
+
+/* ============================================
+   17. FIXES FOR TOOLTIPS, TABS, AND BUTTONS
+   ============================================ */
+
+/* Tooltips - Ensure high contrast in dark mode */
+.dark-mode .app-tooltip__content {
+  background-color: var(--token-layer-elevated) !important;
+  color: var(--token-text-primary) !important;
+  border: 1px solid var(--token-border-subtle) !important;
+  box-shadow: var(--token-shadow-modal) !important;
+}
+
+.dark-mode .app-tooltip__arrow {
+  background-color: var(--token-layer-elevated) !important;
+}
+
+/* Toggle Buttons (Direct Client / Broker) */
+.dark-mode .slds-button-group_toggle .slds-button.slds-is-selected {
+  background-color: var(--token-interactive) !important;
+  border-color: var(--token-interactive) !important;
+  color: #ffffff !important;
+  background-image: none !important;
+  z-index: 1;
+}
+
+.dark-mode .slds-button-group_toggle .slds-button:not(.slds-is-selected) {
+  background-color: var(--token-layer-background) !important;
+  border-color: var(--token-border-strong) !important;
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .slds-button-group_toggle .slds-button:not(.slds-is-selected):hover {
+  background-color: var(--token-layer-surface-hover) !important;
+}
+
+/* Tabs (Specialist/Core Range & Global Settings) */
+.dark-mode .slds-tabs_default__link {
+  background-color: transparent !important;
+  border-bottom: 2px solid transparent !important;
+}
+
+.dark-mode .slds-tabs_default__item.slds-is-active .slds-tabs_default__link {
+  color: var(--token-interactive) !important;
+  border-bottom-color: var(--token-interactive) !important;
+  font-weight: 700;
+  background-color: transparent !important;
+}
+
+.dark-mode .slds-tabs_default__item:not(.slds-is-active) .slds-tabs_default__link {
+  color: var(--token-text-secondary) !important;
+  border-bottom-color: transparent !important;
+}
+
+.dark-mode .slds-tabs_default__item:not(.slds-is-active) .slds-tabs_default__link:hover {
+  color: var(--token-interactive-hover) !important;
+  text-decoration: none;
+}
+
+/* Ensure tab content backgrounds are correct */
+.dark-mode .slds-tabs_default__content {
+  background-color: transparent !important;
+  color: var(--token-text-primary) !important;
+}
+
+
+/* Fix for slds-tabs_card in dark mode (Range Toggle) */
+.dark-mode .slds-tabs_card .slds-tabs_default__item.slds-is-active .slds-tabs_default__link {
+  color: var(--token-interactive) !important;
+  border-bottom-color: var(--token-interactive) !important;
+  background-color: transparent !important;
+}
+
+.dark-mode .slds-tabs_card .slds-tabs_default__item:not(.slds-is-active) .slds-tabs_default__link {
+  color: var(--token-text-secondary) !important;
+}
+
+/* Fix for Global Settings Accordion Headers */
+.dark-mode .settings-accordion-section .slds-accordion__summary {
+  background-color: var(--token-layer-surface) !important;
+  border-color: var(--token-border-subtle) !important;
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .settings-accordion-section .slds-accordion__summary:hover {
+  background-color: var(--token-layer-surface-hover) !important;
+}
+
+.dark-mode .settings-accordion-section .slds-accordion__summary.slds-is-open {
+  background-color: var(--token-layer-active) !important;
+  border-color: var(--token-interactive) !important;
+}
+
+.dark-mode .settings-accordion-section .slds-accordion__summary-heading {
+  color: var(--token-text-primary) !important;
+}
+

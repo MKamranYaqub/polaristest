@@ -50,10 +50,16 @@
 /* ============================================
    RANGE TOGGLE - Segmented Button Group
    For Specialist/Core range selection
-   DEPRECATED: Use slds-button-group_segmented instead
+   ⚠️ DEPRECATED: Use .slds-button-group_segmented instead!
+   Legacy classes kept for backward compatibility.
+   
+   Migration path:
+   .range-toggle-buttons → .slds-button-group_segmented
+   .range-button         → .slds-button (with .slds-is-selected for active state)
    ============================================ */
 
 .range-toggle-container {
+  /* Wrapper container - still used for layout */
   margin-top: $spacing-md;
   background: $token-color-surface;
   border: 1px solid $token-color-border-subtle;
@@ -62,11 +68,13 @@
 }
 
 .range-toggle-buttons {
+  /* Extends .slds-button-group_segmented */
   display: flex;
   gap: 0;
   width: 100%;
   
   .range-button {
+    /* Extends .slds-button (inside button group) */
     flex: 1;
     padding: var(--token-spacing-md) var(--token-spacing-xl);
     background: $token-color-surface;

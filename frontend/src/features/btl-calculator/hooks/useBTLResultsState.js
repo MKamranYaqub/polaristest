@@ -137,30 +137,74 @@ export function useBTLResultsState() {
   };
 
   /**
-   * Load results state from quote data
+   * Migrate old column keys to new format with range prefix
+   * Old format: "Fee: 2%" 
+   * New format: "Specialist - Fee: 2%" or "Core - Fee: 2%"
+   * 
+   * @param {Object} overrides - Original overrides object
+   * @param {string} selectedRange - Current selected range ('specialist' or 'core')
+   * @returns {Object} Migrated overrides with new keys
    */
-  const loadResultsFromQuote = (quote) => {
+  const migrateColumnKeys = (overrides, selectedRange) => {
+    if (!overrides || typeof overrides !== 'object') return overrides;
+    
+    const rangePrefix = selectedRange === 'specialist' ? 'Specialist' : 'Core';
+    const migratedOverrides = {};
+    
+    Object.entries(overrides).forEach(([key, value]) => {
+      // Check if key already has range prefix (new format)
+      if (key.startsWith('Specialist - ') || key.startsWith('Core - ')) {
+        // Already in new format - keep as is
+        migratedOverrides[key] = value;
+      } else if (key.startsWith('Fee: ')) {
+        // Old format - add range prefix based on current selected range
+        const newKey = `${rangePrefix} - ${key}`;
+        migratedOverrides[newKey] = value;
+      } else {
+        // Unknown format - keep as is to avoid data loss
+        migratedOverrides[key] = value;
+      }
+    });
+    
+    return migratedOverrides;
+  };
+
+  /**
+   * Load results state from quote data
+   * Includes backward compatibility for old column key format
+   * 
+   * @param {Object} quote - Quote data from database
+   * @param {string} selectedRange - Current selected range ('specialist' or 'core')
+   */
+  const loadResultsFromQuote = (quote, selectedRange = 'specialist') => {
     // Load slider overrides if available
     if (quote.slider_overrides) {
       const { rolled, deferred } = quote.slider_overrides;
-      if (rolled) setRolledMonthsPerColumn(rolled);
-      if (deferred) setDeferredInterestPerColumn(deferred);
+      
+      // Migrate keys to new format with range prefix
+      const migratedRolled = migrateColumnKeys(rolled, selectedRange);
+      const migratedDeferred = migrateColumnKeys(deferred, selectedRange);
+      
+      if (migratedRolled) setRolledMonthsPerColumn(migratedRolled);
+      if (migratedDeferred) setDeferredInterestPerColumn(migratedDeferred);
       
       // Mark manual mode for columns with overrides
       const manualColumns = {};
-      Object.keys(rolled || {}).forEach(key => { manualColumns[key] = true; });
-      Object.keys(deferred || {}).forEach(key => { manualColumns[key] = true; });
+      Object.keys(migratedRolled || {}).forEach(key => { manualColumns[key] = true; });
+      Object.keys(migratedDeferred || {}).forEach(key => { manualColumns[key] = true; });
       setManualModeActivePerColumn(manualColumns);
     }
 
-    // Load rate overrides
+    // Load rate overrides with migration
     if (quote.rates_overrides) {
-      setRatesOverrides(quote.rates_overrides);
+      const migratedRatesOverrides = migrateColumnKeys(quote.rates_overrides, selectedRange);
+      setRatesOverrides(migratedRatesOverrides);
     }
 
-    // Load product fee overrides
+    // Load product fee overrides with migration
     if (quote.product_fee_overrides) {
-      setProductFeeOverrides(quote.product_fee_overrides);
+      const migratedProductFeeOverrides = migrateColumnKeys(quote.product_fee_overrides, selectedRange);
+      setProductFeeOverrides(migratedProductFeeOverrides);
     }
   };
 

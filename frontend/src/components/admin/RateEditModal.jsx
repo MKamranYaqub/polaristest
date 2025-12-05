@@ -55,9 +55,10 @@ function RateEditModal({ rate, onSave, onCancel }) {
   );
 
   return (
-    <ModalShell isOpen={true} onClose={onCancel} title={rate.id ? 'Edit Rate' : 'Add New Rate'} footer={footerButtons}>
-      <form onSubmit={handleSubmit} className="slds-form slds-form_stacked">
-        <div className="slds-form-element">
+    <ModalShell isOpen={true} onClose={onCancel} title={rate.id ? 'Edit Rate' : 'Add New Rate'} footer={footerButtons} maxWidth="1000px">
+      <form onSubmit={handleSubmit} className="slds-form">
+        {/* First field full width */}
+        <div className="slds-form-element margin-bottom-1">
           <label className="slds-form-element__label">Set Key:</label>
           <div className="slds-form-element__control">
             <input
@@ -71,6 +72,8 @@ function RateEditModal({ rate, onSave, onCancel }) {
           </div>
         </div>
 
+        {/* Two-column grid for remaining fields */}
+        <div className="grid-2-col-gap-margin">
         <div className="slds-form-element">
                 <label className="slds-form-element__label">Property Type:</label>
                 <div className="slds-form-element__control">
@@ -477,6 +480,7 @@ function RateEditModal({ rate, onSave, onCancel }) {
                   />
                 </div>
               </div>
+        </div>
             </form>
     </ModalShell>
   );

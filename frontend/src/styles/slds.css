@@ -49,31 +49,103 @@ body,
 }
 
 .slds-table {
-  background-color: white;
+  background-color: var(--token-layer-surface, white);
   border-collapse: separate;
+  border-spacing: 0;
   width: 100%;
   font-family: var(--slds-font-family);
 }
 
 .slds-table th {
-  background: var(--slds-color-gray-2);
-  padding: 0.5rem;
-  font-weight: 600;
+  background: var(--token-layer-surface, var(--slds-color-gray-2));
+  padding: var(--token-spacing-lg, 0.75rem) var(--token-spacing-md, 0.5rem);
+  font-weight: var(--token-font-weight-semibold, 600);
   text-align: left;
-  line-height: 2;
-  color: var(--slds-color-text-weak);
-  border-bottom: 0.5px solid var(--slds-color-gray-3);
+  line-height: 1.5;
+  font-size: var(--token-font-size-xs, 0.75rem);
+  color: var(--token-text-primary, var(--slds-color-text-weak));
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--token-interactive, #0176d3);
+  white-space: nowrap;
+  position: relative;
 }
 
 .slds-table td {
-  padding: 0.5rem;
+  padding: var(--token-spacing-md, 0.5rem);
   line-height: 1.5;
-  color: var(--slds-color-text-default);
-  border-bottom: 0.5px solid var(--slds-color-gray-3);
+  font-size: var(--token-font-size-sm, 0.875rem);
+  color: var(--token-text-primary, var(--slds-color-text-default));
+  border-bottom: 1px solid var(--token-border-subtle, var(--slds-color-gray-3));
+  white-space: nowrap;
+  background: var(--token-layer-surface, white);
+}
+
+.slds-table tr {
+  transition: background-color 0.15s ease;
 }
 
 .slds-table tr:hover {
-  background-color: var(--slds-color-gray-1);
+  background-color: var(--token-layer-hover, var(--slds-color-gray-1));
+}
+
+.slds-table tr:hover td {
+  background: var(--token-layer-hover, var(--slds-color-gray-1));
+}
+
+.slds-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Sortable table headers */
+.slds-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.slds-table th.sortable:hover {
+  background: var(--token-layer-hover, var(--slds-color-gray-3));
+}
+
+.slds-table th.sortable::after {
+  content: '⇅';
+  margin-left: var(--token-spacing-sm, 0.25rem);
+  opacity: 0.3;
+  font-size: var(--token-font-size-sm, 0.875rem);
+}
+
+.slds-table th.sorted-asc::after {
+  content: '▲';
+  opacity: 1;
+  color: var(--token-interactive, #0176d3);
+}
+
+.slds-table th.sorted-desc::after {
+  content: '▼';
+  opacity: 1;
+  color: var(--token-interactive, #0176d3);
+}
+
+/* Sticky action column */
+.slds-table th.sticky-action {
+  position: sticky;
+  right: 0;
+  background: var(--token-layer-surface, white) !important;
+  z-index: calc(var(--token-z-base, 10) + 1) !important;
+  box-shadow: var(--token-shadow-soft, -2px 0 4px rgba(0,0,0,0.1));
+}
+
+.slds-table td.sticky-action {
+  position: sticky;
+  right: 0;
+  background: var(--token-layer-surface, white) !important;
+  z-index: var(--token-z-base, 10);
+  box-shadow: var(--token-shadow-soft, -2px 0 4px rgba(0,0,0,0.1));
+}
+
+.slds-table tr:hover td.sticky-action {
+  background: var(--token-layer-hover, var(--slds-color-gray-1)) !important;
 }
 
 /* Button Styles */
@@ -316,6 +388,25 @@ body,
   line-height: 1.5;
   margin-right: 0.5rem;
   margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.slds-form-element__control {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.slds-form-element__help {
+  font-size: 0.75rem;
+  color: var(--slds-g-color-on-surface-3);
+  margin-top: 0.25rem;
+  line-height: 1.5;
+}
+
+.slds-required {
+  color: var(--token-danger, #c23934);
+  margin-right: 0.125rem;
 }
 
 .slds-input {
@@ -328,12 +419,20 @@ body,
   background-color: var(--slds-g-color-surface-container-1);
   color: var(--slds-g-color-on-surface-2);
   transition: border 0.1s linear, background-color 0.1s linear;
+  box-sizing: border-box;
+  font-family: var(--slds-font-family);
 }
 
 .slds-input:focus {
   outline: 0;
   border-color: var(--slds-g-color-accent-2);
   box-shadow: 0 0 0 2px rgba(2, 80, 217, 0.2);
+}
+
+.slds-input[aria-invalid="true"],
+.slds-input.error-border {
+  border-color: var(--token-danger, #c23934);
+  border-width: 2px;
 }
 
 .slds-select {
@@ -347,6 +446,41 @@ body,
   color: var(--slds-g-color-on-surface-2);
   transition: border 0.1s linear, background-color 0.1s linear;
   font-family: var(--slds-font-family);
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.slds-select:focus {
+  outline: 0;
+  border-color: var(--slds-g-color-accent-2);
+  box-shadow: 0 0 0 2px rgba(2, 80, 217, 0.2);
+}
+
+.slds-select[aria-invalid="true"],
+.slds-select.error-border {
+  border-color: var(--token-danger, #c23934);
+  border-width: 2px;
+}
+
+.slds-textarea {
+  width: 100%;
+  padding: var(--slds-g-spacing-2) var(--slds-g-spacing-3);
+  line-height: 1.5;
+  min-height: 6rem;
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
+  background-color: var(--slds-g-color-surface-container-1);
+  color: var(--slds-g-color-on-surface-2);
+  transition: border 0.1s linear, background-color 0.1s linear;
+  box-sizing: border-box;
+  font-family: var(--slds-font-family);
+  resize: vertical;
+}
+
+.slds-textarea:focus {
+  outline: 0;
+  border-color: var(--slds-g-color-accent-2);
+  box-shadow: 0 0 0 2px rgba(2, 80, 217, 0.2);
 }
 
 .slds-select:focus {
@@ -395,9 +529,13 @@ body,
   background: var(--slds-g-color-surface-container-1);
   border-radius: var(--slds-g-radius-border-2);
   box-shadow: var(--token-shadow-modal, 0 4px 8px rgba(0, 0, 0, 0.12));
-  width: 50%;
+  width: 90%;
   max-width: 40rem;
   min-width: 20rem;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .slds-modal__header {
@@ -407,12 +545,22 @@ body,
   border-bottom: 1px solid var(--slds-g-color-border-1);
   padding: var(--slds-g-spacing-4);
   text-align: center;
+  flex-shrink: 0;
+}
+
+.slds-modal__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .slds-modal__content {
   padding: var(--slds-g-spacing-4);
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   max-height: 70vh;
+  flex: 1 1 auto;
 }
 
 .slds-modal__footer {
@@ -422,6 +570,7 @@ body,
   border-bottom-right-radius: var(--slds-g-radius-border-2);
   border-bottom-left-radius: var(--slds-g-radius-border-2);
   text-align: right;
+  flex-shrink: 0;
 }
 
 .slds-backdrop {
@@ -432,6 +581,14 @@ body,
   left: 0;
   background: var(--token-layer-overlay, rgba(43, 40, 38, 0.6));
   z-index: 9000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.slds-backdrop_open {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Navigation */
@@ -499,6 +656,21 @@ body,
   border-bottom: 1px solid var(--slds-color-gray-3);
 }
 
+/* ============================================
+   SLDS SPACING UTILITIES
+   Use these spacing classes for SLDS components and consistent spacing.
+   
+   Naming Convention:
+   .slds-m-{side}_{size}  - Margin
+   .slds-p-{side}_{size}  - Padding
+   
+   Sizes: small (0.75rem), medium (1rem), large (1.5rem)
+   Sides: top, bottom, left, right, horizontal, vertical, around
+   
+   Note: For custom layouts and precise spacing control,
+   use the custom utilities in utilities.css (.margin-*, .padding-*)
+   ============================================ */
+
 .slds-p-around_medium {
   padding: 1rem;
 }
@@ -530,6 +702,108 @@ body,
 
 .slds-m-around_medium {
   margin: 1rem;
+}
+
+/* ============================================
+   SLDS PAGINATION CONTROLS
+   Standardized pagination component for admin tables.
+   
+   Structure:
+   .slds-pagination              - Container
+   .slds-pagination__info        - Page info display ("Showing X-Y of Z")
+   .slds-pagination__controls    - Button group wrapper
+   .slds-pagination__button      - Individual nav buttons (Prev/Next)
+   .slds-pagination__rows        - Rows per page selector wrapper
+   
+   Use these classes for all pagination UI across the application.
+   ============================================ */
+
+.slds-pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--token-spacing-md);
+  flex-wrap: wrap;
+}
+
+.slds-pagination__info {
+  font-weight: var(--token-font-weight-medium);
+  color: var(--token-text-primary);
+  white-space: nowrap;
+  font-size: var(--token-font-size-sm);
+  line-height: 1.5;
+}
+
+.slds-pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--token-spacing-sm);
+}
+
+.slds-pagination__button {
+  /* Extends .slds-button */
+  padding: var(--slds-g-spacing-2) var(--slds-g-spacing-4);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
+  background: var(--slds-g-color-surface-container-1);
+  color: var(--slds-g-color-on-surface-2);
+  font-size: var(--token-font-size-sm);
+  font-weight: var(--token-font-weight-medium);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--slds-font-family);
+  line-height: 1.875rem;
+  min-height: var(--slds-g-sizing-9);
+}
+
+.slds-pagination__button:hover:not(:disabled) {
+  background: var(--slds-g-color-surface-container-3);
+  border-color: var(--token-interactive);
+}
+
+.slds-pagination__button:disabled {
+  background: var(--token-layer-background, #f5f5f5);
+  color: var(--token-text-disabled, #c9c9c9);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.slds-pagination__rows {
+  display: flex;
+  align-items: center;
+  gap: var(--token-spacing-sm);
+}
+
+.slds-pagination__rows label {
+  font-weight: var(--token-font-weight-medium);
+  color: var(--token-text-secondary);
+  font-size: var(--token-font-size-xs);
+  white-space: nowrap;
+}
+
+.slds-pagination__rows select {
+  /* Extends .slds-select */
+  padding: var(--slds-g-spacing-2) var(--slds-g-spacing-3);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
+  font-size: var(--token-font-size-sm);
+  line-height: 1.875rem;
+  min-height: var(--slds-g-sizing-9);
+  background: var(--slds-g-color-surface-container-1);
+  color: var(--slds-g-color-on-surface-2);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+  font-family: var(--slds-font-family);
+}
+
+.slds-pagination__rows select:hover {
+  border-color: var(--token-interactive);
+}
+
+.slds-pagination__rows select:focus {
+  outline: 0;
+  border-color: var(--slds-g-color-accent-2);
+  box-shadow: 0 0 0 2px rgba(2, 80, 217, 0.2);
 }
 
 /* Helper / weak text: smaller and slightly grey to match design guidance */

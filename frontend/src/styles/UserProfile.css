@@ -1,0 +1,79 @@
+/* User Profile Button Styles */
+.user-profile-trigger {
+  position: relative;
+}
+
+.user-avatar-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--token-brand-primary);
+  color: var(--token-text-inverse);
+  font-size: var(--token-font-size-sm);
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--token-z-dropdown);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  z-index: calc(var(--token-z-dropdown) + 1);
+  min-width: 280px;
+  background-color: var(--token-layer-surface);
+  border: 1px solid var(--token-border-subtle);
+  border-radius: var(--token-radius-sm);
+  box-shadow: var(--token-shadow-modal);
+}
+
+.user-name {
+  color: var(--token-text-primary);
+  font-weight: 600;
+}
+
+.user-email {
+  color: var(--token-text-muted);
+}
+
+.user-role {
+  color: var(--token-text-muted);
+  font-size: var(--token-font-size-xs);
+}
+
+.dropdown-list {
+  padding: 0;
+  margin: 0;
+}
+
+.dropdown-item {
+  list-style: none;
+}
+
+.dropdown-link {
+  display: flex;
+  align-items: center;
+  padding: var(--token-spacing-md) var(--token-spacing-lg);
+  color: var(--token-text-primary);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dropdown-link-icon {
+  margin-right: var(--token-spacing-sm);
+  font-size: 16px;
+}
+
+.password-modal-container {
+  max-width: 500px;
+}

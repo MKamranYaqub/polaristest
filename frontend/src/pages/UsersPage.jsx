@@ -5,6 +5,7 @@ import SalesforceIcon from '../components/shared/SalesforceIcon';
 import ModalShell from '../components/modals/ModalShell';
 import '../styles/Modal.css';
 import '../styles/admin-tables.css';
+import '../styles/UsersPage.css';
 
 const UsersPage = () => {
   const { token, isAdmin } = useAuth();
@@ -236,11 +237,11 @@ const UsersPage = () => {
       <div className="admin-table-container">
         <div className="table-header-stacked">
           <div className="table-title-row">
-            <div>
-              <h1 style={{ marginBottom: '0.5rem', fontSize: '1.75rem', fontWeight: 'bold' }}>
+            <div className="users-page-header">
+              <h1>
                 User Management
               </h1>
-              <p style={{ margin: 0, color: '#706e6b' }}>
+              <p>
                 Manage user accounts, access levels, and permissions
               </p>
             </div>
@@ -268,9 +269,9 @@ const UsersPage = () => {
         )}
 
         {success && (
-          <div style={{ background: '#e8f5e9', border: '2px solid #4caf50', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem', textAlign: 'center' }}>
-            <h3 style={{ color: '#2e7d32', margin: '0 0 0.5rem 0' }}>Success</h3>
-            <p style={{ margin: '0 0 1rem 0' }}>{success}</p>
+          <div className="success-message-box">
+            <h3>Success</h3>
+            <p>{success}</p>
             <button className="slds-button slds-button_neutral" onClick={() => setSuccess('')}>Dismiss</button>
           </div>
         )}
@@ -335,7 +336,7 @@ const UsersPage = () => {
 
       {/* Create User Modal */}
       {showCreateModal && (
-        <div className="modal-backdrop">
+        <div className="slds-backdrop slds-backdrop_open">
           <div className="slds-modal slds-fade-in-open" role="dialog">
             <div className="slds-modal__container max-width-600">
               <header className="slds-modal__header">
@@ -446,7 +447,7 @@ const UsersPage = () => {
 
       {/* Edit User Modal */}
       {showEditModal && editingUser && (
-        <div className="modal-backdrop">
+        <div className="slds-backdrop slds-backdrop_open">
           <div className="slds-modal slds-fade-in-open" role="dialog">
             <div className="slds-modal__container max-width-600">
               <header className="slds-modal__header">

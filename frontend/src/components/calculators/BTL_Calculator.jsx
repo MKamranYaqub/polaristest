@@ -1405,8 +1405,8 @@ export default function BTLcalculator({ initialQuote = null }) {
     <div className="calculator-container">
       {/* Breadcrumbs */}
       <Breadcrumbs items={[
-        { label: 'Home', path: '/' },
-        { label: 'Calculator', path: '/calculator/btl' },
+        { label: 'Home', path: '/home' },
+        { label: 'Calculator', path: '/calculator' },
         { label: 'Buy to Let', path: '/calculator/btl' }
       ]} />
 
@@ -2280,8 +2280,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                 }
                               </tbody>
                             </table>
-                            {/* Note shown below the table */}
-                            <div style={{ marginTop: 'var(--token-spacing-sm)', color: 'var(--token-text-secondary)', fontSize: 'var(--token-font-size-sm)' }}>Placeholders: ERC (Fusion only) and Exit Fee are not shown in the BTL calculator.</div>
+                           
                           </div>
                         )}
                       </>

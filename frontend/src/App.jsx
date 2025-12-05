@@ -22,6 +22,10 @@ import UsersPage from './pages/UsersPage';
 import SettingsPage from './pages/SettingsPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import HomePage from './pages/HomePage';
+import CalculatorLandingPage from './pages/CalculatorLandingPage';
+import AdminLandingPage from './pages/AdminLandingPage';
+// Products page removed
 import ProtectedRoute from './pages/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import { isEmbeddedMode } from './utils/embedding';
@@ -121,7 +125,11 @@ const AppContent = () => {
                   />
                   <Route 
                     index 
-                    element={<Navigate to="/calculator/btl" replace />} 
+                    element={
+                      <ErrorBoundary>
+                        <CalculatorLandingPage />
+                      </ErrorBoundary>
+                    } 
                   />
                 </Route>
                 
@@ -181,7 +189,11 @@ const AppContent = () => {
                   />
                   <Route 
                     index 
-                    element={<Navigate to="/admin/constants" replace />} 
+                    element={
+                      <ErrorBoundary>
+                        <AdminLandingPage />
+                      </ErrorBoundary>
+                    } 
                   />
                 </Route>
                 
@@ -197,7 +209,18 @@ const AppContent = () => {
                   />
                 </Route>
                 
-                <Route path="/" element={<Navigate to="/calculator/btl" replace />} />
+                <Route 
+                  path="/home" 
+                  element={
+                    <ProtectedRoute requiredAccessLevel={5}>
+                      <HomePage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Products route removed */}
+                
+                <Route path="/" element={<Navigate to="/home" replace />} />
               </Routes>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import SalesforceIcon from '../shared/SalesforceIcon';
 import ModalShell from '../modals/ModalShell';
 import '../../styles/Modal.css';
+import '../../styles/UserProfile.css';
 
 /**
  * UserProfileButton - Shows current user from authentication
@@ -102,23 +103,11 @@ const UserProfileButton = () => {
   return (
     <>
       {/* User Avatar Button */}
-      <div className="slds-dropdown-trigger slds-dropdown-trigger_click" style={{ position: 'relative' }}>
+      <div className="slds-dropdown-trigger slds-dropdown-trigger_click user-profile-trigger">
         <button
-          className="slds-button slds-button_icon slds-button_icon-container"
+          className="slds-button slds-button_icon slds-button_icon-container user-avatar-btn"
           title={`Logged in as ${getUserName()}`}
           onClick={() => setShowMenu(!showMenu)}
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--token-brand-primary)',
-            color: 'var(--token-text-inverse)',
-            fontSize: 'var(--token-font-size-sm)',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
         >
           {getUserInitials()}
         </button>
@@ -129,100 +118,55 @@ const UserProfileButton = () => {
             <div 
               className="dropdown-backdrop"
               onClick={() => setShowMenu(false)}
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: 'var(--token-z-dropdown)'
-              }}
             />
-            <div 
-              className="slds-dropdown slds-dropdown_right slds-dropdown_medium"
-              style={{
-                position: 'absolute',
-                top: '48px',
-                right: '0',
-                zIndex: 'calc(var(--token-z-dropdown) + 1)',
-                minWidth: '280px',
-                backgroundColor: 'var(--token-layer-surface)',
-                border: '1px solid var(--token-border-subtle)',
-                borderRadius: 'var(--token-radius-sm)',
-                boxShadow: 'var(--token-shadow-modal)'
-              }}
-            >
+            <div className="slds-dropdown slds-dropdown_right slds-dropdown_medium user-dropdown">
               {/* Profile Info */}
               <div className="slds-p-around_medium slds-border_bottom">
-                <div className="slds-text-heading_small slds-m-bottom_xx-small" style={{ color: 'var(--token-text-primary)', fontWeight: '600' }}>
+                <div className="slds-text-heading_small slds-m-bottom_xx-small user-name">
                   {getUserName()}
                 </div>
                 {user.email && (
-                  <div className="slds-text-body_small slds-m-bottom_xx-small" style={{ color: 'var(--token-text-muted)' }}>
+                  <div className="slds-text-body_small slds-m-bottom_xx-small user-email">
                     {user.email}
                   </div>
                 )}
-                <div className="slds-text-body_small" style={{ color: 'var(--token-text-muted)', fontSize: 'var(--token-font-size-xs)' }}>
+                <div className="slds-text-body_small user-role">
                   {getAccessLevelLabel()}
                 </div>
               </div>
 
               {/* Menu Items */}
-              <ul className="slds-dropdown__list" role="menu" style={{ padding: 0, margin: 0 }}>
-                <li className="slds-dropdown__item" role="presentation" style={{ listStyle: 'none' }}>
+              <ul className="slds-dropdown__list dropdown-list" role="menu">
+                <li className="slds-dropdown__item dropdown-item" role="presentation">
                   <a
                     href="#"
-                    className="slds-dropdown__item-link"
+                    className="slds-dropdown__item-link dropdown-link"
                     role="menuitem"
                     onClick={(e) => { e.preventDefault(); setShowMenu(false); navigate('/settings'); }}
-                    style={{ 
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: 'var(--token-spacing-md) var(--token-spacing-lg)',
-                      color: 'var(--token-text-primary)',
-                      textDecoration: 'none',
-                      cursor: 'pointer'
-                    }}
                   >
-                    <span style={{ marginRight: 'var(--token-spacing-sm)', fontSize: '16px' }}>⚙️</span>
+                    <span className="dropdown-link-icon">⚙️</span>
                     <span>Settings</span>
                   </a>
                 </li>
-                <li className="slds-dropdown__item" role="presentation" style={{ listStyle: 'none' }}>
+                <li className="slds-dropdown__item dropdown-item" role="presentation">
                   <a
                     href="#"
-                    className="slds-dropdown__item-link"
+                    className="slds-dropdown__item-link dropdown-link"
                     role="menuitem"
                     onClick={(e) => { e.preventDefault(); handlePasswordClick(); }}
-                    style={{ 
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: 'var(--token-spacing-md) var(--token-spacing-lg)',
-                      color: 'var(--token-ui-text-dark)',
-                      textDecoration: 'none',
-                      cursor: 'pointer'
-                    }}
                   >
-                    <span style={{ marginRight: 'var(--token-spacing-sm)', fontSize: '16px' }}>🔑</span>
+                    <span className="dropdown-link-icon">🔑</span>
                     <span>Change Password</span>
                   </a>
                 </li>
-                <li className="slds-dropdown__item" role="presentation" style={{ listStyle: 'none' }}>
+                <li className="slds-dropdown__item dropdown-item" role="presentation">
                   <a
                     href="#"
-                    className="slds-dropdown__item-link"
+                    className="slds-dropdown__item-link dropdown-link"
                     role="menuitem"
                     onClick={(e) => { e.preventDefault(); handleLogout(); }}
-                    style={{ 
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: 'var(--token-spacing-md) var(--token-spacing-lg)',
-                      color: 'var(--token-text-primary)',
-                      textDecoration: 'none',
-                      cursor: 'pointer'
-                    }}
                   >
-                    <span style={{ marginRight: 'var(--token-spacing-sm)', fontSize: '16px' }}>🚪</span>
+                    <span className="dropdown-link-icon">🚪</span>
                     <span>Logout</span>
                   </a>
                 </li>
@@ -234,9 +178,9 @@ const UserProfileButton = () => {
 
       {/* Change Password Modal */}
       {showPasswordModal && (
-        <div className="modal-backdrop">
+        <div className="slds-backdrop slds-backdrop_open">
           <div className="slds-modal slds-fade-in-open" role="dialog">
-            <div className="slds-modal__container" style={{ maxWidth: '500px' }}>
+            <div className="slds-modal__container password-modal-container">
               <header className="slds-modal__header">
                 <button
                   className="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"

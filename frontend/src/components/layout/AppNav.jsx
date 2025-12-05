@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Navigation from './Navigation';
 import ThemeToggle from '../ui/ThemeToggle';
 import UserProfileButton from '../ui/UserProfileButton';
@@ -20,12 +21,14 @@ function AppNav() {
   return (
     <header className="app-header">
       <h1 className="app-header__title">
-        <img 
-          src={isDarkMode ? "/assets/mfs-logo-dark.png" : "/assets/mfs-logo.png"} 
-          alt="MFS Logo" 
-          className="app-header__logo" 
-        />
-        Project Polaris
+        <Link to="/home" className="app-header__home-link" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
+          <img 
+            src={isDarkMode ? "/assets/mfs-logo-dark.png" : "/assets/mfs-logo.png"} 
+            alt="MFS Logo" 
+            className="app-header__logo" 
+          />
+          Market Financial Solutions
+        </Link>
       </h1>
       <div className="margin-left-auto display-flex align-items-center flex-gap-5 margin-right-05">
         <ThemeToggle />

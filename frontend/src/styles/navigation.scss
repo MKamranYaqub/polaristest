@@ -232,24 +232,30 @@ button.slds-tree__item-link.slds-is-selected .slds-tree__item-label {
 .mobile-nav-toggle .hamburger:before { top: -7px; }
 .mobile-nav-toggle .hamburger:after { bottom: -7px; }
 
-/* Backdrop overlay for mobile */
+/* Backdrop overlay for mobile - SLDS pattern */
 .nav-backdrop {
-  /* Backdrop removed per request: prevent full-screen dark overlay on mobile */
-  display: none !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 999;
+  cursor: pointer;
+  transition: opacity var(--token-duration-moderate, 0.2s) ease;
 }
 
 /* Mobile/Tablet behaviour: hide the inline sidenav and use a drawer */
-@media (max-width: 900px) {
+/* Uses standard breakpoint: tablet (768px) */
+@media (max-width: 768px) {
   .mobile-nav-toggle { 
     display: block; 
   }
 
   .app-sidenav {
-    display: none;
     position: fixed;
-    left: 0;
-    /* Offset below header */
-    top: 56px;
+    left: -100%;
+    top: 60px;
     bottom: 0;
     width: 280px;
     max-width: 80vw;
@@ -257,10 +263,11 @@ button.slds-tree__item-link.slds-is-selected .slds-tree__item-label {
     border-right: 1px solid var(--token-border-subtle);
     box-shadow: var(--token-shadow-strong);
     background: var(--token-layer-surface);
+    transition: left var(--token-duration-moderate, 0.2s) ease;
   }
 
   .app-sidenav.mobile-open {
-    display: block;
+    left: 0;
   }
 
   /* Touch-friendly items */
@@ -273,7 +280,8 @@ button.slds-tree__item-link.slds-is-selected .slds-tree__item-label {
 }
 
 /* Tablet-specific adjustments */
-@media (max-width: 900px) and (min-width: 601px) {
+/* Uses standard breakpoints: between mobile (480px) and tablet (768px) */
+@media (max-width: 768px) and (min-width: 481px) {
   .app-sidenav {
     width: 320px;
   }

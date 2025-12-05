@@ -1,4 +1,5 @@
 import React from 'react';
+import '../../styles/ErrorComponents.css';
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -67,22 +68,16 @@ export default class ErrorBoundary extends React.Component {
             {/* Show error details in development */}
             {import.meta.env.DEV && (
               <details className="slds-m-top_medium">
-                <summary className="slds-text-heading_small" style={{ cursor: 'pointer' }}>
+                <summary className="slds-text-heading_small error-summary">
                   Error Details (Development Only)
                 </summary>
-                <div className="slds-box slds-box_small slds-m-top_small" style={{ 
-                  backgroundColor: 'var(--token-ui-background-disabled)',
-                  fontFamily: 'monospace',
-                  fontSize: 'var(--token-font-size-xs)',
-                  whiteSpace: 'pre-wrap',
-                  overflowX: 'auto'
-                }}>
+                <div className="slds-box slds-box_small slds-m-top_small error-stack-box">
                   <strong>Error:</strong>
-                  <div style={{ color: 'var(--token-critical)', marginBottom: 'var(--token-spacing-lg)' }}>
+                  <div className="error-message-critical">
                     {this.state.error && this.state.error.toString()}
                   </div>
                   <strong>Component Stack:</strong>
-                  <div style={{ color: 'var(--token-text-muted)' }}>
+                  <div className="error-text-muted">
                     {this.state.info && this.state.info.componentStack}
                   </div>
                 </div>

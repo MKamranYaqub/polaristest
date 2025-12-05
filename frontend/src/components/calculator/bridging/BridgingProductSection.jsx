@@ -84,27 +84,14 @@ const BridgingProductSection = ({
   }
 
   return (
-    <div className="product-config-section" style={{ 
-      marginBottom: 'var(--token-spacing-lg)',
-    }}>
+    <div className="product-config-section">
       {/* Row 1: Product Type and Action Buttons */}
-      <div className="product-section-row-1" style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between',
-        gap: 'var(--token-spacing-md)', 
-        marginBottom: 'var(--token-spacing-md)',
-        alignItems: 'center'
-      }}>
-        <div style={{
-          fontWeight: 'var(--token-font-weight-semibold)',
-          fontSize: 'var(--token-font-size-md)',
-          display: 'flex',
-          alignItems: 'center'
-        }}>
+      <div className="product-section-row-1">
+        <div className="product-type-label">
           <span style={{ color: 'var(--token-text-primary)' }}>Product type: </span>
           <span style={{ marginLeft: '0.5rem', color: 'var(--token-text-primary)' }}>Bridge & Fusion</span>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--token-spacing-sm)', alignItems: 'center' }}>
+        <div className="product-actions">
           {quoteId && (
             <>
               <button 
@@ -128,11 +115,7 @@ const BridgingProductSection = ({
       </div>
 
       {/* Row 2: Product Scope + Criteria fields grid (4 columns) */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(4, 1fr)', 
-        gap: 'var(--token-form-field-gap)'
-      }}>
+      <div className="product-criteria-grid">
         {/* Product Scope - First field */}
         <div className="slds-form-element">
           <label className="slds-form-element__label">

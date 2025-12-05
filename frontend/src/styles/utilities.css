@@ -79,6 +79,28 @@
 .flex-gap-5 { gap: 0.5rem; }
 .flex-1 { flex: 1; }
 
+/* ============================================
+   CUSTOM SPACING UTILITIES
+   Use these spacing classes for custom layouts and precise spacing control.
+   
+   Naming Convention:
+   .margin-{side}-{value}  - Margin (in rem, except auto)
+   .padding-{side}-{value} - Padding (in rem)
+   
+   When to use:
+   ✅ Custom layouts outside of SLDS components
+   ✅ Precise spacing values (0.25rem, 0.5rem, 1.5rem, etc.)
+   ✅ Calculator grids, custom forms, page layouts
+   
+   When NOT to use:
+   ❌ Inside SLDS modal/form components (use .slds-m-*, .slds-p-* instead)
+   ❌ For standard SLDS spacing patterns (use SLDS utilities)
+   
+   Note: Both systems coexist intentionally:
+   - SLDS utilities (.slds-m-*, .slds-p-*) for SLDS components
+   - Custom utilities (.margin-*, .padding-*) for everything else
+   ============================================ */
+
 /* Margins */
 .margin-0 { margin: 0; }
 .margin-0-auto { margin: 0 auto; }
@@ -253,26 +275,28 @@ table.slds-table.max-width-1200 {
   box-shadow: var(--token-shadow-soft, 0 2px 4px rgba(1, 118, 211, 0.2));
 }
 
-/* New Quote button - extends slds-button_success
-   Use className="slds-button slds-button_success" instead for new code */
+/* ⚠️ DEPRECATED: Use .slds-button .slds-button_success instead!
+   New Quote button - extends slds-button_success
+   Migration: className="btn-new-quote" → className="slds-button slds-button_success" */
 .btn-new-quote {
   display: inline-flex;
   align-items: center;
   background-color: var(--token-success-action, #00a89d);
   color: var(--token-text-inverse, white);
   font-weight: var(--token-font-weight-semibold, 600);
-  border: none;
-  padding: var(--token-spacing-xs, 0.25rem) var(--token-spacing-lg, 1rem);
+  border: 1px solid var(--token-success-action, #00a89d);
+  padding: 0 var(--slds-g-spacing-4);
   border-radius: var(--token-radius-btn);
   box-shadow: var(--token-shadow-soft);
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.1s ease;
-  font-size: var(--token-font-size-sm, 0.875rem);
+  font-size: 0.8125rem;
   line-height: 1.875rem;
 }
 
 .btn-new-quote:hover {
   background-color: var(--token-success-action-hover, #008c82);
+  border-color: var(--token-success-action-hover, #008c82);
   transform: translateY(-1px);
 }
 
@@ -297,40 +321,53 @@ table.slds-table.max-width-1200 {
   background: var(--token-layer-overlay, rgba(255, 255, 255, 0.3));
 }
 
-/* Property remove button - extends slds-button_destructive */
+/* ⚠️ DEPRECATED: Use .slds-button .slds-button_destructive instead!
+   Property remove button - extends slds-button_destructive
+   Migration: className="property-remove-btn" → className="slds-button slds-button_destructive" with custom positioning */
 .property-remove-btn {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
   background: var(--token-danger, #c23934);
   color: var(--token-text-inverse, white);
-  border: none;
+  border: 1px solid var(--token-danger, #c23934);
   border-radius: var(--token-radius-btn);
-  padding: 0.25rem 0.5rem;
+  padding: 0 var(--slds-g-spacing-3);
   cursor: pointer;
   font-size: 0.75rem;
-  transition: background-color 0.2s ease;
+  line-height: 1.5rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
 }
 
 .property-remove-btn:hover {
   background: var(--token-danger-hover, #a61a14);
+  border-color: var(--token-danger-hover, #a61a14);
 }
 
-/* Postcode find button - extends slds-button_brand */
+/* ⚠️ DEPRECATED: Use .slds-button .slds-button_brand instead!
+   Postcode find button - extends slds-button_brand
+   Migration: className="postcode-find-btn" → className="slds-button slds-button_brand" */
 .postcode-find-btn {
   white-space: nowrap;
-  background-color: var(--token-interactive, #0176d3);
-  color: var(--token-text-inverse, #ffffff);
-  border: none;
+  background-color: var(--slds-g-color-accent-2);
+  color: var(--slds-g-color-on-surface-inverse-1);
+  border: 1px solid var(--slds-g-color-accent-2);
   border-radius: var(--token-radius-btn);
   font-weight: 500;
-  padding: 0 1rem;
+  padding: 0 var(--slds-g-spacing-4);
+  font-size: 0.8125rem;
+  line-height: 1.875rem;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
 }
 
 .postcode-find-btn:hover {
-  background-color: var(--token-interactive-hover, #014486);
+  background-color: var(--slds-g-color-accent-3);
+  border-color: var(--slds-g-color-accent-3);
 }
 
 .sticky-table-header {
@@ -407,6 +444,12 @@ table.slds-table.max-width-1200 {
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .grid-2-col-gap-margin {
+    grid-template-columns: 1fr;
+  }
 }
 
 .grid-3-col {
@@ -506,6 +549,127 @@ table.slds-table.max-width-1200 {
   font-size: 16px;
 }
 
+/* ============================================
+   LOADING, ERROR & EMPTY STATE UTILITIES
+   Shared utility classes for loading spinners, error messages,
+   and empty states across the application.
+   
+   Use these classes for consistent UI feedback states.
+   ============================================ */
+
+/* Loading States */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--token-spacing-2xl, 2rem);
+  text-align: center;
+  background: var(--token-layer-background);
+  color: var(--token-text-secondary, #666);
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--token-border-subtle, #e0e0e0);
+  border-top: 4px solid var(--token-interactive, #0176d3);
+  border-radius: 50%;
+  animation: spinner-spin 1s linear infinite;
+  margin-bottom: var(--token-spacing-lg, 1rem);
+}
+
+@keyframes spinner-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: var(--token-text-secondary);
+  font-size: var(--token-font-size-md);
+  font-weight: var(--token-font-weight-medium);
+}
+
+/* Error States */
+.error-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--token-spacing-2xl, 2rem);
+  background: var(--token-layer-background);
+  text-align: center;
+}
+
+.error-message {
+  background-color: color-mix(in srgb, var(--token-critical, #dc3545) 10%, white);
+  border: 2px solid var(--token-critical, #dc3545);
+  border-radius: var(--token-radius-md, 8px);
+  padding: var(--token-spacing-xl, 1.5rem);
+  max-width: 500px;
+  text-align: center;
+  box-shadow: var(--token-shadow-soft);
+}
+
+.error-message__title {
+  color: var(--token-critical, #dc3545);
+  font-size: var(--token-font-size-lg);
+  font-weight: var(--token-font-weight-semibold);
+  margin: 0 0 var(--token-spacing-md, 0.75rem) 0;
+}
+
+.error-message__text {
+  color: var(--token-text-secondary, #666);
+  font-size: var(--token-font-size-sm);
+  margin: 0 0 var(--token-spacing-lg, 1rem) 0;
+  line-height: 1.5;
+}
+
+.error-message__button {
+  background-color: var(--token-critical, #dc3545);
+  color: var(--token-text-inverse, white);
+  border: none;
+  padding: var(--slds-g-spacing-2) var(--slds-g-spacing-4);
+  border-radius: var(--token-radius-btn, 4px);
+  cursor: pointer;
+  font-size: var(--token-font-size-sm);
+  font-weight: var(--token-font-weight-medium);
+  transition: background-color 0.2s ease;
+}
+
+.error-message__button:hover {
+  background-color: color-mix(in srgb, var(--token-critical, #dc3545) 85%, black);
+}
+
+/* Empty States */
+.empty-state {
+  padding: var(--token-spacing-2xl, 2rem);
+  text-align: center;
+  color: var(--token-text-muted, #6b6b6b);
+  font-style: italic;
+}
+
+.empty-state__title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: var(--token-spacing-sm, 0.5rem);
+  font-style: normal;
+  color: var(--token-text-primary, #181818);
+}
+
+.empty-state__subtitle {
+  font-size: 0.9rem;
+  color: var(--token-text-secondary, #6b6b6b);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.empty-state__cell {
+  padding: var(--token-spacing-2xl, 2rem) !important;
+  text-align: center !important;
+  color: var(--token-text-muted, #6b6b6b);
+  font-style: italic;
+}
+
 /* Field Validation Error Styles */
 .error-border {
   border: 2px solid var(--token-danger, #d32f2f) !important;
@@ -521,3 +685,18 @@ table.slds-table.max-width-1200 {
   align-items: center;
   gap: 4px;
 }
+
+.helper-text {
+  color: var(--token-text-secondary, #666);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+/* Animation Utilities */
+.transition-all { transition: all 0.2s ease-in-out; }
+.hover-shadow:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+  border-color: var(--slds-g-color-brand-base-50);
+}
+

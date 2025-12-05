@@ -24,7 +24,8 @@
 }
 
 /* Mobile responsiveness for embedded mode */
-@media (max-width: 900px) {
+/* Uses standard breakpoint: tablet (768px) */
+@media (max-width: 768px) {
   .app-shell--embedded {
     .app-content {
       padding: var(--token-spacing-sm);

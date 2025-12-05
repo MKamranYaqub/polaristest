@@ -1,0 +1,417 @@
+/* Products Page Styles */
+
+.products-page {
+  min-height: 100vh;
+  background: var(--slds-g-color-neutral-base-95);
+  padding: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Header */
+.products-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--slds-g-color-border-2);
+}
+
+.products-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #00205B;
+  margin: 0;
+}
+
+.header-info {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.info-item {
+  font-size: 0.9rem;
+  color: var(--slds-g-color-on-surface-2);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.info-item:hover {
+  color: #E84E0F;
+}
+
+/* Main Tabs */
+.main-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--slds-g-color-border-1);
+}
+
+.main-tab {
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--slds-g-color-on-surface-2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.main-tab:hover {
+  color: #00205B;
+  background: var(--slds-g-color-neutral-base-90);
+}
+
+.main-tab.active {
+  color: #00205B;
+  border-bottom-color: #E84E0F;
+  background: var(--slds-g-color-surface-container-1);
+}
+
+/* Sub Tabs */
+.sub-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.sub-tab {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  background: var(--slds-g-color-surface-container-1);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
+  color: var(--slds-g-color-on-surface-2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sub-tab:hover {
+  background: var(--slds-g-color-neutral-base-85);
+  border-color: var(--slds-g-color-border-2);
+}
+
+.sub-tab.active {
+  background: #00205B;
+  color: white;
+  border-color: #00205B;
+}
+
+/* Content Area */
+.products-content {
+  background: white;
+  border-radius: var(--slds-g-radius-border-3);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.loading-state,
+.error-state,
+.no-data {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.125rem;
+  color: var(--slds-g-color-on-surface-2);
+}
+
+.error-state {
+  color: #c23934;
+}
+
+/* BTL Rates Table */
+.rates-table-container {
+  overflow-x: auto;
+}
+
+.rates-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.rates-table th,
+.rates-table td {
+  padding: 0.75rem;
+  text-align: center;
+  border: 1px solid var(--slds-g-color-border-1);
+}
+
+.rates-table thead th {
+  background: var(--slds-g-color-neutral-base-90);
+  font-weight: 600;
+  color: var(--slds-g-color-on-surface-1);
+}
+
+.tier-header {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+}
+
+.tier-header.tier-tier-1 {
+  background: #0176d3;
+}
+
+.tier-header.tier-tier-2 {
+  background: #E84E0F;
+}
+
+.tier-header.tier-tier-3 {
+  background: #000000;
+}
+
+.product-col {
+  background: var(--slds-g-color-neutral-base-80);
+  font-size: 0.875rem;
+}
+
+.label-cell {
+  font-weight: 600;
+  text-align: left;
+  background: var(--slds-g-color-neutral-base-95);
+  color: var(--slds-g-color-on-surface-1);
+}
+
+.fee-range-row {
+  background: var(--slds-g-color-neutral-base-95);
+}
+
+.fee-range-cell {
+  font-weight: 500;
+  color: var(--slds-g-color-on-surface-2);
+}
+
+.rate-row td {
+  font-weight: 600;
+  color: #00205B;
+}
+
+.revert-rate-row td {
+  font-style: italic;
+  color: var(--slds-g-color-on-surface-2);
+}
+
+.defer-row,
+.roll-row {
+  background: var(--slds-g-color-neutral-base-98);
+}
+
+/* Bridge Variable Table */
+.bridge-table-container {
+  overflow-x: auto;
+}
+
+.bridge-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #00205B;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.bridge-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.bridge-table th,
+.bridge-table td {
+  padding: 0.875rem;
+  text-align: center;
+  border: 1px solid var(--slds-g-color-border-1);
+}
+
+.our-products-header {
+  background: #00205B;
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-align: left;
+  padding-left: 1.5rem;
+}
+
+.product-header {
+  background: #00205B;
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.ltv-row .ltv-label {
+  background: var(--slds-g-color-neutral-base-90);
+  font-weight: 600;
+  text-align: left;
+  padding-left: 1.5rem;
+}
+
+.ltv-row td {
+  font-weight: 600;
+  color: #00205B;
+}
+
+.loan-size-row,
+.max-ltv-row,
+.charge-type-row,
+.term-row,
+.arrangement-fee-row {
+  background: var(--slds-g-color-neutral-base-98);
+}
+
+.loan-size-row .label-cell,
+.max-ltv-row .label-cell,
+.charge-type-row .label-cell,
+.term-row .label-cell,
+.arrangement-fee-row .label-cell {
+  font-weight: 600;
+  text-align: left;
+  padding-left: 1.5rem;
+  background: var(--slds-g-color-neutral-base-95);
+}
+
+/* Bridge Fixed & Fusion - Simple List */
+.bridge-fixed-container,
+.fusion-container {
+  padding: 1rem;
+}
+
+.simple-rates-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.rate-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--slds-g-color-neutral-base-98);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
+  transition: box-shadow 0.15s ease;
+}
+
+.rate-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.rate-product {
+  font-weight: 600;
+  color: var(--slds-g-color-on-surface-1);
+  flex: 1;
+}
+
+.rate-value {
+  font-weight: 700;
+  color: #00205B;
+  font-size: 1.125rem;
+  margin: 0 1rem;
+}
+
+.rate-ltv {
+  font-size: 0.875rem;
+  color: var(--slds-g-color-on-surface-2);
+}
+
+/* Calculator Links Section */
+.calculator-links {
+  background: linear-gradient(135deg, #00205B 0%, #003d8f 100%);
+  border-radius: var(--slds-g-radius-border-3);
+  padding: 2rem;
+  text-align: center;
+  color: white;
+}
+
+.calculator-links h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 1.5rem 0;
+}
+
+.link-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.calc-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.75rem;
+  background: white;
+  color: #00205B;
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+  border-radius: var(--slds-g-radius-border-2);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.calc-link-btn:hover {
+  background: #E84E0F;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .products-page {
+    padding: 1rem;
+  }
+
+  .products-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .header-info {
+    flex-wrap: wrap;
+  }
+
+  .main-tab {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+
+  .sub-tab {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .rates-table,
+  .bridge-table {
+    font-size: 0.75rem;
+  }
+
+  .rates-table th,
+  .rates-table td,
+  .bridge-table th,
+  .bridge-table td {
+    padding: 0.5rem;
+  }
+
+  .simple-rates-list {
+    grid-template-columns: 1fr;
+  }
+
+  .link-buttons {
+    flex-direction: column;
+  }
+
+  .calc-link-btn {
+    width: 100%;
+  }
+}

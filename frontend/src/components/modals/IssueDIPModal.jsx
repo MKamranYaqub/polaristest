@@ -784,7 +784,8 @@ export default function IssueDIPModal({
                   <button
                     type="button"
                     onClick={() => removeSecurityProperty(index)}
-                    className="property-remove-btn"
+                    className="slds-button slds-button_destructive"
+                    style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', fontSize: '0.75rem', padding: '0 0.5rem' }}
                   >
                     Remove
                   </button>
@@ -805,7 +806,7 @@ export default function IssueDIPModal({
                     />
                     <button
                       type="button"
-                      className="slds-button postcode-find-btn"
+                      className="slds-button slds-button_brand"
                       onClick={() => handlePostcodeLookup(index)}
                       disabled={loadingAddresses[index] || !property.postcode}
                     >

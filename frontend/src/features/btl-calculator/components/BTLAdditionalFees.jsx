@@ -37,7 +37,7 @@ export default function BTLAdditionalFees({
         </div>
       </div>
 
-      <div className="slds-grid slds-gutters slds-wrap" style={{ marginTop: '1rem' }}>
+      <div className="slds-grid slds-gutters slds-wrap fees-grid">
         {/* Fee Calculation Type */}
         <div className="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
           <div className="slds-form-element">

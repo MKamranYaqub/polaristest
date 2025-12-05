@@ -42,12 +42,12 @@ export default function BTLSliderControls({
   const displayDeferred = deferredInterest ?? optimizedDeferred ?? 0;
 
   return (
-    <div className="btl-slider-controls" style={{ padding: '0.5rem' }}>
+    <div className="btl-slider-controls">
       {/* Rolled Months Slider */}
-      <div className="slds-form-element" style={{ marginBottom: '1rem' }}>
+      <div className="slds-form-element">
         <label className="slds-form-element__label" htmlFor={`rolled-${columnKey}`}>
           <span className="slds-text-title_caps">Rolled Months</span>
-          <span className="slds-text-body_small" style={{ marginLeft: '0.5rem' }}>
+          <span className="slds-text-body_small slds-m-left_x-small">
             ({displayRolled} months)
           </span>
         </label>
@@ -62,16 +62,15 @@ export default function BTLSliderControls({
             onChange={handleRolledChange}
             disabled={isReadOnly}
             className="slds-slider"
-            style={{ width: '100%' }}
           />
         </div>
       </div>
 
       {/* Deferred Interest Slider */}
-      <div className="slds-form-element" style={{ marginBottom: '1rem' }}>
+      <div className="slds-form-element">
         <label className="slds-form-element__label" htmlFor={`deferred-${columnKey}`}>
           <span className="slds-text-title_caps">Deferred Interest</span>
-          <span className="slds-text-body_small" style={{ marginLeft: '0.5rem' }}>
+          <span className="slds-text-body_small slds-m-left_x-small">
             ({displayDeferred}%)
           </span>
         </label>
@@ -86,7 +85,6 @@ export default function BTLSliderControls({
             onChange={handleDeferredChange}
             disabled={isReadOnly}
             className="slds-slider"
-            style={{ width: '100%' }}
           />
         </div>
       </div>
@@ -107,7 +105,7 @@ export default function BTLSliderControls({
 
       {/* Show manual mode indicator */}
       {isManualMode && (
-        <div className="slds-text-align_center" style={{ marginTop: '0.5rem' }}>
+        <div className="slds-text-align_center manual-mode-indicator">
           <span className="slds-badge slds-theme_warning">Manual Mode</span>
         </div>
       )}

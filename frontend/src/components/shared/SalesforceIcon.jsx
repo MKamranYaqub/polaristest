@@ -1,10 +1,7 @@
-import React from 'react';
-
 /**
  * SalesforceIcon - Reusable component for Salesforce Lightning Design System icons
  * Uses authentic SLDS icon SVG paths
  * 
- * @param {string} category - Icon category ('utility', 'action', 'standard', 'custom', 'doctype')
  * @param {string} name - Icon name (e.g., 'info', 'delete', 'add', 'edit', 'lock', 'close', etc.)
  * @param {string} size - Icon size: 'xx-small', 'x-small', 'small', 'medium', 'large'
  * @param {string} className - Additional CSS classes
@@ -13,6 +10,8 @@ import React from 'react';
 const iconPaths = {
   edit: 'M37.5 28.8L24.3 15.6c-.6-.6-1.5-.6-2.1 0L8.7 29c-.2.2-.3.4-.3.7v9.4c0 .6.4 1 1 1h9.4c.3 0 .5-.1.7-.3l13.5-13.5 4.4 4.4c.6.6 1.5.6 2.1 0 .6-.6.6-1.6 0-2.2l-2-1.7zm-4.2-2.1L20.7 39.3h-7.4v-7.4l12.6-12.6 7.4 7.4z',
   delete: 'M32.7 9.3h-5.4V8c0-2.2-1.8-4-4-4h-6.6c-2.2 0-4 1.8-4 4v1.3H7.3c-.7 0-1.3.6-1.3 1.4v2.6c0 .7.6 1.4 1.3 1.4h1.4v25.9c0 2.2 1.7 4 3.9 4h16.7c2.2 0 4-1.8 4-4V14.7h1.4c.7 0 1.3-.7 1.3-1.4v-2.6c0-.8-.6-1.4-1.3-1.4zM16 8c0-.7.6-1.3 1.3-1.3h5.4c.7 0 1.3.6 1.3 1.3v1.3H16V8zm14.7 32.7c0 .7-.6 1.3-1.4 1.3H12.7c-.7 0-1.4-.6-1.4-1.3V14.7h19.4v26zM18 38c.7 0 1.3-.6 1.3-1.3V20c0-.7-.6-1.3-1.3-1.3s-1.3.6-1.3 1.3v16.7c0 .7.6 1.3 1.3 1.3zm8 0c.7 0 1.3-.6 1.3-1.3V20c0-.7-.6-1.3-1.3-1.3S24.7 19.3 24.7 20v16.7c0 .7.6 1.3 1.3 1.3z',
+  check: 'M20.6 33.4l-8-8c-.8-.8-2-.8-2.8 0l-1.4 1.4c-.8.8-.8 2 0 2.8l10.1 10.1c.8.8 2 .8 2.8 0L44.7 16.3c.8-.8.8-2 0-2.8l-1.4-1.4c-.8-.8-2-.8-2.8 0L20.6 33.4z',
+  refresh: 'M45.9 19.1C43.7 12.2 37.4 7.3 30 7.1c-8.7-.3-16 6.6-16.3 15.3h4.8c.3-6.1 5.3-11 11.5-11 5.1 0 9.5 3.3 11 7.9l-3.6-1c-1-.3-2 .3-2.2 1.3-.3 1 .3 2 1.3 2.2l8.2 2.3c.8.2 1.6-.3 1.8-1.1l2.3-8.2c.3-1-.3-2-1.3-2.2-1-.3-2 .3-2.2 1.3l-.9 3.2zM6.1 32.9C8.3 39.8 14.6 44.7 22 44.9c8.7.3 16-6.6 16.3-15.3h-4.8c-.3 6.1-5.3 11-11.5 11-5.1 0-9.5-3.3-11-7.9l3.6 1c1 .3 2-.3 2.2-1.3.3-1-.3-2-1.3-2.2L9.3 28c-.8-.2-1.6.3-1.8 1.1L5.2 37.3c-.3 1 .3 2 1.3 2.2 1 .3 2-.3 2.2-1.3l.9-3.2z',
   add: 'M27.3 24.7h-2.6v-2.6c0-.7-.6-1.4-1.4-1.4h-2.6c-.7 0-1.4.6-1.4 1.4v2.6h-2.6c-.7 0-1.4.6-1.4 1.4v2.6c0 .7.6 1.4 1.4 1.4h2.6v2.6c0 .7.6 1.4 1.4 1.4h2.6c.7 0 1.4-.6 1.4-1.4v-2.6h2.6c.7 0 1.4-.6 1.4-1.4v-2.6c0-.8-.6-1.4-1.4-1.4z',
   lock: 'M33.3 20h-2v-4c0-3.9-3.1-7-7-7h-1.3c-3.9 0-7 3.1-7 7v4h-2c-1.5 0-2.7 1.2-2.7 2.7v14.6c0 1.5 1.2 2.7 2.7 2.7h19.3c1.5 0 2.7-1.2 2.7-2.7V22.7c0-1.5-1.2-2.7-2.7-2.7zM19.3 16c0-2.2 1.8-4 4-4h1.3c2.2 0 4 1.8 4 4v4h-9.3v-4zM26 31.4v2.9c0 .7-.6 1.3-1.3 1.3h-1.3c-.7 0-1.3-.6-1.3-1.3v-2.9c-1-.6-1.7-1.7-1.7-3 0-1.9 1.5-3.4 3.4-3.4 1.9 0 3.4 1.5 3.4 3.4-.1 1.3-.8 2.4-1.7 3z',
   close: 'M29.4 24l8.3-8.3c1-1 1-2.6 0-3.5l-1.7-1.7c-1-1-2.6-1-3.5 0L24 18.8l-8.5-8.3c-1-1-2.6-1-3.5 0l-1.7 1.7c-1 1-1 2.6 0 3.5l8.3 8.3-8.3 8.5c-1 1-1 2.6 0 3.5l1.7 1.7c1 1 2.6 1 3.5 0l8.5-8.3 8.3 8.3c1 1 2.6 1 3.5 0l1.7-1.7c1-1 1-2.6 0-3.5L29.4 24z',
@@ -31,35 +30,30 @@ const iconPaths = {
   settings: 'M45.8 22.4l-4.2-.7c-.3-1-.7-1.9-1.2-2.8l2.5-3.4c.5-.7.5-1.7-.1-2.3l-3.4-3.4c-.6-.6-1.6-.7-2.3-.1l-3.4 2.5c-.9-.5-1.8-.9-2.8-1.2l-.7-4.2c-.1-.8-.8-1.4-1.6-1.4h-4.8c-.8 0-1.5.6-1.6 1.4l-.7 4.2c-1 .3-1.9.7-2.8 1.2l-3.4-2.5c-.7-.5-1.7-.5-2.3.1l-3.4 3.4c-.6.6-.7 1.6-.1 2.3l2.5 3.4c-.5.9-.9 1.8-1.2 2.8l-4.2.7c-.8.1-1.4.8-1.4 1.6v4.8c0 .8.6 1.5 1.4 1.6l4.2.7c.3 1 .7 1.9 1.2 2.8l-2.5 3.4c-.5.7-.5 1.7.1 2.3l3.4 3.4c.6.6 1.6.7 2.3.1l3.4-2.5c.9.5 1.8.9 2.8 1.2l.7 4.2c.1.8.8 1.4 1.6 1.4h4.8c.8 0 1.5-.6 1.6-1.4l.7-4.2c1-.3 1.9-.7 2.8-1.2l3.4 2.5c.7.5 1.7.5 2.3-.1l3.4-3.4c.6-.6.7-1.6.1-2.3l-2.5-3.4c.5-.9.9-1.8 1.2-2.8l4.2-.7c.8-.1 1.4-.8 1.4-1.6v-4.8c0-.8-.6-1.5-1.4-1.6zM26 33.6c-4.2 0-7.6-3.4-7.6-7.6s3.4-7.6 7.6-7.6 7.6 3.4 7.6 7.6-3.4 7.6-7.6 7.6z'
 };
 
-export default function SalesforceIcon({ category = 'utility', name, size = 'small', className = '' }) {
-  const sizeClass = size ? `slds-icon_${size}` : '';
-  
-  // Map SLDS size classes to actual pixel dimensions
-  const sizeMap = {
-    'xx-small': { width: '1rem', height: '1rem' },
-    'x-small': { width: '1.25rem', height: '1.25rem' },
-    'small': { width: '1.5rem', height: '1.5rem' },
-    'medium': { width: '2rem', height: '2rem' },
-    'large': { width: '3rem', height: '3rem' }
-  };
-  
-  const dimensions = sizeMap[size] || sizeMap['small'];
+export default function SalesforceIcon({ name, size = 'small', className = '' }) {
   const path = iconPaths[name] || iconPaths['info']; // fallback to info icon
   
+  // Check if this is being used as a button icon
+  const isButtonIcon = className && className.includes('slds-button__icon');
+  
+  // Build class names properly
+  // We keep slds-icon as base, but suppress size class if it's a button icon
+  // as the button container usually controls the size.
+  // Also suppress slds-icon class itself for button icons to avoid conflicts with slds-button__icon
+  const sizeClass = (size && !isButtonIcon) ? `slds-icon_${size}` : '';
+  const baseClass = isButtonIcon ? '' : 'slds-icon';
+  
+  const classes = [baseClass, sizeClass, className].filter(Boolean).join(' ');
+
   return (
-    <svg 
-      className={`slds-icon ${sizeClass} ${className}`.trim()} 
+    <svg
+      className={classes}
       aria-hidden="true"
-      style={{ 
-        width: dimensions.width, 
-        height: dimensions.height,
-        verticalAlign: 'middle',
-        display: 'inline-block',
-        fill: 'currentColor'
-      }}
+      focusable="false"
       viewBox="0 0 52 52"
+      style={{ fill: 'currentColor' }}
     >
-      <path d={path} />
+      <path d={path} fill="currentColor" />
     </svg>
   );
 }

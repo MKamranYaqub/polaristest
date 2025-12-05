@@ -125,6 +125,84 @@ input[type="range"] {
   background: var(--slds-g-color-surface-container-1);
   padding: var(--slds-g-spacing-4);
   border-radius: var(--slds-g-radius-border-3);
+  margin-bottom: var(--slds-g-spacing-3);
+}
+
+// Product section row 1: Product type label + action buttons
+.product-section-row-1 {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--slds-g-spacing-3);
+  margin-bottom: var(--slds-g-spacing-4);
+  align-items: center;
+  flex-wrap: wrap;
+
+  .product-type-label {
+    font-weight: var(--token-font-weight-semibold);
+    font-size: var(--token-font-size-md);
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .product-actions {
+    display: flex;
+    gap: var(--slds-g-spacing-2);
+    align-items: center;
+    flex-wrap: wrap;
+
+    // Ensure buttons use consistent SLDS sizing
+    .slds-button {
+      height: var(--slds-g-sizing-9);
+      padding: 0 var(--slds-g-spacing-4);
+    }
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--slds-g-spacing-3);
+
+    .product-type-label {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .product-actions {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .product-actions {
+      flex-direction: column;
+      gap: var(--slds-g-spacing-3);
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+}
+
+// Product section row 2: Grid of criteria fields
+.product-criteria-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--slds-g-spacing-4);
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .btl-product-selector {
@@ -220,20 +298,21 @@ input[type="range"] {
 }
 
 // Criteria grid (responsive 4-column)
+// Uses standard breakpoints: desktop (1024px), tablet (768px), mobile (480px)
 .criteria-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--slds-g-spacing-4);
   
-  @media (max-width: 1200px) {
+  @media (max-width: 1024px) {
     grid-template-columns: repeat(3, 1fr);
   }
   
-  @media (max-width: 900px) {
+  @media (max-width: 768px) {
     grid-template-columns: repeat(2, 1fr);
   }
   
-  @media (max-width: 600px) {
+  @media (max-width: 480px) {
     grid-template-columns: 1fr;
   }
 }
@@ -321,7 +400,7 @@ input[type="range"] {
     }
   }
   
-  @media (max-width: 1600px) {
+  @media (max-width: 1440px) {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
   
@@ -329,15 +408,15 @@ input[type="range"] {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   
-  @media (max-width: 1200px) {
+  @media (max-width: 1024px) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   
-  @media (max-width: 900px) {
+  @media (max-width: 768px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   
-  @media (max-width: 600px) {
+  @media (max-width: 480px) {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -371,7 +450,7 @@ input[type="range"] {
   box-shadow: none;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .first-charge-warning {
     grid-column: 1 / -1; /* full width on small screens */
   }
@@ -408,7 +487,7 @@ input[type="range"] {
       pointer-events: none;
     }
 
-    @media (max-width: 1200px) {
+    @media (max-width: 1024px) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -421,7 +500,7 @@ input[type="range"] {
     // Toggle occupies a single column so the next field is immediately adjacent
     grid-column: span 1;
 
-    @media (max-width: 1200px) {
+    @media (max-width: 1024px) {
       // With 2 columns at this breakpoint, keep the toggle to 1 column as well
       grid-column: span 1;
     }
@@ -478,14 +557,16 @@ input[type="range"] {
     }
   }
 
-  // Empty state / prompts
+  /* ⚠️ DEPRECATED: Use .empty-state from utilities.css instead! */
   .no-rates {
+    /* Extends .empty-state */
     padding: var(--token-spacing-2xl, 2rem);
     text-align: center;
     color: var(--token-text-muted, #6b6b6b);
     font-style: italic;
     
     .no-rates__title {
+      /* Extends .empty-state__title */
       font-size: 1.1rem;
       font-weight: 500;
       margin-bottom: var(--token-spacing-sm, 0.5rem);
@@ -494,6 +575,7 @@ input[type="range"] {
     }
     
     .no-rates__subtitle {
+      /* Extends .empty-state__subtitle */
       font-size: 0.9rem;
       color: var(--token-text-secondary, #6b6b6b);
       font-style: italic;
@@ -501,8 +583,9 @@ input[type="range"] {
   }
 }
 
-// Empty state for table cells
+/* ⚠️ DEPRECATED: Use .empty-state__cell from utilities.css instead! */
 .no-rates__cell {
+  /* Extends .empty-state__cell */
   padding: var(--token-spacing-2xl, 2rem) !important;
   text-align: center !important;
   color: var(--token-text-muted, #6b6b6b);
@@ -773,7 +856,8 @@ input[type="range"] {
 }
 
 /* Responsive tweaks for tablet and mobile */
-@media (max-width: 900px) {
+/* Uses standard breakpoints: tablet (768px), mobile (480px) */
+@media (max-width: 768px) {
   .calculator-container {
     padding: $spacing-sm;
     margin: 0;
@@ -816,7 +900,7 @@ input[type="range"] {
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .calculator-container {
     padding: $spacing-xs;
   }
@@ -887,5 +971,63 @@ input[type="range"] {
     .switch-label {
       font-size: 0.85rem;
     }
+  }
+}
+
+// BTL Slider Controls
+.btl-slider-controls {
+  padding: 0.5rem;
+
+  .slds-form-element {
+    margin-bottom: 1rem;
+  }
+
+  .slds-slider {
+    width: 100%;
+  }
+
+  .manual-mode-indicator {
+    margin-top: 0.5rem;
+  }
+}
+
+// BTL Results Summary
+.btl-results-summary {
+  .no-results {
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .results-table-wrapper {
+    .th-label {
+      width: 200px;
+    }
+  }
+
+  .action-buttons-row {
+    margin-top: 1rem;
+  }
+}
+
+// BTL Additional Fees
+.btl-additional-fees {
+  .fees-grid {
+    margin-top: 1rem;
+  }
+}
+
+// BTL Calculator
+.btl-calculator {
+  .input-card {
+    margin-bottom: 1rem;
+  }
+
+  .action-card {
+    margin-bottom: 1rem;
+  }
+
+  .empty-results {
+    text-align: center;
+    padding: 2rem;
   }
 }

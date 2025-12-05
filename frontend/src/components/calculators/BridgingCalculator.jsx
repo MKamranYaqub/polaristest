@@ -1399,7 +1399,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
       {/* Breadcrumbs */}
       <Breadcrumbs items={[
         { label: 'Home', path: '/' },
-        { label: 'Calculator', path: '/calculator/btl' },
+        { label: 'Calculator', path: '/calculator' },
         { label: 'Bridging', path: '/calculator/bridging' }
       ]} />
       
@@ -1408,7 +1408,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
         <QuoteReferenceHeader reference={currentQuoteRef} />
         {currentQuoteId && (
           <button 
-            className="btn-new-quote"
+            className="slds-button slds-button_success"
             onClick={handleCancelQuote}
             title="Start a new quote"
           >

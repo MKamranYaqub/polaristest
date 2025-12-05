@@ -14,18 +14,34 @@
   gap: 10px;
 }
 
+/* ⚠️ DEPRECATED: Use .slds-pagination and .slds-pagination__button instead!
+   Migration path:
+   .pagination        → .slds-pagination__controls
+   .pagination button → .slds-pagination__button
+*/
+
 .pagination {
+  /* Extends .slds-pagination__controls */
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .pagination button {
+  /* Extends .slds-pagination__button */
   padding: 8px 16px;
   border: 1px solid var(--token-border-subtle, #ddd);
   background-color: var(--token-layer-surface, white);
   cursor: pointer;
   border-radius: 4px;
+  font-size: var(--token-font-size-sm);
+  font-weight: var(--token-font-weight-medium);
+  transition: all 0.15s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: var(--slds-g-color-surface-container-3);
+  border-color: var(--token-interactive);
 }
 
 .pagination button:disabled {
@@ -36,6 +52,8 @@
 
 .pagination span {
   margin: 0 10px;
+  font-size: var(--token-font-size-sm);
+  color: var(--token-text-primary);
 }
 
 input[type="checkbox"] {
@@ -90,15 +108,22 @@ input[type="checkbox"] {
   color: var(--token-text-secondary, #666);
 }
 
+/* ⚠️ DEPRECATED: Use .slds-input and .slds-select directly!
+   These extend SLDS classes for backward compatibility. */
 .filters input,
 .filters select {
+  /* Extends .slds-input / .slds-select */
   padding: var(--slds-g-spacing-2) var(--slds-g-spacing-3);
   border: 1px solid var(--slds-g-color-border-1);
   border-radius: var(--slds-g-radius-border-2);
   font-size: 14px;
+  line-height: 1.875rem;
+  min-height: var(--slds-g-sizing-9);
   background-color: var(--slds-g-color-surface-container-1);
   color: var(--slds-g-color-on-surface-2);
   box-sizing: border-box;
+  font-family: var(--slds-font-family);
+  transition: border-color 0.1s linear, box-shadow 0.1s linear;
 }
 
 .filters select {
@@ -120,7 +145,12 @@ input[type="checkbox"] {
   overflow-x: auto;
 }
 
+/* ⚠️ DEPRECATED: Use .slds-table directly!
+   Legacy rates-table class kept for backward compatibility.
+   Migration path: .rates-table → .slds-table
+*/
 .rates-table {
+  /* Extends .slds-table */
   width: 100%;
   border-collapse: collapse;
   white-space: nowrap;
@@ -128,17 +158,20 @@ input[type="checkbox"] {
 
 .rates-table th,
 .rates-table td {
+  /* Extends .slds-table th/td */
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid var(--token-border-subtle, #ddd);
 }
 
 .rates-table th {
+  /* Extends .slds-table th */
   background-color: var(--token-layer-background, #f8f9fa);
   font-weight: 600;
 }
 
 .rates-table tr:hover {
+  /* Extends .slds-table tr:hover */
   background-color: var(--token-layer-background, #f5f5f5);
 }
 
@@ -174,8 +207,19 @@ input[type="checkbox"] {
   background-color: color-mix(in srgb, var(--token-critical, #dc3545) 90%, black);
 }
 
-/* Loading State */
+/* ============================================
+   LOADING & ERROR STATES
+   ⚠️ DEPRECATED: Use shared utility classes instead!
+   
+   Migration path:
+   .loading-container → .loading-state
+   .loading-spinner   → .loading-spinner (from utilities.css)
+   .error-container   → .error-state
+   .error-message     → .error-message (from utilities.css)
+   ============================================ */
+
 .loading-container {
+  /* Extends .loading-state */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -186,28 +230,30 @@ input[type="checkbox"] {
 }
 
 .loading-spinner {
+  /* Shared utility - defined in utilities.css */
   border: 4px solid var(--token-layer-surface, #f3f3f3);
   border-top: 4px solid var(--token-interactive, #007bff);
   border-radius: 50%;
   width: 40px;
   height: 40px;
-  animation: spin 1s linear infinite;
+  animation: spinner-spin 1s linear infinite;
   margin-bottom: 20px;
 }
 
-@keyframes spin {
+@keyframes spinner-spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
-/* Error State */
 .error-container {
+  /* Extends .error-state */
   display: flex;
   justify-content: center;
   padding: 40px;
 }
 
 .error-message {
+  /* Shared utility - defined in utilities.css */
   background-color: color-mix(in srgb, var(--token-critical, #dc3545) 10%, white);
   border: 1px solid var(--token-critical, #dc3545);
   border-radius: 8px;
@@ -217,16 +263,19 @@ input[type="checkbox"] {
 }
 
 .error-message h3 {
+  /* Extends .error-message__title */
   color: var(--token-critical, #dc3545);
   margin: 0 0 10px 0;
 }
 
 .error-message p {
+  /* Extends .error-message__text */
   margin: 0 0 20px 0;
   color: var(--token-text-secondary, #666);
 }
 
 .error-message button {
+  /* Extends .error-message__button */
   background-color: var(--token-critical, #dc3545);
   color: var(--token-layer-surface, white);
   border: none;
@@ -240,7 +289,8 @@ input[type="checkbox"] {
 }
 
 /* Responsive Styles for Mobile and Tablet */
-@media (max-width: 900px) {
+/* Uses standard breakpoints: tablet (768px), mobile (480px) */
+@media (max-width: 768px) {
   .rates-container {
     padding: 16px;
   }
@@ -274,7 +324,7 @@ input[type="checkbox"] {
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .rates-container {
     padding: 12px;
   }
@@ -317,7 +367,7 @@ input[type="checkbox"] {
   z-index: 6;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   /* On very small screens, sticky columns can interfere with layout; fall back to normal flow */
   .sticky-action {
     position: static;

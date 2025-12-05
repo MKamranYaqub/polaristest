@@ -105,8 +105,9 @@ export default function BTLCalculator({ initialQuote = null }) {
       // Load inputs
       inputs.loadFromQuote(quote);
       
-      // Load results state
-      resultsState.loadResultsFromQuote(quote);
+      // Load results state with selected range for backward compatibility
+      // This ensures old quote overrides (without range prefix) are migrated correctly
+      resultsState.loadResultsFromQuote(quote, inputs.selectedRange);
       
       // Update quote tracking
       setCurrentQuoteId(quote.id);
@@ -247,7 +248,7 @@ export default function BTLCalculator({ initialQuote = null }) {
         {/* Left Column - Inputs */}
         <div className="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
           {/* Basic Inputs */}
-          <div className="slds-card" style={{ marginBottom: '1rem' }}>
+          <div className="slds-card input-card">
             <div className="slds-card__header slds-grid">
               <header className="slds-media slds-media_center slds-has-flexi-truncate">
                 <div className="slds-media__body">
@@ -329,7 +330,7 @@ export default function BTLCalculator({ initialQuote = null }) {
         {/* Right Column - Results */}
         <div className="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
           {/* Action Buttons */}
-          <div className="slds-card" style={{ marginBottom: '1rem' }}>
+          <div className="slds-card action-card">
             <div className="slds-card__body slds-card__body_inner">
               <div className="slds-button-group" role="group">
                 <button
@@ -375,7 +376,7 @@ export default function BTLCalculator({ initialQuote = null }) {
                 isReadOnly={isReadOnly}
               />
             ) : (
-              <div className="slds-text-align_center" style={{ padding: '2rem' }}>
+              <div className="empty-results">
                 <p className="slds-text-body_regular slds-text-color_weak">
                   Enter property details and click Calculate to see results
                 </p>

@@ -92,16 +92,27 @@
   gap: var(--token-spacing-xs);
 }
 
+/* ⚠️ DEPRECATED: Use .slds-input directly for date inputs! */
 .filter-date-range input[type="date"] {
-  /* Use SLDS tokens so admin inputs match app-wide controls */
-  padding: var(--slds-g-spacing-2) var(--slds-g-spacing-3);
+  /* Extends .slds-input */
+  padding: 0 var(--slds-g-spacing-3);
   border: 1px solid var(--slds-g-color-border-1);
   border-radius: var(--slds-g-radius-border-2);
   font-size: 0.85rem;
+  line-height: 1.875rem;
+  height: var(--slds-g-sizing-9);
   min-width: 130px;
   background-color: var(--slds-g-color-surface-container-1);
   color: var(--slds-g-color-on-surface-2);
   box-sizing: border-box;
+  font-family: var(--slds-font-family);
+  transition: border-color 0.1s linear, box-shadow 0.1s linear;
+}
+
+.filter-date-range input[type="date"]:focus {
+  outline: 0;
+  border-color: var(--slds-g-color-accent-2);
+  box-shadow: 0 0 0 2px rgba(2, 80, 217, 0.2);
 }
 
 .filter-date-range .date-separator {
@@ -146,87 +157,11 @@
   text-decoration: underline;
 }
 
-/* ============================================
-   ADMIN TABLE BUTTONS
-   These are legacy button classes for admin tables.
-   For new code, use SLDS button classes:
-   - .btn-primary    → slds-button slds-button_brand
-   - .btn-secondary  → slds-button slds-button_outline-brand
-   - .btn-danger     → slds-button slds-button_destructive
-   - .btn-neutral    → slds-button slds-button_neutral
-   ============================================ */
-
-.btn-primary {
-  background: var(--token-interactive);
-  color: var(--token-text-inverse);
-  border: none;
-  padding: var(--token-spacing-sm) var(--token-spacing-lg);
-  border-radius: var(--token-radius-btn);
-  font-weight: var(--token-font-weight-medium);
-  font-size: var(--token-font-size-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: var(--token-shadow-soft);
-}
-
-.btn-primary:hover {
-  background: var(--token-interactive-hover);
-  box-shadow: var(--token-shadow-modal);
-  transform: translateY(-1px);
-}
-
-.btn-secondary {
-  background: var(--token-layer-surface);
-  color: var(--token-interactive);
-  border: 1px solid var(--token-interactive);
-  padding: var(--token-spacing-sm) var(--token-spacing-lg);
-  border-radius: var(--token-radius-btn);
-  font-weight: var(--token-font-weight-medium);
-  font-size: var(--token-font-size-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-secondary:hover {
-  background: var(--token-layer-hover);
-  border-color: var(--token-interactive-hover);
-  transform: translateY(-1px);
-}
-
-.btn-danger {
-  background: var(--token-critical);
-  color: var(--token-text-inverse);
-  border: none;
-  padding: var(--token-spacing-sm) var(--token-spacing-lg);
-  border-radius: var(--token-radius-btn);
-  font-weight: var(--token-font-weight-medium);
-  font-size: var(--token-font-size-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: var(--token-shadow-soft);
-}
-
-.btn-danger:hover {
-  background: var(--token-critical-hover);
-  box-shadow: var(--token-shadow-modal);
-  transform: translateY(-1px);
-}
-
-.btn-neutral {
-  background: var(--token-layer-surface);
-  color: var(--token-text-primary);
-  border: 1px solid var(--token-border-subtle);
-  padding: var(--token-spacing-sm) var(--token-spacing-lg);
-  border-radius: var(--token-radius-btn);
-  font-weight: var(--token-font-weight-medium);
-  font-size: var(--token-font-size-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-neutral:hover {
-  background: var(--token-layer-hover);
-  border-color: var(--token-border-strong);
+/* Legacy button classes removed - Use SLDS classes instead:
+   .slds-button .slds-button_brand (primary actions)
+   .slds-button .slds-button_outline-brand (secondary actions)
+   .slds-button .slds-button_destructive (delete/dangerous actions)
+   .slds-button .slds-button_neutral (neutral actions) */
 }
 
 .btn-neutral:disabled {
@@ -235,7 +170,7 @@
 }
 
 .btn-neutral:disabled:hover {
-  background: var(--token-layer-surface);
+  background: var(--slds-g-color-surface-container-1);
   transform: none;
 }
 
@@ -252,14 +187,25 @@
   border: 1px solid var(--token-border-subtle);
 }
 
-/* Pagination Controls */
+/* ============================================
+   PAGINATION CONTROLS
+   ⚠️ DEPRECATED: Use .slds-pagination classes instead!
+   
+   Migration path:
+   .pagination-controls → .slds-pagination
+   .pagination-info     → .slds-pagination__info
+   .rows-per-page       → .slds-pagination__rows
+   ============================================ */
+
 .pagination-controls {
+  /* Extends .slds-pagination */
   display: flex;
   align-items: center;
   gap: var(--token-spacing-md);
 }
 
 .pagination-info {
+  /* Extends .slds-pagination__info */
   font-weight: var(--token-font-weight-medium);
   color: var(--token-text-primary);
   white-space: nowrap;
@@ -267,28 +213,33 @@
 }
 
 .rows-per-page {
+  /* Extends .slds-pagination__rows */
   display: flex;
   align-items: center;
   gap: var(--token-spacing-sm);
 }
 
 .rows-per-page label {
+  /* Extends .slds-pagination__rows label */
   font-weight: var(--token-font-weight-medium);
   color: var(--token-text-secondary);
   font-size: var(--token-font-size-xs);
 }
 
 .rows-per-page select {
-  /* Use SLDS tokens to match app controls */
+  /* Extends .slds-pagination__rows select (and .slds-select) */
   padding: var(--slds-g-spacing-2) var(--slds-g-spacing-3);
   border: 1px solid var(--slds-g-color-border-1);
   border-radius: var(--slds-g-radius-border-2);
   font-size: var(--token-font-size-sm);
+  line-height: 1.875rem;
+  min-height: var(--slds-g-sizing-9);
   background: var(--slds-g-color-surface-container-1);
   color: var(--slds-g-color-on-surface-2);
   cursor: pointer;
   transition: border-color 0.2s ease, box-shadow 0.15s ease;
   box-sizing: border-box;
+  font-family: var(--slds-font-family);
 }
 
 .rows-per-page select:hover {
@@ -296,9 +247,9 @@
 }
 
 .rows-per-page select:focus {
-  outline: none;
+  outline: 0;
   border-color: var(--slds-g-color-accent-2);
-  box-shadow: 0 0 0 3px rgba(2,80,217,0.08);
+  box-shadow: 0 0 0 2px rgba(2, 80, 217, 0.2);
 }
 
 /* Filters Section */
@@ -314,6 +265,9 @@
   box-shadow: var(--token-shadow-soft);
 }
 
+/* ⚠️ DEPRECATED: Use .slds-form-element instead!
+   Legacy filter field wrapper kept for backward compatibility.
+   Migration: Wrap inputs in .slds-form-element > .slds-form-element__control */
 .filter-field {
   display: flex;
   flex-direction: column;
@@ -330,16 +284,22 @@
   letter-spacing: 0.5px;
 }
 
+/* ⚠️ DEPRECATED: These extend .slds-select - use .slds-select directly!
+   Kept for backward compatibility with existing admin components. */
 .filter-field select {
-  padding: var(--slds-g-spacing-2) var(--slds-g-spacing-3);
+  /* Extends .slds-select */
+  padding: 0 var(--slds-g-spacing-3);
   border: 1px solid var(--slds-g-color-border-1);
   border-radius: var(--slds-g-radius-border-2);
   font-size: var(--token-font-size-sm);
+  line-height: 1.875rem;
+  height: var(--slds-g-sizing-9);
   background: var(--slds-g-color-surface-container-1);
   color: var(--slds-g-color-on-surface-2);
   cursor: pointer;
   transition: border-color 0.2s ease, box-shadow 0.15s ease;
   box-sizing: border-box;
+  font-family: var(--slds-font-family);
 }
 
 .filter-field select:hover {
@@ -347,6 +307,28 @@
 }
 
 .filter-field select:focus {
+  outline: none;
+  border-color: var(--slds-g-color-accent-2);
+  box-shadow: 0 0 0 3px rgba(2,80,217,0.08);
+}
+
+/* ⚠️ DEPRECATED: Use .slds-input directly! */
+.filter-field input {
+  /* Extends .slds-input */
+  padding: 0 var(--slds-g-spacing-3);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
+  font-size: var(--token-font-size-sm);
+  line-height: 1.875rem;
+  height: var(--slds-g-sizing-9);
+  background: var(--slds-g-color-surface-container-1);
+  color: var(--slds-g-color-on-surface-2);
+  transition: border-color 0.2s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+  font-family: var(--slds-font-family);
+}
+
+.filter-field input:focus {
   outline: none;
   border-color: var(--slds-g-color-accent-2);
   box-shadow: 0 0 0 3px rgba(2,80,217,0.08);
@@ -361,12 +343,26 @@
   background: var(--token-layer-surface);
 }
 
-/* Professional Table Styling */
+/* ⚠️ DEPRECATED: Use .slds-table directly!
+   Legacy professional-table class kept for backward compatibility.
+   
+   Migration path:
+   .professional-table                    → .slds-table
+   .professional-table thead th.sortable  → .slds-table th.sortable
+   .professional-table thead th.sorted-asc → .slds-table th.sorted-asc
+   .professional-table thead th.sorted-desc → .slds-table th.sorted-desc
+   .professional-table thead th.sticky-action → .slds-table th.sticky-action
+   .professional-table tbody td.sticky-action → .slds-table td.sticky-action
+*/
+
+/* Professional Table Styling - Extends .slds-table */
 .professional-table {
+  /* Extends .slds-table */
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   background: var(--token-layer-surface);
+  font-family: var(--slds-font-family);
 }
 
 .professional-table thead {
@@ -374,6 +370,7 @@
 }
 
 .professional-table thead th {
+  /* Extends .slds-table th */
   padding: var(--token-spacing-lg) var(--token-spacing-md);
   text-align: left;
   font-weight: var(--token-font-weight-semibold);
@@ -385,9 +382,11 @@
   white-space: nowrap;
   position: relative;
   background: var(--token-layer-surface);
+  line-height: 1.5;
 }
 
 .professional-table thead th.sortable {
+  /* Extends .slds-table th.sortable */
   cursor: pointer;
   user-select: none;
   transition: background-color 0.2s ease;
@@ -405,24 +404,28 @@
 }
 
 .professional-table thead th.sorted-asc::after {
+  /* Extends .slds-table th.sorted-asc */
   content: '▲';
   opacity: 1;
   color: var(--token-interactive);
 }
 
 .professional-table thead th.sorted-desc::after {
+  /* Extends .slds-table th.sorted-desc */
   content: '▼';
   opacity: 1;
   color: var(--token-interactive);
 }
 
 .professional-table tbody td {
+  /* Extends .slds-table td */
   padding: var(--token-spacing-md);
   font-size: var(--token-font-size-sm);
   color: var(--token-text-primary);
   border-bottom: 1px solid var(--token-border-subtle);
   white-space: nowrap;
   background: var(--token-layer-surface);
+  line-height: 1.5;
 }
 
 .professional-table tbody tr {
@@ -472,7 +475,7 @@
   font-size: var(--token-font-size-xs);
 }
 
-/* Sticky Actions Column - FIXED */
+/* Sticky Actions Column - Extends .slds-table sticky-action */
 .sticky-action {
   position: sticky;
   right: 0;
@@ -482,24 +485,40 @@
 }
 
 .professional-table thead th.sticky-action {
+  /* Extends .slds-table th.sticky-action */
   background: var(--token-layer-surface) !important;
   z-index: calc(var(--token-z-base) + 1) !important;
   position: sticky;
   right: 0;
+  box-shadow: var(--token-shadow-soft);
 }
 
 .professional-table tbody td.sticky-action {
+  /* Extends .slds-table td.sticky-action */
   background: var(--token-layer-surface) !important;
   position: sticky;
   right: 0;
+  z-index: var(--token-z-base);
+  box-shadow: var(--token-shadow-soft);
 }
 
 .professional-table tbody tr:hover td.sticky-action {
   background: var(--token-layer-hover) !important;
 }
 
-/* Loading State */
+/* ============================================
+   LOADING & ERROR STATES
+   ⚠️ DEPRECATED: Use shared utility classes instead!
+   
+   Migration path:
+   .loading-overlay → .loading-state
+   .loading-spinner → .loading-spinner (from utilities.css)
+   .error-state     → .error-state (from utilities.css)
+   .error-box       → .error-message
+   ============================================ */
+
 .loading-overlay {
+  /* Extends .loading-state */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -510,28 +529,30 @@
 }
 
 .loading-spinner {
+  /* Shared utility - defined in utilities.css */
   width: 48px;
   height: 48px;
   border: 4px solid var(--token-border-subtle);
   border-top: 4px solid var(--token-interactive);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spinner-spin 1s linear infinite;
   margin-bottom: var(--token-spacing-xl);
 }
 
-@keyframes spin {
+@keyframes spinner-spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
 .loading-text {
+  /* Extends .loading-text from utilities.css */
   color: var(--token-text-secondary);
   font-size: var(--token-font-size-md);
   font-weight: var(--token-font-weight-medium);
 }
 
-/* Error State */
 .error-state {
+  /* Shared utility - defined in utilities.css */
   display: flex;
   justify-content: center;
   padding: var(--token-spacing-2xl);
@@ -539,6 +560,7 @@
 }
 
 .error-box {
+  /* Extends .error-message */
   background: var(--token-error-bg);
   border: 2px solid var(--token-critical);
   border-radius: var(--token-radius-md);

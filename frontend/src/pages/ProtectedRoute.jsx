@@ -2,13 +2,13 @@ import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const ProtectedRoute = ({ requiredAccessLevel = 5, allowedAccessLevels = null }) => {
+const ProtectedRoute = ({ requiredAccessLevel = 5, allowedAccessLevels = null, children }) => {
   const { user, loading, hasPermission } = useAuth();
 
   // Show loading state while checking authentication
   if (loading) {
     return (
-      <div className="slds-p-around_large" style={{ textAlign: 'center' }}>
+      <div className="slds-p-around_large text-align-center">
         <div className="slds-spinner_container">
           <div role="status" className="slds-spinner slds-spinner_medium">
             <span className="slds-assistive-text">Loading...</span>
@@ -44,7 +44,7 @@ const ProtectedRoute = ({ requiredAccessLevel = 5, allowedAccessLevels = null })
   }
 
   // User is authenticated and has sufficient permissions
-  return <Outlet />;
+  return children ? children : <Outlet />;
 };
 
 export default ProtectedRoute;

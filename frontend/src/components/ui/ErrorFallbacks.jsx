@@ -1,4 +1,5 @@
 import React from 'react';
+import '../../styles/ErrorComponents.css';
 
 /**
  * Fallback UI for Calculator errors
@@ -7,7 +8,7 @@ import React from 'react';
 export function CalculatorErrorFallback({ error, reset }) {
   return (
     <div className="slds-scope">
-      <div className="slds-box slds-m-around_large" style={{ textAlign: 'center', padding: '3rem' }}>
+      <div className="slds-box slds-m-around_large error-fallback-container">
         <div className="slds-illustration slds-illustration_large">
           <svg className="slds-illustration__svg" viewBox="0 0 470 230" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
             <g transform="translate(-53 -80)">
@@ -21,7 +22,7 @@ export function CalculatorErrorFallback({ error, reset }) {
           Calculator Error
         </h2>
         
-        <p className="slds-text-body_regular slds-m-top_small slds-m-bottom_medium" style={{ color: 'var(--token-text-muted)' }}>
+        <p className="slds-text-body_regular slds-m-top_small slds-m-bottom_medium error-text-muted">
           We encountered an error while calculating your results.
           <br />
           Don't worry - your data is safe.
@@ -51,14 +52,9 @@ export function CalculatorErrorFallback({ error, reset }) {
         </div>
 
         {import.meta.env.DEV && error && (
-          <div className="slds-box slds-box_small slds-m-top_large" style={{
-            backgroundColor: 'var(--token-ui-background-disabled)',
-            textAlign: 'left',
-            fontSize: 'var(--token-font-size-xs)',
-            fontFamily: 'monospace'
-          }}>
+          <div className="slds-box slds-box_small slds-m-top_large error-details-box">
             <strong>Error Details (Dev Only):</strong>
-            <pre style={{ color: 'var(--token-critical)', marginTop: '0.5rem' }}>
+            <pre className="error-details-pre">
               {error.toString()}
             </pre>
           </div>
@@ -74,7 +70,7 @@ export function CalculatorErrorFallback({ error, reset }) {
 export function RatesErrorFallback({ error, reset }) {
   return (
     <div className="slds-scope">
-      <div className="slds-notify_container" style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 9999 }}>
+      <div className="slds-notify_container rates-error-container">
         <div className="slds-notify slds-notify_alert slds-theme_error" role="alert">
           <span className="slds-assistive-text">Error</span>
           <h2>
@@ -97,16 +93,11 @@ export function RatesErrorFallback({ error, reset }) {
 
       <div className="slds-box slds-m-around_medium">
         <h3 className="slds-text-heading_small">Rates Management</h3>
-        <p className="slds-m-top_small" style={{ color: 'var(--token-text-muted)' }}>
+        <p className="slds-m-top_small error-text-muted">
           An error occurred while loading the rates data. This could be due to a connection issue or invalid data format.
         </p>
         
         <div className="slds-button-group slds-m-top_medium">
-          {reset && (
-            <button className="slds-button slds-button_brand" onClick={reset}>
-              Retry
-            </button>
-          )}
           <button className="slds-button slds-button_neutral" onClick={() => window.location.reload()}>
             Reload Page
           </button>

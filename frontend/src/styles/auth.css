@@ -29,6 +29,24 @@
   gap: 20px;
 }
 
+/* ⚠️ DEPRECATED: Use .slds-form-element structure instead!
+   Legacy form-group class kept for backward compatibility.
+   
+   Migration:
+   <div className="form-group">
+     <label>Name</label>
+     <input />
+   </div>
+   
+   BECOMES:
+   
+   <div className="slds-form-element">
+     <label className="slds-form-element__label">Name</label>
+     <div className="slds-form-element__control">
+       <input className="slds-input" />
+     </div>
+   </div>
+*/
 .form-group {
   display: flex;
   flex-direction: column;
@@ -38,40 +56,32 @@
 .form-group label {
   font-weight: 500;
   color: var(--token-text-secondary, #555);
+  font-size: 0.875rem;
 }
 
+/* ⚠️ DEPRECATED: Use .slds-input directly! */
 .form-group input {
-  padding: 12px;
-  border: 1px solid var(--token-border-subtle, #ddd);
-  border-radius: 6px;
+  /* Extends .slds-input */
+  padding: 0 var(--slds-g-spacing-3);
+  border: 1px solid var(--slds-g-color-border-1);
+  border-radius: var(--slds-g-radius-border-2);
   font-size: 16px;
+  line-height: 1.875rem;
+  min-height: 2.5rem;
+  background-color: var(--slds-g-color-surface-container-1);
+  color: var(--slds-g-color-on-surface-2);
   transition: border-color 0.3s;
+  font-family: var(--slds-font-family);
+  box-sizing: border-box;
 }
 
 .form-group input:focus {
   border-color: var(--token-interactive, #2563eb);
   outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
-.auth-button {
-  background-color: var(--token-interactive, #2563eb);
-  color: var(--token-layer-surface, white);
-  padding: 12px;
-  border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.auth-button:hover {
-  background-color: var(--token-interactive-hover, #1d4ed8);
-}
-
-.auth-button:disabled {
-  background-color: color-mix(in srgb, var(--token-interactive, #2563eb) 35%, white);
-  cursor: not-allowed;
-}
+/* Legacy auth-button class removed - Use .slds-button .slds-button_brand instead */
 
 .auth-switch {
   margin-top: 20px;

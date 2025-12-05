@@ -25,22 +25,21 @@ export default function ModalShell({ isOpen, onClose, title, children, footer, m
   if (!isOpen) return null;
 
   return (
-    // Keep backdrop inert (clicks won't close modal) — close via Esc key or footer buttons
-    <div className="modal-overlay">
+    <div className="slds-backdrop slds-backdrop_open">
       <div
-        className="modal-content"
+        className="slds-modal__container"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth, maxHeight, overflowY: 'auto' }}
+        style={{ maxWidth, maxHeight }}
       >
-        <div className="modal-header" style={{ background: 'var(--token-brand-header)', padding: 'var(--token-spacing-lg) var(--token-spacing-xl)' }}>
-          <h2 style={{ margin: 0, fontSize: 'var(--token-font-size-lg)', fontWeight: 700, color: 'var(--token-text-inverse)' }}>{title}</h2>
+        <div className="slds-modal__header" style={{ background: 'var(--token-brand-header)', padding: 'var(--token-spacing-lg) var(--token-spacing-xl)' }}>
+          <h2 className="slds-modal__title" style={{ margin: 0, fontSize: 'var(--token-font-size-lg)', fontWeight: 700, color: 'var(--token-text-inverse)' }}>{title}</h2>
         </div>
 
-        <div className="modal-body" style={{ padding: 'var(--token-spacing-lg) var(--token-spacing-xl)' }}>
+        <div className="slds-modal__content" style={{ padding: 'var(--token-spacing-lg) var(--token-spacing-xl)', overflowY: 'auto' }}>
           {children}
         </div>
 
-        <div className="modal-footer slds-modal__footer">
+        <div className="slds-modal__footer">
           {footer}
         </div>
       </div>

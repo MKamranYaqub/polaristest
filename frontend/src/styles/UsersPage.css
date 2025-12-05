@@ -1,0 +1,30 @@
+/* Users Page Styling */
+
+.users-page-header h1 {
+  margin-bottom: 0.5rem;
+  font-size: 1.75rem;
+  font-weight: bold;
+}
+
+.users-page-header p {
+  margin: 0;
+  color: #706e6b;
+}
+
+.success-message-box {
+  background: #e8f5e9;
+  border: 2px solid #4caf50;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.success-message-box h3 {
+  color: #2e7d32;
+  margin: 0 0 0.5rem 0;
+}
+
+.success-message-box p {
+  margin: 0 0 1rem 0;
+}

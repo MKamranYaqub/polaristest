@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import SalesforceIcon from '../shared/SalesforceIcon';
+import '../../styles/ThemeToggle.css';
 
 /**
  * ThemeToggle - Quick toggle button for light/dark theme
@@ -43,23 +44,7 @@ const ThemeToggle = () => {
     <button
       onClick={cycleTheme}
       title={getTooltip()}
-      className="flex-center radius-sm hover-bg"
-      style={{
-        background: 'transparent',
-        border: '1px solid var(--cds-border-subtle)',
-        padding: 'var(--token-spacing-sm)',
-        cursor: 'pointer',
-        color: 'var(--cds-icon-primary)',
-        transition: 'all 0.2s ease',
-        width: '40px',
-        height: '40px',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = 'var(--cds-layer-hover)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'transparent';
-      }}
+      className="flex-center radius-sm hover-bg theme-toggle-btn"
     >
       {getIcon()}
     </button>
