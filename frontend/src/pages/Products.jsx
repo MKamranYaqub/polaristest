@@ -30,6 +30,14 @@ const Products = () => {
   });
   const [submittingSupport, setSubmittingSupport] = useState(false);
 
+  // Inline editing state (Admin only)
+  const [editingCell, setEditingCell] = useState(null); // { rateId, field, value }
+  const [editValue, setEditValue] = useState('');
+  const [savingRate, setSavingRate] = useState(false);
+
+  // Check if user is admin (access_level = 1)
+  const isAdmin = user?.access_level === 1;
+
   // Initialize support form with user data
   useEffect(() => {
     if (user) {
@@ -88,6 +96,119 @@ const Products = () => {
       });
     } finally {
       setSubmittingSupport(false);
+    }
+  };
+
+  // =============================================
+  // INLINE EDITING FUNCTIONS (Admin Only)
+  // =============================================
+
+  // Start editing a rate cell
+  const handleStartEdit = (rateId, field, currentValue, context) => {
+    console.log('handleStartEdit called:', { rateId, field, currentValue, context, isAdmin });
+    if (!isAdmin) {
+      console.log('Not admin, ignoring edit');
+      return;
+    }
+    if (!rateId) {
+      console.log('No rateId provided, ignoring edit');
+      return;
+    }
+    setEditingCell({ rateId, field, context });
+    setEditValue(currentValue?.toString() || '');
+  };
+
+  // Cancel editing
+  const handleCancelEdit = () => {
+    setEditingCell(null);
+    setEditValue('');
+  };
+
+  // Save edited rate
+  const handleSaveRate = async () => {
+    if (!editingCell || !isAdmin) return;
+
+    const { rateId, field, context } = editingCell;
+    const newValue = parseFloat(editValue);
+
+    // Validate
+    if (isNaN(newValue) || newValue < 0 || newValue > 100) {
+      showToast({
+        kind: 'error',
+        title: 'Invalid Value',
+        subtitle: 'Rate must be a number between 0 and 100'
+      });
+      return;
+    }
+
+    setSavingRate(true);
+
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const token = localStorage.getItem('auth_token');
+
+      console.log('Saving rate - token exists:', !!token);
+
+      // Determine table name based on current tab
+      let tableName = 'rates_flat';
+      if (mainTab === 'bridging') {
+        tableName = 'bridge_fusion_rates_full';
+      }
+
+      const response = await fetch(`${API_BASE}/api/rates/${rateId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          field,
+          value: newValue,
+          tableName,
+          oldValue: context?.oldValue,
+          context: {
+            set_key: context?.set_key,
+            product: context?.product,
+            property: context?.property,
+            min_ltv: context?.min_ltv,
+            max_ltv: context?.max_ltv
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update rate');
+      }
+
+      showToast({
+        kind: 'success',
+        title: 'Rate Updated',
+        subtitle: `${field} updated to ${newValue}%`
+      });
+
+      // Refresh rates data
+      fetchRates();
+      handleCancelEdit();
+
+    } catch (err) {
+      console.error('Error updating rate:', err);
+      showToast({
+        kind: 'error',
+        title: 'Update Failed',
+        subtitle: err.message || 'Failed to update rate. Please try again.'
+      });
+    } finally {
+      setSavingRate(false);
+    }
+  };
+
+  // Handle key press in edit input
+  const handleEditKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSaveRate();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
     }
   };
 
@@ -218,15 +339,19 @@ const Products = () => {
         structured[tier].products[product].feeRanges.add(Number(productFee));
       }
 
-      // Group by LTV and fee
+      // Group by LTV and fee (include id for editing)
       const ltvKey = `${maxLtv}_${productFee}`;
       if (!structured[tier].products[product].ltvRates[ltvKey]) {
         structured[tier].products[product].ltvRates[ltvKey] = {
+          id: rate.id,  // Include database ID for editing
           ltv: maxLtv,
           fee: productFee,
           rate: rateValue,
           revertMargin,
-          revertIndex
+          revertIndex,
+          set_key: rate.set_key,
+          tier: tier,
+          product: product
         };
       }
     });
@@ -336,18 +461,81 @@ const Products = () => {
                         // Get rate for this specific fee
                         const rateEntry = Object.values(productData?.ltvRates || {}).find(r => Number(r.fee) === fee);
                         const rateValue = rateEntry?.rate;
+                        const rateId = rateEntry?.id;
                         const isTracker = product.includes('Tracker');
+                        const hasRate = rateValue !== undefined && rateValue !== null;
+                        const isEditing = editingCell?.rateId === rateId && editingCell?.field === 'rate';
                         
                         let displayValue = '—';
-                        if (rateValue !== undefined && rateValue !== null) {
+                        if (hasRate) {
                           // Rates are already in percentage format
                           const percentage = Number(rateValue).toFixed(2);
                           displayValue = isTracker ? `${percentage}% +BBR` : `${percentage}%`;
                         }
                         
                         return (
-                          <td key={`${tier}-${product}-${fee}-rate`} className="slds-text-align_center">
-                            <div className="slds-truncate">{displayValue}</div>
+                          <td 
+                            key={`${tier}-${product}-${fee}-rate`} 
+                            className={`slds-text-align_center ${isAdmin && hasRate ? 'products-rate-cell--editable' : ''}`}
+                          >
+                            {isEditing ? (
+                              <div className="products-rate-cell__edit-container">
+                                <input
+                                  type="number"
+                                  className="products-rate-cell__input"
+                                  value={editValue}
+                                  onChange={(e) => setEditValue(e.target.value)}
+                                  onKeyDown={handleEditKeyPress}
+                                  step="0.01"
+                                  min="0"
+                                  max="100"
+                                  autoFocus
+                                  disabled={savingRate}
+                                />
+                                <div className="products-rate-cell__edit-actions">
+                                  <button
+                                    type="button"
+                                    className="products-rate-cell__save-btn"
+                                    onClick={handleSaveRate}
+                                    disabled={savingRate}
+                                    title="Save"
+                                  >
+                                    ✓
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="products-rate-cell__cancel-btn"
+                                    onClick={handleCancelEdit}
+                                    disabled={savingRate}
+                                    title="Cancel"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div 
+                                className={`slds-truncate ${isAdmin && hasRate ? 'products-rate-cell__value' : ''}`}
+                                style={{ cursor: isAdmin && hasRate ? 'pointer' : 'default' }}
+                                onClick={() => {
+                                  if (isAdmin && hasRate && rateId) {
+                                    handleStartEdit(rateId, 'rate', rateValue, {
+                                      oldValue: rateValue,
+                                      set_key: rateEntry?.set_key || subTab,
+                                      product,
+                                      tier,
+                                      fee
+                                    });
+                                  }
+                                }}
+                                title={isAdmin && hasRate ? 'Click to edit' : undefined}
+                              >
+                                {displayValue}
+                                {isAdmin && hasRate && (
+                                  <span className="products-rate-cell__edit-icon">✎</span>
+                                )}
+                              </div>
+                            )}
                           </td>
                         );
                       })}
@@ -501,9 +689,10 @@ const Products = () => {
         structured[product].maxLtv = maxLtv;
       }
 
-      // Store rate by LTV bracket
+      // Store rate by LTV bracket (include id for editing)
       const ltvKey = `${minLtv}-${maxLtv}`;
       structured[product].ltvRates[ltvKey] = {
+        id: rate.id,  // Include database ID for editing
         minLtv,
         maxLtv,
         rate: rateValue
@@ -540,6 +729,7 @@ const Products = () => {
 
       if (!structured[product]) {
         structured[product] = {
+          id: rate.id,  // Include database ID for editing
           rate: rateValue,
           minLoan,
           maxLoan,
@@ -707,11 +897,73 @@ const Products = () => {
                   const productMaxLtv = productData?.maxLtv || 75;
                   const isNA = maxLtvNum > productMaxLtv || !rateValue;
                   
+                  const rateId = rateData?.id;
+                  const isEditing = editingCell?.rateId === rateId && editingCell?.field === 'rate';
+
                   return (
-                    <td key={`${product}-${ltv.key}`} className="slds-text-align_center">
-                      <div className="slds-truncate">
-                        {isNA ? 'N/a' : `${rateValue}%`}
-                      </div>
+                    <td 
+                      key={`${product}-${ltv.key}`} 
+                      className={`slds-text-align_center ${isAdmin && !isNA ? 'products-rate-cell--editable' : ''}`}
+                    >
+                      {isEditing ? (
+                        <div className="products-rate-cell__edit-container">
+                          <input
+                            type="number"
+                            className="products-rate-cell__input"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onKeyDown={handleEditKeyPress}
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            autoFocus
+                            disabled={savingRate}
+                          />
+                          <div className="products-rate-cell__edit-actions">
+                            <button
+                              type="button"
+                              className="products-rate-cell__save-btn"
+                              onClick={handleSaveRate}
+                              disabled={savingRate}
+                              title="Save"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              type="button"
+                              className="products-rate-cell__cancel-btn"
+                              onClick={handleCancelEdit}
+                              disabled={savingRate}
+                              title="Cancel"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div 
+                          className={`slds-truncate ${isAdmin && !isNA ? 'products-rate-cell__value' : ''}`}
+                          onClick={() => {
+                            if (isAdmin && !isNA && rateId) {
+                              handleStartEdit(rateId, 'rate', rateValue, {
+                                oldValue: rateValue,
+                                set_key: subTab === 'variable' ? 'Bridging_Var' : subTab === 'fixed' ? 'Bridging_Fix' : 'Fusion',
+                                product,
+                                property: bridgingPropertyTab,
+                                min_ltv: ltv.key.split('-')[0],
+                                max_ltv: ltv.key.split('-')[1]
+                              });
+                            }
+                          }}
+                          style={{ cursor: isAdmin && !isNA ? 'pointer' : 'default' }}
+                          title={isAdmin && !isNA ? 'Click to edit' : undefined}
+                        >
+                          {isNA ? 'N/a' : `${rateValue}%`}
+                          {isAdmin && !isNA && (
+                            <span className="products-rate-cell__edit-icon">✎</span>
+                          )}
+                        </div>
+                      )}
                     </td>
                   );
                 })}
@@ -939,11 +1191,74 @@ const Products = () => {
               </th>
               {products.map(product => {
                 const productData = structured[product];
+                const rateId = productData?.id;
+                const rateValue = productData?.rate;
+                const isEditing = editingCell?.rateId === rateId && editingCell?.field === 'rate';
+                const hasRate = rateValue !== undefined && rateValue !== null;
+
                 return (
-                  <td key={`${product}-rate`} className="slds-text-align_center" style={{ backgroundColor: '#ecfdf5' }}>
-                    <div className="slds-truncate" style={{ fontWeight: 600 }}>
-                      {productData?.rate ? `${productData.rate}%` : '—'}
-                    </div>
+                  <td 
+                    key={`${product}-rate`} 
+                    className={`slds-text-align_center ${isAdmin && hasRate ? 'products-rate-cell--editable' : ''}`}
+                    style={{ backgroundColor: '#ecfdf5' }}
+                  >
+                    {isEditing ? (
+                      <div className="products-rate-cell__edit-container">
+                        <input
+                          type="number"
+                          className="products-rate-cell__input"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onKeyDown={handleEditKeyPress}
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          autoFocus
+                          disabled={savingRate}
+                        />
+                        <div className="products-rate-cell__edit-actions">
+                          <button
+                            type="button"
+                            className="products-rate-cell__save-btn"
+                            onClick={handleSaveRate}
+                            disabled={savingRate}
+                            title="Save"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            type="button"
+                            className="products-rate-cell__cancel-btn"
+                            onClick={handleCancelEdit}
+                            disabled={savingRate}
+                            title="Cancel"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div 
+                        className={`slds-truncate ${isAdmin && hasRate ? 'products-rate-cell__value' : ''}`}
+                        style={{ fontWeight: 600, cursor: isAdmin && hasRate ? 'pointer' : 'default' }}
+                        onClick={() => {
+                          if (isAdmin && hasRate && rateId) {
+                            handleStartEdit(rateId, 'rate', rateValue, {
+                              oldValue: rateValue,
+                              set_key: 'Fusion',
+                              product,
+                              property: bridgingPropertyTab
+                            });
+                          }
+                        }}
+                        title={isAdmin && hasRate ? 'Click to edit' : undefined}
+                      >
+                        {hasRate ? `${rateValue}%` : '—'}
+                        {isAdmin && hasRate && (
+                          <span className="products-rate-cell__edit-icon">✎</span>
+                        )}
+                      </div>
+                    )}
                   </td>
                 );
               })}

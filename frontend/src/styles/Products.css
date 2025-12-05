@@ -436,3 +436,129 @@
   outline: 2px solid var(--slds-g-color-brand-base-60, #0176d3);
   outline-offset: -2px;
 }
+
+/* ========================================
+   Admin Inline Editing
+   ======================================== */
+
+/* Editable cell hover state */
+.products-rate-cell--editable {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.products-rate-cell--editable:hover {
+  background-color: var(--slds-g-color-brand-base-95, #eef4ff) !important;
+}
+
+/* Editable value container */
+.products-rate-cell__value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--slds-g-spacing-1, 0.25rem);
+  cursor: pointer;
+  padding: var(--slds-g-spacing-1, 0.25rem);
+  border-radius: var(--token-radius-sm);
+  transition: background-color 0.15s ease;
+}
+
+.products-rate-cell__value:hover {
+  background-color: var(--slds-g-color-brand-base-90, #d8edff);
+}
+
+/* Edit icon (pencil) */
+.products-rate-cell__edit-icon {
+  opacity: 0;
+  color: var(--slds-g-color-brand-base-60, #0176d3);
+  font-size: var(--slds-g-font-size-2, 0.75rem);
+  transition: opacity 0.15s ease;
+}
+
+.products-rate-cell__value:hover .products-rate-cell__edit-icon {
+  opacity: 1;
+}
+
+/* Edit mode container */
+.products-rate-cell__edit-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--slds-g-spacing-1, 0.25rem);
+}
+
+/* Number input */
+.products-rate-cell__input {
+  width: 4rem;
+  padding: var(--slds-g-spacing-1, 0.25rem);
+  border: 2px solid var(--slds-g-color-brand-base-60, #0176d3);
+  border-radius: var(--token-radius-sm);
+  text-align: center;
+  font-size: var(--slds-g-font-size-2, 0.75rem);
+  font-weight: var(--slds-g-font-weight-bold, 700);
+}
+
+.products-rate-cell__input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--slds-g-color-brand-base-40, #014486);
+}
+
+.products-rate-cell__input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Edit action buttons */
+.products-rate-cell__edit-actions {
+  display: flex;
+  gap: var(--slds-g-spacing-1, 0.25rem);
+}
+
+.products-rate-cell__save-btn,
+.products-rate-cell__cancel-btn {
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--token-radius-sm);
+  cursor: pointer;
+  font-weight: var(--slds-g-font-weight-bold, 700);
+  font-size: var(--slds-g-font-size-2, 0.75rem);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.products-rate-cell__save-btn {
+  background-color: var(--slds-g-color-success-base-50, #2e844a);
+  color: var(--slds-g-color-neutral-base-100, #ffffff);
+}
+
+.products-rate-cell__save-btn:hover:not(:disabled) {
+  background-color: var(--slds-g-color-success-base-40, #22683e);
+  transform: scale(1.05);
+}
+
+.products-rate-cell__cancel-btn {
+  background-color: var(--slds-g-color-error-base-50, #ba0517);
+  color: var(--slds-g-color-neutral-base-100, #ffffff);
+}
+
+.products-rate-cell__cancel-btn:hover:not(:disabled) {
+  background-color: var(--slds-g-color-error-base-40, #8e030f);
+  transform: scale(1.05);
+}
+
+.products-rate-cell__save-btn:disabled,
+.products-rate-cell__cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Remove spinner from number input */
+.products-rate-cell__input::-webkit-inner-spin-button,
+.products-rate-cell__input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.products-rate-cell__input[type="number"] {
+  -moz-appearance: textfield;
+}
