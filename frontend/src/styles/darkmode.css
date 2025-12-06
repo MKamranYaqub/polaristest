@@ -1409,7 +1409,43 @@ body.dark-mode #root {
   color: var(--token-text-secondary) !important;
 }
 
-/* Fix for Global Settings Accordion Headers */
+/* Scoped Tabs (Products page sub-tabs) */
+.dark-mode .slds-tabs_scoped {
+  background-color: transparent !important;
+}
+
+.dark-mode .slds-tabs_scoped__nav {
+  background-color: var(--token-layer-surface) !important;
+  border-color: var(--token-border-strong) !important;
+}
+
+.dark-mode .slds-tabs_scoped__item {
+  background-color: transparent !important;
+}
+
+.dark-mode .slds-tabs_scoped__link {
+  color: var(--token-text-secondary) !important;
+  background-color: transparent !important;
+  border-color: var(--token-border-subtle) !important;
+}
+
+.dark-mode .slds-tabs_scoped__link:hover {
+  color: var(--token-text-primary) !important;
+  background-color: var(--token-layer-surface-hover) !important;
+}
+
+.dark-mode .slds-tabs_scoped__item.slds-is-active .slds-tabs_scoped__link {
+  color: var(--token-interactive) !important;
+  background-color: var(--token-layer-surface) !important;
+  border-color: var(--token-interactive) !important;
+  border-bottom-color: var(--token-interactive) !important;
+}
+
+/* Fix for Global Settings and Constants Accordion Sections */
+.dark-mode .settings-accordion-section {
+  background: var(--token-layer-surface) !important;
+}
+
 .dark-mode .settings-accordion-section .slds-accordion__summary {
   background-color: var(--token-layer-surface) !important;
   border-color: var(--token-border-subtle) !important;
@@ -1418,6 +1454,7 @@ body.dark-mode #root {
 
 .dark-mode .settings-accordion-section .slds-accordion__summary:hover {
   background-color: var(--token-layer-surface-hover) !important;
+  border-color: var(--token-border-strong) !important;
 }
 
 .dark-mode .settings-accordion-section .slds-accordion__summary.slds-is-open {
@@ -1427,5 +1464,295 @@ body.dark-mode #root {
 
 .dark-mode .settings-accordion-section .slds-accordion__summary-heading {
   color: var(--token-text-primary) !important;
+}
+
+.dark-mode .settings-accordion-section .slds-accordion__summary-content {
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .settings-accordion-section .slds-accordion__summary-action-icon {
+  color: var(--token-text-secondary) !important;
+  fill: var(--token-text-secondary) !important;
+}
+
+.dark-mode .settings-accordion-section .slds-accordion__content {
+  background: var(--token-layer-surface) !important;
+  color: var(--token-text-primary) !important;
+}
+
+/* ========================================
+   Products Page - Rates Tables
+   ======================================== */
+
+/* Rate table base styles */
+.dark-mode .products-rates-table {
+  background-color: var(--token-layer-surface) !important;
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .products-rates-table th,
+.dark-mode .products-rates-table td {
+  border-color: var(--token-border-subtle) !important;
+  color: var(--token-text-primary) !important;
+}
+
+/* Label column */
+.dark-mode .products-rates-table__label-col,
+.dark-mode .products-rates-table__label-cell {
+  background-color: var(--token-layer-active) !important;
+  color: var(--token-text-primary) !important;
+  border-color: var(--token-border-strong) !important;
+}
+
+/* Fee range rows */
+.dark-mode .products-rates-table__fee-row {
+  background-color: var(--token-layer-surface) !important;
+}
+
+.dark-mode .products-rates-table__fee-row td {
+  color: var(--token-text-secondary) !important;
+}
+
+/* Rate rows */
+.dark-mode .products-rates-table__rate-row {
+  background-color: var(--token-layer-surface-hover) !important;
+}
+
+.dark-mode .products-rates-table__rate-row td {
+  color: var(--token-text-primary) !important;
+}
+
+/* Revert rate rows */
+.dark-mode .products-rates-table__revert-row {
+  background-color: var(--token-layer-surface) !important;
+}
+
+.dark-mode .products-rates-table__revert-row td {
+  color: var(--token-text-secondary) !important;
+}
+
+/* Info rows (Defer/Roll up/Loan Size) */
+.dark-mode .products-rates-table__info-row {
+  background-color: var(--token-layer-surface) !important;
+  border-color: var(--token-border-subtle) !important;
+}
+
+.dark-mode .products-rates-table__info-row td {
+  color: var(--token-text-secondary) !important;
+}
+
+/* Editable cell hover states */
+.dark-mode .products-rate-cell--editable:hover {
+  background-color: var(--token-layer-active) !important;
+}
+
+.dark-mode .products-rate-cell__value {
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .products-rate-cell__value:hover {
+  background-color: var(--token-layer-elevated) !important;
+}
+
+.dark-mode .products-rate-cell__edit-icon {
+  color: var(--token-interactive) !important;
+}
+
+/* Edit mode input */
+.dark-mode .products-rate-cell__input {
+  background-color: var(--token-layer-surface) !important;
+  color: var(--token-text-primary) !important;
+  border-color: var(--token-interactive) !important;
+}
+
+.dark-mode .products-rate-cell__input:focus {
+  box-shadow: 0 0 0 2px var(--token-interactive-hover) !important;
+}
+
+/* Product column headers */
+.dark-mode .products-rates-table__product-col {
+  background-color: var(--token-layer-active) !important;
+  color: var(--token-text-primary) !important;
+  border-color: var(--token-border-strong) !important;
+}
+
+/* Separator rows */
+.dark-mode .products-rates-table tr[style*="backgroundColor"] {
+  background-color: var(--token-layer-background) !important;
+}
+
+/* Fusion coupon rate cells - override inline background colors */
+.dark-mode .products-rates-table__rate-row td[style*="backgroundColor"],
+.dark-mode .products-rates-table__info-row td[style*="backgroundColor"],
+.dark-mode .products-rates-table__rate-row td[style*="background-color"],
+.dark-mode .products-rates-table__info-row td[style*="background-color"],
+.dark-mode .products-rates-table td[style*="#ecfdf5"],
+.dark-mode .products-rates-table td[style*="ecfdf5"] {
+  background-color: var(--token-layer-surface-hover) !important;
+  color: var(--token-text-primary) !important;
+}
+
+/* ========================================
+   Side Panels (Asset Class, LTV Restrictions, Support)
+   ======================================== */
+
+/* Panel containers - override inline white backgrounds */
+.dark-mode .slds-panel[style*="backgroundColor"] {
+  background-color: var(--token-layer-surface) !important;
+}
+
+/* Panel headers - override inline light gray backgrounds */
+.dark-mode .slds-panel__header,
+.dark-mode .slds-panel__header[style*="backgroundColor"],
+.dark-mode .slds-panel__header[style*="background-color"] {
+  background-color: var(--token-layer-active) !important;
+  border-color: var(--token-border-strong) !important;
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .slds-panel__header-title,
+.dark-mode .slds-panel__header h2 {
+  color: var(--token-text-primary) !important;
+}
+
+/* Panel body */
+.dark-mode .slds-panel__body {
+  background-color: var(--token-layer-surface) !important;
+  color: var(--token-text-primary) !important;
+}
+
+/* Tables inside panels */
+.dark-mode .slds-panel__body .slds-table,
+.dark-mode .slds-panel__body .slds-table[style*="width"] {
+  background-color: var(--token-layer-surface) !important;
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .slds-panel__body .slds-table th,
+.dark-mode .slds-panel__body .slds-table td,
+.dark-mode .slds-panel__body .slds-table th[style*="padding"],
+.dark-mode .slds-panel__body .slds-table td[style*="padding"],
+.dark-mode .slds-panel__body .slds-table th[style*="wordWrap"],
+.dark-mode .slds-panel__body .slds-table td[style*="wordWrap"] {
+  background-color: var(--token-layer-surface) !important;
+  color: var(--token-text-primary) !important;
+  border-color: var(--token-border-subtle) !important;
+}
+
+/* Table rows */
+.dark-mode .slds-panel__body .slds-table tbody tr {
+  background-color: var(--token-layer-surface) !important;
+}
+
+.dark-mode .slds-panel__body .slds-table tbody tr:hover {
+  background-color: var(--token-layer-surface-hover) !important;
+}
+
+/* Table headers with inline background colors */
+.dark-mode .slds-panel__body .slds-table th[style*="backgroundColor"],
+.dark-mode .slds-panel__body .slds-table th[style*="background-color"],
+.dark-mode .slds-panel__body .slds-table thead th {
+  background-color: var(--token-layer-active) !important;
+  color: var(--token-text-primary) !important;
+}
+
+/* Table cells with special background colors (Asset Class LTVs) */
+.dark-mode .slds-panel__body .slds-table td[style*="backgroundColor='#90ee90'"],
+.dark-mode .slds-panel__body .slds-table td[style*="backgroundColor: #90ee90"],
+.dark-mode .slds-panel__body .slds-table td[style*="background-color: rgb(144, 238, 144)"] {
+  background-color: rgba(66, 190, 101, 0.3) !important; /* Dark mode green */
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .slds-panel__body .slds-table td[style*="backgroundColor='#d4edda'"],
+.dark-mode .slds-panel__body .slds-table td[style*="backgroundColor: #d4edda"],
+.dark-mode .slds-panel__body .slds-table td[style*="background-color: rgb(212, 237, 218)"] {
+  background-color: rgba(66, 190, 101, 0.2) !important; /* Dark mode lighter green */
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .slds-panel__body .slds-table td[style*="backgroundColor='#fff3cd'"],
+.dark-mode .slds-panel__body .slds-table td[style*="backgroundColor: #fff3cd"],
+.dark-mode .slds-panel__body .slds-table td[style*="background-color: rgb(255, 243, 205)"] {
+  background-color: rgba(245, 158, 11, 0.3) !important; /* Dark mode yellow/warning */
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .slds-panel__body .slds-table td[style*="backgroundColor='#f8d7da'"],
+.dark-mode .slds-panel__body .slds-table td[style*="backgroundColor: #f8d7da"],
+.dark-mode .slds-panel__body .slds-table td[style*="background-color: rgb(248, 215, 218)"] {
+  background-color: rgba(218, 30, 40, 0.3) !important; /* Dark mode red/danger */
+  color: var(--token-text-primary) !important;
+}
+
+/* LTV Restrictions Accordion inside panels */
+.dark-mode .slds-panel__body .slds-accordion__section,
+.dark-mode .slds-panel__body .slds-accordion__section[style*="border"] {
+  border-color: var(--token-border-subtle) !important;
+  background-color: var(--token-layer-surface) !important;
+}
+
+.dark-mode .slds-panel__body .slds-accordion__summary {
+  background-color: var(--token-layer-surface) !important;
+}
+
+.dark-mode .slds-panel__body .slds-accordion__summary button,
+.dark-mode .slds-panel__body .slds-accordion__summary-action,
+.dark-mode .slds-panel__body .slds-button_reset {
+  color: var(--token-text-primary) !important;
+  background-color: transparent !important;
+}
+
+.dark-mode .slds-panel__body .slds-accordion__summary button span {
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .slds-panel__body .slds-accordion__summary:hover {
+  background-color: var(--token-layer-surface-hover) !important;
+}
+
+.dark-mode .slds-panel__body .slds-accordion__content,
+.dark-mode .slds-panel__body .slds-accordion__content[style*="padding"] {
+  background-color: var(--token-layer-surface) !important;
+  color: var(--token-text-primary) !important;
+}
+
+/* Support form inputs */
+.dark-mode .slds-panel__body .slds-form-element__label {
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .slds-panel__body .slds-input,
+.dark-mode .slds-panel__body .slds-textarea,
+.dark-mode .slds-panel__body .slds-select {
+  background-color: var(--token-layer-surface) !important;
+  color: var(--token-text-primary) !important;
+  border-color: var(--token-border-strong) !important;
+}
+
+.dark-mode .slds-panel__body .slds-input:focus,
+.dark-mode .slds-panel__body .slds-textarea:focus,
+.dark-mode .slds-panel__body .slds-select:focus {
+  border-color: var(--token-interactive) !important;
+  box-shadow: 0 0 0 1px var(--token-interactive) !important;
+}
+
+/* Backdrop for panels */
+.dark-mode .slds-backdrop_open {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Panel footers - override inline backgrounds */
+.dark-mode .slds-panel footer,
+.dark-mode .slds-panel footer[style*="backgroundColor"],
+.dark-mode .slds-panel footer[style*="background-color"] {
+  background-color: var(--token-layer-active) !important;
+  border-color: var(--token-border-strong) !important;
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .slds-panel footer div,
+.dark-mode .slds-panel footer span {
+  color: var(--token-text-secondary) !important;
 }
 
