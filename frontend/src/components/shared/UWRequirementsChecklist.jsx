@@ -71,14 +71,21 @@ export default function UWRequirementsChecklist({
   showGuidance = false,
   showExportButton = true,
   title = 'Document Checklist',
-  allowEdit = false
+  allowEdit = false,
+  customRequirements = null,
+  onRequirementsChange = null
 }) {
-  const [requirements, setRequirements] = useState(DEFAULT_UW_REQUIREMENTS);
+  const [requirements, setRequirements] = useState(customRequirements || DEFAULT_UW_REQUIREMENTS);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [exporting, setExporting] = useState(false);
   const [selectedStage, setSelectedStage] = useState(stage === 'Both' ? UW_STAGES.INDICATIVE : stage);
   const [editingItemId, setEditingItemId] = useState(null);
   const [editingText, setEditingText] = useState('');
+
+  // Update requirements when customRequirements prop changes
+  useEffect(() => {
+    setRequirements(customRequirements || DEFAULT_UW_REQUIREMENTS);
+  }, [customRequirements]);
 
   // Update selectedStage when prop changes
   useEffect(() => {
@@ -223,16 +230,14 @@ export default function UWRequirementsChecklist({
     
     setRequirements(updatedRequirements);
     
-    // Save to localStorage
-    try {
-      localStorage.setItem(LOCALSTORAGE_UW_REQUIREMENTS_KEY, JSON.stringify(updatedRequirements));
-    } catch (error) {
-      console.error('Error saving requirements to localStorage:', error);
+    // Call parent callback to save per-quote custom requirements
+    if (onRequirementsChange) {
+      onRequirementsChange(updatedRequirements);
     }
     
     setEditingItemId(null);
     setEditingText('');
-  }, [editingItemId, editingText, requirements]);
+  }, [editingItemId, editingText, requirements, onRequirementsChange]);
 
   // Handle canceling edit
   const handleCancelEdit = useCallback(() => {
@@ -476,5 +481,7 @@ UWRequirementsChecklist.propTypes = {
   showGuidance: PropTypes.bool,
   showExportButton: PropTypes.bool,
   title: PropTypes.string,
-  allowEdit: PropTypes.bool
+  allowEdit: PropTypes.bool,
+  customRequirements: PropTypes.array,
+  onRequirementsChange: PropTypes.func
 };

@@ -4,115 +4,136 @@ import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/render
 // Logo path from public folder
 const MFS_LOGO_PATH = '/assets/mfs-logo.png';
 
-// PDF Styles for UW Requirements Checklist
+// PDF Styles for UW Requirements Checklist - Modern Professional Design
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 50,
+    paddingTop: 35,
     paddingBottom: 50,
-    paddingLeft: 40,
-    paddingRight: 40,
-    fontSize: 10,
+    paddingLeft: 35,
+    paddingRight: 35,
+    fontSize: 9,
     fontFamily: 'Helvetica',
     backgroundColor: '#ffffff',
   },
   
-  // Header
+  // Header - Modern gradient effect simulation with layered design
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 20,
-    paddingBottom: 15,
-    borderBottom: '2pt solid #00205B',
+    alignItems: 'center',
+    marginBottom: 18,
+    paddingBottom: 12,
+    paddingTop: 8,
+    paddingLeft: 15,
+    paddingRight: 15,
+    backgroundColor: '#f8f9fa',
+    borderLeft: '3pt solid #00205B',
+    borderRadius: 2,
   },
   headerLeft: {
     flex: 1,
   },
   headerRight: {
-    width: 90,
+    width: 80,
     alignItems: 'flex-end',
   },
   logo: {
-    width: 80,
-    height: 32,
+    width: 75,
+    height: 30,
     objectFit: 'contain',
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#00205B',
     marginBottom: 4,
+    letterSpacing: 0.3,
   },
   subtitle: {
-    fontSize: 10,
-    color: '#706e6b',
+    fontSize: 9,
+    color: '#5c6b73',
     marginBottom: 2,
   },
   referenceNumber: {
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: 'bold',
-    color: '#3e3e3c',
+    color: '#00205B',
     marginTop: 4,
+    backgroundColor: '#e8f4f8',
+    padding: '3 6',
+    borderRadius: 2,
   },
   
-  // Summary box
+  // Summary box - Modern card design
   summaryBox: {
     flexDirection: 'row',
-    backgroundColor: '#f3f3f3',
+    backgroundColor: '#ffffff',
     padding: 12,
     marginBottom: 15,
     borderRadius: 4,
+    border: '1pt solid #e1e4e8',
   },
   summaryItem: {
     flex: 1,
     alignItems: 'center',
+    paddingHorizontal: 6,
   },
   summaryLabel: {
-    fontSize: 8,
-    color: '#706e6b',
-    marginBottom: 2,
+    fontSize: 7.5,
+    color: '#6a737d',
+    marginBottom: 3,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   summaryValue: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
     color: '#00205B',
   },
   summaryValueComplete: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
-    color: '#2e844a',
+    color: '#28a745',
   },
   summaryValueIncomplete: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
-    color: '#c23934',
+    color: '#dc3545',
   },
   
-  // Progress bar
+  // Progress bar - Modern sleek design
   progressContainer: {
-    marginBottom: 20,
+    marginBottom: 18,
+    padding: 10,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 4,
   },
   progressBarBg: {
     height: 8,
-    backgroundColor: '#e5e5e5',
+    backgroundColor: '#e9ecef',
     borderRadius: 4,
     overflow: 'hidden',
+    border: '1pt solid #dee2e6',
   },
   progressBarFill: {
     height: 8,
-    backgroundColor: '#0176d3',
+    backgroundColor: '#00205B',
     borderRadius: 4,
   },
   progressText: {
-    fontSize: 9,
-    color: '#706e6b',
-    marginTop: 4,
-    textAlign: 'right',
+    fontSize: 8.5,
+    color: '#495057',
+    marginTop: 6,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
   
-  // Category section
+  // Category section - Modern elevated card style
   category: {
     marginBottom: 12,
+    borderRadius: 4,
+    overflow: 'hidden',
+    border: '1pt solid #e1e4e8',
   },
   categoryHeader: {
     backgroundColor: '#00205B',
@@ -120,43 +141,48 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   categoryTitle: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#ffffff',
+    letterSpacing: 0.2,
   },
   categoryCount: {
-    fontSize: 9,
-    color: '#a0d2ff',
-    marginLeft: 8,
+    fontSize: 8.5,
+    color: '#b8d4ff',
+    marginLeft: 6,
+    fontWeight: 'normal',
   },
   
-  // Requirements table
+  // Requirements table - Clean modern layout
   table: {
-    border: '1pt solid #dddbda',
+    backgroundColor: '#ffffff',
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#f3f3f3',
-    borderBottom: '1pt solid #dddbda',
+    backgroundColor: '#f1f3f5',
+    borderBottom: '1.5pt solid #00205B',
   },
   tableHeaderCell: {
-    padding: 6,
+    padding: 7,
     fontSize: 8,
     fontWeight: 'bold',
-    color: '#3e3e3c',
+    color: '#212529',
+    letterSpacing: 0.3,
   },
   tableRow: {
     flexDirection: 'row',
-    borderBottom: '0.5pt solid #e5e5e5',
+    borderBottom: '0.5pt solid #e9ecef',
+    backgroundColor: '#ffffff',
   },
   tableRowAlt: {
     flexDirection: 'row',
-    borderBottom: '0.5pt solid #e5e5e5',
-    backgroundColor: '#fafafa',
+    borderBottom: '0.5pt solid #e9ecef',
+    backgroundColor: '#f8f9fa',
   },
   tableCell: {
-    padding: 6,
-    fontSize: 9,
+    padding: 7,
+    fontSize: 8.5,
+    lineHeight: 1.4,
   },
   
   // Column widths
@@ -176,98 +202,110 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   
-  // Status indicators
+  // Status indicators - Enhanced colors
   statusReceived: {
-    color: '#2e844a',
+    color: '#155724',
     fontWeight: 'bold',
   },
   statusPending: {
-    color: '#c23934',
+    color: '#721c24',
   },
   statusOptional: {
-    color: '#706e6b',
+    color: '#6c757d',
     fontStyle: 'italic',
   },
   
-  // Checkbox icons (text-based)
+  // Checkbox icons - Modern badge style
   checkboxChecked: {
-    fontSize: 10,
+    fontSize: 8,
     color: '#ffffff',
-    backgroundColor: '#2e844a',
-    padding: '2 4',
+    backgroundColor: '#28a745',
+    padding: '2 5',
     borderRadius: 2,
     fontWeight: 'bold',
+    letterSpacing: 0.2,
   },
   checkboxUnchecked: {
-    fontSize: 10,
-    color: '#706e6b',
-    backgroundColor: '#f3f3f3',
-    padding: '2 4',
+    fontSize: 8,
+    color: '#6c757d',
+    backgroundColor: '#ffffff',
+    padding: '2 5',
     borderRadius: 2,
-    border: '1pt solid #dddbda',
+    border: '1pt solid #ced4da',
+    letterSpacing: 0.2,
   },
   
-  // Stage badges
+  // Stage badges - Modern pill design
   stageDIP: {
-    backgroundColor: '#fe9339',
+    backgroundColor: '#fd7e14',
     color: '#ffffff',
     padding: '2 6',
     borderRadius: 3,
-    fontSize: 8,
+    fontSize: 7.5,
+    fontWeight: 'bold',
+    letterSpacing: 0.2,
   },
   stageIndicative: {
-    backgroundColor: '#2e844a',
+    backgroundColor: '#28a745',
     color: '#ffffff',
     padding: '2 6',
     borderRadius: 3,
-    fontSize: 8,
+    fontSize: 7.5,
+    fontWeight: 'bold',
+    letterSpacing: 0.2,
   },
   stageBoth: {
-    backgroundColor: '#706e6b',
+    backgroundColor: '#6c757d',
     color: '#ffffff',
     padding: '2 6',
     borderRadius: 3,
-    fontSize: 8,
+    fontSize: 7.5,
+    fontWeight: 'bold',
+    letterSpacing: 0.2,
   },
   
-  // Footer
+  // Footer - Modern clean design
   footer: {
     position: 'absolute',
     bottom: 25,
-    left: 40,
-    right: 40,
-    borderTop: '1pt solid #dddbda',
-    paddingTop: 8,
+    left: 35,
+    right: 35,
+    borderTop: '1.5pt solid #e1e4e8',
+    paddingTop: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   footerText: {
-    fontSize: 8,
-    color: '#706e6b',
+    fontSize: 7.5,
+    color: '#6c757d',
   },
   pageNumber: {
-    fontSize: 8,
-    color: '#3e3e3c',
+    fontSize: 7.5,
+    color: '#495057',
+    fontWeight: 'bold',
   },
   
-  // Notes section
+  // Notes section - Modern info card
   notesSection: {
     marginTop: 15,
-    padding: 10,
-    backgroundColor: '#fffbe6',
-    border: '1pt solid #ffd666',
-    borderRadius: 4,
+    padding: 12,
+    backgroundColor: '#fff3cd',
+    border: '1pt solid #ffc107',
+    borderLeft: '3pt solid #ffc107',
+    borderRadius: 3,
   },
   notesTitle: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: 'bold',
-    color: '#595959',
-    marginBottom: 4,
+    color: '#856404',
+    marginBottom: 5,
+    letterSpacing: 0.2,
   },
   notesText: {
-    fontSize: 9,
-    color: '#595959',
-    lineHeight: 1.4,
+    fontSize: 8.5,
+    color: '#856404',
+    lineHeight: 1.5,
   },
 });
 
@@ -304,11 +342,14 @@ const UWRequirementsPDF = ({
     groupedRequirements[cat].sort((a, b) => a.order - b.order);
   });
 
-  // Calculate stats
-  const totalCount = requirements.length;
-  const checkedCount = requirements.filter(r => checkedItems.includes(r.id)).length;
-  const requiredCount = requirements.filter(r => r.required).length;
-  const requiredCheckedCount = requirements.filter(r => r.required && checkedItems.includes(r.id)).length;
+  // Filter out Assumptions from stats calculation
+  const requirementsForStats = requirements.filter(r => r.category !== 'Assumptions');
+  
+  // Calculate stats (excluding Assumptions)
+  const totalCount = requirementsForStats.length;
+  const checkedCount = requirementsForStats.filter(r => checkedItems.includes(r.id)).length;
+  const requiredCount = requirementsForStats.filter(r => r.required).length;
+  const requiredCheckedCount = requirementsForStats.filter(r => r.required && checkedItems.includes(r.id)).length;
   const progressPercent = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
   const isComplete = checkedCount === totalCount;
   const isRequiredComplete = requiredCheckedCount === requiredCount;

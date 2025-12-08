@@ -123,8 +123,9 @@ export async function requestQuotePdf(quoteId, token) {
  * @param {Object} checkedItems - Object with requirement IDs as keys and boolean values
  * @param {string} stage - 'DIP', 'Indicative', or 'Both'
  * @param {string} token - Optional auth token override
+ * @param {Array} customRequirements - Optional array of custom requirement objects
  */
-export async function saveUWChecklistState(quoteId, checkedItems, stage = 'Both', token) {
+export async function saveUWChecklistState(quoteId, checkedItems, stage = 'Both', token, customRequirements = null) {
   const res = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}/uw-checklist`, {
     method: 'PUT',
     headers: {
@@ -133,6 +134,10 @@ export async function saveUWChecklistState(quoteId, checkedItems, stage = 'Both'
     },
     body: JSON.stringify({
       checked_items: checkedItems,
+      stage,
+      custom_requirements: customRequirements,
+    }),
+  });
       stage,
     }),
   });
@@ -163,7 +168,7 @@ export async function loadUWChecklistState(quoteId, stage = 'Both', token) {
   if (!res.ok) {
     // Return empty state if not found (404 is expected for new quotes)
     if (res.status === 404) {
-      return { checked_items: {} };
+      return { checked_items: {}, custom_requirements: null };
     }
     const errorData = await res.json().catch(() => ({}));
     const message = errorData.error || 'Failed to load UW checklist state';

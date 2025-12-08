@@ -172,6 +172,7 @@ export default function BTLcalculator({ initialQuote = null }) {
   // UW Requirements checklist state
   const [uwChecklistExpanded, setUwChecklistExpanded] = useState(false);
   const [uwCheckedItems, setUwCheckedItems] = useState({});
+  const [uwCustomRequirements, setUwCustomRequirements] = useState(null);
 
   useEffect(() => {
     async function loadAll() {
@@ -454,8 +455,16 @@ export default function BTLcalculator({ initialQuote = null }) {
         }
 
         setUwCheckedItems(normalized);
+        
+        // Load custom requirements if they exist
+        if (data && data.custom_requirements) {
+          setUwCustomRequirements(data.custom_requirements);
+        } else {
+          setUwCustomRequirements(null);
+        }
       } catch (e) {
         // Silently fail - checklist will start empty
+        setUwCustomRequirements(null);
       }
     }
     loadChecklistState();
@@ -467,25 +476,18 @@ export default function BTLcalculator({ initialQuote = null }) {
     if (!uwCheckedItems || typeof uwCheckedItems !== 'object') return;
     if (Object.keys(uwCheckedItems).length === 0) return;
 
-    const payload = { ...uwCheckedItems };
-
-    // eslint-disable-next-line no-console
-    console.log('[BTL] autosave effect scheduled', { currentQuoteId, payload });
+    const payload = { 
+      checked_items: { ...uwCheckedItems },
+      custom_requirements: uwCustomRequirements
+    };
 
     const timeoutId = setTimeout(() => {
       try {
         Promise.resolve()
           .then(() => {
-            // eslint-disable-next-line no-console
-            console.log('[BTL] autosave firing', { currentQuoteId, payload });
-            return saveUWChecklistState(currentQuoteId, payload, 'both', token);
-          })
-          .then((response) => {
-            // eslint-disable-next-line no-console
-            console.log('[BTL] autosave success', { response });
+            return saveUWChecklistState(currentQuoteId, payload.checked_items, 'both', token, payload.custom_requirements);
           })
           .catch((error) => {
-            // eslint-disable-next-line no-console
             console.error('[BTL] autosave error', error);
             // Ignore save errors; do not crash UI
           });
@@ -495,7 +497,7 @@ export default function BTLcalculator({ initialQuote = null }) {
     }, 500); // Debounce by 500ms
 
     return () => clearTimeout(timeoutId);
-  }, [currentQuoteId, uwCheckedItems, token]);
+  }, [currentQuoteId, uwCheckedItems, uwCustomRequirements, token]);
 
   // Ensure productType defaults to the first product for the selected productScope
   useEffect(() => {
@@ -2352,6 +2354,10 @@ export default function BTLcalculator({ initialQuote = null }) {
             } catch (e) {
               // Prevent crash on checkbox change
             }
+          }}
+          customRequirements={uwCustomRequirements}
+          onRequirementsChange={(updatedRequirements) => {
+            setUwCustomRequirements(updatedRequirements);
           }}
           showExportButton={true}
           showGuidance={true}

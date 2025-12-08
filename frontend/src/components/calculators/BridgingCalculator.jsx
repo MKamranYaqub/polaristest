@@ -125,6 +125,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
   // UW Requirements checklist state
   const [uwChecklistExpanded, setUwChecklistExpanded] = useState(false);
   const [uwCheckedItems, setUwCheckedItems] = useState({});
+  const [uwCustomRequirements, setUwCustomRequirements] = useState(null);
 
   // Multi-property helper functions
   const calculateMultiPropertyGrossLoan = (propertyType, propertyValue, firstChargeAmount) => {
@@ -565,6 +566,13 @@ export default function BridgingCalculator({ initialQuote = null }) {
         }
 
         setUwCheckedItems(normalized);
+        
+        // Load custom requirements if present
+        if (data && data.custom_requirements) {
+          setUwCustomRequirements(data.custom_requirements);
+        } else {
+          setUwCustomRequirements(null);
+        }
       } catch (e) {
         // Silently fail - checklist will start empty
       }
@@ -588,8 +596,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
         Promise.resolve()
           .then(() => {
             // eslint-disable-next-line no-console
-            console.log('[Bridge] autosave firing', { currentQuoteId, payload });
-            return saveUWChecklistState(currentQuoteId, payload, 'both', token);
+            console.log('[Bridge] autosave firing', { currentQuoteId, payload, customRequirements: uwCustomRequirements });
+            return saveUWChecklistState(currentQuoteId, payload, 'both', token, uwCustomRequirements);
           })
           .then((response) => {
             // eslint-disable-next-line no-console
@@ -606,7 +614,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
     }, 500); // Debounce by 500ms
 
     return () => clearTimeout(timeoutId);
-  }, [currentQuoteId, uwCheckedItems, token]);
+  }, [currentQuoteId, uwCheckedItems, uwCustomRequirements, token]);
 
   const handleAnswerChange = (key, idx) => {
     setAnswers(prev => ({ ...prev, [key]: questions[key].options[idx] }));
@@ -2197,6 +2205,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
               // Prevent crash on checkbox change
             }
           }}
+          customRequirements={uwCustomRequirements}
+          onRequirementsChange={setUwCustomRequirements}
           showExportButton={true}
           showGuidance={true}
           allowEdit={true}

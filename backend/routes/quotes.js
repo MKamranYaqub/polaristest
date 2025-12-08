@@ -334,7 +334,7 @@ router.get('/:id/uw-checklist', asyncHandler(async (req, res) => {
   
   if (!data) {
     // Return empty state for new quotes
-    return res.json({ checked_items: {}, stage: stage || 'Both' });
+    return res.json({ checked_items: {}, custom_requirements: null, stage: stage || 'Both' });
   }
   
   // Convert checked_items from array to object if needed
@@ -351,6 +351,7 @@ router.get('/:id/uw-checklist', asyncHandler(async (req, res) => {
     id: data.id,
     quote_id: data.quote_id,
     checked_items: checkedItems,
+    custom_requirements: data.custom_requirements || null,
     stage: data.stage,
     last_updated_by: data.last_updated_by,
     updated_at: data.updated_at
@@ -360,12 +361,13 @@ router.get('/:id/uw-checklist', asyncHandler(async (req, res) => {
 // Save/Update UW checklist state for a quote
 router.put('/:id/uw-checklist', asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { checked_items, stage = 'Both' } = req.body;
+  const { checked_items, stage = 'Both', custom_requirements } = req.body;
   
   log.info('💾 PUT /api/quotes/:id/uw-checklist', { 
     quote_id: id, 
     stage, 
-    checked_count: Object.keys(checked_items || {}).filter(k => checked_items[k]).length 
+    checked_count: Object.keys(checked_items || {}).filter(k => checked_items[k]).length,
+    has_custom_requirements: !!custom_requirements
   });
   
   // Convert object format to array format for storage
@@ -387,6 +389,7 @@ router.put('/:id/uw-checklist', asyncHandler(async (req, res) => {
       quote_id: id,
       stage,
       checked_items: itemsToStore,
+      custom_requirements: custom_requirements || null,
       last_updated_by: req.user?.email || 'system'
     }, {
       onConflict: 'quote_id,stage'
