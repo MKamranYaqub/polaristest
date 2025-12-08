@@ -28,10 +28,11 @@
 }
 
 /* Dark mode */
-[data-carbon-theme='g100'] .keyboard-hint {
-  background: var(--cds-layer-02, #393939);
-  border-color: var(--cds-border-subtle-01, #525252);
-  color: var(--cds-text-secondary, #c6c6c6);
+[data-carbon-theme='g100'] .keyboard-hint,
+.dark-mode .keyboard-hint {
+  background: var(--cds-layer-02, #393939) !important;
+  border-color: var(--cds-border-subtle-01, #525252) !important;
+  color: var(--cds-text-secondary, #c6c6c6) !important;
 }
 
 /* In buttons */

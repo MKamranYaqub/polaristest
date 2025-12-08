@@ -241,6 +241,11 @@ input[type="range"] {
         font-weight: 600;
         color: $token-text-primary;
       }
+
+      /* Make Tier 1 visually stronger in BTL calculator */
+      .tier-value.tier-1 {
+        font-weight: 700 !important;
+      }
     }
   }
 }

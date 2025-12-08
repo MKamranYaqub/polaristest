@@ -6,7 +6,6 @@ import { useToast } from '../../contexts/ToastContext';
 import { useSaveShortcut, useEscapeKey } from '../../hooks/useKeyboardShortcut';
 import { useUiPreferences } from '../../hooks/useUiPreferences';
 import ModalShell from '../modals/ModalShell';
-import KeyboardHint from '../ui/KeyboardHint';
 
 // SaveQuoteButton shows a small modal to collect { name, borrowerName, applicantNames, notes }
 // If `existingQuote` prop provided (object with id), the button will perform an update instead of create.
@@ -476,11 +475,11 @@ export default function SaveQuoteButton({
         footer={(
           <>
             <button className="slds-button slds-button_neutral" onClick={closeForm} disabled={saving}>
-              Cancel {uiPrefs.showKeyboardHints && <KeyboardHint keys="Esc" />}
+              Cancel
             </button>
             <button className="slds-button slds-button_brand" onClick={handleSubmit} disabled={saving}>
               {saving ? 'Saving…' : (existingQuote ? 'Update' : 'Save')}
-              {uiPrefs.showKeyboardHints && <KeyboardHint keys="Ctrl+S" />}
+
             </button>
           </>
         )}

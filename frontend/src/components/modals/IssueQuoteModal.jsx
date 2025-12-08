@@ -7,13 +7,7 @@ import ModalShell from './ModalShell';
 import NotificationModal from './NotificationModal';
 import HelpIcon from '../ui/HelpIcon';
 
-const DEFAULT_ASSUMPTIONS = [
-  'The borrower has a clean credit history.',
-  'The borrower is not a first-time buyer or first-time landlord.',
-  'The borrower is a UK national or a UK limited company.',
-  'The property is a residential unit intended for occupancy by a single household.',
-  'The valuation reflects the 180-day Vacant Possession market value or the 180-day Open Market value (whichever is lower) in its current condition.',
-];
+// Assumptions removed per UX request
 
 export default function IssueQuoteModal({
   isOpen,
@@ -27,7 +21,7 @@ export default function IssueQuoteModal({
 }) {
   const { showToast } = useToast();
   const [selectedFeeRanges, setSelectedFeeRanges] = useState([]);
-  const [assumptions, setAssumptions] = useState([...DEFAULT_ASSUMPTIONS]);
+  // Assumptions UI removed; keep no assumptions state
   const [borrowerName, setBorrowerName] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [productRange, setProductRange] = useState('specialist'); // Core/Specialist selector for which quote to issue
@@ -49,11 +43,7 @@ export default function IssueQuoteModal({
           setSelectedFeeRanges([]);
         }
         
-        if (existingQuoteData.quote_assumptions) {
-          setAssumptions(existingQuoteData.quote_assumptions);
-        } else {
-          setAssumptions([...DEFAULT_ASSUMPTIONS]);
-        }
+        // quote_assumptions intentionally ignored after removing Assumptions UI
         
         if (existingQuoteData.quote_borrower_name) {
           setBorrowerName(existingQuoteData.quote_borrower_name);
@@ -79,11 +69,10 @@ export default function IssueQuoteModal({
         }
       } else {
         // Reset to defaults for new quote
-        setSelectedFeeRanges([]);
-        setAssumptions([...DEFAULT_ASSUMPTIONS]);
-        setBorrowerName('');
-        setAdditionalNotes('');
-        setProductRange('specialist');
+          setSelectedFeeRanges([]);
+          setBorrowerName('');
+          setAdditionalNotes('');
+          setProductRange('specialist');
       }
     }
   }, [isOpen, existingQuoteData]);
@@ -111,21 +100,7 @@ export default function IssueQuoteModal({
     });
   };
 
-  const handleAssumptionChange = (index, value) => {
-    setAssumptions(prev => {
-      const updated = [...prev];
-      updated[index] = value;
-      return updated;
-    });
-  };
-
-  const handleAddAssumption = () => {
-    setAssumptions(prev => [...prev, '']);
-  };
-
-  const handleDeleteAssumption = (index) => {
-    setAssumptions(prev => prev.filter((_, i) => i !== index));
-  };
+  // Assumption handlers removed
 
   // Validate all fields
   const validateForm = () => {
@@ -195,7 +170,8 @@ export default function IssueQuoteModal({
     try {
       const quoteData = {
         quote_selected_fee_ranges: selectedFeeRanges,
-        quote_assumptions: assumptions.filter(a => a.trim() !== ''),
+        // Assumptions removed from UI; send empty array to keep payload stable
+        quote_assumptions: [],
         quote_borrower_name: borrowerName.trim(),
         quote_additional_notes: additionalNotes.trim(),
         quote_product_range: productRange,
@@ -362,40 +338,7 @@ export default function IssueQuoteModal({
         )}
       </div>
 
-            {/* Assumptions */}
-            <div className="slds-form-element margin-bottom-15">
-              <label className="slds-form-element__label">
-                Assumptions
-                <HelpIcon content="Standard assumptions about the borrower and property that will appear on the quote. These set expectations for eligibility. Common assumptions: clean credit history, UK residency, standard property type." />
-              </label>
-              <div className="slds-form-element__control">
-                {assumptions.map((assumption, index) => (
-                  <div key={index} className="display-flex flex-gap-05 margin-bottom-05">
-                    <input
-                      className="slds-input flex-1"
-                      type="text"
-                      value={assumption}
-                      onChange={(e) => handleAssumptionChange(index, e.target.value)}
-                      placeholder="Enter assumption"
-                    />
-                    <button
-                      className="slds-button slds-button_destructive min-width-80"
-                      onClick={() => handleDeleteAssumption(index)}
-                      type="button"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                ))}
-                <button
-                  className="slds-button slds-button_neutral margin-top-05"
-                  onClick={handleAddAssumption}
-                  type="button"
-                >
-                  + Add Assumption
-                </button>
-              </div>
-            </div>
+            {/* Assumptions section removed */}
 
             {/* Additional Notes */}
             <div className="slds-form-element">

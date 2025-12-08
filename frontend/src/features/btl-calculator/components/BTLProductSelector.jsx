@@ -83,7 +83,9 @@ export default function BTLProductSelector({
         {/* Tier Display */}
         <div className="tier-display">
           <span className="tier-label">Based on the criteria:</span>
-          <strong className="tier-value">Tier {currentTier}</strong>
+          <strong className={"tier-value" + (Number(currentTier) === 1 ? " tier-1" : "")}>
+            Tier {currentTier}
+          </strong>
         </div>
       </div>
     </div>

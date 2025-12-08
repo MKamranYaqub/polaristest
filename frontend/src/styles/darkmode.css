@@ -1737,6 +1737,40 @@ body.dark-mode #root {
   box-shadow: 0 0 0 1px var(--token-interactive) !important;
 }
 
+/* Success buttons */
+.dark-mode .slds-button_success {
+  background-color: var(--token-success, #42be65) !important;
+  border-color: var(--token-success, #42be65) !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .slds-button_success:hover:not(:disabled) {
+  background-color: #24a148 !important;
+  border-color: #24a148 !important;
+}
+
+.dark-mode .slds-button_success:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Destructive buttons */
+.dark-mode .slds-button_destructive {
+  background-color: var(--token-danger, #da1e28) !important;
+  border-color: var(--token-danger, #da1e28) !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .slds-button_destructive:hover:not(:disabled) {
+  background-color: var(--token-danger-hover, #ba1b23) !important;
+  border-color: var(--token-danger-hover, #ba1b23) !important;
+}
+
+.dark-mode .slds-button_destructive:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
 /* Backdrop for panels */
 .dark-mode .slds-backdrop_open {
   background-color: rgba(0, 0, 0, 0.7) !important;
