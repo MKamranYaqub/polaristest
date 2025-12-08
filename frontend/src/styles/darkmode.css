@@ -399,6 +399,137 @@ body.dark-mode #root {
   color: var(--token-text-primary) !important;
 }
 
+/* ============================================
+   UW REQUIREMENTS CHECKLIST
+   ============================================ */
+.dark-mode .uw-checklist {
+  background-color: var(--token-layer-surface) !important;
+  border: 1px solid var(--token-ui-border-medium) !important;
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .uw-checklist--empty {
+  color: var(--token-text-secondary) !important;
+}
+
+.dark-mode .uw-checklist__header {
+  border-bottom-color: var(--token-ui-border-subtle) !important;
+}
+
+.dark-mode .uw-checklist__header h3,
+.dark-mode .uw-checklist__header .slds-text-heading_small {
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .uw-checklist__stage-filter .slds-select {
+  background-color: var(--token-layer-background) !important;
+  color: var(--token-text-primary) !important;
+  border-color: var(--token-border-strong) !important;
+}
+
+.dark-mode .uw-checklist__export-btn {
+  background-color: var(--token-border-subtle) !important;
+  border-color: var(--token-border-strong) !important;
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .uw-checklist__export-btn:hover {
+  background-color: var(--token-layer-elevated) !important;
+}
+
+.dark-mode .uw-checklist__progress .slds-progress-bar {
+  background-color: var(--token-ui-border-subtle) !important;
+}
+
+.dark-mode .uw-checklist__progress .slds-progress-bar__value {
+  background-color: var(--token-interactive-brand) !important;
+}
+
+/* Progress text (counts and percent) */
+.dark-mode .uw-checklist__progress-text {
+  color: var(--token-text-secondary) !important;
+}
+
+.dark-mode .uw-checklist__category {
+  border-color: var(--token-ui-border-subtle) !important;
+  background-color: transparent !important;
+}
+
+.dark-mode .uw-checklist__category-header {
+  background-color: var(--token-ui-background-neutral) !important;
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .uw-checklist__category-header:hover {
+  background-color: var(--token-layer-surface-hover) !important;
+}
+
+.dark-mode .uw-checklist__category-header .slds-badge {
+  background-color: var(--token-ui-border-subtle) !important;
+  color: var(--token-text-primary) !important;
+}
+
+.dark-mode .uw-checklist__category-header .slds-badge--complete {
+  background-color: var(--token-success) !important;
+  color: var(--token-text-inverse) !important;
+}
+
+.dark-mode .uw-checklist__item {
+  border-top-color: var(--token-ui-border-subtle) !important;
+}
+
+.dark-mode .uw-checklist__item-label {
+  background-color: transparent !important;
+}
+
+.dark-mode .uw-checklist__item-label:hover {
+  background-color: var(--token-layer-surface-hover) !important;
+}
+
+.dark-mode .uw-checklist__item--checked .uw-checklist__item-label {
+  background-color: var(--token-success-bg) !important;
+}
+
+.dark-mode .uw-checklist__item--checked .uw-checklist__item-text {
+  color: var(--token-text-secondary) !important;
+}
+
+.dark-mode .uw-checklist__item-checkbox {
+  background-color: var(--token-layer-background) !important;
+  border-color: var(--token-ui-border-medium) !important;
+}
+
+.dark-mode .uw-checklist__item--checked .uw-checklist__item-checkbox {
+  background-color: var(--token-success) !important;
+  border-color: var(--token-success) !important;
+}
+
+.dark-mode .uw-checklist__item-guidance {
+  background-color: var(--token-ui-background-light) !important;
+  color: var(--token-text-secondary) !important;
+  border-top-color: var(--token-ui-border-subtle) !important;
+}
+
+.dark-mode .uw-checklist__item-optional-tag {
+  color: var(--token-text-secondary) !important;
+}
+
+.dark-mode .uw-checklist__footer {
+  border-top-color: var(--token-ui-border-subtle) !important;
+}
+
+.dark-mode .uw-checklist__status {
+  color: var(--token-warning) !important;
+}
+
+.dark-mode .uw-checklist__status--complete {
+  color: var(--token-success) !important;
+}
+
+.dark-mode .uw-checklist__status svg {
+  fill: currentColor !important;
+}
+
 .dark-mode .slds-table tbody tr:hover,
 .dark-mode .quotes-table tr:hover {
   background-color: var(--token-layer-surface-hover) !important;
