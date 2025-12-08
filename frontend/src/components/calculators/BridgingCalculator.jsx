@@ -2172,11 +2172,12 @@ export default function BridgingCalculator({ initialQuote = null }) {
       {/* Placeholders are injected into the results table as rows (see above) */}
 
       {/* UW Requirements Checklist */}
-      <CollapsibleSection
-        title="UW Requirements Checklist"
-        expanded={uwChecklistExpanded}
-        onToggle={() => setUwChecklistExpanded(prev => !prev)}
-      >
+      <div style={{ marginTop: '1rem' }}>
+        <CollapsibleSection
+          title="UW Requirements Checklist"
+          expanded={uwChecklistExpanded}
+          onToggle={() => setUwChecklistExpanded(prev => !prev)}
+        >
         <UWRequirementsChecklist
           stage="Both"
           quoteData={{
@@ -2201,6 +2202,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
           allowEdit={true}
         />
       </CollapsibleSection>
+      </div>
 
       {/* Issue DIP Modal */}
       <IssueDIPModal

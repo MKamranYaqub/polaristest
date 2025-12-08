@@ -2318,11 +2318,12 @@ export default function BTLcalculator({ initialQuote = null }) {
       </RangeToggle>
 
       {/* UW Requirements Checklist */}
-      <CollapsibleSection
-        title="UW Requirements Checklist"
-        expanded={uwChecklistExpanded}
-        onToggle={() => setUwChecklistExpanded(prev => !prev)}
-      >
+      <div style={{ marginTop: '1rem' }}>
+        <CollapsibleSection
+          title="UW Requirements Checklist"
+          expanded={uwChecklistExpanded}
+          onToggle={() => setUwChecklistExpanded(prev => !prev)}
+        >
         <UWRequirementsChecklist
           stage="Both"
           quoteData={{
@@ -2357,6 +2358,7 @@ export default function BTLcalculator({ initialQuote = null }) {
           allowEdit={true}
         />
       </CollapsibleSection>
+      </div>
 
       {/* Issue DIP Modal */}
       <IssueDIPModal
