@@ -258,6 +258,86 @@
   fill: var(--slds-g-color-neutral-base-50, #747474);
 }
 
+/* Editing mode */
+.uw-checklist__item-content {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+  width: 100%;
+}
+
+.uw-checklist__item-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.uw-checklist__item-edit-btn {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  margin-left: var(--slds-g-spacing-x-small, 0.5rem);
+  flex-shrink: 0;
+}
+
+.uw-checklist__item:hover .uw-checklist__item-edit-btn {
+  opacity: 1;
+}
+
+.uw-checklist__item-edit-btn:focus {
+  opacity: 1;
+}
+
+.uw-checklist__item--editing {
+  background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
+}
+
+.uw-checklist__item-edit-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--slds-g-spacing-x-small, 0.5rem);
+}
+
+.uw-checklist__item-edit-input {
+  width: 100%;
+  padding: var(--slds-g-spacing-x-small, 0.5rem);
+  font-size: var(--slds-g-font-size-3, 0.875rem);
+  border: 1px solid var(--slds-g-color-border-base-4, #939393);
+  border-radius: var(--slds-g-radius-border-2, 0.25rem);
+  background-color: var(--slds-g-color-neutral-base-100, #fff);
+}
+
+.uw-checklist__item-edit-input:focus {
+  outline: none;
+  border-color: var(--slds-g-color-brand-base-50, #0176d3);
+  box-shadow: 0 0 0 1px var(--slds-g-color-brand-base-50, #0176d3),
+              0 0 0 3px rgba(1, 118, 211, 0.16);
+}
+
+.uw-checklist__item-edit-actions {
+  display: flex;
+  gap: var(--slds-g-spacing-xx-small, 0.25rem);
+  align-items: center;
+}
+
+.uw-checklist__item-edit-actions button {
+  background-color: var(--slds-g-color-neutral-base-100, #fff);
+  border: 1px solid var(--slds-g-color-border-base-4, #939393);
+}
+
+.uw-checklist__item-edit-actions button:hover:not(:disabled) {
+  background-color: var(--slds-g-color-brand-base-50, #0176d3);
+  border-color: var(--slds-g-color-brand-base-50, #0176d3);
+}
+
+.uw-checklist__item-edit-actions button:hover:not(:disabled) svg {
+  fill: var(--slds-g-color-neutral-base-100, #fff);
+}
+
+.uw-checklist__item-edit-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Footer */
 .uw-checklist__footer {
   margin-top: var(--slds-g-spacing-medium, 1rem);

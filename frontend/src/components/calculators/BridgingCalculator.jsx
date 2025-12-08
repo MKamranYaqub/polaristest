@@ -54,7 +54,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
   const { getOrderedRows } = useResultsRowOrder('bridge');
 
   // Use custom hook for results table label aliases
-  const { getLabel } = useResultsLabelAlias();
+  const { getLabel } = useResultsLabelAlias('bridge');
 
   const [allCriteria, setAllCriteria] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -551,8 +551,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
       if (!currentQuoteId || !token) return;
       try {
         const data = await loadUWChecklistState(currentQuoteId, 'both', token);
-        // eslint-disable-next-line no-console
-        console.log('[Bridge] loadChecklistState raw response', { currentQuoteId, data });
         const raw = data && data.checked_items ? data.checked_items : {};
 
         let normalized = {};
@@ -566,8 +564,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
           });
         }
 
-        // eslint-disable-next-line no-console
-        console.log('[Bridge] loadChecklistState normalized', { normalized });
         setUwCheckedItems(normalized);
       } catch (e) {
         // Silently fail - checklist will start empty
@@ -1124,8 +1120,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
           total_cost_to_borrower: null,
           
           // Complete rate metadata from original rate for historical accuracy (Bridging-specific)
-          initial_term: rate.initial_term || rate.max_term || null,
-          full_term: rate.full_term || rate.max_term || null,
+          initial_term: calculated.initialTerm || rate.initial_term || rate.max_term || null,
+          full_term: calculated.fullTerm || rate.full_term || rate.max_term || null,
           revert_rate_type: rate.revert_rate_type || null,
           product_range: rate.product_range || productScope || null,
           min_term: rate.min_term || null,
@@ -1761,7 +1757,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
                             return (
                               <EditableResultRow
-                                label={getLabel('Rates')}
+                                label={getLabel('Full Rate')}
                                 columns={columnsHeaders}
                                 columnValues={ratesDisplayValues}
                                 originalValues={originalRates}
@@ -1788,10 +1784,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
                             const allPlaceholders = [
                               'APRC', 'Admin Fee', 'Broker Client Fee', 'Broker Comission (Proc Fee %)',
                               'Broker Comission (Proc Fee £)', 'Commitment Fee £', 'Deferred Interest %', 'Deferred Interest £',
-                              'Direct Debit', 'ERC 1 £', 'ERC 2 £', 'Exit Fee', 'Full Int BBR £', 'Full Int Coupon £', 
-                              'Gross Loan', 'ICR', 'LTV', 'Monthly Interest Cost',
+                              'Direct Debit', 'ERC 1 £', 'ERC 2 £', 'Exit Fee', 'Full Int BBR £', 'Full Int Coupon £', 'Full Term',
+                              'Gross Loan', 'ICR', 'Initial Term', 'LTV', 'Monthly Interest Cost',
                               'NBP', 'Net Loan', 'Net LTV', 'Pay Rate', 'Product Fee %', 'Product Fee £', 'Revert Rate', 'Revert Rate DD',
-                              'Rolled Months', 'Rolled Months Interest', 'Serviced Interest', 'Title Insurance Cost', 'Total Interest', 'Total Loan Term'
+                              'Rolled Months', 'Rolled Months Interest', 'Serviced Interest', 'Serviced Months', 'Title Insurance Cost', 'Total Interest'
                             ];
                             
                             // Filter placeholders based on visibility settings, then apply ordering
@@ -1960,11 +1956,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                 values['Full Int BBR £'][col] = `£${Number(best.full_interest_bbr).toLocaleString('en-GB')}`;
                               }
 
-                              // Total Loan Term
-                              if (best.total_loan_term && values['Total Loan Term']) {
-                                values['Total Loan Term'][col] = `${best.total_loan_term} months`;
-                              }
-
                               // Revert Rate (if available)
                               if (best.revert_rate && values['Revert Rate']) {
                                 values['Revert Rate'][col] = `${best.revert_rate}%`;
@@ -1983,6 +1974,21 @@ export default function BridgingCalculator({ initialQuote = null }) {
                               // Exit Fee (if available)
                               if (best.exit_fee && values['Exit Fee']) {
                                 values['Exit Fee'][col] = `£${Number(best.exit_fee).toLocaleString('en-GB')}`;
+                              }
+
+                              // Initial Term
+                              if (best.initial_term != null && values['Initial Term']) {
+                                values['Initial Term'][col] = `${best.initial_term} months`;
+                              }
+
+                              // Full Term
+                              if (best.full_term != null && values['Full Term']) {
+                                values['Full Term'][col] = `${best.full_term} months`;
+                              }
+
+                              // Serviced Months
+                              if (best.serviced_months != null && values['Serviced Months']) {
+                                values['Serviced Months'][col] = `${best.serviced_months} months`;
                               }
 
                               // ERC 1 £ (Fusion only)
@@ -2176,7 +2182,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
           quoteData={{
             property_type: answers['Property type'] || '',
             loan_purpose: answers['Loan purpose'] || '',
-            borrower_type: answers['Borrower type'] || ''
+            borrower_type: answers['Borrower type'] || '',
+            borrower_name: currentQuoteData?.borrower_name || '',
+            quote_borrower_name: currentQuoteData?.quote_borrower_name || ''
           }}
           checkedItems={uwCheckedItems || {}}
           onCheckChange={(itemId, checked) => {
@@ -2190,6 +2198,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
           }}
           showExportButton={true}
           showGuidance={true}
+          allowEdit={true}
         />
       </CollapsibleSection>
 

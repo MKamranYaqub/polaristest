@@ -82,7 +82,7 @@ router.get('/quotes', async (req, res) => {
               top_slicing: result.top_slicing,
               nbp: result.nbp,
               total_cost_to_borrower: result.total_cost_to_borrower,
-              total_loan_term: result.total_loan_term,
+              full_term: result.full_term,
             });
           });
         } else {
@@ -178,7 +178,7 @@ router.get('/quotes', async (req, res) => {
               top_slicing: result.top_slicing,
               nbp: result.nbp,
               total_cost_to_borrower: result.total_cost_to_borrower,
-              total_loan_term: result.total_loan_term,
+              full_term: result.full_term,
             });
           });
         } else {

@@ -515,7 +515,13 @@ export class BridgeFusionCalculator {
     }
 
     // === INTEREST CALCULATIONS ===
-    const servicedMonths = Math.max(term - rolled, 0);
+    // Serviced months calculation:
+    // - For Bridge: bridging loan term - rolled months
+    // - For Fusion: min term (24 months) - rolled months
+    const fusionMinTerm = 24;
+    const servicedMonths = productKind === 'fusion'
+      ? Math.max(fusionMinTerm - rolled, 0)
+      : Math.max(term - rolled, 0);
     
     // Deferred interest (annual rate applied to full term, typically for Fusion)
     const deferredMonthlyRate = deferredAnnualRate / 12;
@@ -619,7 +625,7 @@ export class BridgeFusionCalculator {
       netLoanGBP,
       npb: nbp, // Net Proceeds to Borrower
       grossLTV,
-      netLTV,
+      netLTV: (netLoanGBP / pv) * 100, // Net LTV based on net loan
       ltv: ltvBucket,
   combinedGrossLTV,
   isSecondCharge: secondChargeFlag,
@@ -671,6 +677,8 @@ export class BridgeFusionCalculator {
 
       // Interest components
       termMonths: term,
+      initialTerm: term, // Initial term (same as termMonths for bridging)
+      fullTerm: rateRecord?.full_term || term, // Full term from rate record
       rolledMonths: rolled,
       servicedMonths,
       rolledInterestGBP,

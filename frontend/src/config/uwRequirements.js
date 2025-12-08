@@ -70,7 +70,7 @@ export const DEFAULT_UW_REQUIREMENTS = [
     required: false,
     order: 1,
     conditions: [],
-    guidance: 'Header text for assumptions section',
+    guidance: '',
     enabled: true
   },
   {
@@ -114,8 +114,9 @@ export const DEFAULT_UW_REQUIREMENTS = [
     required: false,
     order: 5,
     conditions: [],
-    guidance: 'Important disclaimer',
-    enabled: true
+    guidance: '',
+    enabled: true,
+    pdfOnly: true
   },
   {
     id: 'assumption_dip_intro',
@@ -125,8 +126,9 @@ export const DEFAULT_UW_REQUIREMENTS = [
     required: false,
     order: 6,
     conditions: [],
-    guidance: 'Introduction text for DIP stage',
-    enabled: true
+    guidance: '',
+    enabled: true,
+    pdfOnly: true
   },
 
   // ==================== BROKER REQUIREMENTS ====================
@@ -217,7 +219,7 @@ export const DEFAULT_UW_REQUIREMENTS = [
     required: true,
     order: 7,
     conditions: [],
-    guidance: 'Required for test that loan is for business purposes and non-regulated, max personal use 40% of net/gross loan',
+    guidance: '',
     enabled: true
   },
   {
@@ -228,7 +230,7 @@ export const DEFAULT_UW_REQUIREMENTS = [
     required: true,
     order: 8,
     conditions: [],
-    guidance: 'Get the explanation first and then request specific evidence, refer to TL / Head if unsure or have any concerns',
+    guidance: '',
     enabled: true
   },
   {
@@ -239,7 +241,7 @@ export const DEFAULT_UW_REQUIREMENTS = [
     required: true,
     order: 9,
     conditions: [],
-    guidance: 'Can remove if no deposit / shortfall required from borrower',
+    guidance: '',
     enabled: true
   },
   {
@@ -355,7 +357,7 @@ export const DEFAULT_UW_REQUIREMENTS = [
     conditions: [
       { field: 'borrower_type', operator: CONDITION_OPERATORS.CONTAINS, value: 'personal' }
     ],
-    guidance: 'To confirm if higher rate taxpayer or FTB to confirm minimum income £30,000',
+    guidance: '',
     enabled: true
   },
   {

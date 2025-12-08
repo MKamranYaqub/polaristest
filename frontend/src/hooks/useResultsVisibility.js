@@ -29,25 +29,27 @@ export function useResultsVisibility(calculatorType) {
           }
         }
 
-        // Fallback to Supabase if localStorage doesn't have the data
+        // Fallback to Supabase results_configuration table
         if (supabase) {
           const { data, error } = await supabase
-            .from('app_constants')
-            .select('value')
-            .eq('key', 'results_table_visibility')
+            .from('results_configuration')
+            .select('config')
+            .eq('key', 'visibility')
+            .eq('calculator_type', calculatorType)
             .maybeSingle();
 
-          if (data && data.value) {
-            const settings = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
-            const calcSettings = calculatorType === 'btl' ? settings.btl : 
-                                calculatorType === 'bridge' ? settings.bridge :
-                                calculatorType === 'core' ? settings.core : null;
-            
-            if (calcSettings) {
-              setVisibleRows(calcSettings);
-              // Also save to localStorage for faster future access
-              localStorage.setItem('results_table_visibility', JSON.stringify(settings));
+          if (data && data.config) {
+            setVisibleRows(data.config);
+            // Also save to localStorage for faster future access
+            const localData = localStorage.getItem('results_table_visibility');
+            let allSettings = {};
+            if (localData) {
+              try {
+                allSettings = JSON.parse(localData);
+              } catch (e) { /* ignore */ }
             }
+            allSettings[calculatorType] = data.config;
+            localStorage.setItem('results_table_visibility', JSON.stringify(allSettings));
           }
         }
       } catch (err) {

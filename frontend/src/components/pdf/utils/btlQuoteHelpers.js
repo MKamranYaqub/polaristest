@@ -219,6 +219,13 @@ export const getRolledMonths = (result) => {
   return `${rolled} months`;
 };
 
+export const getServicedMonths = (result) => {
+  if (!result) return 'N/A';
+  const serviced = parseNumber(result.serviced_months);
+  if (serviced === null || serviced === undefined || isNaN(serviced)) return 'N/A';
+  return `${serviced} months`;
+};
+
 // Loan details
 export const getGrossLoan = (result) => {
   if (!result) return 'N/A';
@@ -398,7 +405,7 @@ export const getFeePayments = () => {
   return 'Fees payable when DIP signed.';
 };
 
-export const getTotalLoanTerm = (quote, result) => {
+export const getFullTerm = (quote, result) => {
   if (!result) return 'N/A';
   
   // PRIORITY: Use saved term data from database (added in migration 032)

@@ -43,6 +43,8 @@ export default function BTLResultsSummary({
     { key: 'netLtv', label: 'Net LTV', format: 'percent' },
     { key: 'rate', label: 'Rate', format: 'percent' },
     { key: 'icr', label: 'ICR', format: 'ratio' },
+    { key: 'rolledMonths', label: 'Rolled Months', format: 'months' },
+    { key: 'servicedMonths', label: 'Serviced Months', format: 'months' },
     { key: 'monthlyInterestCost', label: 'Monthly Interest', format: 'currency' },
     { key: 'totalCostToBorrower', label: 'Total Cost', format: 'currency' },
     { key: 'aprc', label: 'APRC', format: 'percent' }
@@ -58,6 +60,8 @@ export default function BTLResultsSummary({
         return formatPercent(value, 2);
       case 'ratio':
         return typeof value === 'number' ? value.toFixed(2) : value;
+      case 'months':
+        return typeof value === 'number' ? `${value} months` : value;
       default:
         return value;
     }

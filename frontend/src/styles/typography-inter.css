@@ -28,69 +28,71 @@ body.typography-inter-enabled {
 }
 
 /* ============================================
-   3. Heading Scale (1.2 ratio - Minor Third)
+   3. Heading Scale - Conservative for business apps
    ============================================ */
+/* Reduced scale: More compact for dense interfaces like calculators and admin panels */
+
 body.typography-inter-enabled h1,
 body.typography-inter-enabled .text-h1 {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 2.986rem;  /* ~47.78px */
+  font-size: 1.75rem;   /* 28px - Page title */
   font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
   margin-top: 0;
-  margin-bottom: 0.5em;
+  margin-bottom: 0.75rem;
 }
 
 body.typography-inter-enabled h2,
 body.typography-inter-enabled .text-h2 {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 2.488rem;  /* ~39.81px */
-  font-weight: 700;
-  line-height: 1.25;
-  letter-spacing: -0.015em;
+  font-size: 1.5rem;    /* 24px - Section title */
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.008em;
   margin-top: 0;
-  margin-bottom: 0.5em;
+  margin-bottom: 0.625rem;
 }
 
 body.typography-inter-enabled h3,
 body.typography-inter-enabled .text-h3 {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 2.074rem;  /* ~33.18px */
+  font-size: 1.25rem;   /* 20px - Subsection title */
   font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
   margin-top: 0;
-  margin-bottom: 0.5em;
+  margin-bottom: 0.5rem;
 }
 
 body.typography-inter-enabled h4,
 body.typography-inter-enabled .text-h4 {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 1.728rem;  /* ~27.65px */
+  font-size: 1.125rem;  /* 18px - Card/Panel title */
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.45;
   margin-top: 0;
-  margin-bottom: 0.5em;
+  margin-bottom: 0.5rem;
 }
 
 body.typography-inter-enabled h5,
 body.typography-inter-enabled .text-h5 {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 1.44rem;   /* ~23.04px */
+  font-size: 1rem;      /* 16px - Same as body, but bold */
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.5;
   margin-top: 0;
-  margin-bottom: 0.5em;
+  margin-bottom: 0.5rem;
 }
 
 body.typography-inter-enabled h6,
 body.typography-inter-enabled .text-h6 {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 1.2rem;    /* ~19.2px */
+  font-size: 0.875rem;  /* 14px - Small heading */
   font-weight: 600;
-  line-height: 1.45;
+  line-height: 1.5;
   margin-top: 0;
-  margin-bottom: 0.5em;
+  margin-bottom: 0.5rem;
 }
 
 /* ============================================
@@ -202,7 +204,38 @@ body.typography-inter-enabled .text-micro {
 }
 
 /* ============================================
-   9. SLDS Component Overrides (only when enabled)
+   9. Universal Text Elements (only when enabled)
+   ============================================ */
+/* Apply Inter font to ALL text elements when enabled */
+body.typography-inter-enabled,
+body.typography-inter-enabled * {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Tables - ensure all table text uses Inter */
+body.typography-inter-enabled table,
+body.typography-inter-enabled th,
+body.typography-inter-enabled td,
+body.typography-inter-enabled tbody,
+body.typography-inter-enabled thead,
+body.typography-inter-enabled tfoot {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Divs, spans, labels - catch-all for calculator results */
+body.typography-inter-enabled div,
+body.typography-inter-enabled span,
+body.typography-inter-enabled label,
+body.typography-inter-enabled a,
+body.typography-inter-enabled button,
+body.typography-inter-enabled input,
+body.typography-inter-enabled select,
+body.typography-inter-enabled textarea {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ============================================
+   10. SLDS Component Overrides (only when enabled)
    ============================================ */
 body.typography-inter-enabled .slds-text-heading_large,
 body.typography-inter-enabled .slds-text-heading_medium,
@@ -219,39 +252,39 @@ body.typography-inter-enabled .slds-tabs_default__link {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* SLDS heading sizes mapped to our scale */
+/* SLDS heading sizes mapped to our conservative scale */
 body.typography-inter-enabled .slds-text-heading_large {
-  font-size: 1.728rem;  /* Maps to h4 */
+  font-size: 1.5rem;    /* 24px - Maps to h2 */
   font-weight: 600;
   line-height: 1.35;
 }
 
 body.typography-inter-enabled .slds-text-heading_medium {
-  font-size: 1.44rem;   /* Maps to h5 */
+  font-size: 1.25rem;   /* 20px - Maps to h3 */
   font-weight: 600;
   line-height: 1.4;
 }
 
 body.typography-inter-enabled .slds-text-heading_small {
-  font-size: 1.2rem;    /* Maps to h6 */
+  font-size: 1.125rem;  /* 18px - Maps to h4 */
   font-weight: 600;
   line-height: 1.45;
 }
 
 /* ============================================
-   10. Admin Page Specific (only when enabled)
+   11. Admin Page Specific (only when enabled)
    ============================================ */
 body.typography-inter-enabled .admin-table-container h1 {
-  font-size: 2.074rem;  /* h3 size for page titles */
+  font-size: 1.75rem;   /* 28px - Use h1 size */
   font-weight: 700;
   line-height: 1.3;
   letter-spacing: -0.01em;
 }
 
 body.typography-inter-enabled .admin-table-container h4 {
-  font-size: 1.44rem;   /* h5 size for section titles */
+  font-size: 1.125rem;  /* 18px - Use h4 size */
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 /* Table headers */
@@ -270,7 +303,7 @@ body.typography-inter-enabled .admin-table-container td {
 }
 
 /* ============================================
-   11. Form Elements (only when enabled)
+   12. Form Elements (only when enabled)
    ============================================ */
 body.typography-inter-enabled .slds-form-element__label {
   font-size: 0.875rem;
@@ -286,7 +319,7 @@ body.typography-inter-enabled .slds-textarea {
 }
 
 /* ============================================
-   12. Buttons (only when enabled)
+   13. Buttons (only when enabled)
    ============================================ */
 body.typography-inter-enabled .slds-button {
   font-size: 0.875rem;
@@ -299,18 +332,18 @@ body.typography-inter-enabled .slds-button_small {
 }
 
 /* ============================================
-   13. CSS Custom Properties (always available)
+   14. CSS Custom Properties (always available)
    ============================================ */
 :root {
   --inter-font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   
-  /* Typography scale */
-  --font-size-h1: 2.986rem;
-  --font-size-h2: 2.488rem;
-  --font-size-h3: 2.074rem;
-  --font-size-h4: 1.728rem;
-  --font-size-h5: 1.44rem;
-  --font-size-h6: 1.2rem;
+  /* Typography scale - updated to conservative sizes */
+  --font-size-h1: 1.75rem;    /* 28px */
+  --font-size-h2: 1.5rem;     /* 24px */
+  --font-size-h3: 1.25rem;    /* 20px */
+  --font-size-h4: 1.125rem;   /* 18px */
+  --font-size-h5: 1rem;       /* 16px */
+  --font-size-h6: 0.875rem;   /* 14px */
   --font-size-body: 1rem;
   --font-size-body-large: 1.125rem;
   --font-size-body-small: 0.875rem;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSupabase } from '../../contexts/SupabaseContext';
 import NotificationModal from '../modals/NotificationModal';
 import {
@@ -202,31 +202,31 @@ export default function Constants() {
         await updateProductList(pt, tempValues[key] || '');
       } else if (key.startsWith('feeColumns:')) {
         const k = key.split(':')[1];
-        await updateFeeColumn(k, tempValues[key] || '');
+        await updateFeeColumns(k, tempValues[key] || '');
       } else if (key.startsWith('marketRates:')) {
         const field = key.split(':')[1];
         const n = Number(tempValues[key]);
-        await updateMarketRate(field, tempValues[key]);
+        await updateMarketRates({ [field]: Number.isFinite(n) ? n / 100 : 0 });
       } else if (key === 'flatAbove:scopeMatcher') {
-        await updateFlatAbove('scopeMatcher', tempValues[key] || '');
+        await updateFlatAboveCommercial({ scopeMatcher: tempValues[key] || '' });
       } else if (key === 'flatAbove:tier2') {
-        await updateFlatAbove('tier2', tempValues[key] || '');
+        await updateFlatAboveCommercial({ tierLtv: { ...(flatAboveCommercialRule.tierLtv || {}), '2': Number(tempValues[key] || '') } });
       } else if (key === 'flatAbove:tier3') {
-        await updateFlatAbove('tier3', tempValues[key] || '');
+        await updateFlatAboveCommercial({ tierLtv: { ...(flatAboveCommercialRule.tierLtv || {}), '3': Number(tempValues[key] || '') } });
       } else if (key.startsWith('brokerRoutes:')) {
         const routeKey = key.split(':')[1];
-        await updateBrokerRoute(routeKey, tempValues[key] || '');
+        await updateBrokerRoutes({ [routeKey]: tempValues[key] || '' });
       } else if (key.startsWith('brokerCommission:')) {
         const route = key.split(':')[1];
         const n = Number(tempValues[key]);
-        await updateBrokerCommission(route, n);
+        await updateBrokerCommissionDefaults({ [route]: Number.isFinite(n) ? n : 0.9 });
       } else if (key === 'brokerTolerance') {
         const n = Number(tempValues[key]);
-        await updateBrokerTolerance(n);
+        await updateBrokerCommissionTolerance(Number.isFinite(n) ? n : 0.2);
       } else if (key === 'fundingLinesBTL') {
-        await updateFundingLines('btl', tempValues[key] || '');
+        await updateFundingLinesBTL(tempValues[key] || '');
       } else if (key === 'fundingLinesBridge') {
-        await updateFundingLines('bridge', tempValues[key] || '');
+        await updateFundingLinesBridge(tempValues[key] || '');
       }
     } catch (e) {
       // Failed to save field
@@ -576,6 +576,377 @@ export default function Constants() {
 
   // Add new broker route
   const addBrokerRoute = async () => {
+    // persist with CURRENT state values for all fields
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: newFeeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates
+    };
+    writeOverrides(currentOverrides);
+    
+    // Save to Supabase using comprehensive save logic
+    setSaving(true);
+    try {
+      let tryStructured = structuredSupported;
+      if (tryStructured === null) {
+        tryStructured = await detectStructuredSupport();
+        setStructuredSupported(tryStructured);
+      }
+
+      if (tryStructured && supabase) {
+        const upsertRow = {
+          key: 'app.constants',
+          product_lists: currentOverrides.productLists,
+          fee_columns: currentOverrides.feeColumns,
+          flat_above_commercial_rule: currentOverrides.flatAboveCommercialRule,
+          market_rates: currentOverrides.marketRates,
+           funding_lines_btl: fundingLinesBTL,
+           funding_lines_bridge: fundingLinesBridge,
+        };
+        const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
+        setSaving(false);
+        
+        if (error) {
+          
+          setMessage('Saved locally but failed to persist fee columns to database. See console.');
+        } else {
+          setMessage('Fee columns saved locally and persisted to database.');
+        }
+        return { error };
+      }
+
+      // Fallback
+      const { error } = await saveToSupabase(currentOverrides);
+      setSaving(false);
+      if (error) {
+        
+        setMessage('Saved locally but failed to persist fee columns to database. See console.');
+      } else {
+        setMessage('Fee columns saved locally and persisted to database.');
+      }
+      return { error };
+    } catch (e) {
+      setSaving(false);
+      
+      setMessage('Saved locally but unexpected error persisting to database.');
+      return { error: e };
+    }
+  };
+
+  const updateFlatAboveCommercial = async (changes) => {
+    const newRule = { ...(flatAboveCommercialRule || {}), ...changes };
+    setFlatAboveCommercialRule(newRule);
+    // persist with CURRENT state values for all fields
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: newRule,
+      marketRates: marketRates
+    };
+    writeOverrides(currentOverrides);
+    
+    // Save to Supabase using comprehensive save logic
+    setSaving(true);
+    try {
+      let tryStructured = structuredSupported;
+      if (tryStructured === null) {
+        tryStructured = await detectStructuredSupport();
+        setStructuredSupported(tryStructured);
+      }
+
+      if (tryStructured && supabase) {
+        const upsertRow = {
+          key: 'app.constants',
+          product_lists: currentOverrides.productLists,
+          fee_columns: currentOverrides.feeColumns,
+          flat_above_commercial_rule: currentOverrides.flatAboveCommercialRule,
+          market_rates: currentOverrides.marketRates,
+           funding_lines_btl: fundingLinesBTL,
+           funding_lines_bridge: fundingLinesBridge,
+        };
+        const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
+        setSaving(false);
+        
+        if (error) {
+          
+          setMessage('Saved locally but failed to persist flat-above-commercial rule to database. See console.');
+        } else {
+          setMessage('Flat-above-commercial rule saved locally and persisted to database.');
+        }
+        return { error };
+      }
+
+      // Fallback
+      const { error } = await saveToSupabase(currentOverrides);
+      setSaving(false);
+      if (error) {
+        
+        setMessage('Saved locally but failed to persist flat-above-commercial rule to database. See console.');
+      } else {
+        setMessage('Flat-above-commercial rule saved locally and persisted to database.');
+      }
+      return { error };
+    } catch (e) {
+      setSaving(false);
+      
+      setMessage('Saved locally but unexpected error persisting to database.');
+      return { error: e };
+    }
+  };
+
+  const updateMarketRates = async (changes) => {
+    const newRates = { ...(marketRates || {}), ...changes };
+    setMarketRates(newRates);
+    // persist with CURRENT state values for all fields
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: newRates,
+      brokerRoutes: brokerRoutes,
+      brokerCommissionDefaults: brokerCommissionDefaults,
+      brokerCommissionTolerance: brokerCommissionTolerance
+    };
+    writeOverrides(currentOverrides);
+    
+    // Save to Supabase using comprehensive save logic
+    setSaving(true);
+    try {
+      let tryStructured = structuredSupported;
+      if (tryStructured === null) {
+        tryStructured = await detectStructuredSupport();
+        setStructuredSupported(tryStructured);
+      }
+
+      if (tryStructured && supabase) {
+        const upsertRow = {
+          key: 'app.constants',
+          product_lists: currentOverrides.productLists,
+          fee_columns: currentOverrides.feeColumns,
+          flat_above_commercial_rule: currentOverrides.flatAboveCommercialRule,
+          market_rates: currentOverrides.marketRates,
+           funding_lines_btl: fundingLinesBTL,
+           funding_lines_bridge: fundingLinesBridge,
+        };
+        const { error } = await supabase.from('app_constants').upsert([upsertRow], { returning: 'minimal' });
+        setSaving(false);
+        
+        if (error) {
+          
+          setMessage('Saved locally but failed to persist market rates to database. See console.');
+        } else {
+          setMessage('Market rates saved locally and persisted to database.');
+        }
+        return { error };
+      }
+
+      // Fallback
+      const { error } = await saveToSupabase(currentOverrides);
+      setSaving(false);
+      if (error) {
+        
+        setMessage('Saved locally but failed to persist market rates to database. See console.');
+      } else {
+        setMessage('Market rates saved locally and persisted to database.');
+      }
+      return { error };
+    } catch (e) {
+      setSaving(false);
+      
+      setMessage('Saved locally but unexpected error persisting to database.');
+      return { error: e };
+    }
+  };
+
+  const updateBrokerRoutes = async (changes) => {
+    const newRoutes = { ...(brokerRoutes || {}), ...changes };
+    setBrokerRoutes(newRoutes);
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates,
+      brokerRoutes: newRoutes,
+      brokerCommissionDefaults: brokerCommissionDefaults,
+      brokerCommissionTolerance: brokerCommissionTolerance
+    };
+    writeOverrides(currentOverrides);
+    setMessage('Broker routes saved to localStorage.');
+  };
+
+  const updateBrokerCommissionDefaults = async (changes) => {
+    const newDefaults = { ...(brokerCommissionDefaults || {}), ...changes };
+    setBrokerCommissionDefaults(newDefaults);
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates,
+      brokerRoutes: brokerRoutes,
+      brokerCommissionDefaults: newDefaults,
+      brokerCommissionTolerance: brokerCommissionTolerance
+    };
+    writeOverrides(currentOverrides);
+    setMessage('Broker commission defaults saved to localStorage.');
+  };
+
+  const updateBrokerCommissionTolerance = async (newTolerance) => {
+    setBrokerCommissionTolerance(newTolerance);
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates,
+      brokerRoutes: brokerRoutes,
+      brokerCommissionDefaults: brokerCommissionDefaults,
+      brokerCommissionTolerance: newTolerance
+    };
+    writeOverrides(currentOverrides);
+    setMessage('Broker commission tolerance saved to localStorage.');
+  };
+
+  // Update funding lines (comma-separated string)
+  // Update funding lines for BTL (comma-separated string)
+  const updateFundingLinesBTL = async (csv) => {
+    const arr = csv.split(',').map((s) => s.trim()).filter(Boolean);
+    setFundingLinesBTL(arr);
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates,
+      brokerRoutes: brokerRoutes,
+      brokerCommissionDefaults: brokerCommissionDefaults,
+      brokerCommissionTolerance: brokerCommissionTolerance,
+      fundingLinesBTL: arr,
+      fundingLinesBridge: fundingLinesBridge
+    };
+    writeOverrides(currentOverrides);
+    setMessage('BTL funding lines saved to localStorage.');
+
+    // Persist using same strategy as other fields
+    setSaving(true);
+    try {
+      let tryStructured = structuredSupported;
+      if (tryStructured === null) {
+        tryStructured = await detectStructuredSupport();
+        setStructuredSupported(tryStructured);
+      }
+
+      if (tryStructured && supabase) {
+        const key = `app.constants:${new Date().toISOString()}`;
+        const insertRow = {
+          key,
+          product_lists: productLists,
+          fee_columns: feeColumns,
+          flat_above_commercial_rule: flatAboveCommercialRule,
+          market_rates: marketRates,
+          broker_routes: brokerRoutes,
+          broker_commission_defaults: brokerCommissionDefaults,
+          broker_commission_tolerance: brokerCommissionTolerance,
+          funding_lines_btl: arr,
+          funding_lines_bridge: fundingLinesBridge,
+        };
+        const { error } = await supabase.from('app_constants').insert([insertRow]);
+        setSaving(false);
+        if (error) {
+          
+          setMessage('Saved locally but failed to persist BTL funding lines to database. See console.');
+        } else {
+          setMessage('BTL funding lines saved locally and persisted to database.');
+        }
+        return { error };
+      }
+
+      // Fallback
+      const { error } = await saveToSupabase(currentOverrides);
+      setSaving(false);
+      if (error) {
+        setMessage('Saved locally but failed to persist BTL funding lines to database.');
+      } else {
+        setMessage('BTL funding lines saved locally and persisted to database.');
+      }
+      return { error };
+    } catch (e) {
+      setSaving(false);
+      
+      setMessage('Saved locally but unexpected error persisting to database.');
+      return { error: e };
+    }
+  };
+
+  // Update funding lines for Bridge (comma-separated string)
+  const updateFundingLinesBridge = async (csv) => {
+    const arr = csv.split(',').map((s) => s.trim()).filter(Boolean);
+    setFundingLinesBridge(arr);
+    const currentOverrides = {
+      productLists: productLists,
+      feeColumns: feeColumns,
+      flatAboveCommercialRule: flatAboveCommercialRule,
+      marketRates: marketRates,
+      brokerRoutes: brokerRoutes,
+      brokerCommissionDefaults: brokerCommissionDefaults,
+      brokerCommissionTolerance: brokerCommissionTolerance,
+      fundingLinesBTL: fundingLinesBTL,
+      fundingLinesBridge: arr
+    };
+    writeOverrides(currentOverrides);
+    setMessage('Bridge funding lines saved to localStorage.');
+
+    // Persist using same strategy as other fields
+    setSaving(true);
+    try {
+      let tryStructured = structuredSupported;
+      if (tryStructured === null) {
+        tryStructured = await detectStructuredSupport();
+        setStructuredSupported(tryStructured);
+      }
+
+      if (tryStructured && supabase) {
+        const key = `app.constants:${new Date().toISOString()}`;
+        const insertRow = {
+          key,
+          product_lists: productLists,
+          fee_columns: feeColumns,
+          flat_above_commercial_rule: flatAboveCommercialRule,
+          market_rates: marketRates,
+          broker_routes: brokerRoutes,
+          broker_commission_defaults: brokerCommissionDefaults,
+          broker_commission_tolerance: brokerCommissionTolerance,
+          funding_lines_btl: fundingLinesBTL,
+          funding_lines_bridge: arr,
+        };
+        const { error } = await supabase.from('app_constants').insert([insertRow]);
+        setSaving(false);
+        if (error) {
+          
+          setMessage('Saved locally but failed to persist Bridge funding lines to database. See console.');
+        } else {
+          setMessage('Bridge funding lines saved locally and persisted to database.');
+        }
+        return { error };
+      }
+
+      // Fallback
+      const { error } = await saveToSupabase(currentOverrides);
+      setSaving(false);
+      if (error) {
+        setMessage('Saved locally but failed to persist Bridge funding lines to database.');
+      } else {
+        setMessage('Bridge funding lines saved locally and persisted to database.');
+      }
+      return { error };
+    } catch (e) {
+      setSaving(false);
+      
+      setMessage('Saved locally but unexpected error persisting to database.');
+      return { error: e };
+    }
+  };
+
+  // Add new broker route
+  const addBrokerRoute = async () => {
     // Validate inputs
     if (!newRouteKey.trim()) {
       setMessage('Error: Route key cannot be empty');
@@ -665,6 +1036,143 @@ export default function Constants() {
   const cancelDeleteBrokerRoute = () => {
     setDeleteConfirmation({ show: false, routeKey: '', displayName: '' });
   };
+
+  // Save a single named column to database table `app_constants`.
+  // Column names used: product_lists, fee_columns, flat_above_commercial_rule, market_rates
+  const saveFieldToSupabase = async (column, value) => {
+    if (!supabase) {
+      
+      return { error: 'Database client unavailable' };
+    }
+    
+    
+    
+    try {
+      // If structured columns supported, try a structured-column upsert first
+      let tryStructured = structuredSupported;
+      if (tryStructured === null) {
+        
+        tryStructured = await detectStructuredSupport();
+        setStructuredSupported(tryStructured);
+      }
+      
+      
+      
+      if (tryStructured) {
+        try {
+          // Fetch existing structured row and merge to avoid overwriting other structured columns with NULL
+          
+          const { data: existingStruct, error: fetchErr } = await supabase.from('app_constants').select('*').eq('key', 'app.constants').single();
+          
+          if (fetchErr && fetchErr.code !== 'PGRST116') {
+            
+          }
+          
+          const currentStruct = existingStruct || {};
+          
+          
+          const mapStruct = {
+            product_lists: 'product_lists',
+            fee_columns: 'fee_columns',
+            flat_above_commercial_rule: 'flat_above_commercial_rule',
+            market_rates: 'market_rates',
+            funding_lines_btl: 'funding_lines_btl',
+            funding_lines_bridge: 'funding_lines_bridge',
+          };
+          const targetCol = mapStruct[column] || column;
+          
+          // Use current state values as fallbacks if DB has nulls
+          const newRow = {
+            key: 'app.constants',
+            product_lists: currentStruct.product_lists || productLists || null,
+            fee_columns: currentStruct.fee_columns || feeColumns || null,
+            flat_above_commercial_rule: currentStruct.flat_above_commercial_rule || flatAboveCommercialRule || null,
+            market_rates: currentStruct.market_rates || marketRates || null,
+          };
+          
+          // set the changed column
+          newRow[targetCol] = value;
+          
+          
+          const { error } = await supabase.from('app_constants').upsert([newRow], { returning: 'minimal' });
+          
+          if (!error) {
+            return { error: null };
+          }
+          
+          // if structured upsert failed, we'll attempt alternatives below
+          
+        } catch (e) {
+          
+        }
+
+        // If structured columns exist but `value` column does not, try merging/upserting structured columns instead of value
+        if (hasValueColumn === false) {
+          try {
+            // Fetch existing structured columns (if any)
+            const { data: existingStruct, error: fetchStructErr } = await supabase.from('app_constants').select('*').eq('key', 'app.constants').single();
+            const currentStruct = existingStruct || {};
+            const mapStruct = {
+              product_lists: 'product_lists',
+              fee_columns: 'fee_columns',
+              flat_above_commercial_rule: 'flat_above_commercial_rule',
+              market_rates: 'market_rates',
+              funding_lines: 'funding_lines',
+            };
+            const targetCol = mapStruct[column] || column;
+            const newRow = {
+              key: 'app.constants',
+              product_lists: currentStruct.product_lists || null,
+              fee_columns: currentStruct.fee_columns || null,
+              flat_above_commercial_rule: currentStruct.flat_above_commercial_rule || null,
+              market_rates: currentStruct.market_rates || null,
+            };
+            // set the changed column
+            newRow[targetCol] = value;
+            const { error: upsertStructErr } = await supabase.from('app_constants').upsert([newRow], { returning: 'minimal' });
+            if (!upsertStructErr) return { error: null };
+            
+          } catch (e) {
+            
+          }
+        }
+      }
+
+      // Generic fallback: if `value` column exists (or we couldn't determine structured support), use JSON merge upsert
+        if (hasValueColumn !== false) {
+        const { data: existing, error: fetchErr } = await supabase.from('app_constants').select('*').eq('key', 'app.constants').single();
+        if (fetchErr && fetchErr.code !== 'PGRST116') {
+          
+        }
+        const current = (existing && existing.value) ? existing.value : (readOverrides() || { productLists, feeColumns, flatAboveCommercialRule, marketRates });
+        // map incoming column names to JSON keys used in localStorage
+        const map = {
+          product_lists: 'productLists',
+          fee_columns: 'feeColumns',
+          flat_above_commercial_rule: 'flatAboveCommercialRule',
+          market_rates: 'marketRates',
+          funding_lines_btl: 'fundingLinesBTL',
+          funding_lines_bridge: 'fundingLinesBridge',
+        };
+        const jsonKey = map[column] || column;
+        const newValue = { ...current, [jsonKey]: value };
+        const row = { key: 'app.constants', value: newValue };
+        const { error: upsertErr } = await supabase.from('app_constants').upsert([row], { returning: 'minimal' });
+        if (upsertErr) {
+          
+          return { error: upsertErr };
+        }
+        return { error: null };
+      }
+
+      return { error: 'No available upsert strategy (structured-only table without value column failed)' };
+    } catch (e) {
+      
+      return { error: e };
+    }
+  };
+
+  
 
   
 

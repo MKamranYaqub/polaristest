@@ -180,9 +180,9 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           </Text>
         </View>
 
-        {/* Total Loan Term - Conditional text based on Fixed vs Tracker */}
+        {/* Full Term - Conditional text based on Fixed vs Tracker */}
         <View style={btlDipStyles.summaryRow}>
-          <Text style={btlDipStyles.summaryLabel}>Total Loan Term:</Text>
+          <Text style={btlDipStyles.summaryLabel}>Full Term:</Text>
           <Text style={btlDipStyles.summaryValue}>
             {isTracker 
               ? `${fullTerm} years, made up of an initial tracker rate of ${initialTerm} years (the "Initial Tracker Rate Period"), then followed by a variable rate (the "Revert Rate") for the remaining term.`

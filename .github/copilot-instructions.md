@@ -1,91 +1,254 @@
-## Quick orientation for AI coding agents
+# GitHub Copilot Instructions - Polaris Specialist Mortgage Platform
 
-This repository is a small full-stack app that uses a Vite + React frontend and an Express backend to interact with Supabase. The file below captures the essential, discoverable knowledge an AI agent needs to be immediately productive here.
+## Quick Orientation for AI Coding Agents
 
-### Big picture
-- Frontend: `frontend/` — React app (Vite) using Carbon components. Entry: `frontend/src/App.jsx`.
-- Backend: `backend/` — Express server that uses a Supabase service-role client. Entry: `backend/server.js`.
-- Supabase: used for auth, a `rates` table, and an `app_constants` table. The frontend uses the anon key; backend uses the service role key.
-
-### Where to look for important patterns
-- Runtime-editable app constants: `frontend/src/config/constants.js` and admin UI at `frontend/src/components/Constants.jsx`.
-- Supabase client in frontend: `frontend/src/contexts/SupabaseContext.jsx` (uses VITE_ env vars).
-- Backend API (rates endpoint): `backend/server.js` — `/api/rates` reads from Supabase `rates` table.
-- DB seed & import scripts: `backend/scripts/seedRates.js`, `backend/scripts/importRatesCsv.js` and the CSV at `migrations/bridge_fusion_rates_full.csv`.
-
-### Data-flow & important behaviors to preserve
-- Rates are stored in Supabase `rates` table and are read by the backend endpoint `/api/rates`.
-- Editable constants persist workflow (key facts):
-  - UI persists to localStorage under `LOCALSTORAGE_CONSTANTS_KEY` which is defined in `frontend/src/config/constants.js` (`app.constants.override.v1`).
-  - When saving, `Constants.jsx` attempts structured-column writes to `app_constants` (columns like `product_lists`, `fee_columns`, `market_rates`) and falls back to a legacy `value` JSON column. Code detects whichever schema is present — changing DB schema must account for both paths.
-
-### Dev / build / run (discovered commands)
-- Node required (backend `package.json` specifies `node: 18.x`).
-- Install deps and run (Powershell examples):
-  - Frontend:
-    ```powershell
-    cd frontend; npm install
-    $env:VITE_SUPABASE_URL = 'https://...'; $env:VITE_SUPABASE_ANON_KEY = 'anon...'; npm run dev
-    ```
-  - Backend:
-    ```powershell
-    cd backend; npm install
-    $env:SUPABASE_URL = 'https://...'; $env:SUPABASE_SERVICE_ROLE_KEY = 'service-role...'; $env:PORT = '3001'; npm run dev
-    ```
-- Frontend build: `cd frontend; npm run build` (Vite). Backend start: `cd backend; npm run start`.
-
-### Useful scripts and artifacts
-- `backend/scripts/seedRates.js` and `importRatesCsv.js` — used to populate the `rates` table. CSV: `migrations/bridge_fusion_rates_full.csv`.
-- Watch mode for backend: `npm run dev` (uses `node --watch server.js`).
-
-### Project-specific conventions & gotchas
-- Dual persistence for `app_constants`: the UI is defensive and supports either structured DB columns or a single `value` JSON column. When changing DB schema, ensure both upsert strategies are considered.
-- Local override key: `LOCALSTORAGE_CONSTANTS_KEY = 'app.constants.override.v1'` — other parts of the app listen to `storage` events and will update.
-- Constants/feature toggles: many behaviors are controlled by values in `frontend/src/config/constants.js` — editing only the UI will persist to localStorage and Supabase; tests or CI should set envs instead.
-- No test runner is present in package.json files; do not assume test scripts exist.
-
-### Quick editing contract (inputs/outputs)
-- When making changes that affect persisted constants, update both `frontend/src/components/Constants.jsx` and `frontend/src/config/constants.js` and consider DB schema impacts in `backend` seed/insert logic.
-
-### When you need help / next steps
-- If adding a DB migration, prefer to preserve the fallback `value` column or provide a data-migration script to populate structured columns; see `Constants.jsx` for the detection/merge strategy.
-- If uncertain about whether frontend components call Supabase directly or via the backend, search for `supabase` usage (frontend uses the client in `SupabaseContext.jsx`).
+This repository is a full-stack specialist mortgage calculation platform for UK Buy-to-Let (BTL) and Bridging loans. It uses **React + Vite frontend** with **Express backend** and **Supabase** database. The system calculates complex mortgage scenarios with regulatory compliance (FCA), multi-rate comparisons, PDF quote generation, and underwriting workflows.
 
 ---
-If you'd like, I can (A) open a short PR that adds a small checklist for DB migrations, or (B) add a brief DEV_NOTES.md with exact env examples per-OS. Which would you prefer?
 
-## Coding Standards - MANDATORY
+## 🎯 Project Overview
 
-### CSS & Styling Rules (CRITICAL)
-- **NEVER use inline styles** - Use CSS classes only (exception: dynamic values like `width: ${val}%`, PDF, SVG)
-- **ALWAYS use SLDS components first** - Check [SLDS documentation](https://www.lightningdesignsystem.com/) before creating custom components
-- **ALL CSS values MUST use design tokens** - No hardcoded colors, spacing, or sizes
-  - Spacing: `var(--slds-g-spacing-*)` or `var(--token-spacing-*)`
-  - Colors: `var(--slds-g-color-*)` or `var(--token-color-*)`
-  - Typography: `var(--slds-g-font-size-*)` or `var(--token-font-size-*)`
+### Big Picture
+- **Frontend**: `frontend/` — React 18.2 + Vite 5.0, Carbon Design System, SLDS utilities
+- **Backend**: `backend/` — Node.js 20+ + Express 4.18.2, Supabase service-role client
+- **Database**: PostgreSQL via Supabase with Row Level Security (RLS)
+- **Domain**: Specialist UK mortgage lending (BTL, Bridging, Fusion products)
+- **Key Features**: 
+  - Multi-rate calculation engines (BTL/Bridging/Fusion)
+  - Quote generation with PDF export (client + DIP)
+  - Admin configuration (rates, constants, broker settings)
+  - Role-based access control (5 levels)
+  - Dark mode support throughout
 
-### React Component Rules (CRITICAL)
-- **ALWAYS use SLDS classes**: `.slds-button`, `.slds-table`, `.slds-modal`, `.slds-form-element`
-- **ALWAYS add PropTypes** for all components
-- **ALWAYS handle loading and error states** - Never render data without checking if it exists
-- **Use React.memo** for expensive components
-- **Use useCallback/useMemo** to prevent unnecessary re-renders
+### Tech Stack
+- **Frontend**: React 18.2, Vite 5.0, React Router DOM 6, Carbon Design 1.96, SLDS
+- **State**: React Context API (AuthContext, SupabaseContext, ThemeContext, ToastContext)
+- **Backend**: Express 4.18.2, Supabase 2.39.0, JWT auth, bcrypt
+- **PDFs**: @react-pdf/renderer 4.3.1 (client), PDFKit 0.17.2 (server)
+- **Testing**: Vitest, @testing-library/react
+- **Styling**: SCSS with design tokens, darkmode.css overrides
 
-### Before Writing Code - MANDATORY CHECKS
-1. **Read these docs FIRST**: 
-   - `docs/CSS_STYLE_GUIDE.md` - For all CSS/styling work
-   - `docs/COMPONENT_DEVELOPMENT.md` - For all React components
-   - `docs/DESIGN_TOKENS.md` - For token values
-2. **Check if SLDS has the component** - Don't reinvent the wheel
-3. **Use existing patterns** - Search codebase for similar components
-4. **Think long-term** - Is this reusable? Maintainable? Token-based?
+---
 
-### Quality Checklist (Run Before Committing)
-- [ ] No inline styles (check with `npm run lint`)
-- [ ] All SLDS classes used correctly
-- [ ] All values use design tokens
-- [ ] PropTypes defined
-- [ ] Loading/error states handled
-- [ ] Component is reusable
-- [ ] Responsive at 480px/768px/1024px/1440px
-- [ ] No console.log() statements
+## 📁 Critical File Locations
+
+### Essential Entry Points
+- **Frontend entry**: `frontend/src/App.jsx` — Route definitions, context providers
+- **Backend entry**: `backend/server.js` — API routes, middleware
+- **BTL Calculator**: `frontend/src/features/btl-calculator/components/BTLCalculator.jsx`
+- **Bridging Calculator**: `frontend/src/components/calculators/BridgingCalculator.jsx`
+- **Calculation Engines**:
+  - BTL: `frontend/src/utils/btlCalculationEngine.js`
+  - Bridging/Fusion: `frontend/src/utils/bridgeFusionCalculationEngine.js`
+  - Rate filtering: `frontend/src/utils/rateFiltering.js`
+
+### Configuration & Constants
+- **App constants**: `frontend/src/config/constants.js` — Runtime-editable settings
+- **Design tokens**: `frontend/src/styles/slds-tokens.css`, `frontend/src/styles/tokens.scss`
+- **Dark mode**: `frontend/src/styles/darkmode.css` — All dark theme overrides
+- **Figma tokens**: `frontend/figma.config.json` — Token source of truth
+
+---
+
+## 🏗️ Architecture Patterns
+
+### UI Layer (MANDATORY RULES)
+
+#### CSS & Styling (CRITICAL)
+```scss
+// ✅ ALWAYS use design tokens - NO hardcoded values
+.my-component {
+  background-color: var(--token-layer-surface);
+  color: var(--token-text-primary);
+  padding: var(--token-spacing-medium);
+  border: 1px solid var(--token-border-subtle);
+}
+
+// ❌ NEVER use hardcoded values
+.bad-component {
+  background-color: #262626; /* NO */
+  padding: 16px; /* NO */
+}
+
+// ✅ EXCEPTION: Inline styles ONLY for dynamic values
+<div style={{ width: `${percentage}%` }}>Progress</div>
+```
+
+#### Dark Mode Support (MANDATORY)
+```css
+/* ✅ Support both selectors */
+:root[data-carbon-theme="g100"],
+.dark-mode {
+  --token-layer-background: #161616;
+  --token-text-primary: #f4f4f4;
+}
+```
+
+#### Component Requirements
+```jsx
+import React from 'react';
+import PropTypes from 'prop-types';
+
+// ✅ ALWAYS include PropTypes
+function MyComponent({ title, onSave, children }) {
+  return <div>{children}</div>;
+}
+
+MyComponent.propTypes = {
+  title: PropTypes.string.isRequired,
+  onSave: PropTypes.func.isRequired,
+  children: PropTypes.node,
+};
+
+// ✅ ALWAYS handle loading and error states
+function DataComponent() {
+  const { data, loading, error } = useFetchData();
+  
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorMessage error={error} />;
+  if (!data) return null;
+  
+  return <div>{data.map(...)}</div>;
+}
+```
+
+---
+
+### State Management
+
+#### Context API Pattern
+```jsx
+import React, { createContext, useContext, useState } from 'react';
+
+const MyContext = createContext();
+
+// ✅ ALWAYS create custom hook
+export const useMyContext = () => {
+  const context = useContext(MyContext);
+  if (!context) {
+    throw new Error('useMyContext must be used within MyProvider');
+  }
+  return context;
+};
+```
+
+#### State Immutability (CRITICAL)
+```jsx
+// ✅ CORRECT - Functional updates with spread
+setResults(prev => ({
+  ...prev,
+  [colKey]: {
+    ...prev[colKey],
+    ...newData,
+  },
+}));
+
+// ❌ INCORRECT - Mutation
+results[colKey] = newData; // NO
+setResults(results); // NO
+```
+
+---
+
+### Calculation Engines (CORE BUSINESS LOGIC)
+
+#### BTL Calculation Pattern
+```javascript
+import { parseNumber, formatCurrency } from './calculator/numberFormatting';
+import { computeBTLLoan } from './btlCalculationEngine';
+
+// ✅ Pure functions - NO side effects
+const result = computeBTLLoan({
+  colKey: '2-3%',
+  selectedRate: rateObject,
+  propertyValue: parseNumber('£500,000'), // ALWAYS parse inputs
+  monthlyRent: parseNumber('£2,500'),
+  loanType: 'Max gross loan',
+  productFeePercent: 2,
+});
+```
+
+#### Key Business Rules
+1. **ICR Formula**: `icr = (monthlyRent + topSlicing) / monthlyInterest * 100`
+2. **LTV Formula**: `ltv = grossLoan / propertyValue`
+3. **Net Loan**: `netLoan = grossLoan * (1 - productFeePercent / 100)`
+4. **Rate Table Priority**: ALWAYS use rate table values over hardcoded defaults
+5. **Per-Column Calculations**: Results keyed by fee column (0-2%, 2-3%, 3%+)
+
+---
+
+## ⚠️ Critical Don'ts (Anti-Patterns)
+
+### ❌ NEVER Do These
+
+#### 1. Hardcoded Colors/Spacing
+```jsx
+// NO
+<div style={{ color: '#f4f4f4', backgroundColor: '#262626', padding: '16px' }}>
+```
+
+#### 2. Missing PropTypes
+```jsx
+// NO - Component without PropTypes
+function MyComponent({ title, onSave }) {
+  return <div>{title}</div>;
+}
+```
+
+#### 3. No Loading/Error States
+```jsx
+// NO - Renders without checking data exists
+function DataList({ items }) {
+  return items.map(item => <div>{item.name}</div>); // Crashes if items is null!
+}
+```
+
+#### 4. Mutating State
+```jsx
+// NO
+state.results[colKey] = newValue;
+setState(state);
+```
+
+#### 5. Side Effects in Calculation Engines
+```jsx
+// NO - Calculation engines MUST be pure
+export function computeBTLLoan(params) {
+  console.log('Calculating...'); // NO
+  fetch('/api/save'); // NO
+  return result;
+}
+```
+
+---
+
+## 🎯 Summary: Golden Rules
+
+When building features in this codebase:
+
+1. ✅ **Design System First**: Carbon components → SLDS utilities → Custom only if needed
+2. ✅ **Design Tokens Always**: No hardcoded colors, spacing, or font sizes
+3. ✅ **Dark Mode Support**: Test both light and dark themes
+4. ✅ **PropTypes Required**: Every component must have PropTypes
+5. ✅ **Loading/Error States**: Handle all async operations properly
+6. ✅ **Pure Calculations**: Calculation engines = pure functions (no side effects)
+7. ✅ **State Immutability**: Never mutate state directly
+8. ✅ **Context API Only**: No Redux/Zustand/MobX
+9. ✅ **Parse All Inputs**: Use `parseNumber()` for numeric inputs
+10. ✅ **Format All Outputs**: Use `formatCurrency()` / `formatPercent()` for display
+
+---
+
+## 📞 Support
+
+For questions about:
+- **UI/Styling**: Reference `docs/CSS_STYLE_GUIDE.md` and `darkmode.css`
+- **Calculations**: Review `btlCalculationEngine.js` and `bridgeFusionCalculationEngine.js`
+- **Authentication**: See `contexts/AuthContext.jsx` and `backend/middleware/auth.js`
+- **Database**: Check `database/migrations/` for schema and `backend/routes/` for queries
+- **PDFs**: Examine `components/pdf/` for patterns and `BTLQuoteStyles.js` for styling
+
+---
+
+**Last Updated**: December 2024  
+**Methodology**: Generated via bitovi/ai-enablement-prompts instruction-generation chain

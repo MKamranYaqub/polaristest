@@ -214,8 +214,8 @@ export const btlQuoteStyles = StyleSheet.create({
     borderRadius: 1,
   },
 
-  // Total loan term row
-  totalLoanTermRow: {
+  // Full term row
+  fullTermRow: {
     fontSize: 8,
     color: '#000000',
     lineHeight: 1.3,

@@ -97,7 +97,7 @@ export default function BTLcalculator({ initialQuote = null }) {
   const { getOrderedRows } = useResultsRowOrder(calculatorTypeForSettings);
   
   // Use custom hook for results table label aliases
-  const { getLabel } = useResultsLabelAlias();
+  const { getLabel } = useResultsLabelAlias('btl');
   
   const [allCriteria, setAllCriteria] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -440,8 +440,6 @@ export default function BTLcalculator({ initialQuote = null }) {
       if (!currentQuoteId || !token) return;
       try {
         const data = await loadUWChecklistState(currentQuoteId, 'both', token);
-        // eslint-disable-next-line no-console
-        console.log('[BTL] loadChecklistState raw response', { currentQuoteId, data });
         const raw = data && data.checked_items ? data.checked_items : {};
 
         let normalized = {};
@@ -455,8 +453,6 @@ export default function BTLcalculator({ initialQuote = null }) {
           });
         }
 
-        // eslint-disable-next-line no-console
-        console.log('[BTL] loadChecklistState normalized', { normalized });
         setUwCheckedItems(normalized);
       } catch (e) {
         // Silently fail - checklist will start empty
@@ -915,6 +911,7 @@ export default function BTLcalculator({ initialQuote = null }) {
           exit_fee: result.exitFee,
           monthly_interest_cost: result.monthlyInterestCost,
           rolled_months: result.rolledMonths,
+          serviced_months: result.servicedMonths,
           rolled_months_interest: result.rolledInterestAmount,
           deferred_interest_percent: result.deferredCapPct,
           deferred_interest_pounds: result.deferredInterestAmount,
@@ -1775,7 +1772,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                       <>
                                         {/* Rates row - now editable */}
                                         <EditableResultRow
-                                          label={getLabel('Rates')}
+                                          label={getLabel('Full Rate')}
                                           columns={columnsHeaders}
                                           columnValues={ratesDisplayValues}
                                           originalValues={originalRates}
@@ -1803,10 +1800,10 @@ export default function BTLcalculator({ initialQuote = null }) {
                                     const allPlaceholders = [
                                       'APRC','Admin Fee','Broker Client Fee','Broker Commission (Proc Fee %)',
                                       'Broker Commission (Proc Fee £)','Deferred Interest %','Deferred Interest £',
-                                      'Direct Debit','ERC','Exit Fee','Gross Loan','ICR',
+                                      'Direct Debit','ERC','Exit Fee','Full Term','Gross Loan','ICR','Initial Term',
                                       'LTV','Monthly Interest Cost','NBP','Net Loan','Net LTV','Pay Rate','Product Fee %',
                                       'Product Fee £','Revert Rate','Revert Rate DD','Rolled Months','Rolled Months Interest',
-                                      'Serviced Interest','Title Insurance Cost','Total Cost to Borrower','Total Loan Term'
+                                      'Serviced Interest','Serviced Months','Title Insurance Cost','Total Cost to Borrower'
                                     ];
                                     
                                     // Filter placeholders based on visibility settings, then apply ordering
@@ -2003,6 +2000,16 @@ export default function BTLcalculator({ initialQuote = null }) {
                                           values['Exit Fee'][colKey] = formatCurrency(result.exitFee, 0);
                                         }
 
+                                        // Initial Term
+                                        if (values['Initial Term'] && result.initialTerm != null) {
+                                          values['Initial Term'][colKey] = `${result.initialTerm} months`;
+                                        }
+
+                                        // Full Term
+                                        if (values['Full Term'] && result.fullTerm != null) {
+                                          values['Full Term'][colKey] = `${result.fullTerm} months`;
+                                        }
+
                                         // NBP
                                         if (values['NBP']) {
                                           values['NBP'][colKey] = formatCurrency(result.nbp, 0);
@@ -2027,6 +2034,11 @@ export default function BTLcalculator({ initialQuote = null }) {
                                           values['Serviced Interest'][colKey] = formatCurrency(result.servicedInterest, 0);
                                         }
 
+                                        // Serviced Months
+                                        if (values['Serviced Months'] && result.servicedMonths != null) {
+                                          values['Serviced Months'][colKey] = `${result.servicedMonths} months`;
+                                        }
+
                                         // Title Insurance Cost
                                         if (values['Title Insurance Cost']) {
                                           values['Title Insurance Cost'][colKey] = formatCurrency(result.titleInsuranceCost, 0);
@@ -2035,11 +2047,6 @@ export default function BTLcalculator({ initialQuote = null }) {
                                         // Total Cost to Borrower
                                         if (values['Total Cost to Borrower']) {
                                           values['Total Cost to Borrower'][colKey] = formatCurrency(result.totalCostToBorrower, 0);
-                                        }
-
-                                        // Total Loan Term
-                                        if (values['Total Loan Term']) {
-                                          values['Total Loan Term'][colKey] = `${result.totalLoanTerm} months`;
                                         }
                                       }
                                     });
@@ -2321,6 +2328,9 @@ export default function BTLcalculator({ initialQuote = null }) {
           quoteData={{
             // Pass all answers for condition evaluation
             ...answers,
+            // Include borrower name from saved quote
+            borrower_name: currentQuoteData?.borrower_name || '',
+            quote_borrower_name: currentQuoteData?.quote_borrower_name || '',
             // Map to standard field names used in UW conditions
             // Database question keys: hmo, mufb, holiday, flatAboveComm, expat, etc.
             property_type: answers['hmo'] || answers['Property type'] || '',
@@ -2344,6 +2354,7 @@ export default function BTLcalculator({ initialQuote = null }) {
           }}
           showExportButton={true}
           showGuidance={true}
+          allowEdit={true}
         />
       </CollapsibleSection>
 

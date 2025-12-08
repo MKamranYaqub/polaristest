@@ -74,7 +74,7 @@ const getInitialTermYears = (quote) => {
  * Get full term in years
  */
 const getFullTermYears = (quote) => {
-  const term = Number(quote.full_term) || Number(quote.total_loan_term) || 120;
+  const term = Number(quote.full_term) || 120;
   // If stored as months, convert to years
   return term > 50 ? term / 12 : term;
 };
@@ -301,15 +301,15 @@ function generateBTLDIPPDF(doc, quote, result) {
   doc.y = startY + 55;
   doc.moveDown(0.5);
   
-  // ========== CONDITIONAL: Total Loan Term Text ==========
+  // ========== CONDITIONAL: Full Term Text ==========
   drawSectionHeader(doc, 'TERM OF LOAN');
   
   // Initial period text - CONDITIONAL on Fixed vs Tracker
   const initialPeriodLabel = isTracker ? 'Initial Tracker Rate Period:' : 'Initial Fixed Rate Period:';
   drawLabelValue(doc, initialPeriodLabel, `${initialTermYears} year${initialTermYears !== 1 ? 's' : ''}`);
   
-  // Total term
-  drawLabelValue(doc, 'Total Loan Term:', `${fullTermYears} years`);
+  // Full term
+  drawLabelValue(doc, 'Full Term:', `${fullTermYears} years`);
   
   // Revert rate text - CONDITIONAL on MVR vs BBR
   let revertText = '';

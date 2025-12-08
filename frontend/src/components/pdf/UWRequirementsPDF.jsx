@@ -191,12 +191,20 @@ const styles = StyleSheet.create({
   
   // Checkbox icons (text-based)
   checkboxChecked: {
-    fontSize: 12,
-    color: '#2e844a',
+    fontSize: 10,
+    color: '#ffffff',
+    backgroundColor: '#2e844a',
+    padding: '2 4',
+    borderRadius: 2,
+    fontWeight: 'bold',
   },
   checkboxUnchecked: {
-    fontSize: 12,
-    color: '#dddbda',
+    fontSize: 10,
+    color: '#706e6b',
+    backgroundColor: '#f3f3f3',
+    padding: '2 4',
+    borderRadius: 2,
+    border: '1pt solid #dddbda',
   },
   
   // Stage badges
@@ -307,6 +315,7 @@ const UWRequirementsPDF = ({
 
   // Category order
   const categoryOrder = [
+    'Assumptions',
     'Broker',
     'Borrower',
     'Company',
@@ -318,9 +327,7 @@ const UWRequirementsPDF = ({
   ];
 
   // Get borrower name from quote data
-  const borrowerName = quoteData.borrower_1_forename && quoteData.borrower_1_surname
-    ? `${quoteData.borrower_1_forename} ${quoteData.borrower_1_surname}`
-    : quoteData.client_name || 'Not specified';
+  const borrowerName = quoteData.quote_borrower_name || quoteData.borrower_name || 'Not specified';
 
   // Get property address
   const propertyAddress = quoteData.property_address || quoteData.security_address || 'Not specified';
@@ -383,9 +390,12 @@ const UWRequirementsPDF = ({
         {/* Requirements by Category */}
         {categoryOrder.map(category => {
           const catReqs = groupedRequirements[category];
+          // Skip if no requirements in this category OR if Assumptions category and stage is DIP
           if (!catReqs || catReqs.length === 0) return null;
+          if (category === 'Assumptions' && stage === 'DIP') return null;
 
           const catChecked = catReqs.filter(r => checkedItems.includes(r.id)).length;
+          const isAssumptions = category === 'Assumptions';
 
           return (
             <View key={category} style={styles.category} wrap={false}>
@@ -393,60 +403,78 @@ const UWRequirementsPDF = ({
               <View style={styles.categoryHeader}>
                 <Text style={styles.categoryTitle}>
                   {category}
-                  <Text style={styles.categoryCount}> ({catChecked}/{catReqs.length})</Text>
+                  {!isAssumptions && (
+                    <Text style={styles.categoryCount}> ({catChecked}/{catReqs.length})</Text>
+                  )}
                 </Text>
               </View>
 
-              {/* Requirements Table */}
-              <View style={styles.table}>
-                {/* Table Header */}
-                <View style={styles.tableHeader}>
-                  <Text style={[styles.tableHeaderCell, styles.colStatus]}>Status</Text>
-                  <Text style={[styles.tableHeaderCell, styles.colDescription]}>Requirement</Text>
-                  <Text style={[styles.tableHeaderCell, styles.colStage]}>Stage</Text>
-                  <Text style={[styles.tableHeaderCell, styles.colRequired]}>Required</Text>
-                </View>
-
-                {/* Table Rows */}
-                {catReqs.map((req, idx) => {
-                  const isChecked = checkedItems.includes(req.id);
-                  const rowStyle = idx % 2 === 0 ? styles.tableRow : styles.tableRowAlt;
-
-                  return (
-                    <View key={req.id} style={rowStyle}>
-                      <View style={[styles.tableCell, styles.colStatus]}>
-                        <Text style={isChecked ? styles.checkboxChecked : styles.checkboxUnchecked}>
-                          {isChecked ? '☑' : '☐'}
-                        </Text>
-                      </View>
-                      <View style={[styles.tableCell, styles.colDescription]}>
-                        <Text style={isChecked ? styles.statusReceived : (req.required ? styles.statusPending : styles.statusOptional)}>
-                          {req.description}
-                        </Text>
-                        {showGuidance && req.guidance && (
-                          <Text style={{ fontSize: 7, color: '#706e6b', marginTop: 2, fontStyle: 'italic' }}>
-                            Note: {req.guidance}
-                          </Text>
-                        )}
-                      </View>
-                      <View style={[styles.tableCell, styles.colStage]}>
-                        <Text style={
-                          req.stage === 'DIP' ? styles.stageDIP :
-                          req.stage === 'Indicative' ? styles.stageIndicative :
-                          styles.stageBoth
-                        }>
-                          {req.stage}
-                        </Text>
-                      </View>
-                      <View style={[styles.tableCell, styles.colRequired]}>
-                        <Text style={{ color: req.required ? '#c23934' : '#706e6b' }}>
-                          {req.required ? 'Yes' : 'Optional'}
-                        </Text>
-                      </View>
+              {/* Assumptions: Plain text list without table */}
+              {isAssumptions ? (
+                <View style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 10 }}>
+                  {catReqs.map((req, idx) => (
+                    <View key={req.id} style={{ marginBottom: 6 }}>
+                      <Text style={{ fontSize: 9, color: '#3e3e3c', lineHeight: 1.4, fontStyle: 'italic' }}>
+                        • {req.description}
+                      </Text>
                     </View>
-                  );
-                })}
-              </View>
+                  ))}
+                </View>
+              ) : (
+                /* Regular requirements table */
+                <View style={styles.table}>
+                  {/* Table Header */}
+                  <View style={styles.tableHeader}>
+                    <Text style={[styles.tableHeaderCell, styles.colStatus]}>Status</Text>
+                    <Text style={[styles.tableHeaderCell, styles.colDescription]}>Requirement</Text>
+                    <Text style={[styles.tableHeaderCell, styles.colStage]}>Stage</Text>
+                    <Text style={[styles.tableHeaderCell, styles.colRequired]}>Required</Text>
+                  </View>
+
+                  {/* Table Rows */}
+                  {catReqs.map((req, idx) => {
+                    const isChecked = checkedItems.includes(req.id);
+                    const rowStyle = idx % 2 === 0 ? styles.tableRow : styles.tableRowAlt;
+                    
+                    // Determine display stage: if stage is 'Both', show the currently selected stage filter
+                    const displayStage = req.stage === 'Both' ? (stage || 'Both') : req.stage;
+
+                    return (
+                      <View key={req.id} style={rowStyle}>
+                        <View style={[styles.tableCell, styles.colStatus]}>
+                          <Text style={isChecked ? styles.checkboxChecked : styles.checkboxUnchecked}>
+                            {isChecked ? 'YES' : 'NO'}
+                          </Text>
+                        </View>
+                        <View style={[styles.tableCell, styles.colDescription]}>
+                          <Text style={isChecked ? styles.statusReceived : (req.required ? styles.statusPending : styles.statusOptional)}>
+                            {req.description}
+                          </Text>
+                          {showGuidance && req.guidance && (
+                            <Text style={{ fontSize: 7, color: '#706e6b', marginTop: 2, fontStyle: 'italic' }}>
+                              Note: {req.guidance}
+                            </Text>
+                          )}
+                        </View>
+                        <View style={[styles.tableCell, styles.colStage]}>
+                          <Text style={
+                            displayStage === 'DIP' ? styles.stageDIP :
+                            displayStage === 'Indicative' ? styles.stageIndicative :
+                            styles.stageBoth
+                          }>
+                            {displayStage}
+                          </Text>
+                        </View>
+                        <View style={[styles.tableCell, styles.colRequired]}>
+                          <Text style={{ color: req.required ? '#c23934' : '#706e6b' }}>
+                            {req.required ? 'Yes' : 'Optional'}
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
             </View>
           );
         })}
@@ -459,7 +487,7 @@ const UWRequirementsPDF = ({
               ? '✓ All requirements have been received. This case is ready for underwriting review.'
               : isRequiredComplete
                 ? `✓ All required items received (${requiredCheckedCount}/${requiredCount}). ${totalCount - checkedCount} optional item(s) outstanding.`
-                : `⚠ ${requiredCount - requiredCheckedCount} required item(s) and ${totalCount - checkedCount - (requiredCount - requiredCheckedCount)} optional item(s) outstanding.`
+                : `⚠ ${requiredCount - requiredCheckedCount}  required item(s) and ${totalCount - checkedCount - (requiredCount - requiredCheckedCount)} optional item(s) outstanding.`
             }
           </Text>
           {propertyAddress !== 'Not specified' && (
@@ -472,7 +500,7 @@ const UWRequirementsPDF = ({
         {/* Footer */}
         <View style={styles.footer} fixed>
           <Text style={styles.footerText}>
-            MFS UW Requirements Checklist • {generatedDate}
+            Market Financial Solutions Underwriting Requirements Checklist • {generatedDate}
           </Text>
           <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
             `Page ${pageNumber} of ${totalPages}`

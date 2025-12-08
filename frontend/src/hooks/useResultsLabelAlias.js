@@ -3,7 +3,7 @@
  * Labels can be customized via global settings (GlobalSettings UI)
  * 
  * Usage:
- *   const { getLabel } = useResultsLabelAlias();
+ *   const { getLabel } = useResultsLabelAlias('btl'); // or 'bridge' or 'core'
  *   const displayLabel = getLabel('Gross Loan'); // Returns customized label or original
  */
 
@@ -15,7 +15,7 @@ import { useSupabase } from '../contexts/SupabaseContext';
 // All label alias configuration is managed in GlobalSettings.jsx
 const DEFAULT_LABEL_ALIASES = {};
 
-export function useResultsLabelAlias() {
+export function useResultsLabelAlias(calculatorType = 'btl') {
   const { supabase } = useSupabase();
   const [labelAliases, setLabelAliases] = useState(DEFAULT_LABEL_ALIASES);
 
@@ -23,24 +23,17 @@ export function useResultsLabelAlias() {
   useEffect(() => {
     const loadOverrides = async () => {
       try {
-        // First try to load from Supabase (uses dedicated label_aliases column)
-        if (supabase) {
+        // Load from results_configuration table for specific calculator type
+        if (supabase && calculatorType) {
           const { data, error } = await supabase
-            .from('app_constants')
-            .select('label_aliases, value')
-            .eq('key', 'results_table_label_aliases')
+            .from('results_configuration')
+            .select('config')
+            .eq('key', 'label_aliases')
+            .eq('calculator_type', calculatorType)
             .maybeSingle();
 
-          // Check for label_aliases column first (new), then fall back to value column (legacy)
-          const labelAliasData = data?.label_aliases || data?.value;
-          if (!error && data && labelAliasData) {
-            const settings = typeof labelAliasData === 'string' ? JSON.parse(labelAliasData) : labelAliasData;
-            const mergedAliases = {
-              ...settings.btl,
-              ...settings.bridge,
-              ...settings.core
-            };
-            setLabelAliases(mergedAliases);
+          if (!error && data && data.config) {
+            setLabelAliases(data.config);
             
             // Update localStorage for consistency
             let existingConstants = {};
@@ -51,7 +44,7 @@ export function useResultsLabelAlias() {
             
             localStorage.setItem(LOCALSTORAGE_CONSTANTS_KEY, JSON.stringify({
               ...existingConstants,
-              resultsLabelAliases: mergedAliases
+              [`resultsLabelAliases_${calculatorType}`]: data.config
             }));
             return;
           }
@@ -61,8 +54,9 @@ export function useResultsLabelAlias() {
         const stored = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (parsed.resultsLabelAliases && typeof parsed.resultsLabelAliases === 'object') {
-            setLabelAliases(parsed.resultsLabelAliases);
+          const key = `resultsLabelAliases_${calculatorType}`;
+          if (parsed[key] && typeof parsed[key] === 'object') {
+            setLabelAliases(parsed[key]);
           }
         }
       } catch (e) {
@@ -89,7 +83,7 @@ export function useResultsLabelAlias() {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('constantsUpdated', handleCustomEvent);
     };
-  }, [supabase]);
+  }, [supabase, calculatorType]);
 
   /**
    * Get the display label for a field
@@ -97,7 +91,8 @@ export function useResultsLabelAlias() {
    * @returns {string} - The display label (alias if configured, otherwise original)
    */
   const getLabel = useCallback((internalName) => {
-    return labelAliases[internalName] || internalName;
+    const result = labelAliases[internalName] || internalName;
+    return result;
   }, [labelAliases]);
 
   /**

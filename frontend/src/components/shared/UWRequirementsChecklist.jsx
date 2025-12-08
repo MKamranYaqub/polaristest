@@ -70,16 +70,19 @@ export default function UWRequirementsChecklist({
   compact = false,
   showGuidance = false,
   showExportButton = true,
-  title = 'Document Checklist'
+  title = 'Document Checklist',
+  allowEdit = false
 }) {
   const [requirements, setRequirements] = useState(DEFAULT_UW_REQUIREMENTS);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [exporting, setExporting] = useState(false);
-  const [selectedStage, setSelectedStage] = useState(stage);
+  const [selectedStage, setSelectedStage] = useState(stage === 'Both' ? UW_STAGES.INDICATIVE : stage);
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [editingText, setEditingText] = useState('');
 
   // Update selectedStage when prop changes
   useEffect(() => {
-    setSelectedStage(stage);
+    setSelectedStage(stage === 'Both' ? UW_STAGES.INDICATIVE : stage);
   }, [stage]);
 
   // Normalize checkedItems to always work as a lookup
@@ -88,15 +91,9 @@ export default function UWRequirementsChecklist({
     if (!id) return false; // Defensive check
     if (Array.isArray(checkedItems)) {
       const result = checkedItems.includes(id);
-      // Debug: track checklist state evaluation
-      // eslint-disable-next-line no-console
-      console.log('[UWChecklist] isChecked(array)', { id, result, checkedItems });
       return result;
     }
     const result = !!(checkedItems && checkedItems[id] === true);
-    // Debug: track checklist state evaluation
-    // eslint-disable-next-line no-console
-    console.log('[UWChecklist] isChecked(object)', { id, result, checkedItems });
     return result;
   };
 
@@ -134,7 +131,8 @@ export default function UWRequirementsChecklist({
 
   // Filter requirements by stage and conditions
   const applicableRequirements = useMemo(() => {
-    const filtered = filterByConditions(filterByStage(requirements, selectedStage), quoteData);
+    const filtered = filterByConditions(filterByStage(requirements, selectedStage), quoteData)
+      .filter(req => !req.pdfOnly); // Exclude PDF-only items from UI
     
     // Group by category
     const grouped = {};
@@ -185,9 +183,6 @@ export default function UWRequirementsChecklist({
 
   // Handle checkbox change
   const handleCheck = (id, checked) => {
-    // Debug: log checkbox interactions
-    // eslint-disable-next-line no-console
-    console.log('[UWChecklist] handleCheck', { id, checked, readOnly });
     if (!id) return; // Defensive check
     if (onCheckChange && !readOnly) {
       onCheckChange(id, checked);
@@ -210,6 +205,50 @@ export default function UWRequirementsChecklist({
       setExporting(false);
     }
   }, [checkedItemsArray, quoteData, selectedStage, showGuidance]);
+
+  // Handle starting edit mode
+  const handleStartEdit = useCallback((req) => {
+    if (!allowEdit || readOnly) return;
+    setEditingItemId(req.id);
+    setEditingText(req.description);
+  }, [allowEdit, readOnly]);
+
+  // Handle saving edited text
+  const handleSaveEdit = useCallback(() => {
+    if (!editingItemId || !editingText.trim()) return;
+
+    const updatedRequirements = requirements.map(req => 
+      req.id === editingItemId ? { ...req, description: editingText.trim() } : req
+    );
+    
+    setRequirements(updatedRequirements);
+    
+    // Save to localStorage
+    try {
+      localStorage.setItem(LOCALSTORAGE_UW_REQUIREMENTS_KEY, JSON.stringify(updatedRequirements));
+    } catch (error) {
+      console.error('Error saving requirements to localStorage:', error);
+    }
+    
+    setEditingItemId(null);
+    setEditingText('');
+  }, [editingItemId, editingText, requirements]);
+
+  // Handle canceling edit
+  const handleCancelEdit = useCallback(() => {
+    setEditingItemId(null);
+    setEditingText('');
+  }, []);
+
+  // Handle keyboard shortcuts during editing
+  const handleEditKeyDown = useCallback((e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
+  }, [handleSaveEdit, handleCancelEdit]);
 
   // Get display categories in order
   const displayCategories = CATEGORY_ORDER.filter(cat => applicableRequirements[cat]?.length > 0);
@@ -240,28 +279,27 @@ export default function UWRequirementsChecklist({
               value={selectedStage}
               onChange={(e) => setSelectedStage(e.target.value)}
             >
-              <option value="Both">All Stages</option>
               <option value={UW_STAGES.INDICATIVE}>Indicative</option>
               <option value={UW_STAGES.DIP}>DIP</option>
             </select>
           </div>
         </div>
         <div className="uw-checklist__header-actions">
-          {showExportButton && !compact && (
+          {!readOnly && (
             <button
-              className="slds-button slds-button_icon slds-button_icon-border-filled uw-checklist__export-btn"
+              className="slds-button uw-checklist__export-btn"
               onClick={handleExportPDF}
               disabled={exporting}
               title="Export to PDF"
+              style={{ backgroundColor: 'var(--token-brand-primary)', color: '#ffffff', padding: '0.5rem 1rem', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
             >
               {exporting ? (
                 <span className="slds-spinner slds-spinner_x-small slds-spinner_inline" role="status">
                   <span className="slds-assistive-text">Exporting</span>
                 </span>
               ) : (
-                <SalesforceIcon name="download" size="x-small" />
+                'Download PDF'
               )}
-              <span className="slds-assistive-text">Export to PDF</span>
             </button>
           )}
           <div className="uw-checklist__progress">
@@ -311,33 +349,82 @@ export default function UWRequirementsChecklist({
                   {catReqs.map(req => {
                     if (!req || !req.id) return null;
                     const itemChecked = isChecked(req.id);
+                    const isEditing = editingItemId === req.id;
                     return (
                       <li 
                         key={req.id} 
-                        className={`uw-checklist__item ${itemChecked ? 'uw-checklist__item--checked' : ''} ${!req.required ? 'uw-checklist__item--optional' : ''}`}
+                        className={`uw-checklist__item ${itemChecked ? 'uw-checklist__item--checked' : ''} ${!req.required ? 'uw-checklist__item--optional' : ''} ${isEditing ? 'uw-checklist__item--editing' : ''}`}
                       >
-                        <label className="uw-checklist__item-label">
-                          <input
-                            type="checkbox"
-                            checked={itemChecked}
-                            onChange={(e) => handleCheck(req.id, e.target.checked)}
-                            disabled={readOnly}
-                            className="slds-checkbox"
-                          />
-                          <span className="uw-checklist__item-checkbox">
-                            {itemChecked ? (
-                              <SalesforceIcon name="check" size="x-small" />
+                        <div className="uw-checklist__item-content">
+                          <label className="uw-checklist__item-label">
+                            <input
+                              type="checkbox"
+                              checked={itemChecked}
+                              onChange={(e) => handleCheck(req.id, e.target.checked)}
+                              disabled={readOnly || isEditing}
+                              className="slds-checkbox"
+                            />
+                            <span className="uw-checklist__item-checkbox">
+                              {itemChecked ? (
+                                <SalesforceIcon name="check" size="x-small" />
+                              ) : (
+                                <span className="uw-checklist__item-checkbox-empty" />
+                              )}
+                            </span>
+                            {isEditing ? (
+                              <div className="uw-checklist__item-edit-container">
+                                <input
+                                  type="text"
+                                  className="slds-input uw-checklist__item-edit-input"
+                                  value={editingText}
+                                  onChange={(e) => setEditingText(e.target.value)}
+                                  onKeyDown={handleEditKeyDown}
+                                  autoFocus
+                                  placeholder="Enter requirement text"
+                                />
+                                <div className="uw-checklist__item-edit-actions">
+                                  <button
+                                    type="button"
+                                    className="slds-button slds-button_icon slds-button_icon-small slds-button_icon-border-filled"
+                                    onClick={handleSaveEdit}
+                                    title="Save"
+                                    disabled={!editingText.trim()}
+                                  >
+                                    <SalesforceIcon name="check" size="xx-small" />
+                                    <span className="slds-assistive-text">Save</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="slds-button slds-button_icon slds-button_icon-small slds-button_icon-border-filled"
+                                    onClick={handleCancelEdit}
+                                    title="Cancel"
+                                  >
+                                    <SalesforceIcon name="close" size="xx-small" />
+                                    <span className="slds-assistive-text">Cancel</span>
+                                  </button>
+                                </div>
+                              </div>
                             ) : (
-                              <span className="uw-checklist__item-checkbox-empty" />
+                              <span className="uw-checklist__item-text">
+                                {req.description}
+                                {!req.required && req.category === 'Additional Requirements' && (
+                                  <span className="uw-checklist__item-optional-tag">(Optional)</span>
+                                )}
+                              </span>
                             )}
-                          </span>
-                          <span className="uw-checklist__item-text">
-                            {req.description}
-                            {!req.required && (
-                              <span className="uw-checklist__item-optional-tag">(Optional)</span>
-                            )}
-                          </span>
-                        </label>
+                          </label>
+                          {allowEdit && !readOnly && !isEditing && (
+                            <button
+                              type="button"
+                              className="slds-button slds-button_icon slds-button_icon-small uw-checklist__item-edit-btn"
+                              onClick={() => handleStartEdit(req)}
+                              title="Edit requirement"
+                            >
+                              <SalesforceIcon name="edit" size="xx-small" />
+                              <span className="slds-assistive-text">Edit</span>
+                            </button>
+                          )}
+                        </div>
                         {showGuidance && req.guidance && (
                           <div className="uw-checklist__item-guidance">
                             <SalesforceIcon name="info" size="xx-small" />
@@ -388,5 +475,6 @@ UWRequirementsChecklist.propTypes = {
   compact: PropTypes.bool,
   showGuidance: PropTypes.bool,
   showExportButton: PropTypes.bool,
-  title: PropTypes.string
+  title: PropTypes.string,
+  allowEdit: PropTypes.bool
 };

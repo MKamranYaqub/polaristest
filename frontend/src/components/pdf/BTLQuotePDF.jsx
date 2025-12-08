@@ -113,7 +113,7 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
   const labelWidth = '22%';
   const valueWidth = numColumns > 0 ? `${(78 / numColumns).toFixed(1)}%` : '19.5%';
   
-  // Get first result for total loan term description
+  // Get first result for full term description
   const firstResult = results.length > 0 ? results[0] : null;
 
   return (
@@ -502,7 +502,7 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
                 </View>
                 <View style={btlQuoteStyles.termsRow}>
                   <Text style={btlQuoteStyles.termsLabel}>Total loan details</Text>
-                  <Text style={btlQuoteStyles.termsValue}>{h.getTotalLoanTerm(quote, firstResult)}</Text>
+                  <Text style={btlQuoteStyles.termsValue}>{h.getFullTerm(quote, firstResult)}</Text>
                 </View>
               </View>
             </View>

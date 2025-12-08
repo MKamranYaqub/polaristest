@@ -354,7 +354,7 @@ router.post('/:id', async (req, res) => {
           if (result.total_amount_repayable !== undefined && result.total_amount_repayable !== null) doc.text(`  Total Amount Repayable: ${formatCurrency(result.total_amount_repayable)}`);
           if (result.total_interest !== undefined && result.total_interest !== null) doc.text(`  Total Interest: ${formatCurrency(result.total_interest)}`);
           if (result.total_cost_to_borrower !== undefined && result.total_cost_to_borrower !== null) doc.text(`  Total Cost to Borrower: ${formatCurrency(result.total_cost_to_borrower)}`);
-          if (result.total_loan_term !== undefined && result.total_loan_term !== null) doc.text(`  Total Loan Term: ${formatNumber(result.total_loan_term, 0)} months`);
+          if (result.full_term !== undefined && result.full_term !== null) doc.text(`  Full Term: ${formatNumber(result.full_term, 0)} months`);
           if (result.product_name) doc.text(`  Product: ${result.product_name}`);
           
           doc.moveDown(1);

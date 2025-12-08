@@ -424,6 +424,9 @@ export class BTLCalculationEngine {
     // Calculate direct debit (monthly payment) using actual rate
     const directDebit = eligibleGross > 0 ? eligibleGross * payRateAdj / 12 : 0;
     
+    // Calculate serviced months (initial term - rolled months)
+    const servicedMonths = this.termMonths - rolledMonths;
+    
     return {
       grossLoan: eligibleGross,
       netLoan,
@@ -432,6 +435,7 @@ export class BTLCalculationEngine {
       deferredInterestAmount: deferredInterestAmt,
       loanToValueRatio: ltv,
       rolledMonths,
+      servicedMonths,
       deferredRate,
       paymentRateAdjusted: payRateAdj,
       icr,
@@ -757,7 +761,7 @@ export class BTLCalculationEngine {
       
       // Ratios
       ltv: bestLoan.loanToValueRatio,
-      netLtv: bestLoan.loanToValueRatio, // Same as LTV for BTL
+      netLtv: bestLoan.netLoan / this.propertyValue, // Net LTV based on net loan
       icr: bestLoan.icr,
       
       // Payment info
@@ -767,8 +771,11 @@ export class BTLCalculationEngine {
       
       // Slider values
       rolledMonths: bestLoan.rolledMonths,
+      servicedMonths: bestLoan.servicedMonths,
       deferredCapPct: bestLoan.deferredRate,
       termMonths: this.termMonths,
+      initialTerm: this.termMonths, // Initial fixed rate term
+      fullTerm: this.selectedRate?.full_term || 300, // Full mortgage term (default 25 years for BTL)
       
       // Broker fees
       procFeePct,

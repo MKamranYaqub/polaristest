@@ -29,27 +29,27 @@ export function useResultsRowOrder(calculatorType) {
           }
         }
 
-        // Fallback to Supabase if localStorage doesn't have the data
+        // Fallback to Supabase results_configuration table
         if (supabase) {
           const { data, error } = await supabase
-            .from('app_constants')
-            .select('results_row_order')
-            .eq('key', 'results_table_row_order')
+            .from('results_configuration')
+            .select('config')
+            .eq('key', 'row_order')
+            .eq('calculator_type', calculatorType)
             .maybeSingle();
 
-          if (data && data.results_row_order) {
-            const settings = typeof data.results_row_order === 'string' 
-              ? JSON.parse(data.results_row_order) 
-              : data.results_row_order;
-            const calcSettings = calculatorType === 'btl' ? settings.btl : 
-                                calculatorType === 'bridge' ? settings.bridge :
-                                calculatorType === 'core' ? settings.core : null;
-            
-            if (calcSettings && Array.isArray(calcSettings)) {
-              setRowOrder(calcSettings);
-              // Also save to localStorage for faster future access
-              localStorage.setItem('results_table_row_order', JSON.stringify(settings));
+          if (data && data.config && Array.isArray(data.config)) {
+            setRowOrder(data.config);
+            // Also save to localStorage for faster future access
+            const localData = localStorage.getItem('results_table_row_order');
+            let allSettings = {};
+            if (localData) {
+              try {
+                allSettings = JSON.parse(localData);
+              } catch (e) { /* ignore */ }
             }
+            allSettings[calculatorType] = data.config;
+            localStorage.setItem('results_table_row_order', JSON.stringify(allSettings));
           }
         }
       } catch (err) {

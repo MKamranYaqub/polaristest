@@ -45,8 +45,10 @@ const DEFAULT_LABEL_ALIASES_BTL = {
   'Direct Debit': 'Direct Debit',
   'ERC': 'ERC',
   'Exit Fee': 'Exit Fee',
+  'Full Term': 'Full Term',
   'Gross Loan': 'Gross Loan',
   'ICR': 'ICR',
+  'Initial Term': 'Initial Term',
   'LTV': 'LTV',
   'Monthly Interest Cost': 'Monthly Interest Cost',
   'NBP': 'NBP',
@@ -60,9 +62,9 @@ const DEFAULT_LABEL_ALIASES_BTL = {
   'Rolled Months': 'Rolled Months',
   'Rolled Months Interest': 'Rolled Months Interest',
   'Serviced Interest': 'Serviced Interest',
+  'Serviced Months': 'Serviced Months',
   'Title Insurance Cost': 'Title Insurance Cost',
   'Total Cost to Borrower': 'Total Cost to Borrower',
-  'Total Loan Term': 'Total Loan Term',
 };
 
 // Default label aliases for Bridging Calculator (33 labels)
@@ -81,8 +83,10 @@ const DEFAULT_LABEL_ALIASES_BRIDGE = {
   'Exit Fee': 'Exit Fee',
   'Full Int BBR £': 'Full Int BBR £',
   'Full Int Coupon £': 'Full Int Coupon £',
+  'Full Term': 'Full Term',
   'Gross Loan': 'Gross Loan',
   'ICR': 'ICR',
+  'Initial Term': 'Initial Term',
   'LTV': 'LTV',
   'Monthly Interest Cost': 'Monthly Interest Cost',
   'NBP': 'NBP',
@@ -97,9 +101,9 @@ const DEFAULT_LABEL_ALIASES_BRIDGE = {
   'Rolled Months': 'Rolled Months',
   'Rolled Months Interest': 'Rolled Months Interest',
   'Serviced Interest': 'Serviced Interest',
+  'Serviced Months': 'Serviced Months',
   'Title Insurance Cost': 'Title Insurance Cost',
   'Total Interest': 'Total Interest',
-  'Total Loan Term': 'Total Loan Term',
 };
 
 // Default label aliases for Core Calculator (28 labels)
@@ -114,8 +118,10 @@ const DEFAULT_LABEL_ALIASES_CORE = {
   'Direct Debit': 'Direct Debit',
   'ERC': 'ERC',
   'Exit Fee': 'Exit Fee',
+  'Full Term': 'Full Term',
   'Gross Loan': 'Gross Loan',
   'ICR': 'ICR',
+  'Initial Term': 'Initial Term',
   'LTV': 'LTV',
   'Monthly Interest Cost': 'Monthly Interest Cost',
   'NBP': 'NBP',
@@ -129,9 +135,9 @@ const DEFAULT_LABEL_ALIASES_CORE = {
   'Rolled Months': 'Rolled Months',
   'Rolled Months Interest': 'Rolled Months Interest',
   'Serviced Interest': 'Serviced Interest',
+  'Serviced Months': 'Serviced Months',
   'Title Insurance Cost': 'Title Insurance Cost',
   'Total Cost to Borrower': 'Total Cost to Borrower',
-  'Total Loan Term': 'Total Loan Term',
 };
 
 // Helper function to apply header colors to CSS custom properties
@@ -212,8 +218,10 @@ export default function GlobalSettings() {
     'Direct Debit',
     'ERC',
     'Exit Fee',
+    'Full Term',
     'Gross Loan',
     'ICR',
+    'Initial Term',
     'LTV',
     'Monthly Interest Cost',
     'NBP',
@@ -227,9 +235,9 @@ export default function GlobalSettings() {
     'Rolled Months',
     'Rolled Months Interest',
     'Serviced Interest',
+    'Serviced Months',
     'Title Insurance Cost',
-    'Total Cost to Borrower',
-    'Total Loan Term'
+    'Total Cost to Borrower'
   ];
 
   // Default rows for Bridging Calculator
@@ -248,8 +256,10 @@ export default function GlobalSettings() {
     'Exit Fee',
     'Full Int BBR £',
     'Full Int Coupon £',
+    'Full Term',
     'Gross Loan',
     'ICR',
+    'Initial Term',
     'LTV',
     'Monthly Interest Cost',
     'NBP',
@@ -263,9 +273,9 @@ export default function GlobalSettings() {
     'Rolled Months',
     'Rolled Months Interest',
     'Serviced Interest',
+    'Serviced Months',
     'Title Insurance Cost',
-    'Total Interest',
-    'Total Loan Term'
+    'Total Interest'
   ];
 
   // Default rows for Core Range Calculator
@@ -280,8 +290,10 @@ export default function GlobalSettings() {
     'Direct Debit',
     'ERC',
     'Exit Fee',
+    'Full Term',
     'Gross Loan',
     'ICR',
+    'Initial Term',
     'LTV',
     'Monthly Interest Cost',
     'NBP',
@@ -295,9 +307,9 @@ export default function GlobalSettings() {
     'Rolled Months',
     'Rolled Months Interest',
     'Serviced Interest',
+    'Serviced Months',
     'Title Insurance Cost',
-    'Total Cost to Borrower',
-    'Total Loan Term'
+    'Total Cost to Borrower'
   ];
 
   const [btlVisibleRows, setBtlVisibleRows] = useState(() => 
@@ -320,8 +332,8 @@ export default function GlobalSettings() {
   const [btlLabelAliases, setBtlLabelAliases] = useState({ ...DEFAULT_LABEL_ALIASES_BTL });
   const [bridgeLabelAliases, setBridgeLabelAliases] = useState({ ...DEFAULT_LABEL_ALIASES_BRIDGE });
   const [coreLabelAliases, setCoreLabelAliases] = useState({ ...DEFAULT_LABEL_ALIASES_CORE });
-  const [editingLabel, setEditingLabel] = useState(null);
-  const [tempLabelValue, setTempLabelValue] = useState('');
+  const [editingLabel, setEditingLabel] = useState({ btl: null, bridge: null, core: null });
+  const [tempLabelValue, setTempLabelValue] = useState({ btl: '', bridge: '', core: '' });
 
   // Header colors state - separate colors for each loan type with dynamic columns
   // Each loan type has a labelBg/labelText plus an array of column colors
@@ -366,110 +378,97 @@ export default function GlobalSettings() {
     try {
       setLoading(true);
       
-      // Load visibility settings
+      // Load visibility settings from results_configuration
       const { data: visibilityData, error: visibilityError } = await supabase
-        .from('app_constants')
+        .from('results_configuration')
         .select('*')
-        .eq('key', 'results_table_visibility')
-        .maybeSingle();
+        .eq('key', 'visibility');
 
       if (visibilityError && visibilityError.code !== 'PGRST116') {
         throw visibilityError;
       }
 
-      if (visibilityData && visibilityData.value) {
-        const settings = typeof visibilityData.value === 'string' ? JSON.parse(visibilityData.value) : visibilityData.value;
-        
-        if (settings.btl) {
-          // Merge with defaults to ensure all fields are present
-          const mergedBtl = { ...DEFAULT_BTL_ROWS.reduce((acc, row) => ({ ...acc, [row]: true }), {}), ...settings.btl };
-          setBtlVisibleRows(mergedBtl);
-        }
-        if (settings.bridge) {
-          // Merge with defaults to ensure all fields are present
-          const mergedBridge = { ...DEFAULT_BRIDGE_ROWS.reduce((acc, row) => ({ ...acc, [row]: true }), {}), ...settings.bridge };
-          setBridgeVisibleRows(mergedBridge);
-        }
-        if (settings.core) {
-          // Merge with defaults to ensure all fields are present
-          const mergedCore = { ...DEFAULT_CORE_ROWS.reduce((acc, row) => ({ ...acc, [row]: true }), {}), ...settings.core };
-          setCoreVisibleRows(mergedCore);
-        }
+      if (visibilityData && visibilityData.length > 0) {
+        visibilityData.forEach(row => {
+          const settings = typeof row.config === 'string' ? JSON.parse(row.config) : row.config;
+          
+          if (row.calculator_type === 'btl') {
+            const mergedBtl = { ...DEFAULT_BTL_ROWS.reduce((acc, r) => ({ ...acc, [r]: true }), {}), ...settings };
+            setBtlVisibleRows(mergedBtl);
+          } else if (row.calculator_type === 'bridge') {
+            const mergedBridge = { ...DEFAULT_BRIDGE_ROWS.reduce((acc, r) => ({ ...acc, [r]: true }), {}), ...settings };
+            setBridgeVisibleRows(mergedBridge);
+          } else if (row.calculator_type === 'core') {
+            const mergedCore = { ...DEFAULT_CORE_ROWS.reduce((acc, r) => ({ ...acc, [r]: true }), {}), ...settings };
+            setCoreVisibleRows(mergedCore);
+          }
+        });
       }
 
-      // Load row order settings
+      // Load row order settings from results_configuration
       const { data: orderData, error: orderError } = await supabase
-        .from('app_constants')
+        .from('results_configuration')
         .select('*')
-        .eq('key', 'results_table_row_order')
-        .maybeSingle();
+        .eq('key', 'row_order');
 
       if (orderError && orderError.code !== 'PGRST116') {
         throw orderError;
       }
 
-      if (orderData && orderData.results_row_order) {
-        const settings = typeof orderData.results_row_order === 'string' 
-          ? JSON.parse(orderData.results_row_order) 
-          : orderData.results_row_order;
-        
-        if (settings.btl && Array.isArray(settings.btl)) {
-          // Filter to only include valid fields from defaults, then add any missing ones
-          const validFields = settings.btl.filter(row => DEFAULT_BTL_ROWS.includes(row));
-          const missingBtlFields = DEFAULT_BTL_ROWS.filter(row => !validFields.includes(row));
-          setBtlRowOrder([...validFields, ...missingBtlFields]);
-        }
-        if (settings.bridge && Array.isArray(settings.bridge)) {
-          // Filter to only include valid fields from defaults, then add any missing ones
-          const validFields = settings.bridge.filter(row => DEFAULT_BRIDGE_ROWS.includes(row));
-          const missingBridgeFields = DEFAULT_BRIDGE_ROWS.filter(row => !validFields.includes(row));
-          setBridgeRowOrder([...validFields, ...missingBridgeFields]);
-        }
-        if (settings.core && Array.isArray(settings.core)) {
-          // Filter to only include valid fields from defaults, then add any missing ones
-          const validFields = settings.core.filter(row => DEFAULT_CORE_ROWS.includes(row));
-          const missingCoreFields = DEFAULT_CORE_ROWS.filter(row => !validFields.includes(row));
-          setCoreRowOrder([...validFields, ...missingCoreFields]);
-        }
+      if (orderData && orderData.length > 0) {
+        orderData.forEach(row => {
+          const settings = typeof row.config === 'string' ? JSON.parse(row.config) : row.config;
+          
+          if (row.calculator_type === 'btl' && Array.isArray(settings)) {
+            const validFields = settings.filter(r => DEFAULT_BTL_ROWS.includes(r));
+            const missingBtlFields = DEFAULT_BTL_ROWS.filter(r => !validFields.includes(r));
+            setBtlRowOrder([...validFields, ...missingBtlFields]);
+          } else if (row.calculator_type === 'bridge' && Array.isArray(settings)) {
+            const validFields = settings.filter(r => DEFAULT_BRIDGE_ROWS.includes(r));
+            const missingBridgeFields = DEFAULT_BRIDGE_ROWS.filter(r => !validFields.includes(r));
+            setBridgeRowOrder([...validFields, ...missingBridgeFields]);
+          } else if (row.calculator_type === 'core' && Array.isArray(settings)) {
+            const validFields = settings.filter(r => DEFAULT_CORE_ROWS.includes(r));
+            const missingCoreFields = DEFAULT_CORE_ROWS.filter(r => !validFields.includes(r));
+            setCoreRowOrder([...validFields, ...missingCoreFields]);
+          }
+        });
       }
 
-      // Load label aliases from Supabase (primary storage) - uses dedicated label_aliases column
+      // Load label aliases from results_configuration
       const { data: labelData, error: labelError } = await supabase
-        .from('app_constants')
+        .from('results_configuration')
         .select('*')
-        .eq('key', 'results_table_label_aliases')
-        .maybeSingle();
+        .eq('key', 'label_aliases');
 
       if (labelError && labelError.code !== 'PGRST116') {
         throw labelError;
       }
 
       let labelAliasesLoaded = false;
-      // Check for label_aliases column first (new), then fall back to value column (legacy)
-      const labelAliasData = labelData?.label_aliases || labelData?.value;
-      if (labelData && labelAliasData) {
-        const settings = typeof labelAliasData === 'string' ? JSON.parse(labelAliasData) : labelAliasData;
-        
-        if (settings.btl) {
-          setBtlLabelAliases({ ...DEFAULT_LABEL_ALIASES_BTL, ...settings.btl });
-          labelAliasesLoaded = true;
-        }
-        if (settings.bridge) {
-          setBridgeLabelAliases({ ...DEFAULT_LABEL_ALIASES_BRIDGE, ...settings.bridge });
-          labelAliasesLoaded = true;
-        }
-        if (settings.core) {
-          setCoreLabelAliases({ ...DEFAULT_LABEL_ALIASES_CORE, ...settings.core });
-          labelAliasesLoaded = true;
-        }
+      if (labelData && labelData.length > 0) {
+        labelData.forEach(row => {
+          const settings = typeof row.config === 'string' ? JSON.parse(row.config) : row.config;
+          
+          if (row.calculator_type === 'btl') {
+            setBtlLabelAliases({ ...DEFAULT_LABEL_ALIASES_BTL, ...settings });
+            labelAliasesLoaded = true;
+          } else if (row.calculator_type === 'bridge') {
+            setBridgeLabelAliases({ ...DEFAULT_LABEL_ALIASES_BRIDGE, ...settings });
+            labelAliasesLoaded = true;
+          } else if (row.calculator_type === 'core') {
+            setCoreLabelAliases({ ...DEFAULT_LABEL_ALIASES_CORE, ...settings });
+            labelAliasesLoaded = true;
+          }
+        });
         
         // Also update localStorage for the hook to use
         if (labelAliasesLoaded) {
-          const mergedForHook = {
-            ...settings.btl,
-            ...settings.bridge,
-            ...settings.core
-          };
+          const mergedForHook = {};
+          labelData.forEach(row => {
+            const settings = typeof row.config === 'string' ? JSON.parse(row.config) : row.config;
+            Object.assign(mergedForHook, settings);
+          });
           let existingConstants = {};
           try {
             const stored = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
@@ -501,56 +500,59 @@ export default function GlobalSettings() {
         }
       }
 
-      // Load header colors from Supabase
+      // Load header colors from results_configuration
       const { data: headerColorData, error: headerColorError } = await supabase
-        .from('app_constants')
+        .from('results_configuration')
         .select('*')
-        .eq('key', 'results_table_header_colors')
-        .maybeSingle();
+        .eq('key', 'header_colors');
 
       if (headerColorError && headerColorError.code !== 'PGRST116') {
         throw headerColorError;
       }
 
-      if (headerColorData && headerColorData.value) {
-        const colors = typeof headerColorData.value === 'string' 
-          ? JSON.parse(headerColorData.value) 
-          : headerColorData.value;
+      if (headerColorData && headerColorData.length > 0) {
+        const mergedColors = { ...DEFAULT_HEADER_COLORS };
         
-        // Helper to migrate old format (col1Bg, col2Bg...) to new format (columns array)
-        const migrateToColumnsFormat = (loanTypeColors, defaults) => {
-          if (loanTypeColors?.columns) {
-            // Already in new format
+        headerColorData.forEach(row => {
+          const colors = typeof row.config === 'string' ? JSON.parse(row.config) : row.config;
+          
+          // Helper to migrate old format (col1Bg, col2Bg...) to new format (columns array)
+          const migrateToColumnsFormat = (loanTypeColors, defaults) => {
+            if (loanTypeColors?.columns) {
+              // Already in new format
+              return {
+                labelBg: loanTypeColors.labelBg || defaults.labelBg,
+                labelText: loanTypeColors.labelText || defaults.labelText,
+                columns: loanTypeColors.columns
+              };
+            }
+            // Migrate from old format
+            const columns = [];
+            let i = 1;
+            while (loanTypeColors?.[`col${i}Bg`] !== undefined || i <= 3) {
+              columns.push({
+                bg: loanTypeColors?.[`col${i}Bg`] || defaults.columns[i-1]?.bg || '#002855',
+                text: loanTypeColors?.[`col${i}Text`] || defaults.columns[i-1]?.text || '#ffffff'
+              });
+              i++;
+              if (i > 10) break; // Safety limit
+            }
             return {
-              labelBg: loanTypeColors.labelBg || defaults.labelBg,
-              labelText: loanTypeColors.labelText || defaults.labelText,
-              columns: loanTypeColors.columns
+              labelBg: loanTypeColors?.labelBg || defaults.labelBg,
+              labelText: loanTypeColors?.labelText || defaults.labelText,
+              columns: columns.length > 0 ? columns : defaults.columns
             };
-          }
-          // Migrate from old format
-          const columns = [];
-          let i = 1;
-          while (loanTypeColors?.[`col${i}Bg`] !== undefined || i <= 3) {
-            columns.push({
-              bg: loanTypeColors?.[`col${i}Bg`] || defaults.columns[i-1]?.bg || '#002855',
-              text: loanTypeColors?.[`col${i}Text`] || defaults.columns[i-1]?.text || '#ffffff'
-            });
-            i++;
-            if (i > 10) break; // Safety limit
-          }
-          return {
-            labelBg: loanTypeColors?.labelBg || defaults.labelBg,
-            labelText: loanTypeColors?.labelText || defaults.labelText,
-            columns: columns.length > 0 ? columns : defaults.columns
           };
-        };
+          
+          if (row.calculator_type === 'btl') {
+            mergedColors.btl = migrateToColumnsFormat(colors, DEFAULT_HEADER_COLORS.btl);
+          } else if (row.calculator_type === 'bridge') {
+            mergedColors.bridge = migrateToColumnsFormat(colors, DEFAULT_HEADER_COLORS.bridge);
+          } else if (row.calculator_type === 'core') {
+            mergedColors.core = migrateToColumnsFormat(colors, DEFAULT_HEADER_COLORS.core);
+          }
+        });
         
-        // Merge with defaults for each loan type
-        const mergedColors = {
-          btl: migrateToColumnsFormat(colors.btl, DEFAULT_HEADER_COLORS.btl),
-          bridge: migrateToColumnsFormat(colors.bridge, DEFAULT_HEADER_COLORS.bridge),
-          core: migrateToColumnsFormat(colors.core, DEFAULT_HEADER_COLORS.core)
-        };
         setHeaderColors(mergedColors);
         
         // Save to localStorage for quick loading
@@ -572,73 +574,121 @@ export default function GlobalSettings() {
     try {
       setSaving(true);
       
-      // Save visibility settings
-      const visibilitySettings = {
-        btl: btlVisibleRows,
-        bridge: bridgeVisibleRows,
-        core: coreVisibleRows
-      };
-
-      const { error: visibilityError } = await supabase
-        .from('app_constants')
-        .upsert({
-          key: 'results_table_visibility',
-          value: visibilitySettings,
+      // Save visibility settings (one row per calculator type)
+      const visibilityPromises = [
+        supabase.from('results_configuration').upsert({
+          key: 'visibility',
+          calculator_type: 'btl',
+          config: btlVisibleRows,
           updated_at: new Date().toISOString()
-        }, { onConflict: 'key' });
-
+        }, { onConflict: 'key,calculator_type' }),
+        supabase.from('results_configuration').upsert({
+          key: 'visibility',
+          calculator_type: 'bridge',
+          config: bridgeVisibleRows,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key,calculator_type' }),
+        supabase.from('results_configuration').upsert({
+          key: 'visibility',
+          calculator_type: 'core',
+          config: coreVisibleRows,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key,calculator_type' })
+      ];
+      
+      const visibilityResults = await Promise.all(visibilityPromises);
+      const visibilityError = visibilityResults.find(r => r.error)?.error;
       if (visibilityError) throw visibilityError;
 
-      // Save row order settings
-      const orderSettings = {
-        btl: btlRowOrder,
-        bridge: bridgeRowOrder,
-        core: coreRowOrder
-      };
-
-      const { error: orderError } = await supabase
-        .from('app_constants')
-        .upsert({
-          key: 'results_table_row_order',
-          results_row_order: orderSettings,
+      // Save row order settings (one row per calculator type)
+      const orderPromises = [
+        supabase.from('results_configuration').upsert({
+          key: 'row_order',
+          calculator_type: 'btl',
+          config: btlRowOrder,
           updated_at: new Date().toISOString()
-        }, { onConflict: 'key' });
-
+        }, { onConflict: 'key,calculator_type' }),
+        supabase.from('results_configuration').upsert({
+          key: 'row_order',
+          calculator_type: 'bridge',
+          config: bridgeRowOrder,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key,calculator_type' }),
+        supabase.from('results_configuration').upsert({
+          key: 'row_order',
+          calculator_type: 'core',
+          config: coreRowOrder,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key,calculator_type' })
+      ];
+      
+      const orderResults = await Promise.all(orderPromises);
+      const orderError = orderResults.find(r => r.error)?.error;
       if (orderError) throw orderError;
 
-      // Save label aliases - only save labels that differ from defaults
-      const labelAliasSettings = {
-        btl: Object.fromEntries(
-          Object.entries(btlLabelAliases).filter(([key, value]) => value !== DEFAULT_LABEL_ALIASES_BTL[key])
-        ),
-        bridge: Object.fromEntries(
-          Object.entries(bridgeLabelAliases).filter(([key, value]) => value !== DEFAULT_LABEL_ALIASES_BRIDGE[key])
-        ),
-        core: Object.fromEntries(
-          Object.entries(coreLabelAliases).filter(([key, value]) => value !== DEFAULT_LABEL_ALIASES_CORE[key])
-        )
-      };
-
-      // Save to dedicated label_aliases column
-      const { error: labelError } = await supabase
-        .from('app_constants')
-        .upsert({
-          key: 'results_table_label_aliases',
-          label_aliases: labelAliasSettings,
+      // Save label aliases - save ALL labels, not just changes from defaults
+      const btlConfig = Object.fromEntries(
+        Object.entries(btlLabelAliases)
+      );
+      const bridgeConfig = Object.fromEntries(
+        Object.entries(bridgeLabelAliases)
+      );
+      const coreConfig = Object.fromEntries(
+        Object.entries(coreLabelAliases)
+      );
+      
+      const labelAliasPromises = [
+        supabase.from('results_configuration').upsert({
+          key: 'label_aliases',
+          calculator_type: 'btl',
+          config: btlConfig,
           updated_at: new Date().toISOString()
-        }, { onConflict: 'key' });
-
-      if (labelError) throw labelError;
-
-      // Save header colors
-      const { error: headerColorError } = await supabase
-        .from('app_constants')
-        .upsert({
-          key: 'results_table_header_colors',
-          value: headerColors,
+        }, { onConflict: 'key,calculator_type' }),
+        supabase.from('results_configuration').upsert({
+          key: 'label_aliases',
+          calculator_type: 'bridge',
+          config: bridgeConfig,
           updated_at: new Date().toISOString()
-        }, { onConflict: 'key' });
+        }, { onConflict: 'key,calculator_type' }),
+        supabase.from('results_configuration').upsert({
+          key: 'label_aliases',
+          calculator_type: 'core',
+          config: coreConfig,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key,calculator_type' })
+      ];
+      
+      const labelResults = await Promise.all(labelAliasPromises);
+      const labelError = labelResults.find(r => r.error)?.error;
+      if (labelError) {
+        console.error('Label alias save error:', labelError);
+        throw labelError;
+      }
 
+      // Save header colors (one row per calculator type)
+      const headerColorPromises = [
+        supabase.from('results_configuration').upsert({
+          key: 'header_colors',
+          calculator_type: 'btl',
+          config: headerColors.btl,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key,calculator_type' }),
+        supabase.from('results_configuration').upsert({
+          key: 'header_colors',
+          calculator_type: 'bridge',
+          config: headerColors.bridge,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key,calculator_type' }),
+        supabase.from('results_configuration').upsert({
+          key: 'header_colors',
+          calculator_type: 'core',
+          config: headerColors.core,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key,calculator_type' })
+      ];
+      
+      const headerColorResults = await Promise.all(headerColorPromises);
+      const headerColorError = headerColorResults.find(r => r.error)?.error;
       if (headerColorError) throw headerColorError;
 
       // Save header colors to localStorage for immediate effect
@@ -655,16 +705,14 @@ export default function GlobalSettings() {
       });
 
       // Save to localStorage for immediate effect
+      const visibilitySettings = { btl: btlVisibleRows, bridge: bridgeVisibleRows, core: coreVisibleRows };
+      const orderSettings = { btl: btlRowOrder, bridge: bridgeRowOrder, core: coreRowOrder };
+      
       localStorage.setItem('results_table_visibility', JSON.stringify(visibilitySettings));
       localStorage.setItem('results_table_row_order', JSON.stringify(orderSettings));
       
       // Save label aliases to localStorage for immediate effect
-      // Merge all modified label aliases into one object for the hook to use
-      const mergedLabelAliases = {
-        ...labelAliasSettings.btl,
-        ...labelAliasSettings.bridge,
-        ...labelAliasSettings.core
-      };
+      // Store separately by calculator type to avoid conflicts
       
       // Read existing constants and merge
       let existingConstants = {};
@@ -679,7 +727,9 @@ export default function GlobalSettings() {
       
       const updatedConstants = {
         ...existingConstants,
-        resultsLabelAliases: mergedLabelAliases
+        resultsLabelAliases_btl: btlLabelAliases,
+        resultsLabelAliases_bridge: bridgeLabelAliases,
+        resultsLabelAliases_core: coreLabelAliases
       };
       localStorage.setItem(LOCALSTORAGE_CONSTANTS_KEY, JSON.stringify(updatedConstants));
       
@@ -803,28 +853,30 @@ export default function GlobalSettings() {
   };
 
   // Label alias handlers
-  const handleStartEditLabel = (key, currentValue) => {
-    setEditingLabel(key);
-    setTempLabelValue(currentValue);
+  const handleStartEditLabel = (type, key, currentValue) => {
+    setEditingLabel(prev => ({ ...prev, [type]: key }));
+    setTempLabelValue(prev => ({ ...prev, [type]: currentValue }));
   };
 
   const handleSaveLabel = (type) => {
-    if (!editingLabel) return;
+    const labelKey = editingLabel[type];
+    if (!labelKey) return;
     
+    const newValue = tempLabelValue[type];
     if (type === 'btl') {
-      setBtlLabelAliases(prev => ({ ...prev, [editingLabel]: tempLabelValue }));
+      setBtlLabelAliases(prev => ({ ...prev, [labelKey]: newValue }));
     } else if (type === 'bridge') {
-      setBridgeLabelAliases(prev => ({ ...prev, [editingLabel]: tempLabelValue }));
+      setBridgeLabelAliases(prev => ({ ...prev, [labelKey]: newValue }));
     } else if (type === 'core') {
-      setCoreLabelAliases(prev => ({ ...prev, [editingLabel]: tempLabelValue }));
+      setCoreLabelAliases(prev => ({ ...prev, [labelKey]: newValue }));
     }
-    setEditingLabel(null);
-    setTempLabelValue('');
+    setEditingLabel(prev => ({ ...prev, [type]: null }));
+    setTempLabelValue(prev => ({ ...prev, [type]: '' }));
   };
 
-  const handleCancelEditLabel = () => {
-    setEditingLabel(null);
-    setTempLabelValue('');
+  const handleCancelEditLabel = (type) => {
+    setEditingLabel(prev => ({ ...prev, [type]: null }));
+    setTempLabelValue(prev => ({ ...prev, [type]: '' }));
   };
 
   const handleResetLabel = (type, key) => {
@@ -1021,7 +1073,7 @@ export default function GlobalSettings() {
           <div className="label-alias-grid">
             {Object.keys(defaultAliases).map(key => {
               const isModified = labelAliases[key] !== defaultAliases[key];
-              const isEditing = editingLabel === key;
+              const isEditing = editingLabel[type] === key;
               
               return (
                 <div 
@@ -1040,11 +1092,11 @@ export default function GlobalSettings() {
                       <input
                         type="text"
                         className="slds-input"
-                        value={tempLabelValue}
-                        onChange={(e) => setTempLabelValue(e.target.value)}
+                        value={tempLabelValue[type]}
+                        onChange={(e) => setTempLabelValue(prev => ({ ...prev, [type]: e.target.value }))}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') handleSaveLabel(type);
-                          if (e.key === 'Escape') handleCancelEditLabel();
+                          if (e.key === 'Escape') handleCancelEditLabel(type);
                         }}
                         autoFocus
                       />
@@ -1065,7 +1117,7 @@ export default function GlobalSettings() {
                       </span>
                       <button
                         className="slds-button slds-button_icon slds-button_icon-border"
-                        onClick={() => handleStartEditLabel(key, labelAliases[key])}
+                        onClick={() => handleStartEditLabel(type, key, labelAliases[key])}
                         title="Edit"
                         type="button"
                       >

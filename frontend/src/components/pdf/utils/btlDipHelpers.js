@@ -201,7 +201,7 @@ export const getFullTerm = (quote) => {
   }
   
   // Check for full_term in months or years
-  const fullTerm = parseNumber(quote.full_term) || parseNumber(quote.total_loan_term);
+  const fullTerm = parseNumber(quote.full_term);
   if (fullTerm) {
     // If stored as months (> 50), convert to years
     return fullTerm > 50 ? fullTerm / 12 : fullTerm;
@@ -275,6 +275,14 @@ export const getRolledMonths = (quote) => {
          parseNumber(selectedResult.rolled_months) ||
          parseNumber(quote.rolledMonths) ||
          parseNumber(selectedResult.rolledMonths) || 0;
+};
+
+export const getServicedMonths = (quote) => {
+  const selectedResult = quote._selectedResult || {};
+  return parseNumber(quote.serviced_months) || 
+         parseNumber(selectedResult.serviced_months) ||
+         parseNumber(quote.servicedMonths) ||
+         parseNumber(selectedResult.servicedMonths) || 0;
 };
 
 export const getRolledInterestAmount = (quote) => {
