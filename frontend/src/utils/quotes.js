@@ -138,9 +138,6 @@ export async function saveUWChecklistState(quoteId, checkedItems, stage = 'Both'
       custom_requirements: customRequirements,
     }),
   });
-      stage,
-    }),
-  });
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
