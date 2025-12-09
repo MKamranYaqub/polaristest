@@ -109,6 +109,7 @@ export const formatSecurityProperties = (dipData) => {
     if (property.street) parts.push(property.street);
     if (property.city) parts.push(property.city);
     if (property.postcode) parts.push(property.postcode);
+    if (property.country) parts.push(property.country);
     
     const address = parts.join(', ');
     return {

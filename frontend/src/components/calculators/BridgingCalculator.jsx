@@ -604,7 +604,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
             console.log('[Bridge] autosave success', { response });
           })
           .catch((error) => {
-            // eslint-disable-next-line no-console
+             
             console.error('[Bridge] autosave error', error);
             // Ignore save errors; do not crash UI
           });

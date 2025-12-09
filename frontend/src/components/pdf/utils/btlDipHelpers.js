@@ -70,6 +70,7 @@ export const getSecurityAddress = (dipData) => {
     if (prop.street) parts.push(prop.street);
     if (prop.city) parts.push(prop.city);
     if (prop.postcode) parts.push(prop.postcode);
+    if (prop.country) parts.push(prop.country);
     const address = parts.join(', ') || 'Address not provided';
     return properties.length > 1 ? `Property ${idx + 1}: ${address}` : address;
   }).join('\n');

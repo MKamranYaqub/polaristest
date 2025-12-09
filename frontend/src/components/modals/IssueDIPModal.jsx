@@ -53,9 +53,16 @@ export default function IssueDIPModal({
     title_insurance: existingDipData.title_insurance || '' // Yes or No - controls Title Insurance section in PDF - mandatory
   });
 
-  const [securityProperties, setSecurityProperties] = useState(
-    existingDipData.security_properties || [{ street: '', city: '', postcode: '' }]
-  );
+  const [securityProperties, setSecurityProperties] = useState(() => {
+    // Ensure backward compatibility - add country field if missing
+    if (existingDipData.security_properties && Array.isArray(existingDipData.security_properties)) {
+      return existingDipData.security_properties.map(prop => ({
+        ...prop,
+        country: prop.country || 'United Kingdom'
+      }));
+    }
+    return [{ street: '', city: '', postcode: '', country: 'United Kingdom' }];
+  });
 
   const [saving, setSaving] = useState(false);
   const uiPrefs = useUiPreferences();
@@ -88,12 +95,29 @@ export default function IssueDIPModal({
         product_range: existingDipData.product_range || 'specialist',
         title_insurance: existingDipData.title_insurance || ''
       });
-
+      
+      // Update security properties with backward compatibility
       if (existingDipData.security_properties && Array.isArray(existingDipData.security_properties) && existingDipData.security_properties.length > 0) {
-        setSecurityProperties(existingDipData.security_properties);
+        const propertiesWithCountry = existingDipData.security_properties.map(prop => ({
+          ...prop,
+          country: prop.country || 'United Kingdom'
+        }));
+        setSecurityProperties(propertiesWithCountry);
       }
     }
   }, [existingDipData, existingDipData?.funding_line]);
+  
+  // Ensure all properties have country field set (normalize on mount and after changes)
+  useEffect(() => {
+    const needsNormalization = securityProperties.some(prop => !prop.country);
+    if (needsNormalization) {
+      const normalized = securityProperties.map(prop => ({
+        ...prop,
+        country: prop.country || 'United Kingdom'
+      }));
+      setSecurityProperties(normalized);
+    }
+  }, [securityProperties]);
 
   // Auto-calculate expiry date when DIP date changes
   useEffect(() => {
@@ -138,7 +162,7 @@ export default function IssueDIPModal({
   };
 
   const addSecurityProperty = () => {
-    setSecurityProperties([...securityProperties, { street: '', city: '', postcode: '' }]);
+    setSecurityProperties([...securityProperties, { street: '', city: '', postcode: '', country: 'United Kingdom' }]);
   };
 
   const removeSecurityProperty = (index) => {
@@ -196,6 +220,7 @@ export default function IssueDIPModal({
   const handleAddressSelect = (index, address) => {
     const updatedProperties = [...securityProperties];
     updatedProperties[index] = {
+      ...updatedProperties[index], // Preserve existing fields like country
       street: address.street,
       city: address.city,
       postcode: address.postcode
@@ -247,9 +272,12 @@ export default function IssueDIPModal({
     }
     
     // Check if at least one security property is fully filled
-    const hasValidProperty = securityProperties.some(
-      prop => prop.street.trim() && prop.city.trim() && prop.postcode.trim()
-    );
+    const hasValidProperty = securityProperties.some(prop => {
+      return !!(prop.street && prop.street.trim() && 
+                prop.city && prop.city.trim() && 
+                prop.postcode && prop.postcode.trim() && 
+                prop.country && prop.country.trim());
+    });
     if (!hasValidProperty) {
       errors.security_properties = 'Please complete at least one security property (all fields required)';
     }
@@ -336,9 +364,15 @@ export default function IssueDIPModal({
     setSaving(true);
 
     try {
+      // Ensure all properties have country field before saving
+      const normalizedProperties = securityProperties.map(prop => ({
+        ...prop,
+        country: prop.country || 'United Kingdom'
+      }));
+      
       const dipData = {
         ...formData,
-        security_properties: securityProperties,
+        security_properties: normalizedProperties,
         dip_status: 'Issued'
       };
 
@@ -362,10 +396,16 @@ export default function IssueDIPModal({
     setSaving(true);
 
     try {
+      // Ensure all properties have country field before saving
+      const normalizedProperties = securityProperties.map(prop => ({
+        ...prop,
+        country: prop.country || 'United Kingdom'
+      }));
+      
       // First save the data
       const dipData = {
         ...formData,
-        security_properties: securityProperties,
+        security_properties: normalizedProperties,
         dip_status: 'Issued'
       };
 
@@ -860,6 +900,25 @@ export default function IssueDIPModal({
                     placeholder="Enter city"
                   />
                 </div>
+                
+                <div className="margin-bottom-05">
+                  <label className="slds-form-element__label slds-text-body_small">
+                    <abbr className="slds-required" title="required">*</abbr> Country
+                  </label>
+                  <input 
+                    type="text" 
+                    className="slds-input" 
+                    value={property.country ?? 'United Kingdom'}
+                    onChange={(e) => handlePropertyChange(index, 'country', e.target.value)}
+                    onFocus={(e) => {
+                      // Ensure country field is set when user focuses on it
+                      if (!property.country) {
+                        handlePropertyChange(index, 'country', 'United Kingdom');
+                      }
+                    }}
+                    placeholder="Enter country"
+                  />
+                </div>
               </div>
             ))}
             
@@ -870,6 +929,12 @@ export default function IssueDIPModal({
             >
               + Add Another Property
             </button>
+            
+            {fieldErrors.security_properties && (
+              <div className="slds-form-element__help error-message" id="error-security_properties">
+                ⚠️ {fieldErrors.security_properties}
+              </div>
+            )}
           </div>
     </ModalShell>
     

@@ -184,7 +184,7 @@ export default function BTLcalculator({ initialQuote = null }) {
           .select('*');
         if (e) throw e;
         // Debug log rows count
-        // eslint-disable-next-line no-console
+         
         setAllCriteria(data || []);
       } catch (err) {
         setError(err.message || String(err));
@@ -431,7 +431,7 @@ export default function BTLcalculator({ initialQuote = null }) {
       }
     } catch (e) {
       // ignore load errors
-      // eslint-disable-next-line no-console
+       
     }
   }, [effectiveInitialQuote]);
 
@@ -792,7 +792,7 @@ export default function BTLcalculator({ initialQuote = null }) {
 
         setRelevantRates(feeFiltered);
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
       }
     }
     fetchRelevant();
