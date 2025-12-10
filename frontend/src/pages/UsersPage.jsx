@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 import SalesforceIcon from '../components/shared/SalesforceIcon';
+import WelcomeHeader from '../components/shared/WelcomeHeader';
 import ModalShell from '../components/modals/ModalShell';
 import '../styles/Modal.css';
 import '../styles/admin-tables.css';
@@ -234,13 +235,11 @@ const UsersPage = () => {
 
   return (
     <div className="slds-p-around_large">
-      <div className="admin-table-container">
+      <div className="page-container page-container--table">
         <div className="table-header-stacked">
           <div className="table-title-row">
             <div className="users-page-header">
-              <h1>
-                User Management
-              </h1>
+              <WelcomeHeader />
               <p>
                 Manage user accounts, access levels, and permissions
               </p>

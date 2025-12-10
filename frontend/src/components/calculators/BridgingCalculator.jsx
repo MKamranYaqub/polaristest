@@ -13,7 +13,7 @@ import EditableResultRow from '../calculator/EditableResultRow';
 import CollapsibleSection from '../calculator/CollapsibleSection';
 import QuoteReferenceHeader from '../calculator/shared/QuoteReferenceHeader';
 import ClientDetailsSection from '../calculator/shared/ClientDetailsSection';
-import Breadcrumbs from '../layout/Breadcrumbs';
+import WelcomeHeader from '../shared/WelcomeHeader';
 import BridgingProductSection from '../calculator/bridging/BridgingProductSection';
 import LoanDetailsSection from '../calculator/bridging/LoanDetailsSection';
 import MultiPropertyDetailsSection from '../calculator/bridging/MultiPropertyDetailsSection';
@@ -1474,14 +1474,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
   );
 
   return (
-    <div className="calculator-container">
-      {/* Breadcrumbs */}
-      <Breadcrumbs items={[
-        { label: 'Home', path: '/' },
-        { label: 'Calculator', path: '/calculator' },
-        { label: 'Bridging', path: '/calculator/bridging' }
-      ]} />
-      
+    <div className="page-container page-container--full-width">
       {/* Quote Reference Badge and New Quote Button */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--token-spacing-md)' }}>
         <QuoteReferenceHeader reference={currentQuoteRef} />

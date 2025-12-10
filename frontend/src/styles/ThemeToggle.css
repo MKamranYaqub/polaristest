@@ -8,6 +8,7 @@
   transition: all 0.2s ease;
   width: 40px;
   height: 40px;
+  margin-left: 0.5rem;
 }
 
 .theme-toggle-btn:hover {

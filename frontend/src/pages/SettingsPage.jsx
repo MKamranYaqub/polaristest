@@ -90,7 +90,7 @@ const SettingsPage = () => {
             </div>
           )}
 
-          <div className="settings-sections-container">
+          <div className="page-container page-container--form">
             <div className="settings-section">
               <div className="setting-item">
                 <label className="toggle-label">

@@ -1,5 +1,154 @@
 /* Utility classes for replacing inline styles */
 
+/* ============================================
+   TOKEN-BASED UTILITIES (PREFERRED)
+   These utilities use design tokens and should be used
+   for new code and refactoring existing code.
+   ============================================ */
+
+/* Flexbox Utilities (Token-based) */
+.flex { display: flex; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-align-center { display: flex; align-items: center; }
+.flex-justify-center { display: flex; justify-content: center; }
+.flex-justify-between { display: flex; justify-content: space-between; }
+.flex-justify-end { display: flex; justify-content: flex-end; }
+.flex-column { display: flex; flex-direction: column; }
+.flex-wrap { display: flex; flex-wrap: wrap; }
+
+/* Gap Utilities (Token-based) */
+.gap-xs { gap: var(--token-spacing-xs); }
+.gap-sm { gap: var(--token-spacing-sm); }
+.gap-md { gap: var(--token-spacing-md); }
+.gap-lg { gap: var(--token-spacing-lg); }
+.gap-xl { gap: var(--token-spacing-xl); }
+
+/* Text Color Utilities (Token-based) */
+.text-primary { color: var(--token-text-primary); }
+.text-secondary { color: var(--token-text-secondary); }
+.text-muted { color: var(--token-text-muted); }
+.text-inverse { color: var(--token-text-inverse); }
+.text-error { color: var(--token-critical); }
+.text-success { color: var(--token-success); }
+.text-warning { color: var(--token-warning); }
+
+/* Font Size Utilities (Token-based) */
+.text-xs { font-size: var(--token-font-size-xs); }
+.text-sm { font-size: var(--token-font-size-sm); }
+.text-md { font-size: var(--token-font-size-md); }
+.text-lg { font-size: var(--token-font-size-lg); }
+.text-xl { font-size: var(--token-font-size-xl); }
+
+/* Background Color Utilities (Token-based) */
+.bg-surface { background-color: var(--token-layer-surface); }
+.bg-background { background-color: var(--token-layer-background); }
+.bg-neutral { background-color: var(--token-ui-background-neutral); }
+.bg-overlay { background-color: var(--token-layer-overlay); }
+
+/* Border Utilities (Token-based) */
+.border-subtle { border: var(--token-border-width-thin) solid var(--token-ui-border-subtle); }
+.border-strong { border: var(--token-border-width-medium) solid var(--token-ui-border-strong); }
+.border-danger { border: var(--token-border-width-thin) solid var(--token-critical); }
+.border-success { border: var(--token-border-width-thin) solid var(--token-success); }
+
+/* Border Radius Utilities (Token-based) */
+.radius-sm { border-radius: var(--token-radius-sm); }
+.radius-md { border-radius: var(--token-radius-md); }
+
+/* Shadow Utilities (Token-based) */
+.shadow-soft { box-shadow: var(--token-shadow-soft); }
+.shadow-strong { box-shadow: var(--token-shadow-strong); }
+.shadow-modal { box-shadow: var(--token-shadow-modal); }
+
+/* Spacing Utilities (Token-based) */
+.m-0 { margin: 0; }
+.mt-xs { margin-top: var(--token-spacing-xs); }
+.mt-sm { margin-top: var(--token-spacing-sm); }
+.mt-md { margin-top: var(--token-spacing-md); }
+.mt-lg { margin-top: var(--token-spacing-lg); }
+.mt-xl { margin-top: var(--token-spacing-xl); }
+.mr-xs { margin-right: var(--token-spacing-xs); }
+.mr-sm { margin-right: var(--token-spacing-sm); }
+.mr-md { margin-right: var(--token-spacing-md); }
+.mb-xs { margin-bottom: var(--token-spacing-xs); }
+.mb-sm { margin-bottom: var(--token-spacing-sm); }
+.mb-md { margin-bottom: var(--token-spacing-md); }
+.mb-lg { margin-bottom: var(--token-spacing-lg); }
+.mb-xl { margin-bottom: var(--token-spacing-xl); }
+.ml-xs { margin-left: var(--token-spacing-xs); }
+.ml-sm { margin-left: var(--token-spacing-sm); }
+.ml-md { margin-left: var(--token-spacing-md); }
+
+.p-0 { padding: 0; }
+.pt-xs { padding-top: var(--token-spacing-xs); }
+.pt-sm { padding-top: var(--token-spacing-sm); }
+.pt-md { padding-top: var(--token-spacing-md); }
+.pt-lg { padding-top: var(--token-spacing-lg); }
+.pr-xs { padding-right: var(--token-spacing-xs); }
+.pr-sm { padding-right: var(--token-spacing-sm); }
+.pr-md { padding-right: var(--token-spacing-md); }
+.pb-xs { padding-bottom: var(--token-spacing-xs); }
+.pb-sm { padding-bottom: var(--token-spacing-sm); }
+.pb-md { padding-bottom: var(--token-spacing-md); }
+.pb-lg { padding-bottom: var(--token-spacing-lg); }
+.pl-xs { padding-left: var(--token-spacing-xs); }
+.pl-sm { padding-left: var(--token-spacing-sm); }
+.pl-md { padding-left: var(--token-spacing-md); }
+
+/* Z-index Utilities (Token-based) */
+.z-base { z-index: var(--token-z-base); }
+.z-dropdown { z-index: var(--token-z-dropdown); }
+.z-sticky { z-index: var(--token-z-sticky); }
+.z-modal { z-index: var(--token-z-modal); }
+.z-toast { z-index: var(--token-z-toast); }
+
+/* Interactive State Utilities (Token-based) */
+.hover-bg:hover { background-color: var(--token-ui-hover); }
+.hover-interactive:hover { color: var(--token-interactive-hover); }
+
+/* Common Component Patterns (Token-based) */
+.card {
+  background: var(--token-layer-surface);
+  border-radius: var(--token-radius-md);
+  box-shadow: var(--token-shadow-soft);
+  border: var(--token-border-width-thin) solid var(--token-ui-border-subtle);
+  padding: var(--token-spacing-lg);
+}
+
+.clickable {
+  cursor: pointer;
+  transition: background-color var(--token-duration-fast, 0.2s) ease;
+}
+
+.disabled {
+  opacity: var(--token-opacity-disabled, 0.5);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.dropdown-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--token-layer-overlay);
+  z-index: var(--token-z-dropdown);
+}
+
+.modal-header-branded {
+  background: var(--token-color-brand-navy);
+  color: var(--token-text-inverse);
+  padding: var(--token-spacing-md) var(--token-spacing-lg);
+  border-radius: var(--token-radius-md) var(--token-radius-md) 0 0;
+}
+
+/* ============================================
+   LEGACY UTILITIES (DEPRECATED - Keep for compatibility)
+   These utilities use hardcoded values and should be
+   migrated to token-based utilities above.
+   ============================================ */
+
 /* Font Weight */
 .font-weight-300 { font-weight: 300; }
 .font-weight-400 { font-weight: 400; }

@@ -14,7 +14,7 @@ const DEFAULT_SETTINGS = {
   reducedMotion: false, // Disable animations and transitions
   highContrast: false, // Increase contrast ratios
   fontSize: 'medium', // 'small', 'medium', 'large', 'x-large'
-  focusIndicators: true, // Enhanced focus indicators
+  focusIndicators: false, // Enhanced focus indicators (default OFF)
   textSpacing: false, // Increased line height and letter spacing
   linkUnderlines: false, // Always underline links
 };

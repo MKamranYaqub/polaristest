@@ -1,5 +1,4 @@
 @use './tokens';
-@use './utility-classes';
 
 body {
   margin: 0;
@@ -8,16 +7,12 @@ body {
   line-height: var(--token-line-height-base);
   color: var(--token-text-primary);
   background: var(--token-layer-background);
-  overflow: hidden;
-  height: 100vh;
 }
 
 #root {
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
   background: var(--token-layer-background);
-  width: 1440px;
-  max-width: 100%;
+  max-width: 1440px;
   margin: 0 auto;
 }
 
@@ -32,11 +27,10 @@ a {
 }
 
 .app-shell {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--token-layer-background);
-  overflow: hidden;
 }
 
 .app-header {
@@ -113,6 +107,51 @@ a {
   background: var(--token-layer-background);
 }
 
+/* ============================================
+   PAGE CONTAINER SYSTEM
+   Base container with BEM modifiers
+   ============================================ */
+
+/* Base container - shared styles for all pages */
+.page-container {
+  padding: var(--token-spacing-xl);
+  max-width: 100%;
+  background-color: var(--token-layer-surface);
+  border-radius: var(--slds-g-radius-border-3);
+  box-shadow: var(--token-shadow-soft);
+}
+
+/* Modifier: Table pages (admin tables, data grids) */
+.page-container--table {
+  /* Table-specific overrides if needed */
+}
+
+/* Modifier: Form pages (settings, profiles) */
+.page-container--form {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Modifier: Full-width pages (calculators, dashboards) */
+.page-container--full-width {
+  max-width: 100%;
+}
+
+/* Modifier: No shadow (nested containers) */
+.page-container--no-shadow {
+  box-shadow: none;
+}
+
+/* Modifier: Compact padding */
+.page-container--compact {
+  padding: var(--token-spacing-md);
+}
+
+/* Modifier: No padding (for custom layouts) */
+.page-container--no-padding {
+  padding: 0;
+}
+
 /* Mobile/Tablet: Stack navigation and make it toggleable */
 /* Uses standard breakpoint: tablet (768px) */
 @media (max-width: 768px) {
@@ -127,8 +166,6 @@ a {
   display: flex;
   flex-direction: column;
   padding: var(--token-space-24);
-  overflow-x: hidden;
-  overflow-y: auto;
   background: transparent;
   margin-inline-start: 0 !important;
   margin-left: 0 !important;
@@ -168,6 +205,7 @@ a {
   color: var(--token-text-secondary);
 }
 
+@import './utilities.css'; /* Token-based utility classes */
 @import './slds.css';
 @import './auth.css';
 @import './rates.css';

@@ -17,6 +17,7 @@ export default function Breadcrumbs({ items = [] }) {
       <ol className="slds-breadcrumb__list">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
+          const isMainSection = index === 1; // Second item is the main section (Products, Calculator, Quotes, Admin)
           
           return (
             <li key={index} className="slds-breadcrumb__item">
@@ -52,7 +53,15 @@ export function useBreadcrumbs() {
     { label: 'Home', path: '/' }
   ];
 
-  if (path.includes('/calculator')) {
+  if (path.includes('/products')) {
+    breadcrumbs.push({ label: 'Products', path: '/products/btl' });
+    
+    if (path.includes('/btl')) {
+      breadcrumbs.push({ label: 'Buy to Let', path: '/products/btl' });
+    } else if (path.includes('/bridging')) {
+      breadcrumbs.push({ label: 'Bridge & Fusion', path: '/products/bridging' });
+    }
+  } else if (path.includes('/calculator')) {
     breadcrumbs.push({ label: 'Calculator', path: '/calculator/btl' });
     
     if (path.includes('/btl')) {
@@ -69,6 +78,16 @@ export function useBreadcrumbs() {
       breadcrumbs.push({ label: 'Constants', path: '/admin/constants' });
     } else if (path.includes('/users')) {
       breadcrumbs.push({ label: 'Users', path: '/admin/users' });
+    } else if (path.includes('/criteria')) {
+      breadcrumbs.push({ label: 'BTL Criteria', path: '/admin/criteria' });
+    } else if (path.includes('/btl-rates')) {
+      breadcrumbs.push({ label: 'BTL Rates', path: '/admin/btl-rates' });
+    } else if (path.includes('/bridging-rates')) {
+      breadcrumbs.push({ label: 'Bridging Rates', path: '/admin/bridging-rates' });
+    } else if (path.includes('/global-settings')) {
+      breadcrumbs.push({ label: 'Global Settings', path: '/admin/global-settings' });
+    } else if (path.includes('/support-requests')) {
+      breadcrumbs.push({ label: 'Support Requests', path: '/admin/support-requests' });
     }
   } else if (path.includes('/settings')) {
     breadcrumbs.push({ label: 'Settings', path: '/settings' });

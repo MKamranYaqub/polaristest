@@ -4,9 +4,9 @@ import { Loading } from '@carbon/react';
 import { listQuotes, getQuote, deleteQuote } from '../../utils/quotes';
 import { API_BASE_URL } from '../../config/api';
 import SalesforceIcon from '../shared/SalesforceIcon';
+import WelcomeHeader from '../shared/WelcomeHeader';
 import NotificationModal from '../modals/NotificationModal';
 import ConfirmationModal from '../modals/ConfirmationModal';
-import Breadcrumbs from '../layout/Breadcrumbs';
 import '../../styles/admin-tables.css';
 
 export default function QuotesList({ calculatorType = null, onLoad = null }) {
@@ -308,17 +308,10 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
   }, [filterRef, filterName, filterType, filterBorrowerType, filterCreatedFrom, filterCreatedTo, filterUpdatedFrom, filterUpdatedTo]);
 
   return (
-    <div>
-      {/* Breadcrumbs */}
-      <Breadcrumbs items={[
-        { label: 'Home', path: '/' },
-        { label: 'Quotes', path: '/quotes' }
-      ]} />
-      
-      <div className="admin-table-container">
+    <div className="admin-table-container">
         <div className="table-header-stacked">
           <div className="table-title-row">
-            <h1>Quotes {calculatorType ? `(${calculatorType})` : ''}</h1>
+            <WelcomeHeader />
             <div className="table-actions-row">
               <button 
                 className="slds-button slds-button_brand" 
@@ -625,7 +618,6 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
       </div>
       </>
         )}
-      </div>
       
       <NotificationModal
         isOpen={notification.show}

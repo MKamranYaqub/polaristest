@@ -17,7 +17,6 @@ import ClientDetailsSection from '../calculator/shared/ClientDetailsSection';
 import ActionButtons from '../calculator/ActionButtons';
 import RangeToggle from '../calculator/RangeToggle';
 import TopFiltersSection from '../calculator/btl/TopFiltersSection';
-import Breadcrumbs from '../layout/Breadcrumbs';
 import useBrokerSettings from '../../hooks/calculator/useBrokerSettings';
 import { useResultsVisibility } from '../../hooks/useResultsVisibility';
 import { useResultsRowOrder } from '../../hooks/useResultsRowOrder';
@@ -1451,14 +1450,7 @@ export default function BTLcalculator({ initialQuote = null }) {
   });
 
   return (
-    <div className="calculator-container">
-      {/* Breadcrumbs */}
-      <Breadcrumbs items={[
-        { label: 'Home', path: '/home' },
-        { label: 'Calculator', path: '/calculator' },
-        { label: 'Buy to Let', path: '/calculator/btl' }
-      ]} />
-
+    <div className="page-container page-container--full-width">
       {/* Quote Reference Badge and New Quote Button */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--token-spacing-md)' }}>
         <QuoteReferenceHeader reference={currentQuoteRef} />

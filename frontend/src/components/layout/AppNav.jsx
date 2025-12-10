@@ -4,7 +4,6 @@ import Navigation from './Navigation';
 import ThemeToggle from '../ui/ThemeToggle';
 import UserProfileButton from '../ui/UserProfileButton';
 import { useTheme } from '../../contexts/ThemeContext';
-import '../../styles/app-nav.scss';
 
 /**
  * AppNav - Consolidated navigation component

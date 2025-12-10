@@ -1,11 +1,19 @@
 /* Professional Admin Tables Styling - BTL & Bridge/Fusion Rates */
 /* Fully tokenized for theme compatibility */
 
+/* ============================================
+   DEPRECATED: Use .page-container instead!
+   Kept for backward compatibility only.
+   ============================================ */
+
 /* Container and Layout */
 .admin-table-container {
-  padding: var(--token-spacing-0);
+  /* DEPRECATED: Use .page-container .page-container--table */
+  padding: var(--token-spacing-xl);
   max-width: 100%;
-  background-color: var(--token-layer-background);
+  background-color: var(--token-layer-surface);
+  border-radius: var(--slds-g-radius-border-3);
+  box-shadow: var(--token-shadow-soft);
 }
 
 /* Header Section with Actions */
@@ -16,6 +24,9 @@
   margin-bottom: var(--token-spacing-xl);
   flex-wrap: wrap;
   gap: var(--token-spacing-lg);
+  padding: var(--token-spacing-lg);
+  background: var(--token-layer-surface);
+  border-radius: var(--slds-g-radius-border-3);
 }
 
 .table-actions-left {
@@ -40,6 +51,8 @@
   align-items: flex-end;
   gap: var(--token-spacing-md);
   margin-bottom: var(--token-spacing-xl);
+  background: var(--token-layer-surface);
+  border-radius: var(--slds-g-radius-border-3);
 }
 
 /* Title row: heading on left, action buttons on right */
@@ -257,9 +270,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--token-form-field-gap, 2rem);
-  padding: var(--token-spacing-lg);
+  padding: var(--token-spacing-xl);
   background: var(--token-layer-surface);
-  border-radius: var(--token-radius-md);
+  border-radius: var(--slds-g-radius-border-3);
   margin-bottom: var(--token-spacing-xl);
   border: 1px solid var(--token-border-subtle);
   box-shadow: var(--token-shadow-soft);
@@ -337,7 +350,7 @@
 /* Table Container */
 .table-wrapper {
   overflow-x: auto;
-  border-radius: var(--token-radius-md);
+  border-radius: var(--slds-g-radius-border-3);
   box-shadow: var(--token-shadow-soft);
   border: 1px solid var(--token-border-subtle);
   background: var(--token-layer-surface);
@@ -419,7 +432,7 @@
 
 .professional-table tbody td {
   /* Extends .slds-table td */
-  padding: var(--token-spacing-md);
+  padding: var(--token-spacing-lg) var(--token-spacing-md);
   font-size: var(--token-font-size-sm);
   color: var(--token-text-primary);
   border-bottom: 1px solid var(--token-border-subtle);

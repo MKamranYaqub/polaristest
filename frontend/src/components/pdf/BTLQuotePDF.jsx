@@ -186,14 +186,18 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
         <View style={btlQuoteStyles.resultsTable}>
           {/* Table Header */}
           <View style={btlQuoteStyles.tableHeaderRow}>
-            <Text style={[btlQuoteStyles.tableHeaderCell, { width: labelWidth }]}>
+            <Text style={[btlQuoteStyles.tableHeaderCell, { width: labelWidth, backgroundColor: '#f4f4f4' }]}>
               {/* Empty cell for row labels */}
             </Text>
-            {feeRanges.map((feeRange, index) => (
-              <Text key={index} style={[btlQuoteStyles.tableHeaderCell, { width: valueWidth, textAlign: 'right' }]}>
-                {feeRange ? `${feeRange}%` : '—'}
-              </Text>
-            ))}
+            {feeRanges.map((feeRange, index) => {
+              const colors = ['#d8edff', '#ffd4e5', '#ffe4b3', '#d4f4dd'];
+              const bgColor = colors[index % colors.length];
+              return (
+                <Text key={index} style={[btlQuoteStyles.tableHeaderCell, { width: valueWidth, backgroundColor: bgColor }]}>
+                  {feeRange ? `${feeRange}% Fee` : '—'}
+                </Text>
+              );
+            })}
           </View>
 
           {/* Full rate */}
@@ -511,7 +515,9 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
           {/* Right Column: Broker Details */}
           <View style={{ flex: 1 }}>
             <View style={btlQuoteStyles.brokerDetailsBox}>
-              <Text style={btlQuoteStyles.brokerDetailsTitle}>Broker details</Text>
+              <Text style={btlQuoteStyles.brokerDetailsTitle}>
+                {((clientDetails?.clientType || quote?.client_type) === 'Direct') ? 'Client details' : 'Broker details'}
+              </Text>
               <View style={btlQuoteStyles.brokerDetailsRow}>
                 <Text style={btlQuoteStyles.brokerDetailsLabel}>Name</Text>
                 <Text style={btlQuoteStyles.brokerDetailsValue}>{h.getClientName(clientDetails, quote)}</Text>

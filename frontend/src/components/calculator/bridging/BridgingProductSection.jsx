@@ -1,10 +1,11 @@
 import React from 'react';
 import ModernSwitch from '../../common/ModernSwitch';
+import WelcomeHeader from '../../shared/WelcomeHeader';
 import '../../../styles/Calculator.scss';
 
 /**
  * BridgingProductSection - Product configuration section for Bridging Calculator
- * Contains product type, buttons, and criteria fields
+ * Contains welcome message, buttons, and criteria fields
  */
 const BridgingProductSection = ({ 
   productScope,
@@ -85,12 +86,9 @@ const BridgingProductSection = ({
 
   return (
     <div className="product-config-section">
-      {/* Row 1: Product Type and Action Buttons */}
+      {/* Row 1: Welcome Header and Action Buttons */}
       <div className="product-section-row-1">
-        <div className="product-type-label">
-          <span style={{ color: 'var(--token-text-primary)' }}>Product type: </span>
-          <span style={{ marginLeft: '0.5rem', color: 'var(--token-text-primary)' }}>Bridge & Fusion</span>
-        </div>
+        <WelcomeHeader />
         <div className="product-actions">
           {quoteId && (
             <>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSupabase } from '../../contexts/SupabaseContext';
 import NotificationModal from '../modals/NotificationModal';
+import WelcomeHeader from '../shared/WelcomeHeader';
 import { LOCALSTORAGE_CONSTANTS_KEY } from '../../config/constants';
 import '../../styles/GlobalSettings.css';
 import SalesforceIcon from '../shared/SalesforceIcon';
@@ -1370,9 +1371,9 @@ export default function GlobalSettings() {
   }
 
   return (
-    <div className="global-settings-container">
+    <div className="page-container page-container--table global-settings-container">
       <div className="global-settings-header">
-        <h1 className="global-settings-title">Global Settings</h1>
+        <WelcomeHeader className="global-settings-title" />
         <p className="global-settings-subtitle">Configure calculator results table display and customize how data appears to users</p>
       </div>
       

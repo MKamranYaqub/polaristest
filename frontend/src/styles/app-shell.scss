@@ -1,31 +1,39 @@
-/* AppShell styles - main layout wrapper with embedding support */
+/* AppShell styles - main layout wrapper with Salesforce-style navigation */
 
 .app-shell {
-  /* Base shell - inherits layout from index.scss */
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--cds-background, #fff);
+}
+
+/* Main content area - adjusted for horizontal nav */
+.app-content {
+  flex: 1;
+  padding: var(--token-spacing-lg);
+  max-width: 100%;
 }
 
 /* Standalone mode - full navigation visible */
 .app-shell--standalone {
-  /* Default layout with header and sidebar - uses existing app-layout styles */
   display: flex;
   flex-direction: column;
 }
 
 /* Embedded mode - no navigation, optimized for iframe */
 .app-shell--embedded {
-  /* Remove any fixed positioning or headers that might conflict with host */
-  
   .app-content {
-    /* Maximize content area */
     max-width: 100%;
     padding: var(--token-spacing-lg);
   }
 }
 
-/* Mobile responsiveness for embedded mode */
-/* Uses standard breakpoint: tablet (768px) */
+/* Mobile responsiveness */
 @media (max-width: 768px) {
+  .app-content {
+    padding: var(--token-spacing-sm);
+  }
+  
   .app-shell--embedded {
     .app-content {
       padding: var(--token-spacing-sm);

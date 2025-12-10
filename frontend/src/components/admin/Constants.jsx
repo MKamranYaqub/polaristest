@@ -18,6 +18,7 @@ import useTypography from '../../hooks/useTypography';
 import '../../styles/slds.css';
 import '../../styles/GlobalSettings.css';
 import SalesforceIcon from '../shared/SalesforceIcon';
+import WelcomeHeader from '../shared/WelcomeHeader';
 
 function readOverrides() {
   try {
@@ -513,8 +514,62 @@ export default function Constants() {
     const arr = csv.split(',').map((s) => s.trim()).filter(Boolean);
     const newFeeColumns = { ...(feeColumns || {}), [feeKey]: arr };
     setFeeColumns(newFeeColumns);
-    // Save all settings
-    await saveToStorage();
+    
+    // Update the payload with current values BEFORE saving
+    const payload = { 
+      productLists, 
+      feeColumns: newFeeColumns, // Use the NEW value
+      flatAboveCommercialRule, 
+      marketRates, 
+      brokerRoutes, 
+      brokerCommissionDefaults, 
+      brokerCommissionTolerance,
+      fundingLinesBTL,
+      fundingLinesBridge,
+      uiPreferences: DEFAULT_UI_PREFERENCES
+    };
+    
+    writeOverrides(payload);
+    setSaving(true);
+
+    try {
+      const { error: saveErr } = await saveToSupabase(payload);
+      setSaving(false);
+      
+      if (saveErr) {
+        console.error('Failed to save to database:', saveErr);
+        setNotification({ 
+          show: true, 
+          type: 'warning', 
+          title: 'Warning', 
+          message: 'Saved locally but database sync failed: ' + (saveErr.message || 'Unknown error') 
+        });
+      } else {
+        setNotification({ 
+          show: true, 
+          type: 'success', 
+          title: 'Success', 
+          message: 'Fee column saved successfully!' 
+        });
+        
+        // Dispatch event so other components update immediately
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: LOCALSTORAGE_CONSTANTS_KEY,
+          newValue: JSON.stringify(payload),
+          url: window.location.href,
+          storageArea: localStorage
+        }));
+      }
+    } catch (e) {
+      setSaving(false);
+      console.error('Save exception:', e);
+      setNotification({ 
+        show: true, 
+        type: 'error', 
+        title: 'Error', 
+        message: 'Unexpected error: ' + (e.message || 'Unknown error') 
+      });
+    }
   };
 
   const updateMarketRate = async (rateKey, pctValue) => {
@@ -522,8 +577,62 @@ export default function Constants() {
     if (isNaN(decimal)) return;
     const newMarketRates = { ...(marketRates || {}), [rateKey]: decimal };
     setMarketRates(newMarketRates);
-    // Save all settings
-    await saveToStorage();
+    
+    // Update the payload with current values BEFORE saving
+    const payload = { 
+      productLists, 
+      feeColumns, 
+      flatAboveCommercialRule, 
+      marketRates: newMarketRates, // Use the NEW value
+      brokerRoutes, 
+      brokerCommissionDefaults, 
+      brokerCommissionTolerance,
+      fundingLinesBTL,
+      fundingLinesBridge,
+      uiPreferences: DEFAULT_UI_PREFERENCES
+    };
+    
+    writeOverrides(payload);
+    setSaving(true);
+
+    try {
+      const { error: saveErr } = await saveToSupabase(payload);
+      setSaving(false);
+      
+      if (saveErr) {
+        console.error('Failed to save to database:', saveErr);
+        setNotification({ 
+          show: true, 
+          type: 'warning', 
+          title: 'Warning', 
+          message: 'Saved locally but database sync failed: ' + (saveErr.message || 'Unknown error') 
+        });
+      } else {
+        setNotification({ 
+          show: true, 
+          type: 'success', 
+          title: 'Success', 
+          message: 'Market rate saved successfully!' 
+        });
+        
+        // Dispatch event so other components update immediately
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: LOCALSTORAGE_CONSTANTS_KEY,
+          newValue: JSON.stringify(payload),
+          url: window.location.href,
+          storageArea: localStorage
+        }));
+      }
+    } catch (e) {
+      setSaving(false);
+      console.error('Save exception:', e);
+      setNotification({ 
+        show: true, 
+        type: 'error', 
+        title: 'Error', 
+        message: 'Unexpected error: ' + (e.message || 'Unknown error') 
+      });
+    }
   };
 
   const updateFlatAbove = async (field, value) => {
@@ -669,8 +778,8 @@ export default function Constants() {
   
 
   return (
-    <div className="slds-p-around_medium">
-
+    <div className="page-container page-container--table">
+      <WelcomeHeader />
       <p className="helper-text">Edit product lists, fee columns and LTV thresholds.</p>
       <div className="slds-actions">
         <button className="slds-button slds-button_destructive" onClick={resetToDefaults}>Reset defaults</button>

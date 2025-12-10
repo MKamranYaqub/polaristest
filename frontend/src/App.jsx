@@ -6,7 +6,6 @@ import BTLCalculator from './components/calculators/BTL_Calculator';
 import BridgingCalculator from './components/calculators/BridgingCalculator';
 import QuotesList from './components/calculators/QuotesList';
 import AppShell from './components/layout/AppShell';
-import Navigation from './components/layout/Navigation';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import { 
   CalculatorErrorFallback, 
@@ -79,15 +78,8 @@ const AppContent = () => {
       <UserProvider>
         <ErrorBoundary title="Application Error" message="The application encountered an unexpected error.">
           <AppShell>
-            <div className="app-layout">
-              {showNavigation && (
-                <ErrorBoundary fallback={<div className="slds-p-around_medium">Navigation error</div>}>
-                  <Navigation />
-                </ErrorBoundary>
-              )}
-              
-              <div className="app-content">
-                <Routes>
+            <div className="app-content">
+              <Routes>
                 {/* Public routes */}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -135,6 +127,22 @@ const AppContent = () => {
                 
                 {/* Protected products page - require authentication */}
                 <Route path="/products" element={<ProtectedRoute requiredAccessLevel={5} />}>
+                  <Route 
+                    path="btl"
+                    element={
+                      <ErrorBoundary>
+                        <Products initialTab="btl" />
+                      </ErrorBoundary>
+                    } 
+                  />
+                  <Route 
+                    path="bridging"
+                    element={
+                      <ErrorBoundary>
+                        <Products initialTab="bridging" />
+                      </ErrorBoundary>
+                    } 
+                  />
                   <Route 
                     index
                     element={
@@ -253,9 +261,8 @@ const AppContent = () => {
                 {/* Products route removed */}
                 
                 <Route path="/" element={<Navigate to="/home" replace />} />
-              </Routes>
-            </div>
-          </div>
+                </Routes>
+              </div>
           </AppShell>
         </ErrorBoundary>
       </UserProvider>

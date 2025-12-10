@@ -36,9 +36,9 @@ import BTLSliderControls from '../components/BTLSliderControls';
 import BTLResultsSummary from '../components/BTLResultsSummary';
 import QuoteReferenceHeader from '../../../components/calculator/shared/QuoteReferenceHeader';
 import ClientDetailsSection from '../../../components/calculator/shared/ClientDetailsSection';
-import Breadcrumbs from '../../../components/Breadcrumbs';
 import SaveQuoteButton from '../../../components/SaveQuoteButton';
 import CollapsibleSection from '../../../components/calculator/CollapsibleSection';
+import WelcomeHeader from '../../../components/shared/WelcomeHeader';
 
 // Utilities
 import { getQuote, upsertQuoteData } from '../../../utils/quotes';
@@ -203,9 +203,6 @@ export default function BTLCalculator({ initialQuote = null }) {
 
   return (
     <div className="btl-calculator">
-      {/* Breadcrumbs */}
-      <Breadcrumbs />
-      
       {/* Header */}
       <div className="slds-page-header">
         <div className="slds-page-header__row">
@@ -214,11 +211,7 @@ export default function BTLCalculator({ initialQuote = null }) {
               <div className="slds-media__body">
                 <div className="slds-page-header__name">
                   <div className="slds-page-header__name-title">
-                    <h1>
-                      <span className="slds-page-header__title slds-truncate">
-                        BTL Calculator
-                      </span>
-                    </h1>
+                    <WelcomeHeader />
                   </div>
                 </div>
               </div>

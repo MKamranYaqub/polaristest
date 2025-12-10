@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { useSupabase } from "../../contexts/SupabaseContext";
+import React, { useEffect, useState } from 'react';
+import { useSupabase } from '../../contexts/SupabaseContext';
+import WelcomeHeader from '../shared/WelcomeHeader';
 import SalesforceIcon from "../shared/SalesforceIcon";
 import CriteriaEditModal from './CriteriaEditModal';
 import NotificationModal from '../modals/NotificationModal';
@@ -548,10 +549,10 @@ function CriteriaTable() {
   }
 
   return (
-    <div className="admin-table-container">
+    <div className="page-container page-container--table">
       <div className="table-header-stacked">
         <div className="table-title-row">
-          <h1>BTL Criteria Management</h1>
+          <WelcomeHeader />
           <div className="table-actions-row">
             <button className="slds-button slds-button_brand" onClick={handleAdd}>
               Add New Criteria

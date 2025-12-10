@@ -6,9 +6,10 @@
 
 /* Main Container */
 .global-settings-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--slds-g-spacing-medium, var(--token-spacing-md));
+  /* Layout is now provided by .page-container */
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 /* Page Header */
@@ -62,7 +63,7 @@
 
 .settings-accordion-section .slds-accordion__summary.slds-is-open {
   background: var(--slds-g-color-surface-container-3);
-  border-color: var(--slds-g-color-accent-2);
+ 
 }
 
 .settings-accordion-section .slds-accordion__summary-heading {

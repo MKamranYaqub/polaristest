@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import WelcomeHeader from '../components/shared/WelcomeHeader';
 import '../styles/admin-tables.css';
 
 /**
@@ -208,11 +209,11 @@ const SupportRequestsPage = () => {
 
   return (
     <div>
-      <div className="admin-table-container">
+      <div className="page-container page-container--table">
         <div className="table-header-stacked">
           <div className="table-title-row">
-            <h1>
-              Support Requests
+            <div>
+              <WelcomeHeader />
               {unreadCount > 0 && (
                 <span 
                   className="slds-badge slds-badge_error slds-m-left_small"
@@ -221,7 +222,7 @@ const SupportRequestsPage = () => {
                   {unreadCount} unread
                 </span>
               )}
-            </h1>
+            </div>
             <div className="table-actions-row">
               {unreadCount > 0 && (
                 <button 
@@ -303,24 +304,24 @@ const SupportRequestsPage = () => {
         )}
 
         {!loading && !error && (
-          <div className="table-scroll-container">
-            <table className="slds-table slds-table_bordered slds-table_cell-buffer slds-table_striped">
+          <div className="table-wrapper">
+            <table className="professional-table">
               <thead>
-                <tr className="slds-line-height_reset">
-                  <th scope="col" style={{ width: '40px' }}></th>
-                  <th scope="col">Date</th>
-                  <th scope="col">Name</th>
-                  <th scope="col">Email</th>
-                  <th scope="col">Bug Type</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Page</th>
-                  <th scope="col" style={{ width: '180px' }}>Actions</th>
+                <tr>
+                  <th style={{ width: '40px' }}></th>
+                  <th className="sortable">Date</th>
+                  <th className="sortable">Name</th>
+                  <th>Email</th>
+                  <th>Bug Type</th>
+                  <th>Status</th>
+                  <th>Page</th>
+                  <th style={{ width: '180px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {requests.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="slds-text-align_center slds-p-around_large">
+                    <td colSpan="8" style={{ textAlign: 'center', padding: 'var(--token-spacing-xl)' }}>
                       No support requests found
                     </td>
                   </tr>
@@ -360,9 +361,9 @@ const SupportRequestsPage = () => {
                       </td>
                       <td>{request.page || '-'}</td>
                       <td>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <div className="row-actions">
                           <button
-                            className="slds-button slds-button_neutral slds-button_small"
+                            className="slds-button slds-button_neutral"
                             onClick={() => viewDetails(request)}
                           >
                             View

@@ -161,16 +161,19 @@ export const getResultForFeeRange = (results, feeRange) => {
 export const getFullRate = (result) => {
   if (!result) return 'N/A';
   const rate = parseNumber(result.initial_rate || result.rate);
-  return `${(rate / 100).toFixed(2)}%`;
+  const isTracker = result.product_name && result.product_name.toLowerCase().includes('tracker');
+  return isTracker ? `${(rate / 100).toFixed(2)}% + BBR` : `${(rate / 100).toFixed(2)}%`;
 };
 
 export const getPayRate = (result) => {
   if (!result) return 'N/A';
   
+  const isTracker = result.product_name && result.product_name.toLowerCase().includes('tracker');
+  
   // Check if pay_rate is directly available
   if (result.pay_rate !== undefined && result.pay_rate !== null) {
     const payRate = parseNumber(result.pay_rate);
-    return `${(payRate / 100).toFixed(2)}%`;
+    return isTracker ? `${(payRate / 100).toFixed(2)}% + BBR` : `${(payRate / 100).toFixed(2)}%`;
   }
   
   // For BTL, pay rate equals full rate (no deferred interest concept like Bridging)
@@ -179,13 +182,19 @@ export const getPayRate = (result) => {
 
 export const getRevertRate = (result) => {
   if (!result) return 'MVR';
-  // Use revert_rate_type from database (now saved with quotes)
-  const revert = result.revert_rate_type || result.revert_rate;
-  if (!revert && result.revert_rate_number) {
-    const n = parseNumber(result.revert_rate_number);
-    return n ? `${(n / 100).toFixed(2)} %` : 'MVR';
+  
+  // Check if revert_index is MVR
+  if (result.revert_index && result.revert_index.toUpperCase() === 'MVR') {
+    // Show MVR or MVR + margin if margin > 0
+    if (result.revert_margin && parseNumber(result.revert_margin) > 0) {
+      return `MVR + ${parseNumber(result.revert_margin).toFixed(2)}%`;
+    }
+    return 'MVR';
   }
-  return revert || 'MVR';
+  
+  // Show numeric revert rate as percentage
+  const revertRate = parseNumber(result.revert_rate);
+  return revertRate ? `${revertRate.toFixed(2)}%` : 'MVR';
 };
 
 export const getServicePeriod = (result) => {
@@ -318,14 +327,10 @@ export const getTotalCostToBorrower = (result) => {
 // Fees
 export const getBrokerCommission = (result, brokerSettings) => {
   if (!result) return 'N/A';
-  // Always display value when present in results; fallback to £0
-  const commission = parseNumber(
-    result.broker_commission_proc_fee_pounds ||
-    result.broker_commission ||
-    result.broker_commission_fee ||
-    result.proc_fee
-  );
-  return formatCurrency(commission);
+  // Only use broker_commission_proc_fee_pounds field
+  const commission = parseNumber(result.broker_commission_proc_fee_pounds);
+  // Only show if commission > 0
+  return commission > 0 ? formatCurrency(commission) : '£0';
 };
 
 export const getBrokerClientFee = (result, brokerSettings) => {
@@ -359,7 +364,13 @@ export const getClientTelephone = (clientDetails, quote) => {
 };
 
 export const getClientRoute = (clientDetails, quote) => {
-  return clientDetails?.clientType || clientDetails?.broker_route || quote?.broker_route || quote?.client_type || 'N/A';
+  // Check client type first
+  const clientType = clientDetails?.clientType || quote?.client_type;
+  if (clientType && clientType.toLowerCase() === 'direct') {
+    return 'Direct Client';
+  }
+  // For brokers, return the broker route
+  return clientDetails?.broker_route || quote?.broker_route || clientDetails?.brokerRoute || 'N/A';
 };
 
 // ============================================================================

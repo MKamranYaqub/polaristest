@@ -18,17 +18,17 @@ input[type="range"] {
   &::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 18px;
-    height: 18px;
+    width: var(--token-size-icon-md);
+    height: var(--token-size-icon-md);
     border-radius: 50%;
-    background: #0176d3;
+    background: var(--token-color-brand-blue);
     cursor: pointer;
-    border: 2px solid #ffffff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    border: var(--token-border-width-medium) solid var(--token-layer-surface);
+    box-shadow: var(--token-shadow-sm);
     transition: all 0.15s ease;
 
     &:hover {
-      background: #014486;
+      background: var(--token-color-brand-blue-dark);
       transform: scale(1.1);
     }
 
@@ -38,17 +38,17 @@ input[type="range"] {
   }
 
   &::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
+    width: var(--token-size-icon-md);
+    height: var(--token-size-icon-md);
     border-radius: 50%;
-    background: #0176d3;
+    background: var(--token-color-brand-blue);
     cursor: pointer;
-    border: 2px solid #ffffff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    border: var(--token-border-width-medium) solid var(--token-layer-surface);
+    box-shadow: var(--token-shadow-sm);
     transition: all 0.15s ease;
 
     &:hover {
-      background: #014486;
+      background: var(--token-color-brand-blue-dark);
       transform: scale(1.1);
     }
 
@@ -273,7 +273,7 @@ input[type="range"] {
   // When section is expanded, use accent color
   &.expanded {
     background: var(--slds-g-color-surface-container-3);
-    border-color: var(--slds-g-color-accent-2);
+   
   }
   
   .header-title {
@@ -613,15 +613,15 @@ input[type="range"] {
     align-items: center;
     
     svg {
-      width: 14px;
-      height: 14px;
-      fill: #0176d3; // Salesforce blue
-      color: #0176d3;
+      width: var(--token-icon-sm);
+      height: var(--token-icon-sm);
+      fill: var(--token-color-brand-blue);
+      color: var(--token-color-brand-blue);
     }
-    
+
     &:hover svg {
-      fill: #014486;
-      color: #014486;
+      fill: var(--token-color-brand-blue-dark);
+      color: var(--token-color-brand-blue-dark);
     }
   }
   

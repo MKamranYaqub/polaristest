@@ -3,6 +3,7 @@ import { useSupabase } from '../../contexts/SupabaseContext';
 import RateEditModal from './RateEditModal';
 // Bridge & Fusion rates tab removed - keep BTL rates only
 import NotificationModal from '../modals/NotificationModal';
+import WelcomeHeader from '../shared/WelcomeHeader';
 import '../../styles/slds.css';
 import '../../styles/admin-tables.css';
 
@@ -585,7 +586,7 @@ function RatesTable() {
       <>
       <div className="table-header-stacked">
         <div className="table-title-row">
-          <h1>BTL Rate Management</h1>
+          <WelcomeHeader />
           <div className="table-actions-row">
             <button className="slds-button slds-button_brand" onClick={handleAdd}>
               Add New Product

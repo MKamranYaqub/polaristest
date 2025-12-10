@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import WelcomeHeader from '../components/shared/WelcomeHeader';
 import '../styles/Products.css';
 
 /**
@@ -8,12 +9,22 @@ import '../styles/Products.css';
  * 
  * Fetches rates from backend API (no Supabase keys exposed on frontend)
  * Supports multiple product categories and tiers with dynamic rate display
+ * 
+ * @param {object} props
+ * @param {string} props.initialTab - Initial tab to display ('btl' or 'bridging')
  */
-const Products = () => {
+const Products = ({ initialTab = 'btl' }) => {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const [mainTab, setMainTab] = useState('btl'); // 'btl' or 'bridging'
-  const [subTab, setSubTab] = useState('core');
+  const [mainTab, setMainTab] = useState(initialTab); // 'btl' or 'bridging'
+  const [subTab, setSubTab] = useState(initialTab === 'btl' ? 'specialist' : 'variable');
+  
+  // Update mainTab when initialTab prop changes
+  useEffect(() => {
+    setMainTab(initialTab);
+    setSubTab(initialTab === 'btl' ? 'specialist' : 'variable');
+    setBridgingPropertyTab('residential');
+  }, [initialTab]);
   const [bridgingPropertyTab, setBridgingPropertyTab] = useState('residential'); // 'residential' or 'commercial'
   const [ratesData, setRatesData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -275,15 +286,11 @@ const Products = () => {
   const handleMainTabChange = (tab) => {
     setMainTab(tab);
     setSubTab(tab === 'btl' ? 'core' : 'variable');
-    // Reset property tab to residential when switching main tabs
-    setBridgingPropertyTab('residential');
   };
 
   // Handle bridging sub-tab change (Variable, Fixed, Fusion)
   const handleBridgingSubTabChange = (tab) => {
     setSubTab(tab);
-    // Reset property tab to residential when switching between bridging sub-tabs
-    setBridgingPropertyTab('residential');
   };
 
   // Transform rates data into structured format for BTL
@@ -352,7 +359,13 @@ const Products = () => {
   // Render BTL rates table
   const renderBTLTable = () => {
     const structured = transformBTLData();
-    const tiers = Object.keys(structured).sort();
+    let tiers = Object.keys(structured).sort();
+    
+    // For Core Residential and Commercial, show only Tier 1 and Tier 2 (Screenshot 3)
+    const isCoreOrCommercial = subTab === 'core' || subTab === 'commercial';
+    if (isCoreOrCommercial) {
+      tiers = tiers.filter(tier => tier === 'Tier 1' || tier === 'Tier 2');
+    }
 
     if (tiers.length === 0) {
       return (
@@ -1357,22 +1370,15 @@ const Products = () => {
   };
 
   return (
-    <div className="slds-container_fluid">
-      {/* Header with Products title and actions */}
+    <div className="page-container page-container--table">
+      {/* Header with actions */}
       <div className="slds-page-header">
         <div className="slds-page-header__row">
           <div className="slds-page-header__col-title">
-            <div className="slds-page-header__name">
-              <h1>
-                <span className="slds-page-header__title slds-truncate">Products</span>
-              </h1>
-            </div>
+            <WelcomeHeader />
           </div>
           <div className="slds-page-header__col-actions">
             <div className="slds-page-header__controls" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem' }}>
-              {user && (
-                <span className="slds-text-body_regular slds-m-right_small">Welcome back, <strong>{user.name || user.email}</strong></span>
-              )}
               <button 
                 className="slds-button slds-button_neutral" 
                 title="Asset Class Information"
@@ -1387,21 +1393,14 @@ const Products = () => {
               >
                 ℹ️ LTV Restrictions
               </button>
-              <button 
-                className="slds-button slds-button_neutral" 
-                title="Support"
-                onClick={() => setShowSupportPanel(true)}
-              >
-                ℹ️ Support
-              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Tabs */}
+      {/* Main Tabs - Tab buttons hidden, content still visible */}
       <div className="slds-tabs_default">
-        <ul className="slds-tabs_default__nav" role="tablist">
+        <ul className="slds-tabs_default__nav" role="tablist" style={{ display: 'none' }}>
           <li 
             className={`slds-tabs_default__item ${mainTab === 'btl' ? 'slds-is-active' : ''}`}
             role="presentation"
@@ -1442,19 +1441,6 @@ const Products = () => {
           <div className="slds-tabs_scoped">
             <ul className="slds-tabs_scoped__nav" role="tablist">
               <li 
-                className={`slds-tabs_scoped__item ${subTab === 'core' ? 'slds-is-active' : ''}`}
-                role="presentation"
-              >
-                <button
-                  className="slds-tabs_scoped__link"
-                  role="tab"
-                  aria-selected={subTab === 'core'}
-                  onClick={() => setSubTab('core')}
-                >
-                  Core Residential BTL
-                </button>
-              </li>
-              <li 
                 className={`slds-tabs_scoped__item ${subTab === 'specialist' ? 'slds-is-active' : ''}`}
                 role="presentation"
               >
@@ -1464,7 +1450,20 @@ const Products = () => {
                   aria-selected={subTab === 'specialist'}
                   onClick={() => setSubTab('specialist')}
                 >
-                  Specialist Residential BTL
+                  Specialist Residential
+                </button>
+              </li>
+              <li 
+                className={`slds-tabs_scoped__item ${subTab === 'core' ? 'slds-is-active' : ''}`}
+                role="presentation"
+              >
+                <button
+                  className="slds-tabs_scoped__link"
+                  role="tab"
+                  aria-selected={subTab === 'core'}
+                  onClick={() => setSubTab('core')}
+                >
+                  Core Residential
                 </button>
               </li>
               <li 
@@ -1477,7 +1476,7 @@ const Products = () => {
                   aria-selected={subTab === 'commercial'}
                   onClick={() => setSubTab('commercial')}
                 >
-                  Commercial BTL
+                  Commercial
                 </button>
               </li>
               <li 
@@ -1490,7 +1489,7 @@ const Products = () => {
                   aria-selected={subTab === 'semi-commercial'}
                   onClick={() => setSubTab('semi-commercial')}
                 >
-                  Semi Commercial BTL
+                  Semi Commercial
                 </button>
               </li>
             </ul>
@@ -1525,6 +1524,25 @@ const Products = () => {
           className={`slds-tabs_default__content ${mainTab === 'bridging' ? 'slds-show' : 'slds-hide'}`}
           role="tabpanel"
         >
+          {/* Residential / Commercial Property Tabs - Moved above sub-tabs */}
+          <div className="slds-m-top_small slds-m-horizontal_medium slds-m-bottom_medium">
+            <div className="slds-button-group" role="group" style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                className={`slds-button ${bridgingPropertyTab === 'residential' ? 'slds-button_brand' : 'slds-button_neutral'}`}
+                onClick={() => setBridgingPropertyTab('residential')}
+                style={{ marginRight: '0.5rem' }}
+              >
+                Residential
+              </button>
+              <button
+                className={`slds-button ${bridgingPropertyTab === 'commercial' ? 'slds-button_brand' : 'slds-button_neutral'}`}
+                onClick={() => setBridgingPropertyTab('commercial')}
+              >
+                Commercial
+              </button>
+            </div>
+          </div>
+
           {/* Bridging Sub Tabs */}
           <div className="slds-tabs_scoped">
             <ul className="slds-tabs_scoped__nav" role="tablist">
@@ -1570,24 +1588,6 @@ const Products = () => {
             </ul>
           </div>
 
-          {/* Residential / Commercial Property Tabs */}
-          <div className="slds-m-top_small slds-m-horizontal_medium">
-            <div className="slds-button-group" role="group">
-              <button
-                className={`slds-button ${bridgingPropertyTab === 'residential' ? 'slds-button_brand' : 'slds-button_neutral'}`}
-                onClick={() => setBridgingPropertyTab('residential')}
-              >
-                Residential
-              </button>
-              <button
-                className={`slds-button ${bridgingPropertyTab === 'commercial' ? 'slds-button_brand' : 'slds-button_neutral'}`}
-                onClick={() => setBridgingPropertyTab('commercial')}
-              >
-                Commercial
-              </button>
-            </div>
-          </div>
-
           {/* Bridging Content */}
           <div className="slds-p-around_medium">
             {loading && (
@@ -1609,16 +1609,6 @@ const Products = () => {
             )}
             {!loading && !error && (
               <>
-                {/* Title based on current selection */}
-                <h2 className="slds-text-heading_medium slds-m-bottom_medium" style={{ 
-                  color: subTab === 'variable' ? '#00205B' : subTab === 'fixed' ? '#dd7a01' : '#0d9488',
-                  fontWeight: 700
-                }}>
-                  {subTab === 'variable' && 'Variable Bridging Loan Rates'}
-                  {subTab === 'fixed' && 'Fixed Bridging Loan Rates'}
-                  {subTab === 'fusion' && 'Fusion Rates'}
-                </h2>
-                
                 {/* Render appropriate table */}
                 {subTab === 'fusion' ? renderFusionTable() : renderBridgingTable()}
                 

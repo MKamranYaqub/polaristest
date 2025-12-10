@@ -41,12 +41,14 @@ router.post('/:id', async (req, res) => {
       .from(resultsTable)
       .select('*')
       .eq('quote_id', id)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: true});
     
     if (resultsError) {
     }
     if (resultsData && resultsData.length > 0) {
     }
+    
+
     
     // Attach results to quote object
     quote.results = resultsData || [];
@@ -263,8 +265,16 @@ router.post('/:id', async (req, res) => {
           };
           
           // Helper function to format percentage
-          const formatPercent = (value, decimals = 2) => {
+          const formatPercent = (value, decimals = 2, isTracker = false) => {
             if (value === null || value === undefined) return '—';
+            // If it's already a string with +BBR or Tracker, return as-is
+            if (typeof value === 'string' && (value.includes('+BBR') || value.toLowerCase() === 'tracker' || value.toLowerCase() === 'mvr')) {
+              return value;
+            }
+            // For tracker rates, add +BBR suffix
+            if (isTracker) {
+              return `${Number(value).toFixed(decimals)}%+BBR`;
+            }
             return `${Number(value).toFixed(decimals)}%`;
           };
           
@@ -291,13 +301,42 @@ router.post('/:id', async (req, res) => {
           doc.fontSize(10).fillColor('#555555').text('Interest Rates:', { underline: true });
           doc.fillColor('black').fontSize(9);
           if (result.initial_rate !== undefined) doc.text(`  Full Annual Rate: ${formatPercent(result.initial_rate)}`);
-          if (result.pay_rate !== undefined) doc.text(`  Pay Rate (pm): ${formatPercent(result.pay_rate)}`);
-          if (result.full_rate !== undefined) doc.text(`  Full Rate (pm): ${result.full_rate}`);
+          
+          // Determine if this is a tracker product
+          const isTrackerProduct = result.product_name && result.product_name.toLowerCase().includes('tracker');
+          
+          // Pay Rate - add +BBR suffix for tracker products
+          if (result.pay_rate !== undefined) {
+            doc.text(`  Pay Rate (pm): ${formatPercent(result.pay_rate, 2, isTrackerProduct)}`);
+          }
+          
+          // Full Rate - add +BBR suffix for tracker products
+          if (result.full_rate !== undefined) {
+            doc.text(`  Full Rate (pm): ${formatPercent(result.full_rate, 2, isTrackerProduct)}`);
+          }
+          
           if (result.full_rate_monthly !== undefined) doc.text(`  Full Rate Monthly: ${formatPercent(result.full_rate_monthly)}`);
           if (result.full_coupon_rate_monthly !== undefined) doc.text(`  Full Coupon Rate (pm): ${formatPercent(result.full_coupon_rate_monthly)}`);
           if (result.margin_monthly !== undefined) doc.text(`  Margin Monthly: ${formatPercent(result.margin_monthly)}`);
           if (result.bbr_monthly !== undefined) doc.text(`  BBR Monthly: ${formatPercent(result.bbr_monthly)}`);
-          if (result.revert_rate !== undefined) doc.text(`  Revert Rate: ${formatPercent(result.revert_rate)}`);
+          
+          // Revert Rate - show MVR or MVR + margin% if revert_index is MVR
+          if (result.revert_rate !== undefined) {
+            let revertDisplay;
+            if (result.revert_index && result.revert_index.toUpperCase() === 'MVR') {
+              // Show MVR or MVR + margin if margin > 0
+              if (result.revert_margin && Number(result.revert_margin) > 0) {
+                revertDisplay = `MVR + ${Number(result.revert_margin).toFixed(2)}%`;
+              } else {
+                revertDisplay = 'MVR';
+              }
+            } else {
+              // Show numeric revert rate as percentage
+              revertDisplay = formatPercent(result.revert_rate, 2, false);
+            }
+            doc.text(`  Revert Rate (pm): ${revertDisplay}`);
+          }
+          
           if (result.revert_rate_dd !== undefined) doc.text(`  Revert Rate DD: ${formatPercent(result.revert_rate_dd)}`);
           if (result.aprc !== undefined) doc.text(`  APRC: ${formatPercent(result.aprc)}`);
           if (result.aprc_monthly !== undefined) doc.text(`  APRC (pm): ${formatPercent(result.aprc_monthly)}`);
@@ -310,9 +349,9 @@ router.post('/:id', async (req, res) => {
           if (result.product_fee_percent !== undefined && result.product_fee_percent !== null) doc.text(`  Product Fee %: ${formatPercent(result.product_fee_percent)}`);
           if (result.product_fee_pounds !== undefined && result.product_fee_pounds !== null) doc.text(`  Product Fee £: ${formatCurrency(result.product_fee_pounds)}`);
           if (result.admin_fee !== undefined && result.admin_fee !== null) doc.text(`  Admin Fee: ${formatCurrency(result.admin_fee)}`);
-          if (result.broker_client_fee !== undefined && result.broker_client_fee !== null) doc.text(`  Broker Client Fee: ${formatCurrency(result.broker_client_fee)}`);
-          if (result.broker_commission_proc_fee_percent !== undefined && result.broker_commission_proc_fee_percent !== null) doc.text(`  Broker Commission %: ${formatPercent(result.broker_commission_proc_fee_percent)}`);
-          if (result.broker_commission_proc_fee_pounds !== undefined && result.broker_commission_proc_fee_pounds !== null) doc.text(`  Broker Commission £: ${formatCurrency(result.broker_commission_proc_fee_pounds)}`);
+          if (result.broker_client_fee !== undefined && result.broker_client_fee !== null && result.broker_client_fee > 0) doc.text(`  Broker Client Fee: ${formatCurrency(result.broker_client_fee)}`);
+          if (result.broker_commission_proc_fee_percent !== undefined && result.broker_commission_proc_fee_percent !== null && result.broker_commission_proc_fee_percent > 0) doc.text(`  Broker Commission %: ${formatPercent(result.broker_commission_proc_fee_percent)}`);
+          if (result.broker_commission_proc_fee_pounds !== undefined && result.broker_commission_proc_fee_pounds !== null && result.broker_commission_proc_fee_pounds > 0) doc.text(`  Broker Commission £: ${formatCurrency(result.broker_commission_proc_fee_pounds)}`);
           if (result.commitment_fee_pounds !== undefined && result.commitment_fee_pounds !== null) doc.text(`  Commitment Fee: ${formatCurrency(result.commitment_fee_pounds)}`);
           if (result.exit_fee !== undefined && result.exit_fee !== null) doc.text(`  Exit Fee: ${formatCurrency(result.exit_fee)}`);
           if (result.title_insurance_cost !== undefined && result.title_insurance_cost !== null) doc.text(`  Title Insurance Cost: ${formatCurrency(result.title_insurance_cost)}`);

@@ -64,9 +64,7 @@ body,
   line-height: 1.5;
   font-size: var(--token-font-size-xs, 0.75rem);
   color: var(--token-text-primary, var(--slds-color-text-weak));
-  text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 2px solid var(--token-interactive, #0176d3);
   white-space: nowrap;
   position: relative;
 }
@@ -250,6 +248,16 @@ body,
 /* ============================================
    BUTTON GROUPS - Toggle & Segmented Controls
    ============================================ */
+
+/* Button Group - standard flex layout with gap support */
+.slds-button-group {
+  display: flex;
+  align-items: center;
+}
+
+.slds-button-group > * + * {
+  margin-left: 0;
+}
 
 /* Toggle Button Group - for binary choices (Direct Client/Broker) */
 .slds-button-group_toggle {

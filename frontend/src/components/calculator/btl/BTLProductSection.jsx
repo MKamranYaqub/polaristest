@@ -1,9 +1,10 @@
 import React from 'react';
+import WelcomeHeader from '../../shared/WelcomeHeader';
 import '../../../styles/Calculator.scss';
 
 /**
  * BTLProductSection - Product configuration section for BTL Calculator
- * Contains product type, buttons, and product criteria grid
+ * Contains welcome message, buttons, and product criteria grid
  */
 const BTLProductSection = ({ 
   productScope,
@@ -24,12 +25,9 @@ const BTLProductSection = ({
 }) => {
   return (
     <div className="product-config-section">
-      {/* Row 1: Product Type and Action Buttons */}
+      {/* Row 1: Welcome Header and Action Buttons */}
       <div className="product-section-row-1">
-        <div className="product-type-label">
-          <span style={{ color: 'var(--token-text-primary)' }}>Product Type: </span>
-          <span style={{ marginLeft: '0.5rem', color: 'var(--token-text-primary)' }}>Buy to Let</span>
-        </div>
+        <WelcomeHeader />
         <div className="product-actions">
           {quoteId && (
             <>

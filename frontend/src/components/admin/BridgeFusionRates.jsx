@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSupabase } from '../../contexts/SupabaseContext';
+import WelcomeHeader from '../shared/WelcomeHeader';
 import BridgeRateEditModal from './BridgeRateEditModal';
 import NotificationModal from '../modals/NotificationModal';
 import '../../styles/slds.css';
@@ -333,7 +334,7 @@ function BridgeFusionRates() {
     <div className="admin-table-container">
       <div className="table-header-stacked">
         <div className="table-title-row">
-          <h1>Bridging Rate Management</h1>
+          <WelcomeHeader />
           <div className="table-actions-row">
             <button className="slds-button slds-button_brand" onClick={handleAdd}>Add Bridge/Fusion Rate</button>
           <input type="file" accept=".csv" onChange={handleImport} style={{ display: 'none' }} id="bridge-csv-import" />

@@ -659,7 +659,9 @@ body.dark-mode #root {
    ============================================ */
 
 /* Calculator Components */
+/* DEPRECATED: .calculator-container - Use .page-container instead */
 .dark-mode .calculator-container,
+.dark-mode .page-container,
 .dark-mode .rates-table-container {
   background-color: var(--token-layer-surface) !important;
   color: var(--token-text-primary) !important;
@@ -681,7 +683,7 @@ body.dark-mode #root {
 
 .dark-mode .collapsible-header.expanded {
   background: var(--token-layer-active) !important;
-  border-color: var(--slds-g-color-accent-2) !important;
+  border-color: var(--slds-g-color-surface-container-1) !important;
 }
 
 .dark-mode .collapsible-body {
@@ -1590,7 +1592,7 @@ body.dark-mode #root {
 
 .dark-mode .settings-accordion-section .slds-accordion__summary.slds-is-open {
   background-color: var(--token-layer-active) !important;
-  border-color: var(--token-interactive) !important;
+  border-color: var(--token-text-inverse) !important;
 }
 
 .dark-mode .settings-accordion-section .slds-accordion__summary-heading {

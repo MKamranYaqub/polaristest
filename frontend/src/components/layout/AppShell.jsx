@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import AppNav from './AppNav';
+import SalesforceNav from './SalesforceNav';
 import { isEmbeddedMode, sendMessageToHost } from '../../utils/embedding';
 import '../../styles/app-shell.scss';
 
@@ -40,7 +40,7 @@ function AppShell({ children }) {
 
   return (
     <div className="app-shell">
-      {!isEmbedded && <AppNav />}
+      {!isEmbedded && <SalesforceNav />}
       {children}
     </div>
   );

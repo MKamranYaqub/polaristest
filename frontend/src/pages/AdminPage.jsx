@@ -11,7 +11,6 @@ const AdminPage = ({ tab = 'constants' }) => {
     <div className="padding-0">
       {tab === 'constants' && (
         <div>
-          <h1 className="font-size-2rem font-weight-bold margin-bottom-1">Application Constants</h1>
           <Constants />
         </div>
       )}

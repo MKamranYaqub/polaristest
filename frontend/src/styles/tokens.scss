@@ -13,12 +13,19 @@
   --token-font-weight-regular: 400;
   --token-font-weight-medium: 500;
   --token-font-weight-semibold: 600;
+  --token-font-weight-bold: 700;
   --token-font-size-xs: 0.75rem;
   --token-font-size-sm: 0.875rem;
   --token-font-size-md: 1rem;
   --token-font-size-lg: 1.25rem;
+  --token-font-size-xl: 1.35rem;
+  --token-font-size-2xl: 1.5rem;
+  --token-font-size-3xl: 2rem;
+  --token-font-size-4xl: 2.25rem;
+  --token-font-size-5xl: 3rem;
   --token-line-height-tight: 1.3;
   --token-line-height-base: 1.5;
+  --token-line-height-loose: 1.6;
 
   /* Spacing - now aliased to SLDS tokens for Figma consistency */
   --token-space-2: 0.125rem;
@@ -47,6 +54,21 @@
   --token-icon-sm: 14px;
   --token-icon-md: 16px;
   --token-icon-lg: 24px;
+  --token-icon-xl: 40px;
+  --token-icon-2xl: 56px;
+  --token-icon-3xl: 64px;
+
+  /* Size scale for components */
+  --token-size-icon-sm: 14px;
+  --token-size-icon-md: 18px;
+  --token-size-icon-lg: 24px;
+  --token-size-icon-xl: 40px;
+  --token-size-icon-2xl: 56px;
+  --token-size-icon-3xl: 64px;
+
+  /* Border widths */
+  --token-border-width-thin: 1px;
+  --token-border-width-medium: 2px;
 
   /* Radii - aliased to SLDS for Figma consistency */
   --token-radius-sm: var(--slds-g-spacing-1);     /* 0.25rem */
@@ -119,6 +141,18 @@
   --mfs-brand-navy: #002855; /* MFS deep navy */
   --mfs-brand-navy-500: #1B3B6F; /* hover/alt */
   --mfs-brand-navy-100: #E6ECF6; /* subtle bg */
+
+  /* Brand color aliases for easier usage */
+  --token-color-brand-navy: #00205B;
+  --token-color-brand-navy-dark: #00163e;
+  --token-color-brand-orange: #E84E0F;
+  --token-color-brand-blue: #0176d3;
+  --token-color-brand-blue-dark: #014486;
+
+  /* Additional UI colors */
+  --token-color-text-tertiary: #54698d;
+  --token-color-bg-tertiary: #f3f2f2;
+  --token-color-bg-subtle: #eef4ff;
   
   /* Results table header colors (tokenized for easy theming) */
   /* Default colors (backward compatibility) - columns 1-10 */
@@ -216,6 +250,58 @@
   --results-header-core-col9-text: #ffffff;
   --results-header-core-col10-bg: var(--mfs-brand-navy);
   --results-header-core-col10-text: #ffffff;
+  
+  /* ========================================
+     PRODUCTS PAGE RATE TABLE TOKENS
+     Design tokens for Products page tier tables and category tabs
+     ======================================== */
+  
+  /* Category Tab Navigation (Top-level tabs: Specialist/Core/Commercial/Semi-Commercial) */
+  --token-products-tab-bg: var(--token-layer-surface);
+  --token-products-tab-bg-active: #0176d3; /* Blue for active tab */
+  --token-products-tab-bg-hover: var(--token-layer-hover);
+  --token-products-tab-text: var(--token-text-secondary);
+  --token-products-tab-text-active: #ffffff;
+  --token-products-tab-text-hover: var(--token-text-primary);
+  --token-products-tab-border: var(--token-border-subtle);
+  --token-products-tab-border-bottom-active: 3px solid #0176d3;
+  --token-products-tab-padding-x: var(--token-spacing-xl);
+  --token-products-tab-padding-y: var(--token-spacing-md);
+  --token-products-tab-font-size: var(--token-font-size-sm);
+  --token-products-tab-font-weight: var(--token-font-weight-medium);
+  --token-products-tab-font-weight-active: var(--token-font-weight-semibold);
+  
+  /* Tier Header Colors - Exact colors from Screenshots */
+  --token-tier1-bg: #89CFF0; /* Light blue */
+  --token-tier1-text: #000000;
+  --token-tier2-bg: #FF9339; /* Orange */
+  --token-tier2-text: #ffffff;
+  --token-tier3-bg: #E91E8C; /* Pink/Magenta */
+  --token-tier3-text: #ffffff;
+  
+  /* Product Column Headers (3yr Fixed, 2yr Fixed, 2yr Tracker) */
+  --token-product-3yr-fixed-bg: #6CB4EE; /* Light blue */
+  --token-product-3yr-fixed-text: #ffffff;
+  --token-product-2yr-fixed-bg: #003D7A; /* Dark blue */
+  --token-product-2yr-fixed-text: #ffffff;
+  --token-product-2yr-tracker-bg: #6C6C6C; /* Gray */
+  --token-product-2yr-tracker-text: #ffffff;
+  
+  /* Row Type Backgrounds */
+  --token-row-fee-bg: #F3F3F3; /* Light gray for fee range rows */
+  --token-row-rate-bg: #FFFFFF; /* White for rate rows */
+  --token-row-revert-bg: #F9F9F9; /* Very light gray for revert rows */
+  --token-row-info-bg: #FAFAFA; /* Slightly lighter for info rows (defer/roll) */
+  
+  /* Table Cell Spacing */
+  --token-table-cell-padding-x: var(--token-spacing-md);
+  --token-table-cell-padding-y: var(--token-spacing-sm);
+  --token-table-header-padding: var(--token-spacing-lg);
+  
+  /* Table Borders */
+  --token-table-border: 1px solid var(--token-border-subtle);
+  --token-table-border-thick: 2px solid var(--token-border-subtle);
+  --token-table-radius: var(--slds-g-radius-border-3);
   
   /* Z-index scale */
   --token-z-base: 1;
