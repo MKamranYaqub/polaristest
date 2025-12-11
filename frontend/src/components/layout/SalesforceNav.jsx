@@ -146,7 +146,9 @@ function SalesforceNav() {
               </div>
             </div>
           )}
-          
+        </div>
+        
+        <div className="sf-global-header__right">
           {/* Navigation Tabs */}
           <nav className="sf-nav-tabs">
           {navItems.map(item => {
@@ -214,9 +216,7 @@ function SalesforceNav() {
             return null;
           })}
         </nav>
-        </div>
         
-        <div className="sf-global-header__right">
           {/* Support Icon Button */}
           <button
             onClick={() => setShowSupportPanel(true)}

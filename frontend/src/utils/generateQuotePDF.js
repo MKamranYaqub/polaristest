@@ -7,6 +7,7 @@
 import { pdf } from '@react-pdf/renderer';
 import { getQuote } from './quotes';
 import BTLQuotePDF from '../components/pdf/BTLQuotePDF';
+import BridgingQuotePDF from '../components/pdf/BridgingQuotePDF';
 import React from 'react';
 
 /**
@@ -135,15 +136,68 @@ export async function generateBTLQuotePDF(quoteId) {
 }
 
 /**
+ * Generate Bridging Quote PDF and return blob
+ */
+export async function generateBridgingQuotePDF(quoteId) {
+  try {
+    // Fetch quote with results
+    const { quote, results } = await fetchQuoteData(quoteId);
+    
+    // Attach normalized results to quote
+    quote.results = results;
+    
+    // Get broker settings from localStorage
+    let brokerSettings = {};
+    try {
+      const stored = localStorage.getItem('brokerSettings');
+      if (stored) {
+        brokerSettings = JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error('Error loading broker settings:', e);
+    }
+    
+    // Get client details from localStorage
+    const clientDetails = {
+      clientFirstName: brokerSettings.clientFirstName,
+      clientLastName: brokerSettings.clientLastName,
+      brokerCompanyName: brokerSettings.brokerCompanyName,
+      clientEmail: brokerSettings.clientEmail,
+      clientContact: brokerSettings.clientContact,
+      clientType: brokerSettings.clientType,
+    };
+    
+    // Create React element
+    const element = React.createElement(BridgingQuotePDF, {
+      quote,
+      brokerSettings,
+      clientDetails,
+    });
+    
+    // Generate PDF blob
+    const blob = await pdf(element).toBlob();
+    
+    return blob;
+  } catch (error) {
+    console.error('Error generating Bridging Quote PDF:', error);
+    throw error;
+  }
+}
+
+/**
  * Generate Quote PDF based on calculator type
  */
 export async function generateQuotePDF(quoteId, calculatorType) {
-  if (calculatorType === 'BTL') {
+  const calcType = (calculatorType || '').toUpperCase();
+  
+  if (calcType === 'BTL') {
     return generateBTLQuotePDF(quoteId);
   }
   
-  // For now, only BTL is supported
-  // You can add BRIDGING support later if needed
+  if (calcType === 'BRIDGING' || calcType === 'BRIDGE') {
+    return generateBridgingQuotePDF(quoteId);
+  }
+  
   throw new Error(`Quote PDF generation not supported for ${calculatorType}`);
 }
 
@@ -173,6 +227,7 @@ export async function downloadQuotePDF(quoteId, calculatorType, referenceNumber)
 
 export default {
   generateBTLQuotePDF,
+  generateBridgingQuotePDF,
   generateQuotePDF,
   downloadQuotePDF,
 };

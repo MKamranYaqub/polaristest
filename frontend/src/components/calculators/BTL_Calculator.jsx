@@ -1154,29 +1154,28 @@ export default function BTLcalculator({ initialQuote = null }) {
       return;
     }
     
-    // Fetch the latest quote data from the database to get any previously saved quote info
+    // Check if we have a saved quote with results
+    // We need to verify the quote exists in the database, but we'll use the current results data
+    // since SaveQuoteButton saves them and there might be a timing issue with fetching immediately
     try {
       const response = await getQuote(currentQuoteId);
       if (response && response.quote) {
         setQuoteData(response.quote);
-        
-        // Check if the quote has saved results in the database
-        const hasResults = response.quote.results && response.quote.results.length > 0;
-        
-        // Warn if the quote has no saved results in the database
-        if (!hasResults) {
-          console.warn('⚠️ Quote has no saved results. This means Update Quote did not save results to quote_results table.');
-          showToast({
-            kind: 'warning',
-            title: 'Quote not fully saved',
-            subtitle: 'Please click "Update Quote" to save your calculations before issuing the quote. Check console for debugging info.'
-          });
-          return;
-        }
+      }
+      
+      // If we have relevantRates (calculation results in memory) and they were just saved,
+      // we can proceed. Only block if there's truly no data.
+      if (!relevantRates || relevantRates.length === 0) {
+        showToast({
+          kind: 'warning',
+          title: 'No calculation results',
+          subtitle: 'Please ensure calculations have been performed before issuing the quote.'
+        });
+        return;
       }
     } catch (error) {
       console.error('Error fetching quote for Issue Quote:', error);
-      // Continue anyway - use existing data
+      // Continue anyway - use existing data if quote fetch fails
     }
     
     setQuoteModalOpen(true);

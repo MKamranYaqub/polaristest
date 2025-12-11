@@ -100,7 +100,7 @@
   display: flex;
   align-items: center;
   height: 100%;
-  margin-left: 1rem;
+  margin-right: 1rem;
 }
 
 .sf-nav-item {
@@ -119,7 +119,7 @@
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
-  min-width: 120px;
+  min-width: 150px;
   justify-content: center;
 
   &:last-child {
@@ -154,8 +154,8 @@
 .sf-nav-item__trigger {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
+  justify-content: space-between;
+  gap: 0.5rem;
   height: 36px;
   padding: 0 1.5rem;
   background: transparent;
@@ -167,7 +167,7 @@
   color: #3e3e3c;
   cursor: pointer;
   transition: all 0.15s;
-  min-width: 120px;
+  min-width: 150px;
 
   &:hover {
     color: #080707;
@@ -182,7 +182,6 @@
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
-  margin-left: 0.25rem;
 }
 
 // Dropdown

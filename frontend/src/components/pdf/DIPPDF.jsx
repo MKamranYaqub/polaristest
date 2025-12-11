@@ -9,6 +9,7 @@ import TitleInsuranceSection from './sections/TitleInsuranceSection';
 import BrokerFeeSection from './sections/BrokerFeeSection';
 import * as DIPHelpers from './utils/dipHelpers';
 import BTLDIPPDF from './BTLDIPPDF';
+import BridgingDIPPDF from './BridgingDIPPDF';
 
 const DIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
   // Normalize calculator_type to handle both 'BTL' and 'btl' cases
@@ -19,6 +20,11 @@ const DIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
   // Use specialized BTL DIP PDF for BTL quotes (matches Excel DIP sheet)
   if (isBTL) {
     return <BTLDIPPDF quote={quote} dipData={dipData} brokerSettings={brokerSettings} />;
+  }
+  
+  // Use specialized Bridging DIP PDF for Bridging quotes (matches Excel DIP/Fusion DIP sheets)
+  if (isBridging) {
+    return <BridgingDIPPDF quote={quote} dipData={dipData} brokerSettings={brokerSettings} />;
   }
   
   // Use helper functions for complex logic

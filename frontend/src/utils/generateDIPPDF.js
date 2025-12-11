@@ -242,10 +242,41 @@ export async function generateBridgingDIPPDF(quoteId) {
   // Get broker settings from quote and localStorage
   const brokerSettings = getBrokerSettings(quote);
   
-  // Use the generic DIPPDF for bridging (can be updated later)
+  // Create dipData object with DIP-specific fields (same as BTL)
+  const dipData = {
+    dip_date: quote.dip_date || new Date().toISOString(),
+    dip_expiry_date: quote.dip_expiry_date,
+    dip_version: quote.dip_version || 1,
+    borrower_name: quote.borrower_name || quote.applicant_name,
+    borrower_surname: quote.borrower_surname,
+    applicant_name_2: quote.applicant_name_2,
+    applicant_surname_2: quote.applicant_surname_2,
+    applicant_name_3: quote.applicant_name_3,
+    applicant_surname_3: quote.applicant_surname_3,
+    applicant_name_4: quote.applicant_name_4,
+    applicant_surname_4: quote.applicant_surname_4,
+    security_address: quote.security_address || quote.property_address,
+    property_type: quote.property_type || 'Residential',
+    commercial_or_main_residence: quote.commercial_or_main_residence,
+    applicant_type: quote.applicant_type,
+    guarantor_name: quote.guarantor_name,
+    lender_legal_fee: quote.lender_legal_fee,
+    number_of_applicants: quote.number_of_applicants || 1,
+    overpayments_percent: quote.overpayments_percent || 10,
+    fee_type_selection: quote.fee_type_selection,
+    funding_line: quote.funding_line,
+    security_properties: quote.security_properties || [],
+    title_insurance: quote.title_insurance || 'No', // Title Insurance dropdown selection
+    product_range: quote.product_range || 'specialist', // Core or Specialist for full term
+    admin_fee: quote.admin_fee,
+    valuation_fee: quote.valuation_fee,
+    exit_fee: quote.exit_fee
+  };
+  
+  // Use the generic DIPPDF for bridging (routes to BridgingDIPPDF)
   const pdfDocument = React.createElement(DIPPDF, {
     quote: preparedQuote,
-    results: results,
+    dipData: dipData,
     brokerSettings: brokerSettings
   });
   

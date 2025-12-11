@@ -1272,18 +1272,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   const handleCreatePDF = async (quoteId) => {
     try {
-      const response = await requestDipPdf(quoteId, token);
-
-      // Download the PDF
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `DIP_${quoteId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Use frontend React PDF generation (like BTL)
+      const { downloadDIPPDF } = await import('../../utils/generateDIPPDF');
+      const quoteData = currentQuoteData || { id: quoteId };
+      await downloadDIPPDF(quoteId, 'BRIDGING', quoteData?.reference_number || quoteId);
       
       // Note: Success toast is shown by IssueDIPModal
     } catch (err) {
@@ -1334,24 +1326,28 @@ export default function BridgingCalculator({ initialQuote = null }) {
       return;
     }
     
-    // Fetch the latest quote data from the database to get any previously saved quote info
+    // Check if we have a saved quote with results
+    // We need to verify the quote exists in the database, but we'll use the current results data
+    // since SaveQuoteButton saves them and there might be a timing issue with fetching immediately
     try {
       const response = await getQuote(currentQuoteId);
       if (response && response.quote) {
         setQuoteData(response.quote);
-        
-        // Warn if the quote has no saved results in the database
-        if (!response.quote.results || response.quote.results.length === 0) {
-          showToast({
-            kind: 'warning',
-            title: 'Quote not fully saved',
-            subtitle: 'Please click "Update Quote" to save your calculations before issuing the quote.'
-          });
-          return;
-        }
+      }
+      
+      // If we have relevantRates (calculation results in memory) and they were just saved,
+      // we can proceed. Only block if there's truly no data.
+      if (!relevantRates || relevantRates.length === 0) {
+        showToast({
+          kind: 'warning',
+          title: 'No calculation results',
+          subtitle: 'Please ensure calculations have been performed before issuing the quote.'
+        });
+        return;
       }
     } catch (error) {
-      // Continue anyway - use existing data
+      // Continue anyway - use existing data if quote fetch fails
+      console.error('Error fetching quote:', error);
     }
     
     setQuoteModalOpen(true);
@@ -1436,18 +1432,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   const handleCreateQuotePDF = async (quoteId) => {
     try {
-      const response = await requestQuotePdf(quoteId, token);
-
-      // Download the PDF
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Quote_${quoteId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Use frontend React PDF generation (like BTL)
+      const { downloadQuotePDF } = await import('../../utils/generateQuotePDF');
+      const quoteData = currentQuoteData || { id: quoteId };
+      await downloadQuotePDF(quoteId, 'BRIDGING', quoteData?.reference_number || quoteId);
       
       // Note: Success toast is shown by IssueQuoteModal
     } catch (err) {
@@ -1492,7 +1480,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
         onNewQuote={handleCancelQuote}
         saveQuoteButton={
           <SaveQuoteButton
-            calculatorType="Bridging"
+            calculatorType="bridging"
             calculationData={{
               productScope,
               chargeType,
@@ -1511,6 +1499,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
               loanCalculationRequested,
               ...brokerSettings.getAllSettings(),
               relevantRates,
+              results: calculatedRates, // Add calculated results for saving
               selectedRate: (filteredRatesForDip && filteredRatesForDip.length > 0) 
                 ? filteredRatesForDip[0] 
                 : (relevantRates && relevantRates.length > 0 ? relevantRates[0] : null),
@@ -1520,6 +1509,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
               deferredInterestPerColumn,
               multiPropertyRows: isMultiProperty ? multiPropertyRows : null
             }}
+            allColumnData={relevantRates || []}
             existingQuote={currentQuoteData}
             onSaved={async (savedQuote) => {
               if (savedQuote && savedQuote.id) {
