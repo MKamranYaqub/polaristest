@@ -48,12 +48,6 @@ function SalesforceNav() {
   // Navigation structure
   const navItems = [
     {
-      id: 'home',
-      label: 'Home',
-      path: '/home',
-      type: 'link'
-    },
-    {
       id: 'products',
       label: 'Products',
       type: 'dropdown',
@@ -98,7 +92,8 @@ function SalesforceNav() {
 
   const isActive = (path) => {
     if (!path) return false;
-    return location.pathname === path || location.pathname.startsWith(path + '/');
+    // Exact match only - prevents /calculator from matching /calculator/btl
+    return location.pathname === path;
   };
 
   const isDropdownActive = (children) => {
@@ -132,7 +127,7 @@ function SalesforceNav() {
       {/* Single Header Bar with Logo, Breadcrumbs, and Actions */}
       <div className="sf-global-header">
         <div className="sf-global-header__left">
-          <div className="sf-brand">
+          <div className="sf-brand" onClick={() => navigate('/home')} style={{ cursor: 'pointer' }}>
             <img 
               src={isDarkMode ? "/assets/mfs-logo-dark.png" : "/assets/mfs-logo.png"} 
               alt="MFS Logo" 
