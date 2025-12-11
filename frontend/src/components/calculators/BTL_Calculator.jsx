@@ -12,7 +12,6 @@ import IssueQuoteModal from '../modals/IssueQuoteModal';
 import CalculatorResultsPlaceholders from './CalculatorResultsPlaceholders';
 import SliderResultRow from '../calculator/SliderResultRow';
 import EditableResultRow from '../calculator/EditableResultRow';
-import QuoteReferenceHeader from '../calculator/shared/QuoteReferenceHeader';
 import ClientDetailsSection from '../calculator/shared/ClientDetailsSection';
 import ActionButtons from '../calculator/ActionButtons';
 import RangeToggle from '../calculator/RangeToggle';
@@ -504,7 +503,8 @@ export default function BTLcalculator({ initialQuote = null }) {
     
     // Skip auto-setting productType if we just loaded from a saved quote
     // The saved quote already has the correct productType value
-    if (loadedFromSavedQuoteRef.current || effectiveInitialQuote) {
+    // Check currentQuoteData instead of effectiveInitialQuote to allow auto-selection after New Quote
+    if (loadedFromSavedQuoteRef.current || (effectiveInitialQuote && currentQuoteData)) {
       return;
     }
     
@@ -523,7 +523,7 @@ export default function BTLcalculator({ initialQuote = null }) {
       const list = DEFAULT_PRODUCT_TYPES_LIST[productScope] || DEFAULT_PRODUCT_TYPES_LIST['Residential'] || [];
       if (list.length > 0 && (!productType || !list.includes(productType))) setProductType(list[0]);
     }
-  }, [productScope]);
+  }, [productScope, currentQuoteData]);
 
   // compute tier when answers change
   const currentTier = computeTierFromAnswers(answers);
@@ -1451,20 +1451,6 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   return (
     <div className="page-container page-container--full-width">
-      {/* Quote Reference Badge and New Quote Button */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--token-spacing-md)' }}>
-        <QuoteReferenceHeader reference={currentQuoteRef} />
-        {currentQuoteId && (
-          <button 
-            className="btn-new-quote"
-            onClick={handleCancelQuote}
-            title="Start a new quote"
-          >
-            + New Quote
-          </button>
-        )}
-      </div>
-
       {/* Product Configuration section */}
       <BTLProductSection
         productScope={productScope}
@@ -1476,6 +1462,7 @@ export default function BTLcalculator({ initialQuote = null }) {
         currentTier={currentTier}
         availableScopes={productScopes}
         quoteId={currentQuoteId}
+        quoteReference={currentQuoteRef}
         onIssueDip={handleOpenDipModal}
         onIssueQuote={handleIssueQuote}
         onCancelQuote={handleCancelQuote}

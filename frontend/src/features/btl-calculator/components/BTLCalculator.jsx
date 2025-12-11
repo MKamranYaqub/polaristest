@@ -34,7 +34,6 @@ import BTLLoanDetailsSection from '../../../components/calculator/btl/BTLLoanDet
 import BTLCriteriaSection from '../../../components/calculator/btl/BTLCriteriaSection';
 import BTLSliderControls from '../components/BTLSliderControls';
 import BTLResultsSummary from '../components/BTLResultsSummary';
-import QuoteReferenceHeader from '../../../components/calculator/shared/QuoteReferenceHeader';
 import ClientDetailsSection from '../../../components/calculator/shared/ClientDetailsSection';
 import SaveQuoteButton from '../../../components/SaveQuoteButton';
 import CollapsibleSection from '../../../components/calculator/CollapsibleSection';
@@ -211,7 +210,7 @@ export default function BTLCalculator({ initialQuote = null }) {
               <div className="slds-media__body">
                 <div className="slds-page-header__name">
                   <div className="slds-page-header__name-title">
-                    <WelcomeHeader />
+                    <WelcomeHeader quoteReference={currentQuoteRef} />
                   </div>
                 </div>
               </div>
@@ -230,11 +229,6 @@ export default function BTLCalculator({ initialQuote = null }) {
           </div>
         </div>
       </div>
-
-      {/* Quote Reference */}
-      {currentQuoteRef && (
-        <QuoteReferenceHeader referenceNumber={currentQuoteRef} />
-      )}
 
       {/* Main Content */}
       <div className="slds-grid slds-gutters slds-wrap">

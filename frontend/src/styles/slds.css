@@ -176,6 +176,19 @@ body,
   border-color: var(--slds-g-color-accent-3);
 }
 
+.slds-button_issue-quote {
+  padding: 0 var(--slds-g-spacing-4);
+  background-color: var(--token-color-issue-quote);
+  border-color: var(--token-color-issue-quote);
+  color: white;
+  border-radius: var(--token-radius-btn);
+}
+
+.slds-button_issue-quote:hover {
+  background-color: var(--token-color-issue-quote-hover);
+  border-color: var(--token-color-issue-quote-hover);
+}
+
 .slds-button_neutral {
   padding: 0 var(--slds-g-spacing-4);
   background-color: var(--slds-g-color-surface-container-1);

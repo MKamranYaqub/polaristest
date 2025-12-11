@@ -16,6 +16,7 @@ const BTLProductSection = ({
   currentTier,
   availableScopes,
   quoteId,
+  quoteReference,
   onIssueDip,
   onIssueQuote,
   saveQuoteButton,
@@ -27,27 +28,42 @@ const BTLProductSection = ({
     <div className="product-config-section">
       {/* Row 1: Welcome Header and Action Buttons */}
       <div className="product-section-row-1">
-        <WelcomeHeader />
-        <div className="product-actions">
+        <WelcomeHeader quoteReference={quoteReference} />
+        <div className="product-actions-container">
+          {/* + New Quote button on its own row, right-aligned */}
           {quoteId && (
-            <>
+            <div className="product-actions-new-quote">
               <button 
-                className="slds-button slds-button_neutral"
-                onClick={onIssueDip}
-                disabled={isReadOnly}
+                className="btn-new-quote"
+                onClick={onNewQuote}
+                title="Start a new quote"
               >
-                Issue DIP
+                + New Quote
               </button>
-              <button 
-                className="slds-button slds-button_brand"
-                onClick={onIssueQuote}
-                disabled={isReadOnly}
-              >
-                Issue Quote
-              </button>
-            </>
+            </div>
           )}
-          {saveQuoteButton}
+          {/* Other action buttons in a row below */}
+          <div className="product-actions">
+            {quoteId && (
+              <>
+                <button 
+                  className="slds-button slds-button_neutral"
+                  onClick={onIssueDip}
+                  disabled={isReadOnly}
+                >
+                  Issue DIP
+                </button>
+                <button 
+                  className="slds-button slds-button_issue-quote"
+                  onClick={onIssueQuote}
+                  disabled={isReadOnly}
+                >
+                  Issue Quote
+                </button>
+              </>
+            )}
+            {saveQuoteButton}
+          </div>
         </div>
       </div>
 

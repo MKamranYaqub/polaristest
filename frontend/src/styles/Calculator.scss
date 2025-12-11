@@ -145,6 +145,17 @@ input[type="range"] {
     flex-shrink: 0;
   }
 
+  .product-actions-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--slds-g-spacing-4);
+  }
+
+  .product-actions-new-quote {
+    display: flex;
+    justify-content: flex-end;
+  }
+
   .product-actions {
     display: flex;
     gap: var(--slds-g-spacing-2);

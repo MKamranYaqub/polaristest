@@ -11,9 +11,7 @@ import CalculatorResultsPlaceholders from './CalculatorResultsPlaceholders';
 import SliderResultRow from '../calculator/SliderResultRow';
 import EditableResultRow from '../calculator/EditableResultRow';
 import CollapsibleSection from '../calculator/CollapsibleSection';
-import QuoteReferenceHeader from '../calculator/shared/QuoteReferenceHeader';
 import ClientDetailsSection from '../calculator/shared/ClientDetailsSection';
-import WelcomeHeader from '../shared/WelcomeHeader';
 import BridgingProductSection from '../calculator/bridging/BridgingProductSection';
 import LoanDetailsSection from '../calculator/bridging/LoanDetailsSection';
 import MultiPropertyDetailsSection from '../calculator/bridging/MultiPropertyDetailsSection';
@@ -1475,20 +1473,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   return (
     <div className="page-container page-container--full-width">
-      {/* Quote Reference Badge and New Quote Button */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--token-spacing-md)' }}>
-        <QuoteReferenceHeader reference={currentQuoteRef} />
-        {currentQuoteId && (
-          <button 
-            className="slds-button slds-button_success"
-            onClick={handleCancelQuote}
-            title="Start a new quote"
-          >
-            + New Quote
-          </button>
-        )}
-      </div>
-
       {/* Product Configuration section */}
       <BridgingProductSection
         productScope={productScope}
@@ -1501,6 +1485,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
         chargeType={chargeType}
         subProductLimits={subProductLimits}
         quoteId={currentQuoteId}
+        quoteReference={currentQuoteRef}
         onIssueDip={handleOpenDipModal}
         onIssueQuote={handleIssueQuote}
         onCancelQuote={handleCancelQuote}
