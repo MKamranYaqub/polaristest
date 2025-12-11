@@ -9,7 +9,7 @@
   width: 100%;
   margin: 0;
   padding: 0;
-  background-color: #f5f5f5;
+  background-color: var(--token-layer-hover);
   font-family: var(--token-font-family-base);
   position: relative;
 
@@ -21,15 +21,15 @@
     align-items: center;
     justify-content: center;
     padding: 2rem;
-    background-color: #f5f5f5;
+    background-color: var(--token-layer-hover);
 
     .login-card {
-      background: white;
-      border-radius: 12px;
+      background: var(--token-layer-surface);
+      border-radius: 16px;
       padding: 3rem 2.5rem;
       width: 100%;
       max-width: 400px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      box-shadow: var(--token-shadow-soft);
 
       .logo-container {
         display: flex;
@@ -45,7 +45,7 @@
       .welcome-text {
         text-align: center;
         font-size: 1rem;
-        color: #002855;
+        color: var(--mfs-brand-navy);
         margin-bottom: 2rem;
         font-weight: 400;
       }
@@ -56,8 +56,8 @@
         label {
           display: block;
           font-size: 0.875rem;
-          color: #525252;
-          margin-bottom: 0.25rem;
+          color: var(--token-text-secondary);
+          margin-bottom: 0.125rem;
           font-weight: 400;
         }
 
@@ -69,10 +69,10 @@
             padding: 0 var(--token-spacing-lg) 0 var(--token-spacing-md);
             line-height: 1.875rem;
             min-height: calc(1.875rem + (1px * 2));
-            border: 1px solid #747474;
-            border-radius: 4px;
-            background-color: white !important;
-            color: #181818;
+            border: 1px solid var(--token-text-muted);
+            border-radius: var(--token-radius-md);
+            background-color: var(--token-layer-surface) !important;
+            color: var(--token-ui-text-dark);
             transition: border 0.1s linear, background-color 0.1s linear;
             font-family: var(--token-font-family-base);
             font-size: 0.875rem;
@@ -81,18 +81,18 @@
             &:-webkit-autofill:hover, 
             &:-webkit-autofill:focus, 
             &:-webkit-autofill:active {
-                -webkit-box-shadow: 0 0 0 30px white inset !important;
-                -webkit-text-fill-color: #181818 !important;
+                -webkit-box-shadow: 0 0 0 30px var(--token-layer-surface) inset !important;
+                -webkit-text-fill-color: var(--token-ui-text-dark) !important;
             }
 
             &:focus {
               outline: 0;
-              border-color: #0176d3;
-              box-shadow: 0 0 3px rgba(1, 118, 211, 0.5);
+              border-color: var(--token-brand-primary);
+              box-shadow: 0 0 3px var(--token-focus-ring);
             }
 
             &::placeholder {
-              color: #706e6b;
+              color: var(--token-text-muted);
             }
           }
 
@@ -107,10 +107,10 @@
             padding: 4px;
             display: flex;
             align-items: center;
-            color: #707070;
+            color: var(--token-text-muted);
 
             &:hover {
-              color: #525252;
+              color: var(--token-text-secondary);
             }
 
             svg {
@@ -137,12 +137,12 @@
             height: 16px;
             margin-right: 0.5rem;
             cursor: pointer;
-            accent-color: #0176d3;
+            accent-color: var(--token-brand-primary);
           }
 
           label {
             font-size: 0.875rem;
-            color: #525252;
+            color: var(--token-text-secondary);
             cursor: pointer;
             margin: 0;
             user-select: none;
@@ -152,7 +152,7 @@
         .login-button {
           width: auto;
           padding: 0.5rem 2rem;
-          background-color: #0176d3;
+          background-color: var(--token-brand-primary);
           color: white;
           border: none;
           border-radius: 20px;
@@ -162,11 +162,11 @@
           transition: background-color 0.2s ease;
 
           &:hover:not(:disabled) {
-            background-color: #0158a3;
+            background-color: var(--token-color-brand-blue-dark);
           }
 
           &:active:not(:disabled) {
-            background-color: #014486;
+            background-color: var(--token-color-brand-blue-dark);
           }
 
           &:disabled {
@@ -180,7 +180,7 @@
         text-align: center;
 
         a {
-          color: #0176d3;
+          color: var(--token-brand-primary);
           text-decoration: none;
           font-size: 0.875rem;
 
@@ -191,9 +191,9 @@
       }
 
       .error-message {
-        background-color: #fef0f0;
-        border: 1px solid #f5c6cb;
-        color: #721c24;
+        background-color: var(--token-error-bg);
+        border: 1px solid var(--token-error);
+        color: var(--token-error);
         padding: 0.75rem 1rem;
         border-radius: 6px;
         margin-bottom: 1.25rem;
@@ -207,7 +207,7 @@
       padding: 1.5rem;
       margin-top: 2rem;
       font-size: 0.8125rem;
-      color: #002855;
+      color: var(--mfs-brand-navy);
     }
   }
 
