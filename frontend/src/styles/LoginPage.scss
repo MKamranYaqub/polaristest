@@ -1,0 +1,268 @@
+// Import SLDS variables for consistent input styling
+@import './variables';
+
+// Login Page Styles - Matching Design Specifications
+.login-page-container {
+  display: flex;
+  min-height: 100vh;
+  height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+  font-family: var(--token-font-family-base);
+  position: relative;
+
+  // Left side - Login form
+  .login-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background-color: #f5f5f5;
+
+    .login-card {
+      background: white;
+      border-radius: 12px;
+      padding: 3rem 2.5rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+      .logo-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+
+        img {
+          height: 80px;
+          width: auto;
+        }
+      }
+
+      .welcome-text {
+        text-align: center;
+        font-size: 1rem;
+        color: #002855;
+        margin-bottom: 2rem;
+        font-weight: 400;
+      }
+
+      .form-group {
+        margin-bottom: 1.25rem;
+
+        label {
+          display: block;
+          font-size: 0.875rem;
+          color: #525252;
+          margin-bottom: 0.25rem;
+          font-weight: 400;
+        }
+
+        .input-wrapper {
+          position: relative;
+
+          input {
+            width: 100%;
+            padding: 0 var(--token-spacing-lg) 0 var(--token-spacing-md);
+            line-height: 1.875rem;
+            min-height: calc(1.875rem + (1px * 2));
+            border: 1px solid #747474;
+            border-radius: 4px;
+            background-color: white !important;
+            color: #181818;
+            transition: border 0.1s linear, background-color 0.1s linear;
+            font-family: var(--token-font-family-base);
+            font-size: 0.875rem;
+
+            &:-webkit-autofill,
+            &:-webkit-autofill:hover, 
+            &:-webkit-autofill:focus, 
+            &:-webkit-autofill:active {
+                -webkit-box-shadow: 0 0 0 30px white inset !important;
+                -webkit-text-fill-color: #181818 !important;
+            }
+
+            &:focus {
+              outline: 0;
+              border-color: #0176d3;
+              box-shadow: 0 0 3px rgba(1, 118, 211, 0.5);
+            }
+
+            &::placeholder {
+              color: #706e6b;
+            }
+          }
+
+          .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            color: #707070;
+
+            &:hover {
+              color: #525252;
+            }
+
+            svg {
+              width: 20px;
+              height: 20px;
+            }
+          }
+        }
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        margin-top: 1rem;
+
+        .remember-me-container {
+          display: flex;
+          align-items: center;
+
+          input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-right: 0.5rem;
+            cursor: pointer;
+            accent-color: #0176d3;
+          }
+
+          label {
+            font-size: 0.875rem;
+            color: #525252;
+            cursor: pointer;
+            margin: 0;
+            user-select: none;
+          }
+        }
+
+        .login-button {
+          width: auto;
+          padding: 0.5rem 2rem;
+          background-color: #0176d3;
+          color: white;
+          border: none;
+          border-radius: 20px;
+          font-size: 0.9375rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+
+          &:hover:not(:disabled) {
+            background-color: #0158a3;
+          }
+
+          &:active:not(:disabled) {
+            background-color: #014486;
+          }
+
+          &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+        }
+      }
+
+      .forgot-password {
+        text-align: center;
+
+        a {
+          color: #0176d3;
+          text-decoration: none;
+          font-size: 0.875rem;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+
+      .error-message {
+        background-color: #fef0f0;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        margin-bottom: 1.25rem;
+        font-size: 0.875rem;
+      }
+    }
+
+    // Copyright footer - positioned below login card
+    .copyright {
+      text-align: center;
+      padding: 1.5rem;
+      margin-top: 2rem;
+      font-size: 0.8125rem;
+      color: #002855;
+    }
+  }
+
+  // Right side - Background image
+  .login-right {
+    flex: 1;
+    background-image: url('/assets/login_image.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+
+    // Overlay to darken the image slightly if needed
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.05);
+    }
+  }
+
+  // Responsive design
+  @media (max-width: 1024px) {
+    flex-direction: column;
+
+    .login-left,
+    .login-right {
+      flex: none;
+    }
+
+    .login-left {
+      min-height: 100vh;
+    }
+
+    .login-right {
+      display: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .login-left {
+      padding: 1.5rem;
+
+      .login-card {
+        padding: 2rem 1.5rem;
+        max-width: 100%;
+      }
+
+      .copyright {
+        margin-top: 1.5rem;
+        font-size: 0.75rem;
+      }
+    }
+  }
+}

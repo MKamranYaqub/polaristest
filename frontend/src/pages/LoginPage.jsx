@@ -1,16 +1,27 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import '../styles/slds.css';
+import '../styles/LoginPage.scss';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login, error: authError } = useAuth();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Load saved email from localStorage on component mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,8 +30,15 @@ export default function LoginPage() {
 
     try {
       const result = await login(email, password);
-      
+
       if (result.success) {
+        // Handle Remember Me functionality
+        if (rememberMe) {
+          localStorage.setItem('rememberedEmail', email);
+        } else {
+          localStorage.removeItem('rememberedEmail');
+        }
+
         // Redirect to home page after successful login
         navigate('/home');
       } else {
@@ -33,80 +51,119 @@ export default function LoginPage() {
     }
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  // Get current year for copyright
+  const currentYear = new Date().getFullYear();
+
   return (
-    <div className="auth-container slds-m-top_none">
-      <div className="slds-box slds-theme_default">
-        <h1 className="slds-text-heading_large slds-m-bottom_medium text-align-center">
-          MFS Portal Login
-        </h1>
-        
-        {(error || authError) && (
-          <div className="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-m-bottom_medium" role="alert">
-            <span className="slds-assistive-text">Error</span>
-            <h2>{error || authError}</h2>
+    <div className="login-page-container">
+      <div className="login-left">
+        <div className="login-card">
+          <div className="logo-container">
+            <img
+              src="/assets/mfs-logo.png"
+              alt="MFS Logo"
+            />
           </div>
-        )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="slds-form-element slds-m-bottom_medium">
-            <label className="slds-form-element__label" htmlFor="email">
-              <abbr className="slds-required" title="required">*</abbr> Email
-            </label>
-            <div className="slds-form-element__control">
-              <input
-                type="email"
-                id="email"
-                className="slds-input"
-                placeholder="your.email@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-              />
+          <h2 className="welcome-text">Welcome to Polaris</h2>
+
+          {(error || authError) && (
+            <div className="error-message">
+              {error || authError}
             </div>
-          </div>
+          )}
 
-          <div className="slds-form-element slds-m-bottom_medium">
-            <label className="slds-form-element__label" htmlFor="password">
-              <abbr className="slds-required" title="required">*</abbr> Password
-            </label>
-            <div className="slds-form-element__control">
-              <input
-                type="password"
-                id="password"
-                className="slds-input"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-                minLength={8}
-              />
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="email">Username</label>
+              <div className="input-wrapper">
+                <input
+                  type="email"
+                  id="email"
+                  placeholder="leon.govier@mfsuk.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
+                  autoComplete="email"
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="slds-m-top_medium">
-            <button
-              type="submit"
-              className="slds-button slds-button_brand width-100 justify-content-center"
-              disabled={loading}
-            >
-              {loading ? 'Logging in...' : 'Login'}
-            </button>
-          </div>
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <div className="input-wrapper">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  placeholder="•••••••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  minLength={8}
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  className="toggle-password"
+                  onClick={togglePasswordVisibility}
+                  tabIndex="-1"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
 
-          <div className="slds-m-top_small text-align-center">
-            <Link 
-              to="/forgot-password" 
-              className="slds-text-link font-size-14"
-            >
-              Forgot your password?
-            </Link>
-          </div>
-        </form>
+            <div className="form-actions">
+              <div className="remember-me-container">
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <label htmlFor="rememberMe">Remember me</label>
+              </div>
 
-        
+              <button
+                type="submit"
+                className="login-button"
+                disabled={loading}
+              >
+                {loading ? 'Logging in...' : 'Login to Portal'}
+              </button>
+            </div>
+
+            <div className="forgot-password">
+              <Link to="/forgot-password">
+                Forgot your password?
+              </Link>
+            </div>
+          </form>
+        </div>
+
+        <div className="copyright">
+          © {currentYear} Market Financial Services Ltd. All rights reserved.
+        </div>
       </div>
+
+      <div className="login-right"></div>
     </div>
   );
 }

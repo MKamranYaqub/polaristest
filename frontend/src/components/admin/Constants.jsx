@@ -91,6 +91,22 @@ export default function Constants() {
   const safeFundingLinesBTL = Array.isArray(fundingLinesBTL) && fundingLinesBTL.length ? fundingLinesBTL : FUNDING_LINES_BTL;
   const safeFundingLinesBridge = Array.isArray(fundingLinesBridge) && fundingLinesBridge.length ? fundingLinesBridge : FUNDING_LINES_BRIDGE;
 
+  // Warn user before leaving page if there are unsaved changes
+  useEffect(() => {
+    const hasUnsavedChanges = Object.keys(editingFields).some(key => editingFields[key]);
+    
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [editingFields]);
+
   useEffect(() => {
     const overrides = readOverrides();
     if (overrides) {
@@ -506,14 +522,74 @@ export default function Constants() {
     const arr = csv.split(',').map((s) => s.trim()).filter(Boolean);
     const newProductLists = { ...(productLists || {}), [propType]: arr };
     setProductLists(newProductLists);
-    // Save all settings (not just this field)
-    await saveToStorage();
+    
+    // Update tempValues to reflect the saved value
+    setTempValues(prev => ({ ...prev, [`productLists:${propType}`]: arr.join(', ') }));
+    
+    // Create payload with NEW productLists value
+    const payload = { 
+      productLists: newProductLists, // Use the NEW value
+      feeColumns, 
+      flatAboveCommercialRule, 
+      marketRates, 
+      brokerRoutes, 
+      brokerCommissionDefaults, 
+      brokerCommissionTolerance,
+      fundingLinesBTL,
+      fundingLinesBridge,
+      uiPreferences: DEFAULT_UI_PREFERENCES
+    };
+    
+    writeOverrides(payload);
+    setSaving(true);
+
+    try {
+      const { error: saveErr } = await saveToSupabase(payload);
+      setSaving(false);
+      
+      if (saveErr) {
+        console.error('Failed to save to database:', saveErr);
+        setNotification({ 
+          show: true, 
+          type: 'warning', 
+          title: 'Warning', 
+          message: 'Saved locally but database sync failed: ' + (saveErr.message || 'Unknown error') 
+        });
+      } else {
+        setNotification({ 
+          show: true, 
+          type: 'success', 
+          title: 'Success', 
+          message: 'Product list saved successfully!' 
+        });
+        
+        // Dispatch event so other components update immediately
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: LOCALSTORAGE_CONSTANTS_KEY,
+          newValue: JSON.stringify(payload),
+          url: window.location.href,
+          storageArea: localStorage
+        }));
+      }
+    } catch (e) {
+      setSaving(false);
+      console.error('Save exception:', e);
+      setNotification({ 
+        show: true, 
+        type: 'error', 
+        title: 'Error', 
+        message: 'Unexpected error: ' + (e.message || 'Unknown error') 
+      });
+    }
   };
 
   const updateFeeColumn = async (feeKey, csv) => {
     const arr = csv.split(',').map((s) => s.trim()).filter(Boolean);
     const newFeeColumns = { ...(feeColumns || {}), [feeKey]: arr };
     setFeeColumns(newFeeColumns);
+    
+    // Update tempValues to reflect the saved value
+    setTempValues(prev => ({ ...prev, [`feeColumns:${feeKey}`]: arr.join(', ') }));
     
     // Update the payload with current values BEFORE saving
     const payload = { 
@@ -577,6 +653,9 @@ export default function Constants() {
     if (isNaN(decimal)) return;
     const newMarketRates = { ...(marketRates || {}), [rateKey]: decimal };
     setMarketRates(newMarketRates);
+    
+    // Update tempValues to reflect the saved value
+    setTempValues(prev => ({ ...prev, [`marketRates:${rateKey}`]: pctValue }));
     
     // Update the payload with current values BEFORE saving
     const payload = { 
@@ -644,15 +723,127 @@ export default function Constants() {
       updated.tierLtv[field === 'tier2' ? '2' : '3'] = parseInt(value, 10) || 0;
     }
     setFlatAboveCommercialRule(updated);
-    // Save all settings
-    await saveToStorage();
+    
+    // Update tempValues to reflect the saved value
+    setTempValues(prev => ({ ...prev, [`flatAbove:${field}`]: value }));
+    
+    // Create payload with NEW flatAboveCommercialRule value
+    const payload = { 
+      productLists, 
+      feeColumns, 
+      flatAboveCommercialRule: updated, // Use the NEW value
+      marketRates, 
+      brokerRoutes, 
+      brokerCommissionDefaults, 
+      brokerCommissionTolerance,
+      fundingLinesBTL,
+      fundingLinesBridge,
+      uiPreferences: DEFAULT_UI_PREFERENCES
+    };
+    
+    writeOverrides(payload);
+    setSaving(true);
+
+    try {
+      const { error: saveErr } = await saveToSupabase(payload);
+      setSaving(false);
+      
+      if (saveErr) {
+        console.error('Failed to save to database:', saveErr);
+        setNotification({ 
+          show: true, 
+          type: 'warning', 
+          title: 'Warning', 
+          message: 'Saved locally but database sync failed: ' + (saveErr.message || 'Unknown error') 
+        });
+      } else {
+        setNotification({ 
+          show: true, 
+          type: 'success', 
+          title: 'Success', 
+          message: 'Setting saved successfully!' 
+        });
+        
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: LOCALSTORAGE_CONSTANTS_KEY,
+          newValue: JSON.stringify(payload),
+          url: window.location.href,
+          storageArea: localStorage
+        }));
+      }
+    } catch (e) {
+      setSaving(false);
+      console.error('Save exception:', e);
+      setNotification({ 
+        show: true, 
+        type: 'error', 
+        title: 'Error', 
+        message: 'Unexpected error: ' + (e.message || 'Unknown error') 
+      });
+    }
   };
 
   const updateBrokerRoute = async (routeKey, displayName) => {
     const updated = { ...(brokerRoutes || {}), [routeKey]: displayName };
     setBrokerRoutes(updated);
-    // Save all settings
-    await saveToStorage();
+    
+    // Update tempValues to reflect the saved value
+    setTempValues(prev => ({ ...prev, [`brokerRoutes:${routeKey}`]: displayName }));
+    
+    // Create payload with NEW brokerRoutes value
+    const payload = { 
+      productLists, 
+      feeColumns, 
+      flatAboveCommercialRule, 
+      marketRates, 
+      brokerRoutes: updated, // Use the NEW value
+      brokerCommissionDefaults, 
+      brokerCommissionTolerance,
+      fundingLinesBTL,
+      fundingLinesBridge,
+      uiPreferences: DEFAULT_UI_PREFERENCES
+    };
+    
+    writeOverrides(payload);
+    setSaving(true);
+
+    try {
+      const { error: saveErr } = await saveToSupabase(payload);
+      setSaving(false);
+      
+      if (saveErr) {
+        console.error('Failed to save to database:', saveErr);
+        setNotification({ 
+          show: true, 
+          type: 'warning', 
+          title: 'Warning', 
+          message: 'Saved locally but database sync failed: ' + (saveErr.message || 'Unknown error') 
+        });
+      } else {
+        setNotification({ 
+          show: true, 
+          type: 'success', 
+          title: 'Success', 
+          message: 'Broker route saved successfully!' 
+        });
+        
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: LOCALSTORAGE_CONSTANTS_KEY,
+          newValue: JSON.stringify(payload),
+          url: window.location.href,
+          storageArea: localStorage
+        }));
+      }
+    } catch (e) {
+      setSaving(false);
+      console.error('Save exception:', e);
+      setNotification({ 
+        show: true, 
+        type: 'error', 
+        title: 'Error', 
+        message: 'Unexpected error: ' + (e.message || 'Unknown error') 
+      });
+    }
   };
 
   const updateBrokerCommission = async (key, value) => {
@@ -660,27 +851,198 @@ export default function Constants() {
     if (isNaN(num)) return;
     const updated = { ...(brokerCommissionDefaults || {}), [key]: num };
     setBrokerCommissionDefaults(updated);
-    // Save all settings
-    await saveToStorage();
+    
+    // Update tempValues to reflect the saved value
+    setTempValues(prev => ({ ...prev, [`brokerCommission:${key}`]: value }));
+    
+    // Create payload with NEW brokerCommissionDefaults value
+    const payload = { 
+      productLists, 
+      feeColumns, 
+      flatAboveCommercialRule, 
+      marketRates, 
+      brokerRoutes, 
+      brokerCommissionDefaults: updated, // Use the NEW value
+      brokerCommissionTolerance,
+      fundingLinesBTL,
+      fundingLinesBridge,
+      uiPreferences: DEFAULT_UI_PREFERENCES
+    };
+    
+    writeOverrides(payload);
+    setSaving(true);
+
+    try {
+      const { error: saveErr } = await saveToSupabase(payload);
+      setSaving(false);
+      
+      if (saveErr) {
+        console.error('Failed to save to database:', saveErr);
+        setNotification({ 
+          show: true, 
+          type: 'warning', 
+          title: 'Warning', 
+          message: 'Saved locally but database sync failed: ' + (saveErr.message || 'Unknown error') 
+        });
+      } else {
+        setNotification({ 
+          show: true, 
+          type: 'success', 
+          title: 'Success', 
+          message: 'Broker commission saved successfully!' 
+        });
+        
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: LOCALSTORAGE_CONSTANTS_KEY,
+          newValue: JSON.stringify(payload),
+          url: window.location.href,
+          storageArea: localStorage
+        }));
+      }
+    } catch (e) {
+      setSaving(false);
+      console.error('Save exception:', e);
+      setNotification({ 
+        show: true, 
+        type: 'error', 
+        title: 'Error', 
+        message: 'Unexpected error: ' + (e.message || 'Unknown error') 
+      });
+    }
   };
 
   const updateBrokerTolerance = async (value) => {
     const num = parseFloat(value);
     if (isNaN(num)) return;
     setBrokerCommissionTolerance(num);
-    // Save all settings
-    await saveToStorage();
+    
+    // Update tempValues to reflect the saved value
+    setTempValues(prev => ({ ...prev, ['brokerTolerance']: value }));
+    
+    // Create payload with NEW brokerCommissionTolerance value
+    const payload = { 
+      productLists, 
+      feeColumns, 
+      flatAboveCommercialRule, 
+      marketRates, 
+      brokerRoutes, 
+      brokerCommissionDefaults, 
+      brokerCommissionTolerance: num, // Use the NEW value
+      fundingLinesBTL,
+      fundingLinesBridge,
+      uiPreferences: DEFAULT_UI_PREFERENCES
+    };
+    
+    writeOverrides(payload);
+    setSaving(true);
+
+    try {
+      const { error: saveErr } = await saveToSupabase(payload);
+      setSaving(false);
+      
+      if (saveErr) {
+        console.error('Failed to save to database:', saveErr);
+        setNotification({ 
+          show: true, 
+          type: 'warning', 
+          title: 'Warning', 
+          message: 'Saved locally but database sync failed: ' + (saveErr.message || 'Unknown error') 
+        });
+      } else {
+        setNotification({ 
+          show: true, 
+          type: 'success', 
+          title: 'Success', 
+          message: 'Broker tolerance saved successfully!' 
+        });
+        
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: LOCALSTORAGE_CONSTANTS_KEY,
+          newValue: JSON.stringify(payload),
+          url: window.location.href,
+          storageArea: localStorage
+        }));
+      }
+    } catch (e) {
+      setSaving(false);
+      console.error('Save exception:', e);
+      setNotification({ 
+        show: true, 
+        type: 'error', 
+        title: 'Error', 
+        message: 'Unexpected error: ' + (e.message || 'Unknown error') 
+      });
+    }
   };
 
   const updateFundingLines = async (type, csv) => {
     const arr = csv.split(',').map((s) => s.trim()).filter(Boolean);
+    const newFundingLinesBTL = type === 'btl' ? arr : fundingLinesBTL;
+    const newFundingLinesBridge = type === 'bridge' ? arr : fundingLinesBridge;
+    
     if (type === 'btl') {
       setFundingLinesBTL(arr);
     } else {
       setFundingLinesBridge(arr);
     }
-    // Save all settings
-    await saveToStorage();
+    
+    // Update tempValues to reflect the saved value
+    setTempValues(prev => ({ ...prev, [`fundingLines${type === 'btl' ? 'BTL' : 'Bridge'}`]: arr.join(', ') }));
+    
+    // Create payload with NEW funding lines values
+    const payload = { 
+      productLists, 
+      feeColumns, 
+      flatAboveCommercialRule, 
+      marketRates, 
+      brokerRoutes, 
+      brokerCommissionDefaults, 
+      brokerCommissionTolerance,
+      fundingLinesBTL: newFundingLinesBTL, // Use the NEW value
+      fundingLinesBridge: newFundingLinesBridge, // Use the NEW value
+      uiPreferences: DEFAULT_UI_PREFERENCES
+    };
+    
+    writeOverrides(payload);
+    setSaving(true);
+
+    try {
+      const { error: saveErr } = await saveToSupabase(payload);
+      setSaving(false);
+      
+      if (saveErr) {
+        console.error('Failed to save to database:', saveErr);
+        setNotification({ 
+          show: true, 
+          type: 'warning', 
+          title: 'Warning', 
+          message: 'Saved locally but database sync failed: ' + (saveErr.message || 'Unknown error') 
+        });
+      } else {
+        setNotification({ 
+          show: true, 
+          type: 'success', 
+          title: 'Success', 
+          message: 'Funding lines saved successfully!' 
+        });
+        
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: LOCALSTORAGE_CONSTANTS_KEY,
+          newValue: JSON.stringify(payload),
+          url: window.location.href,
+          storageArea: localStorage
+        }));
+      }
+    } catch (e) {
+      setSaving(false);
+      console.error('Save exception:', e);
+      setNotification({ 
+        show: true, 
+        type: 'error', 
+        title: 'Error', 
+        message: 'Unexpected error: ' + (e.message || 'Unknown error') 
+      });
+    }
   };
 
   // Add new broker route
