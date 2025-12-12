@@ -95,11 +95,6 @@
   box-shadow: none !important;
 }
 
-/* Remove border from the last row to look cleaner */
-.products-rates-table tr:last-child td {
-  border-bottom: none !important;
-}
-
 /* ========================================
    LABEL COLUMN (Left-most)
    ======================================== */
