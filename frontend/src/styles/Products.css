@@ -12,8 +12,9 @@
   display: flex !important;
   align-items: stretch !important;
   border: none !important;
+  border-bottom: 1px solid var(--slds-g-color-border-1) !important;
   margin: 0 !important;
-  margin-bottom: 1px !important;
+  margin-bottom: var(--token-spacing-sm) !important;
   padding: 0 !important;
   list-style: none !important;
   background: transparent !important;
@@ -26,6 +27,7 @@
   display: flex !important;
   margin-bottom: -1px !important;
   list-style: none !important;
+  
   margin: 0 !important;
   border-right: none !important;
   position: relative !important;
