@@ -21,13 +21,11 @@ const ThemeToggle = () => {
   };
 
   const getIcon = () => {
-    if (themeMode === 'dark') {
-      return <SalesforceIcon category="utility" name="moon" size="small" />;
-    } else if (themeMode === 'system') {
-      return <SalesforceIcon category="utility" name="settings" size="small" />;
-    } else {
-      return <SalesforceIcon category="utility" name="dayview" size="small" />;
-    }
+    return (
+      <div className="feature-icon-container feature-icon-green" style={{ width: '28px', height: '28px' }}>
+        <SalesforceIcon name="lightbulb" size="x-small" />
+      </div>
+    );
   };
 
   const getTooltip = () => {
@@ -45,6 +43,7 @@ const ThemeToggle = () => {
       onClick={cycleTheme}
       title={getTooltip()}
       className="flex-center radius-sm hover-bg theme-toggle-btn"
+      style={{ padding: 0 }}
     >
       {getIcon()}
     </button>

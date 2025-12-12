@@ -1,0 +1,29 @@
+/* Feature Icons Styles */
+
+.feature-icon-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  color: white;
+}
+
+.feature-icon-container.large {
+  width: 48px;
+  height: 48px;
+}
+
+.feature-icon-orange {
+  background-color: #ff9e2c !important; /* Adjust to match the orange in the image */
+}
+
+.feature-icon-green {
+  background-color: #4bca81 !important; /* Adjust to match the green in the image */
+}
+
+/* Ensure the SVG inside inherits the white color */
+.feature-icon-container svg {
+  fill: white !important;
+}

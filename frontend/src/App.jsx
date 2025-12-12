@@ -34,6 +34,7 @@ import useTypography from './hooks/useTypography';
 import './styles/index.scss';
 import './styles/accessibility.css';
 import './styles/utilities.css';
+import './styles/FeatureIcons.css';
 import './styles/typography-inter.css'; // Inter typography (toggled via body class)
 
 // AppContent component to use theme context

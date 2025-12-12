@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import WelcomeHeader from '../components/shared/WelcomeHeader';
+import ProductsTable from '../components/tables/ProductsTable';
 import '../styles/Products.css';
 
 /**
@@ -294,350 +295,7 @@ const Products = ({ initialTab = 'btl' }) => {
   };
 
   // Transform rates data into structured format for BTL
-  const transformBTLData = useCallback(() => {
-    const structured = {};
 
-    ratesData.forEach(rate => {
-      // Normalize tier format: '1' -> 'Tier 1', '2' -> 'Tier 2', etc.
-      const tierNum = String(rate.tier || '1');
-      const tier = tierNum.startsWith('Tier') ? tierNum : `Tier ${tierNum}`;
-      const product = rate.product || 'Unknown';
-      const productFee = rate.product_fee;
-      const maxLtv = rate.max_ltv || 0;
-      // Rates are already in percentage format (e.g., 5.79, not 0.0579)
-      const rateValue = rate.rate || 0;
-      const revertMargin = rate.revert_margin;
-      const revertIndex = rate.revert_index || 'MVR';
-      const maxDeferInt = rate.max_defer_int;
-      const maxRolledMonths = rate.max_rolled_months;
-
-      if (!structured[tier]) {
-        structured[tier] = {
-          products: {},
-          maxDeferInt,
-          maxRolledMonths
-        };
-      }
-
-      if (!structured[tier].products[product]) {
-        structured[tier].products[product] = {
-          feeRanges: new Set(),
-          ltvRates: {},
-          maxDeferInt: maxDeferInt  // Store product-specific defer
-        };
-      }
-      
-      // Update defer if current product has it (tracker may have different defer)
-      if (maxDeferInt !== null && maxDeferInt !== undefined) {
-        structured[tier].products[product].maxDeferInt = maxDeferInt;
-      }
-
-      if (productFee !== null && productFee !== undefined) {
-        structured[tier].products[product].feeRanges.add(Number(productFee));
-      }
-
-      // Group by LTV and fee (include id for editing)
-      const ltvKey = `${maxLtv}_${productFee}`;
-      if (!structured[tier].products[product].ltvRates[ltvKey]) {
-        structured[tier].products[product].ltvRates[ltvKey] = {
-          id: rate.id,  // Include database ID for editing
-          ltv: maxLtv,
-          fee: productFee,
-          rate: rateValue,
-          revertMargin,
-          revertIndex,
-          set_key: rate.set_key,
-          tier: tier,
-          product: product
-        };
-      }
-    });
-
-    return structured;
-  }, [ratesData]);
-
-  // Render BTL rates table
-  const renderBTLTable = () => {
-    const structured = transformBTLData();
-    let tiers = Object.keys(structured).sort();
-    
-    // For Core Residential and Commercial, show only Tier 1 and Tier 2 (Screenshot 3)
-    const isCoreOrCommercial = subTab === 'core' || subTab === 'commercial';
-    if (isCoreOrCommercial) {
-      tiers = tiers.filter(tier => tier === 'Tier 1' || tier === 'Tier 2');
-    }
-
-    if (tiers.length === 0) {
-      return (
-        <div className="slds-text-align_center slds-p-around_large">
-          <p className="slds-text-body_regular">No rates available for this product category</p>
-        </div>
-      );
-    }
-
-    // Get unique fee values from all tiers (to create rows for each fee)
-    const allFees = new Set();
-    tiers.forEach(tier => {
-      const tierData = structured[tier];
-      Object.values(tierData.products || {}).forEach(productData => {
-        if (productData.feeRanges) {
-          productData.feeRanges.forEach(fee => allFees.add(fee));
-        }
-      });
-    });
-    const feeList = Array.from(allFees).sort((a, b) => a - b); // Ascending order
-
-    // Product types to display
-    const productTypes = ['3yr Fix', '2yr Fix', '2yr Tracker'];
-    
-    // Check if this is Core (no defer/roll up)
-    const isCore = subTab === 'core';
-
-    return (
-      <div className="slds-scrollable_x">
-        <table className="slds-table slds-table_bordered slds-table_cell-buffer products-rates-table">
-          <thead>
-            {/* Tier headers */}
-            <tr className="slds-line-height_reset">
-              <th scope="col" rowSpan="2" className="products-rates-table__label-col">
-                <span className="slds-assistive-text">Rate Type</span>
-              </th>
-              {tiers.map(tier => (
-                <th 
-                  key={tier} 
-                  scope="col" 
-                  colSpan="3" 
-                  className={`slds-text-align_center products-rates-table__tier-header products-rates-table__tier-header--${tier.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  <div className="slds-truncate">{tier}</div>
-                </th>
-              ))}
-            </tr>
-            {/* Product type headers */}
-            <tr className="slds-line-height_reset">
-              {tiers.map(tier => (
-                <React.Fragment key={`${tier}-products`}>
-                  {productTypes.map(product => (
-                    <th key={`${tier}-${product}`} scope="col" className="slds-text-align_center products-rates-table__product-col">
-                      <div className="slds-truncate">{product}</div>
-                    </th>
-                  ))}
-                </React.Fragment>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {/* For each fee, show: Fee range row, Rate row, Revert rate row */}
-            {feeList.map(fee => (
-              <React.Fragment key={fee}>
-                {/* Fee Range Row for this specific fee - merged per tier */}
-                <tr className="products-rates-table__fee-row">
-                  <th scope="row" className="products-rates-table__label-cell">
-                    <div className="slds-truncate">Fee range</div>
-                  </th>
-                  {tiers.map(tier => {
-                    // Check if any product in this tier has this fee
-                    const tierData = structured[tier];
-                    const hasAnyFee = productTypes.some(product => {
-                      const productData = tierData?.products?.[product];
-                      return productData?.feeRanges?.has(fee);
-                    });
-                    const feeText = hasAnyFee ? `${fee}% fee range` : '—';
-                    
-                    return (
-                      <td key={`${tier}-${fee}-feerange`} colSpan="3" className="slds-text-align_center">
-                        <div className="slds-truncate">{feeText}</div>
-                      </td>
-                    );
-                  })}
-                </tr>
-
-                {/* Rate row for this fee */}
-                <tr className="products-rates-table__rate-row">
-                  <th scope="row" className="products-rates-table__label-cell">
-                    <div className="slds-truncate">Rate</div>
-                  </th>
-                  {tiers.map(tier => (
-                    <React.Fragment key={`${tier}-${fee}-rate`}>
-                      {productTypes.map(product => {
-                        const productData = structured[tier]?.products?.[product];
-                        // Get rate for this specific fee
-                        const rateEntry = Object.values(productData?.ltvRates || {}).find(r => Number(r.fee) === fee);
-                        const rateValue = rateEntry?.rate;
-                        const rateId = rateEntry?.id;
-                        const isTracker = product.includes('Tracker');
-                        const hasRate = rateValue !== undefined && rateValue !== null;
-                        const isEditing = editingCell?.rateId === rateId && editingCell?.field === 'rate';
-                        
-                        let displayValue = '—';
-                        if (hasRate) {
-                          // Rates are already in percentage format
-                          const percentage = Number(rateValue).toFixed(2);
-                          displayValue = isTracker ? `${percentage}% +BBR` : `${percentage}%`;
-                        }
-                        
-                        return (
-                          <td 
-                            key={`${tier}-${product}-${fee}-rate`} 
-                            className={`slds-text-align_center ${isAdmin && hasRate ? 'products-rate-cell--editable' : ''}`}
-                          >
-                            {isEditing ? (
-                              <div className="products-rate-cell__edit-container">
-                                <input
-                                  type="number"
-                                  className="products-rate-cell__input"
-                                  value={editValue}
-                                  onChange={(e) => setEditValue(e.target.value)}
-                                  onKeyDown={handleEditKeyPress}
-                                  step="0.01"
-                                  min="0"
-                                  max="100"
-                                  autoFocus
-                                  disabled={savingRate}
-                                />
-                                <div className="products-rate-cell__edit-actions">
-                                  <button
-                                    type="button"
-                                    className="products-rate-cell__save-btn"
-                                    onClick={handleSaveRate}
-                                    disabled={savingRate}
-                                    title="Save"
-                                  >
-                                    ✓
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="products-rate-cell__cancel-btn"
-                                    onClick={handleCancelEdit}
-                                    disabled={savingRate}
-                                    title="Cancel"
-                                  >
-                                    ✕
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div 
-                                className={`slds-truncate ${isAdmin && hasRate ? 'products-rate-cell__value' : ''}`}
-                                style={{ cursor: isAdmin && hasRate ? 'pointer' : 'default' }}
-                                onClick={() => {
-                                  if (isAdmin && hasRate && rateId) {
-                                    handleStartEdit(rateId, 'rate', rateValue, {
-                                      oldValue: rateValue,
-                                      set_key: rateEntry?.set_key || subTab,
-                                      product,
-                                      tier,
-                                      fee
-                                    });
-                                  }
-                                }}
-                                title={isAdmin && hasRate ? 'Click to edit' : undefined}
-                              >
-                                {displayValue}
-                                {isAdmin && hasRate && (
-                                  <span className="products-rate-cell__edit-icon">✎</span>
-                                )}
-                              </div>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </React.Fragment>
-                  ))}
-                </tr>
-                
-                {/* Revert rate row for this fee - merged per tier */}
-                <tr className="products-rates-table__revert-row">
-                  <th scope="row" className="products-rates-table__label-cell">
-                    <div className="slds-truncate">Revert rate</div>
-                  </th>
-                  {tiers.map(tier => {
-                    const tierData = structured[tier];
-                    // Get revert margin from any product in this tier (should be same for all)
-                    let revertText = 'MVR';
-                    
-                    // For Tier 1, always just "MVR"
-                    // For other tiers, show margin if available
-                    if (tier !== 'Tier 1') {
-                      const anyProduct = productTypes.find(p => tierData?.products?.[p]);
-                      if (anyProduct) {
-                        const productData = tierData.products[anyProduct];
-                        const rateEntry = Object.values(productData?.ltvRates || {}).find(r => Number(r.fee) === fee);
-                        if (rateEntry?.revertMargin !== null && rateEntry?.revertMargin !== undefined) {
-                          const margin = Number(rateEntry.revertMargin);
-                          const sign = margin >= 0 ? '+' : '';
-                          revertText = `MVR ${sign}${margin}%`;
-                        }
-                      }
-                    }
-                    
-                    return (
-                      <td key={`${tier}-${fee}-revert`} colSpan="3" className="slds-text-align_center">
-                        <div className="slds-truncate">{revertText}</div>
-                      </td>
-                    );
-                  })}
-                </tr>
-              </React.Fragment>
-            ))}
-
-            {/* Defer up to - only for Specialist, Commercial, Semi-Commercial (not Core) */}
-            {!isCore && (
-              <tr className="products-rates-table__info-row">
-                <th scope="row" className="products-rates-table__label-cell">
-                  <div className="slds-truncate">Defer up to</div>
-                </th>
-                {tiers.map(tier => {
-                  const tierData = structured[tier];
-                  const defaultDefer = tierData?.maxDeferInt || '—';
-                  
-                  // Get defer for each product type from database
-                  const fixedDefer3yr = tierData?.products?.['3yr Fix']?.maxDeferInt || defaultDefer;
-                  const trackerDefer = tierData?.products?.['2yr Tracker']?.maxDeferInt || defaultDefer;
-                  
-                  // Use the first fixed product's defer (usually same for both)
-                  const fixedDeferText = fixedDefer3yr !== '—' ? `${fixedDefer3yr}%` : '—';
-                  const trackerDeferText = trackerDefer !== '—' ? `${trackerDefer}%` : '—';
-                  
-                  return (
-                    <React.Fragment key={`${tier}-defer`}>
-                      {/* Merged cell for both fixed products (3yr Fix + 2yr Fix) */}
-                      <td colSpan="2" className="slds-text-align_center">
-                        <div className="slds-truncate">{fixedDeferText}</div>
-                      </td>
-                      {/* Separate cell for tracker with database defer */}
-                      <td className="slds-text-align_center">
-                        <div className="slds-truncate">{trackerDeferText}</div>
-                      </td>
-                    </React.Fragment>
-                  );
-                })}
-              </tr>
-            )}
-
-            {/* Roll up to - only for Specialist, Commercial, Semi-Commercial (not Core) */}
-            {!isCore && (
-              <tr className="products-rates-table__info-row">
-                <th scope="row" className="products-rates-table__label-cell">
-                  <div className="slds-truncate">Roll up to</div>
-                </th>
-                {tiers.map(tier => {
-                  const tierData = structured[tier];
-                  const rollMonths = tierData?.maxRolledMonths || 0;
-                  const rollText = rollMonths > 0 ? `${rollMonths} months interest payments` : '—';
-                  return (
-                    <td key={`${tier}-roll`} colSpan="3" className="slds-text-align_center">
-                      <div className="slds-truncate">{rollText}</div>
-                    </td>
-                  );
-                })}
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
 
   // =============================================
   // BRIDGING RATES FUNCTIONS
@@ -853,21 +511,15 @@ const Products = ({ initialTab = 'btl' }) => {
             <tr>
               <th 
                 scope="col" 
-                className="products-rates-table__label-col"
-                style={headerStyle}
+                className={`products-rates-table__label-col ${isVariable ? 'products-bridging-table__header--variable' : 'products-bridging-table__header--fixed'}`}
               >
-                <div style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>Our Products</div>
+                <div className="products-bridging-table__header-text">Our Products</div>
               </th>
               {products.map(product => (
                 <th 
                   key={product} 
                   scope="col" 
                   className="slds-text-align_center products-bridging-table__product-header"
-                  style={{ 
-                    backgroundColor: '#e5e5e5', 
-                    fontWeight: 600,
-                    padding: '0.5rem 0.25rem'
-                  }}
                 >
                   <div className="products-bridging-table__product-name">{product}</div>
                 </th>
@@ -948,7 +600,7 @@ const Products = ({ initialTab = 'btl' }) => {
                               });
                             }
                           }}
-                          style={{ cursor: isAdmin && !isNA ? 'pointer' : 'default' }}
+                          className={isAdmin && !isNA ? 'products-rate-cell--pointer' : 'products-rate-cell--default'}
                           title={isAdmin && !isNA ? 'Click to edit' : undefined}
                         >
                           {isNA ? 'N/a' : `${rateValue}%`}
@@ -964,7 +616,7 @@ const Products = ({ initialTab = 'btl' }) => {
             ))}
 
             {/* Separator row */}
-            <tr style={{ height: '0.5rem', backgroundColor: '#f3f3f3' }}>
+            <tr className="products-table__spacer-row">
               <td colSpan={products.length + 1}></td>
             </tr>
 
@@ -1052,7 +704,7 @@ const Products = ({ initialTab = 'btl' }) => {
             {/* Term row */}
             <tr className="products-rates-table__info-row">
               <th scope="row" className="products-rates-table__label-cell">
-                <div className="slds-truncate">Term <span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(months)</span></div>
+                <div className="slds-truncate">Term <span className="products-table__label-annotation">(months)</span></div>
               </th>
               {products.map((product, idx) => {
                 const productData = structured[product];
@@ -1078,7 +730,7 @@ const Products = ({ initialTab = 'btl' }) => {
             {/* Arrangement Fee row */}
             <tr className="products-rates-table__info-row">
               <th scope="row" className="products-rates-table__label-cell">
-                <div className="slds-truncate">Arrangement Fee <span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(from)</span></div>
+                <div className="slds-truncate">Arrangement Fee <span className="products-table__label-annotation">(from)</span></div>
               </th>
               {products.map((product, idx) => {
                 const productData = structured[product];
@@ -1135,9 +787,7 @@ const Products = ({ initialTab = 'btl' }) => {
               <th 
                 scope="col" 
                 className="products-rates-table__label-col"
-                style={{ background: 'linear-gradient(135deg, #0d9488 0%, #14b8a6 100%)', color: '#ffffff' }}
               >
-                <div style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>Our Products</div>
               </th>
               {products.map(product => {
                 const colorConfig = headerColors[product] || { bg: '#0d9488', letter: product.slice(-1) };
@@ -1145,29 +795,13 @@ const Products = ({ initialTab = 'btl' }) => {
                   <th 
                     key={product} 
                     scope="col" 
-                    className="slds-text-align_center"
-                    style={{ 
-                      padding: '0.75rem 0.5rem',
-                      minWidth: '10rem',
-                      backgroundColor: '#f8fafc'
-                    }}
+                    className="products-fusion-table__product-header"
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                      <span style={{ 
-                        color: '#0d9488', 
-                        fontWeight: 700, 
-                        fontSize: '1.25rem' 
-                      }}>
+                    <div className="products-fusion-table__product-name">
+                      <span className="products-fusion-table__fusion-text">
                         Fusion
                       </span>
-                      <span style={{ 
-                        backgroundColor: colorConfig.bg,
-                        color: '#ffffff',
-                        padding: '0.25rem 0.5rem',
-                        borderRadius: '0.25rem',
-                        fontWeight: 700,
-                        fontSize: '1rem'
-                      }}>
+                      <span className={`products-fusion-table__badge ${colorConfig.bg === '#f59e0b' ? 'products-fusion-table__badge--orange' : 'products-fusion-table__badge--teal'}`}>
                         {colorConfig.letter}
                       </span>
                     </div>
@@ -1180,7 +814,7 @@ const Products = ({ initialTab = 'btl' }) => {
             {/* Coupon Rate row */}
             <tr className="products-rates-table__rate-row">
               <th scope="row" className="products-rates-table__label-cell">
-                <div className="slds-truncate">Coupon Rate <span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(+BBR)</span></div>
+                <div className="slds-truncate">Coupon Rate <span className="products-table__label-annotation">(+BBR)</span></div>
               </th>
               {products.map(product => {
                 const productData = structured[product];
@@ -1192,8 +826,7 @@ const Products = ({ initialTab = 'btl' }) => {
                 return (
                   <td 
                     key={`${product}-rate`} 
-                    className={`slds-text-align_center ${isAdmin && hasRate ? 'products-rate-cell--editable' : ''}`}
-                    style={{ backgroundColor: '#ecfdf5' }}
+                    className={`slds-text-align_center products-fusion-table__rate-cell ${isAdmin && hasRate ? 'products-rate-cell--editable' : ''}`}
                   >
                     {isEditing ? (
                       <div className="products-rate-cell__edit-container">
@@ -1265,7 +898,7 @@ const Products = ({ initialTab = 'btl' }) => {
               {products.map(product => {
                 const productData = structured[product];
                 return (
-                  <td key={`${product}-loan`} className="slds-text-align_center" style={{ backgroundColor: '#ecfdf5' }}>
+                  <td key={`${product}-loan`} className="slds-text-align_center products-fusion-table__rate-cell">
                     <div className="slds-truncate">
                       {formatLoanRange(productData?.minLoan, productData?.maxLoan)}
                     </div>
@@ -1275,7 +908,7 @@ const Products = ({ initialTab = 'btl' }) => {
             </tr>
 
             {/* Separator */}
-            <tr style={{ height: '0.5rem', backgroundColor: '#f3f3f3' }}>
+            <tr className="products-table__spacer-row">
               <td colSpan={products.length + 1}></td>
             </tr>
 
@@ -1305,9 +938,9 @@ const Products = ({ initialTab = 'btl' }) => {
                 <div className="slds-truncate">Initial Term</div>
               </th>
               <td className="slds-text-align_center" colSpan={products.length}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div className="products-table__cell-content--column">
                   <span>{structured[products[0]]?.minTerm || 24} months</span>
-                  <span style={{ fontSize: '0.7rem', color: '#706e6b' }}>(+12 month discretionary extension available)</span>
+                  <span className="products-table__helper-text">(+12 month discretionary extension available)</span>
                 </div>
               </td>
             </tr>
@@ -1328,9 +961,9 @@ const Products = ({ initialTab = 'btl' }) => {
                 <div className="slds-truncate">Max Rolled Interest</div>
               </th>
               <td className="slds-text-align_center" colSpan={products.length}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div className="products-table__cell-content--column">
                   <span>{structured[products[0]]?.maxRolledMonths || 12} months</span>
-                  <span style={{ fontSize: '0.7rem', color: '#706e6b' }}>(then serviced)</span>
+                  <span className="products-table__helper-text">(then serviced)</span>
                 </div>
               </td>
             </tr>
@@ -1346,7 +979,7 @@ const Products = ({ initialTab = 'btl' }) => {
             </tr>
 
             {/* Separator */}
-            <tr style={{ height: '0.5rem', backgroundColor: '#f3f3f3' }}>
+            <tr className="products-table__spacer-row">
               <td colSpan={products.length + 1}></td>
             </tr>
 
@@ -1356,10 +989,10 @@ const Products = ({ initialTab = 'btl' }) => {
                 <div className="slds-truncate">ERC</div>
               </th>
               <td className="slds-text-align_center" colSpan={products.length}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div className="products-table__cell-content--column">
                   <span>{structured[products[0]]?.erc1 || 3}% in year 1</span>
                   <span>{structured[products[0]]?.erc2 || 1.5}% in year 2</span>
-                  <span style={{ fontSize: '0.65rem', color: '#706e6b', marginTop: '0.25rem' }}>25% ERC free after 6 months, no ERC after 21 months</span>
+                  <span className="products-table__helper-text" style={{ marginTop: 'var(--token-spacing-xs)' }}>25% ERC free after 6 months, no ERC after 21 months</span>
                 </div>
               </td>
             </tr>
@@ -1514,7 +1147,20 @@ const Products = ({ initialTab = 'btl' }) => {
                 <h2>Error loading rates: {error}</h2>
               </div>
             )}
-            {!loading && !error && renderBTLTable()}
+            {!loading && !error && (
+              <ProductsTable
+                ratesData={ratesData}
+                subTab={subTab}
+                isAdmin={isAdmin}
+                onStartEdit={handleStartEdit}
+                editingCell={editingCell}
+                editValue={editValue}
+                setEditValue={setEditValue}
+                onSaveRate={handleSaveRate}
+                onCancelEdit={handleCancelEdit}
+                savingRate={savingRate}
+              />
+            )}
           </div>
         </div>
 
@@ -1524,60 +1170,73 @@ const Products = ({ initialTab = 'btl' }) => {
           className={`slds-tabs_default__content ${mainTab === 'bridging' ? 'slds-show' : 'slds-hide'}`}
           role="tabpanel"
         >
-          {/* Residential / Commercial Property Tabs - Moved above sub-tabs */}
-          <div className="slds-m-top_small slds-m-horizontal_medium slds-m-bottom_medium">
-            <div className="slds-button-group" role="group" style={{ display: 'flex', gap: '1rem' }}>
-              <button
-                className={`slds-button ${bridgingPropertyTab === 'residential' ? 'slds-button_brand' : 'slds-button_neutral'}`}
-                onClick={() => setBridgingPropertyTab('residential')}
-                style={{ marginRight: '0.5rem' }}
-              >
-                Residential
-              </button>
-              <button
-                className={`slds-button ${bridgingPropertyTab === 'commercial' ? 'slds-button_brand' : 'slds-button_neutral'}`}
-                onClick={() => setBridgingPropertyTab('commercial')}
-              >
-                Commercial
-              </button>
-            </div>
-          </div>
-
-          {/* Bridging Sub Tabs */}
-          <div className="slds-tabs_scoped">
-            <ul className="slds-tabs_scoped__nav" role="tablist">
+          {/* Residential / Commercial Property Tabs - Using slds-tabs_default__nav */}
+          <div className="slds-tabs_default">
+            <ul className="slds-tabs_default__nav" role="tablist">
               <li 
-                className={`slds-tabs_scoped__item ${subTab === 'variable' ? 'slds-is-active' : ''}`}
+                className={`slds-tabs_default__item ${bridgingPropertyTab === 'residential' ? 'slds-is-active' : ''}`}
                 role="presentation"
               >
                 <button
-                  className="slds-tabs_scoped__link"
+                  className="slds-tabs_default__link"
+                  role="tab"
+                  aria-selected={bridgingPropertyTab === 'residential'}
+                  onClick={() => setBridgingPropertyTab('residential')}
+                >
+                  Residential
+                </button>
+              </li>
+              <li 
+                className={`slds-tabs_default__item ${bridgingPropertyTab === 'commercial' ? 'slds-is-active' : ''}`}
+                role="presentation"
+              >
+                <button
+                  className="slds-tabs_default__link"
+                  role="tab"
+                  aria-selected={bridgingPropertyTab === 'commercial'}
+                  onClick={() => setBridgingPropertyTab('commercial')}
+                >
+                  Commercial
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Bridging Sub Tabs - Using slds-tabs_default__nav */}
+          <div className="slds-tabs_default">
+            <ul className="slds-tabs_default__nav" role="tablist">
+              <li 
+                className={`slds-tabs_default__item ${subTab === 'variable' ? 'slds-is-active' : ''}`}
+                role="presentation"
+              >
+                <button
+                  className="slds-tabs_default__link"
                   role="tab"
                   aria-selected={subTab === 'variable'}
                   onClick={() => handleBridgingSubTabChange('variable')}
                 >
-                  Bridge Variable
+                  Variable
                 </button>
               </li>
               <li 
-                className={`slds-tabs_scoped__item ${subTab === 'fixed' ? 'slds-is-active' : ''}`}
+                className={`slds-tabs_default__item ${subTab === 'fixed' ? 'slds-is-active' : ''}`}
                 role="presentation"
               >
                 <button
-                  className="slds-tabs_scoped__link"
+                  className="slds-tabs_default__link"
                   role="tab"
                   aria-selected={subTab === 'fixed'}
                   onClick={() => handleBridgingSubTabChange('fixed')}
                 >
-                  Bridge Fix
+                  Fixed
                 </button>
               </li>
               <li 
-                className={`slds-tabs_scoped__item ${subTab === 'fusion' ? 'slds-is-active' : ''}`}
+                className={`slds-tabs_default__item ${subTab === 'fusion' ? 'slds-is-active' : ''}`}
                 role="presentation"
               >
                 <button
-                  className="slds-tabs_scoped__link"
+                  className="slds-tabs_default__link"
                   role="tab"
                   aria-selected={subTab === 'fusion'}
                   onClick={() => handleBridgingSubTabChange('fusion')}

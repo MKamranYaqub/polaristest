@@ -1,7 +1,7 @@
 /* Theme Toggle Button Styles */
 .theme-toggle-btn {
   background: transparent;
-  border: 1px solid var(--cds-border-subtle);
+  border: none;
   padding: var(--token-spacing-sm);
   cursor: pointer;
   color: var(--cds-icon-primary);
