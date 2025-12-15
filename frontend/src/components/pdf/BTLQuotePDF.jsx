@@ -156,27 +156,27 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
         {/* Tier Range and Version Info */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingRight: 20 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-            <Text style={{ fontSize: 8, color: '#706e6b', marginRight: 10 }}>Tier range</Text>
-            <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000', marginRight: 10 }}>
+            <Text style={{ fontSize: 9, color: '#706e6b', marginRight: 10 }}>Tier range</Text>
+            <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000000', marginRight: 10 }}>
               {h.getTierRange(quote)}
             </Text>
-            <Text style={{ fontSize: 9, color: '#000000', marginRight: 10 }}>Tier {h.getTierNumber(quote)}</Text>
+            <Text style={{ fontSize: 10, color: '#000000', marginRight: 10 }}>Tier {h.getTierNumber(quote)}</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
-            <Text style={{ fontSize: 8, color: '#706e6b', marginRight: 10 }}>Retention</Text>
-            <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000' }}>
+            <Text style={{ fontSize: 9, color: '#706e6b', marginRight: 10 }}>Retention</Text>
+            <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000000' }}>
               {h.getRetention(quote)}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
-            <Text style={{ fontSize: 8, color: '#706e6b', marginRight: 10 }}>Version</Text>
-            <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000' }}>
+            <Text style={{ fontSize: 9, color: '#706e6b', marginRight: 10 }}>Version</Text>
+            <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000000' }}>
               {h.getVersion(quote)}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
-            <Text style={{ fontSize: 8, color: '#706e6b', marginRight: 10 }}>Submitted by</Text>
-            <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000' }}>
+            <Text style={{ fontSize: 9, color: '#706e6b', marginRight: 10 }}>Submitted by</Text>
+            <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000000' }}>
               {h.getSubmittedBy(quote)}
             </Text>
           </View>
@@ -539,6 +539,140 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
                 <Text style={btlQuoteStyles.brokerDetailsValue}>{h.getClientRoute(clientDetails, quote)}</Text>
               </View>
             </View>
+          </View>
+        </View>
+
+        <PDFFooter />
+      </Page>
+
+      {/* Page 2: DIP Packaging List */}
+      <Page size="A4" style={styles.page}>
+        {/* Fixed Logo in top right (same as page 1) */}
+        <View style={fixedHeaderStyles.fixedHeader} fixed>
+          <Image src={MFS_LOGO_PATH} style={fixedHeaderStyles.logo} />
+        </View>
+        
+        {/* Header with Packaging List */}
+        <View style={{ 
+          flexDirection: 'row', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          paddingHorizontal: 40,
+          paddingVertical: 15,
+          borderBottom: '1px solid #c9c9c9'
+        }}>
+          <Text style={{ fontSize: 14, fontWeight: 700, color: '#00205B' }}>
+            Packaging List
+          </Text>
+          <View style={{ width: 80, height: 32 }} />
+        </View>
+        
+        <View style={{ padding: '20px 40px' }}>
+          {/* Product Type and Date Section */}
+          <View style={{ 
+            backgroundColor: '#dd7a01', 
+            padding: '8px 16px', 
+            marginBottom: 10,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <Text style={{ fontSize: 11, fontWeight: 700, color: '#ffffff' }}>
+              Buy to Let – {quote.property_type || 'Residential'}
+            </Text>
+            <Text style={{ fontSize: 11, fontWeight: 700, color: '#ffffff' }}>
+              {new Date(quote.created_at || Date.now()).toLocaleDateString()}
+            </Text>
+          </View>
+
+          {/* Introduction Text */}
+          <Text style={{ fontSize: 10, fontStyle: 'italic', marginBottom: 10, lineHeight: 1.4 }}>
+            The following list comprises the standard information required for initial credit screening and approval to issue a DIP. Note that further information will be requested during the underwriting process, depending on the nature of the transaction, specific circumstances of the borrower and the type of property.
+          </Text>
+
+          {/* DIP List Header */}
+          <View style={{ 
+            backgroundColor: '#032d60', 
+            padding: '8px 12px', 
+            marginBottom: 10
+          }}>
+            <Text style={{ fontSize: 12, fontWeight: 700, color: '#ffffff', textAlign: 'center' }}>
+              DIP List
+            </Text>
+          </View>
+
+          {/* DIP List Items */}
+          <View style={{ border: '1px solid #dddbda', padding: 12 }}>
+            {[
+              {
+                label: 'Property address and description:',
+                value: 'details of the property or properties offered as security'
+              },
+              {
+                label: 'Borrower name and nationality / jurisdiction:',
+                value: 'list all individual borrowers or shareholders of corporate borrowers'
+              },
+              {
+                label: 'Occupation and experience of key individual/s:',
+                value: 'list occupation that provides the main source of income and detail experience relevant to managing the security property/ies'
+              },
+              {
+                label: 'Annual income:',
+                value: 'total annual income from employment including any salary, dividends, benefits, rental, pensions, investments etc'
+              },
+              {
+                label: 'Asset and Liability Statement for any individual Borrowers, Shareholders or Guarantors:',
+                value: 'include value of all assets owned in company or personal names along with any outstanding debts'
+              },
+              {
+                label: 'Residential address of key individual/s:',
+                value: 'address of main residence for any individual borrowers or shareholders > 25%'
+              },
+              {
+                label: 'Details of any adverse credit:',
+                value: 'list all overdue payments and credit provider (to be cleared on or before completion)'
+              },
+              {
+                label: 'Loan Purpose:',
+                value: 'what will the loan proceeds be used for? e.g. purchase, refinance, debt consolidation, equity release, refurbishment works'
+              },
+              {
+                label: 'Agreed purchase price (if purchase):',
+                value: 'price to be paid and declared on HM Land Registry'
+              },
+              {
+                label: 'Details of outstanding charges and loan balances (if refinance or 2nd charge):',
+                value: 'amount of outstanding loan/s and lender name/s'
+              },
+              {
+                label: 'Breakdown of use of funds:',
+                value: 'detail how the net loan balance will be used (including cost estimate for any proposed works)'
+              },
+              {
+                label: 'Proposed exit strategy / source of repayment:',
+                value: 'how will the loan be repaid? E.g. sale, refinance or liquidity event'
+              },
+              {
+                label: 'Additional information:',
+                value: 'any further information relevant to the transaction, property, or borrower'
+              }
+            ].map((item, index) => (
+              <View key={index} style={{ 
+                flexDirection: 'row', 
+                marginBottom: 8,
+                paddingLeft: 8
+              }}>
+                <Text style={{ fontSize: 10, width: 15, marginRight: 6 }}>•</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 10, fontWeight: 700 }}>
+                    {item.label}
+                  </Text>
+                  <Text style={{ fontSize: 9, color: '#5C5C5C', marginTop: 2, lineHeight: 1.3 }}>
+                    {item.value}
+                  </Text>
+                </View>
+              </View>
+            ))}
           </View>
         </View>
 

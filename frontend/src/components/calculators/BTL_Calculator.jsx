@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSupabase } from '../../contexts/SupabaseContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -35,7 +35,9 @@ import {
   PRODUCT_TYPES_LIST as DEFAULT_PRODUCT_TYPES_LIST, 
   FEE_COLUMNS as DEFAULT_FEE_COLUMNS, 
   LOCALSTORAGE_CONSTANTS_KEY, 
-  FLAT_ABOVE_COMMERCIAL_RULE as DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE
+  FLAT_ABOVE_COMMERCIAL_RULE as DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE,
+  BROKER_ROUTES,
+  BROKER_COMMISSION_DEFAULTS
 } from '../../config/constants';
 
 /**
@@ -74,6 +76,7 @@ export default function BTLcalculator({ initialQuote = null }) {
   const { canEditCalculators, token } = useAuth();
   const { showToast } = useToast();
   const location = useLocation();
+    const navigate = useNavigate();
   const navQuote = location && location.state ? location.state.loadQuote : null;
   const effectiveInitialQuote = initialQuote || navQuote;
   
@@ -1241,6 +1244,68 @@ export default function BTLcalculator({ initialQuote = null }) {
       title: 'Quote Cancelled', 
       subtitle: 'Calculator has been reset to start a new quote.' 
     });
+
+    // Navigate to the calculator route to mirror behavior when opening from navigation
+    navigate('/calculator/btl', { replace: true });
+  };
+
+  const handleNewQuote = () => {
+    // Reset to initial state - clear currentQuoteId and reference
+    setCurrentQuoteId(null);
+    setCurrentQuoteRef(null);
+    setCurrentQuoteData(null);
+
+    // Reset the loaded-from-saved-quote flag
+    loadedFromSavedQuoteRef.current = false;
+
+    // Reset all input fields
+    setPropertyValue('');
+    setMonthlyRent('');
+    setTopSlicing('');
+    setProductScope('');
+    setProductType('');
+    setLoanType('');
+    setSpecificGrossLoan('');
+    setSpecificNetLoan('');
+    setMaxLtvInput(75);
+    setRetentionChoice('No');
+    setRetentionLtv('75');
+
+    // Reset criteria answers
+    setAnswers({});
+
+    // Reset results and overrides
+    setRelevantRates([]);
+    setRatesOverrides({});
+    setProductFeeOverrides({});
+    setRolledMonthsPerColumn({});
+    setDeferredInterestPerColumn({});
+    setManualModeActivePerColumn({});
+    setOptimizedRolledPerColumn({});
+    setOptimizedDeferredPerColumn({});
+
+    // Reset DIP data
+    setDipData({});
+    setFilteredRatesForDip([]);
+
+    // Reset UW checklist
+    setUwCheckedItems({});
+
+    // Reset broker settings
+    brokerSettings.setClientType('Direct');
+    brokerSettings.setClientFirstName('');
+    brokerSettings.setClientLastName('');
+    brokerSettings.setClientEmail('');
+    brokerSettings.setClientContact('');
+    brokerSettings.setBrokerCompanyName('');
+    brokerSettings.setBrokerRoute(BROKER_ROUTES.DIRECT_BROKER);
+    brokerSettings.setBrokerCommissionPercent(BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER]);
+    brokerSettings.setAddFeesToggle(false);
+    brokerSettings.setFeeCalculationType('pound');
+    brokerSettings.setAdditionalFeeAmount('');
+
+    // Navigate to the calculator route (no toast for New Quote)
+    navigate('/calculator/btl', { replace: true });
   };
 
   const handleSaveQuoteData = async (quoteId, updatedQuoteData) => {
@@ -1465,7 +1530,7 @@ export default function BTLcalculator({ initialQuote = null }) {
         onIssueDip={handleOpenDipModal}
         onIssueQuote={handleIssueQuote}
         onCancelQuote={handleCancelQuote}
-        onNewQuote={handleCancelQuote}
+        onNewQuote={handleNewQuote}
         saveQuoteButton={
           <SaveQuoteButton
             calculatorType="BTL"

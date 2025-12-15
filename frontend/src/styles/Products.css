@@ -665,6 +665,26 @@
 }
 
 /* ========================================
+   PANEL HEADERS
+   ======================================== */
+
+.products-panel__header {
+  height: 5rem !important;
+  min-height: 5rem !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--token-spacing-xl);
+  background-color: var(--slds-g-color-neutral-base-95);
+  border-bottom: 1px solid var(--slds-g-color-border-1);
+}
+
+.products-panel__header-title {
+  margin: 0;
+  font-weight: var(--token-font-weight-bold);
+}
+
+/* ========================================
    ACCESSIBILITY
    ======================================== */
 

@@ -61,6 +61,15 @@ const AdminLandingPage = () => {
       stats: { label: 'Configs', value: '16' }
     },
     {
+      id: 'data-health',
+      title: 'Data Health',
+      description: 'Detect duplicate rates and anomalies across BTL/Bridging sets.',
+      icon: 'warning',
+      link: '/admin/data-health',
+      gradient: 'linear-gradient(135deg, #ffd194 0%, #70e1f5 100%)',
+      stats: { label: 'Checks', value: 'Live' }
+    },
+    {
       id: 'users',
       title: 'User Management',
       description: 'Manage user accounts, roles, permissions, and access levels.',

@@ -23,14 +23,14 @@ export default function Breadcrumbs({ items = [] }) {
             <li key={index} className="slds-breadcrumb__item">
               {isLast ? (
                 <span className="slds-breadcrumb__current" aria-current="page">
-                  {item.label}
+                  {String(item.label)}
                 </span>
               ) : (
                 <Link 
                   to={item.path} 
                   className="slds-breadcrumb__link"
                 >
-                  {item.label}
+                  {String(item.label)}
                 </Link>
               )}
             </li>
@@ -88,6 +88,10 @@ export function useBreadcrumbs() {
       breadcrumbs.push({ label: 'Global Settings', path: '/admin/global-settings' });
     } else if (path.includes('/support-requests')) {
       breadcrumbs.push({ label: 'Support Requests', path: '/admin/support-requests' });
+    } else if (path.includes('/data-health')) {
+      breadcrumbs.push({ label: 'Data Health', path: '/admin/data-health' });
+    } else if (path.includes('/data-access')) {
+      breadcrumbs.push({ label: 'Data Access', path: '/admin/data-access' });
     }
   } else if (path.includes('/settings')) {
     breadcrumbs.push({ label: 'Settings', path: '/settings' });

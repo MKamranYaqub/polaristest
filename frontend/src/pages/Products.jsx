@@ -1297,8 +1297,8 @@ const Products = ({ initialTab = 'btl' }) => {
               backgroundColor: '#ffffff'
             }}
           >
-            <div className="slds-panel__header" style={{ height: '4rem !important', minHeight: '4rem !important', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.5rem', backgroundColor: '#f3f3f3', borderBottom: '1px solid #dddbda' }}>
-              <h2 className="slds-panel__header-title slds-text-heading_small slds-truncate" style={{ margin: 0, fontWeight: 700 }}>Asset Class LTVs</h2>
+            <div className="slds-panel__header products-panel__header">
+              <h2 className="slds-panel__header-title slds-text-heading_small slds-truncate products-panel__header-title">Asset Class LTVs</h2>
               <button 
                 className="slds-button slds-button_icon slds-button_icon-small" 
                 onClick={() => setShowAssetClassPanel(false)}

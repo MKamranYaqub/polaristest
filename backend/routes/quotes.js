@@ -219,6 +219,19 @@ router.put('/:id', validate(updateQuoteSchema), asyncHandler(async (req, res) =>
   const { calculator_type, results, ...updates } = req.body;
   updates.updated_at = new Date().toISOString();
 
+  // If issuance status is being set to an issued state, stamp timestamps when absent
+  const nowIso = updates.updated_at;
+  if (typeof updates.quote_status === 'string' && /issued/i.test(updates.quote_status)) {
+    if (!updates.quote_issued_at) {
+      updates.quote_issued_at = nowIso;
+    }
+  }
+  if (typeof updates.dip_status === 'string' && /issued/i.test(updates.dip_status)) {
+    if (!updates.dip_issued_at) {
+      updates.dip_issued_at = nowIso;
+    }
+  }
+
   const isBridge = calculator_type && (calculator_type.toLowerCase() === 'bridging' || calculator_type.toLowerCase() === 'bridge');
   const table = isBridge ? 'bridge_quotes' : 'quotes';
   const resultsTable = isBridge ? 'bridge_quote_results' : 'quote_results';
@@ -285,6 +298,47 @@ router.put('/:id', validate(updateQuoteSchema), asyncHandler(async (req, res) =>
     } else {
       log.info(`✅ Successfully updated ${resultsToInsert.length} results in ${resultsTable}`);
     }
+  }
+
+  // If DIP has been issued, ensure a single DIP result row exists
+  try {
+    const dipIssued = typeof updates.dip_status === 'string' && /issued/i.test(updates.dip_status);
+    const resultsTableForStage = (table === 'bridge_quotes') ? 'bridge_quote_results' : 'quote_results';
+    if (dipIssued) {
+      // Remove any existing DIP stage row (enforced by unique index)
+      await supabase
+        .from(resultsTableForStage)
+        .delete()
+        .eq('quote_id', id)
+        .eq('stage', 'DIP');
+
+      // Load current QUOTE results to choose the best candidate
+      const { data: currentResults, error: loadErr } = await supabase
+        .from(resultsTableForStage)
+        .select('*')
+        .eq('quote_id', id)
+        .neq('stage', 'DIP');
+      if (!loadErr && currentResults && currentResults.length > 0) {
+        // Heuristic: pick result with highest net_loan; fallback to first row
+        const best = currentResults.reduce((acc, r) => {
+          if (!acc) return r;
+          const a = Number(acc.net_loan ?? acc.gross_loan ?? 0);
+          const b = Number(r.net_loan ?? r.gross_loan ?? 0);
+          return b > a ? r : acc;
+        }, null);
+
+        if (best) {
+          const { id: _omit, created_at: _c1, updated_at: _u1, stage: _s1, ...payload } = best;
+          const dipRow = { ...payload, stage: 'DIP' };
+          // Ensure quote_id is set
+          dipRow.quote_id = id;
+          // Insert DIP row
+          await supabase.from(resultsTableForStage).insert(dipRow);
+        }
+      }
+    }
+  } catch (e) {
+    log.warn('Non-fatal: failed to ensure DIP stage result', { quote_id: id, error: e?.message || String(e) });
   }
   
   return res.json({ quote: updated[0] });

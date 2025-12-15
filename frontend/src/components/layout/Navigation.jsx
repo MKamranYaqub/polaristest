@@ -65,7 +65,9 @@ function Navigation() {
         ...(showUserManagement ? [
           { id: 'users', label: 'Users', path: '/admin/users' },
           { id: 'support-requests', label: 'Support Requests', path: '/admin/support-requests' }
-        ] : [])
+        ] : []),
+        { id: 'data-health', label: 'Data Health', path: '/admin/data-health' },
+        { id: 'data-access', label: 'Data Access', path: '/admin/data-access' }
       ]
     }] : [])
   ];

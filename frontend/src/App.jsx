@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+const LazyDataAccess = React.lazy(() => import('./components/admin/DataAccessVariables'));
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 // Removed Carbon Content/Theme; using SLDS + app styles
 import Calculator from './components/calculators/Calculator';
@@ -217,6 +218,14 @@ const AppContent = () => {
                     } 
                   />
                   <Route 
+                    path="data-health" 
+                    element={
+                      <ErrorBoundary>
+                        <AdminPage tab="dataHealth" />
+                      </ErrorBoundary>
+                    } 
+                  />
+                  <Route 
                     index 
                     element={
                       <ErrorBoundary>
@@ -247,6 +256,20 @@ const AppContent = () => {
                         <SupportRequestsPage />
                       </ErrorBoundary>
                     } 
+                  />
+                </Route>
+
+                {/* Data Access Variables - Admin only */}
+                <Route path="/admin/data-access" element={<ProtectedRoute requiredAccessLevel={1} allowedAccessLevels={[1]} />}>
+                  <Route 
+                    index
+                    element={
+                      <ErrorBoundary>
+                        <React.Suspense fallback={<div className="slds-p-around_medium">Loading…</div>}>
+                          <LazyDataAccess />
+                        </React.Suspense>
+                      </ErrorBoundary>
+                    }
                   />
                 </Route>
                 

@@ -66,54 +66,114 @@ export function useBTLCalculation() {
       // Compute tier from criteria answers
       const tier = computeTierFromAnswers(inputs.answers);
 
-      // Filter rates based on product scope, range, and product type
+      // Filter rates based on property (scope), tier, and product type
       const filteredRates = ratesData.filter(rate => {
-        // Check product scope match
-        if (rate.product_scope !== inputs.productScope) return false;
+        // Check property match (maps to product scope)
+        // rates_flat uses 'property' field (Residential, Commercial, Semi-Commercial, Core)
+        if (rate.property && rate.property !== inputs.productScope) return false;
         
-        // Check range match (Core or Specialist)
-        if (rate.product_range && rate.product_range !== inputs.selectedRange) return false;
+        // Check tier match
+        if (rate.tier && tier && rate.tier !== String(tier)) return false;
         
         // Check product type match if specified
-        if (inputs.productType && rate.product_type !== inputs.productType) return false;
+        // rates_flat uses 'product' field (2yr Fix, 3yr Fix, 2yr Tracker)
+        if (inputs.productType && rate.product !== inputs.productType) return false;
         
         return true;
       });
 
       setRelevantRates(filteredRates);
 
-      // Prepare calculation parameters
-      const calculationParams = {
-        propertyValue: parseFloat(inputs.propertyValue),
-        monthlyRent: parseFloat(inputs.monthlyRent),
-        topSlicing: parseFloat(inputs.topSlicing || 0),
-        loanCalculationRequested: inputs.loanType,
-        specificGrossLoan: inputs.specificGrossLoan ? parseFloat(inputs.specificGrossLoan) : undefined,
-        specificNetLoan: inputs.specificNetLoan ? parseFloat(inputs.specificNetLoan) : undefined,
-        targetLtv: inputs.maxLtvInput || 75,
-        tier: tier,
-        addFeesToggle: inputs.addFeesToggle,
-        feeCalculationType: inputs.feeCalculationType,
-        additionalFeeAmount: inputs.additionalFeeAmount ? parseFloat(inputs.additionalFeeAmount) : 0,
-        retentionChoice: inputs.retentionChoice,
-        retentionLtv: inputs.retentionLtv ? parseFloat(inputs.retentionLtv) : 75,
-        rolledMonthsPerColumn: inputs.rolledMonthsPerColumn || {},
-        deferredInterestPerColumn: inputs.deferredInterestPerColumn || {},
-        brokerSettings: brokerSettings || {}
-      };
+      // Extract unique product_fee values from filtered rates to create columns (normalize to numbers)
+      const uniqueFees = [
+        ...new Set(
+          filteredRates
+            .map(r => Number(r.product_fee))
+            .filter(f => Number.isFinite(f))
+        )
+      ].sort((a, b) => b - a);
 
-      // Perform calculation using the engine
-      const calculatedResults = computeBTLLoan(
-        filteredRates,
-        calculationParams
-      );
+      if (uniqueFees.length === 0) {
+        setResults([]);
+        setLastCalculationInputs(inputs);
+        return [];
+      }
+
+      // Calculate results for each fee column
+      const calculatedResults = uniqueFees.map(fee => {
+        // Find the best rate for this specific product and fee.
+        // If multiple rows match (e.g., data duplication across tiers), prefer:
+        // 1) Exact tier match
+        // 2) Higher max_ltv
+        // 3) Most recent updated_at
+        // 4) Highest id (as final tiebreak)
+        const candidates = filteredRates.filter(r =>
+          r.product === inputs.productType &&
+          Number(r.product_fee) === Number(fee)
+        );
+
+        let selectedRate = null;
+        if (candidates.length === 1) {
+          selectedRate = candidates[0];
+        } else if (candidates.length > 1) {
+          const tierStr = String(tier);
+          const exactTier = candidates.filter(r => String(r.tier) === tierStr);
+          const pool = exactTier.length > 0 ? exactTier : candidates;
+          selectedRate = pool.sort((a, b) => {
+            const aLtv = Number(a.max_ltv) || 0;
+            const bLtv = Number(b.max_ltv) || 0;
+            if (bLtv !== aLtv) return bLtv - aLtv;
+            const aUpd = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+            const bUpd = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+            if (bUpd !== aUpd) return bUpd - aUpd;
+            const aId = Number(a.id) || 0;
+            const bId = Number(b.id) || 0;
+            return bId - aId;
+          })[0];
+        }
+
+        if (!selectedRate) {
+          return null;
+        }
+
+        // Prepare calculation parameters for this column
+        const colKey = `Fee: ${fee}%`;
+        const calculationParams = {
+          colKey,
+          selectedRate,
+          propertyValue: inputs.propertyValue,
+          monthlyRent: inputs.monthlyRent,
+          topSlicing: inputs.topSlicing || 0,
+          loanType: inputs.loanType,
+          specificGrossLoan: inputs.specificGrossLoan,
+          specificNetLoan: inputs.specificNetLoan,
+          maxLtvInput: inputs.maxLtvInput || 75,
+          productType: inputs.productType,
+          productScope: inputs.productScope,
+          tier: tier,
+          selectedRange: inputs.selectedRange,
+          productFeePercent: fee,
+          feeOverrides: inputs.productFeeOverrides || {},
+          manualRolled: inputs.rolledMonthsPerColumn?.[colKey],
+          manualDeferred: inputs.deferredInterestPerColumn?.[colKey],
+          retentionChoice: inputs.retentionChoice,
+          retentionLtv: inputs.retentionLtv || 75,
+          brokerRoute: brokerSettings?.brokerRoute,
+          procFeePct: brokerSettings?.procFeePct,
+          brokerFeePct: brokerSettings?.brokerFeePct,
+          brokerFeeFlat: brokerSettings?.brokerFeeFlat,
+        };
+
+        // Perform calculation using the engine
+        return computeBTLLoan(calculationParams);
+      }).filter(result => result !== null);
 
       setResults(calculatedResults || []);
       setLastCalculationInputs(inputs);
       
       return calculatedResults;
     } catch (err) {
-      console.error('Calculation error:', err);
+      // Surface concise error to UI; avoid noisy console logs in production
       setError(err.message || 'Calculation failed. Please check your inputs.');
       return null;
     } finally {
@@ -158,6 +218,7 @@ export function useBTLCalculation() {
     isCalculating,
     error,
     calculate,
+    validateInputs,
     clearResults,
     recalculateWithSliders,
     lastCalculationInputs

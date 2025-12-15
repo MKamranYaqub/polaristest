@@ -278,6 +278,11 @@
   box-shadow: var(--token-shadow-soft);
 }
 
+/* Compact variant when preceding section already provides spacing */
+.filters-section--compact {
+  margin-top: 0; /* token-friendly: explicit zero */
+}
+
 /* ⚠️ DEPRECATED: Use .slds-form-element instead!
    Legacy filter field wrapper kept for backward compatibility.
    Migration: Wrap inputs in .slds-form-element > .slds-form-element__control */
@@ -354,6 +359,28 @@
   box-shadow: var(--token-shadow-soft);
   border: 1px solid var(--token-border-subtle);
   background: var(--token-layer-surface);
+}
+
+/* When inside accordion sections, drop outer border to avoid double borders */
+.settings-accordion-section .table-wrapper {
+  border: none;
+  box-shadow: none;
+  border-radius: var(--slds-g-radius-border-2);
+}
+
+/* Generic section header/body helpers for tokenized spacing */
+.section-header {
+  padding: var(--token-spacing-lg);
+  border-bottom: 1px solid var(--token-border-subtle);
+}
+
+.section-body {
+  padding: var(--token-spacing-lg);
+}
+
+.section-subtitle {
+  padding: var(--token-spacing-sm) var(--token-spacing-md);
+  margin: 0;
 }
 
 /* ⚠️ DEPRECATED: Use .slds-table directly!
@@ -439,6 +466,12 @@
   white-space: nowrap;
   background: var(--token-layer-surface);
   line-height: 1.5;
+}
+
+/* Empty state cell padding using tokens */
+.empty-cell {
+  color: var(--token-text-secondary);
+  padding: var(--token-spacing-md) var(--token-spacing-lg) !important;
 }
 
 .professional-table tbody tr {

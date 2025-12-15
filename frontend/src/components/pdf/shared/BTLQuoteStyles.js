@@ -36,12 +36,12 @@ export const btlQuoteStyles = StyleSheet.create({
     paddingRight: 5,
   },
   summaryLabel: {
-    fontSize: 8,
+    fontSize: 9,
     color: '#706e6b',
     marginBottom: 1,
   },
   summaryValue: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#000000',
     marginBottom: 5,
@@ -61,7 +61,7 @@ export const btlQuoteStyles = StyleSheet.create({
     borderRadius: 2,
   },
   tierLabel: {
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: 'bold',
     color: '#014486',
     textAlign: 'center',
@@ -82,7 +82,7 @@ export const btlQuoteStyles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   tableHeaderCell: {
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: 'bold',
     color: '#000000',
     textAlign: 'center',
@@ -121,20 +121,20 @@ export const btlQuoteStyles = StyleSheet.create({
   },
   tableCellLabel: {
     width: '22%',
-    fontSize: 8,
+    fontSize: 9,
     color: '#000000',
     paddingRight: 4,
   },
   tableCellValue: {
     width: '19.5%',
-    fontSize: 8,
+    fontSize: 9,
     color: '#000000',
     textAlign: 'center',
     paddingRight: 4,
   },
   tableCellValueHighlight: {
     width: '19.5%',
-    fontSize: 8,
+    fontSize: 9,
     color: '#000000',
     textAlign: 'center',
     fontWeight: 'bold',
@@ -148,7 +148,7 @@ export const btlQuoteStyles = StyleSheet.create({
     borderTop: '1pt solid #dddbda',
   },
   termsTitle: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#000000',
     marginBottom: 4,
@@ -164,12 +164,12 @@ export const btlQuoteStyles = StyleSheet.create({
     marginBottom: 4,
   },
   termsLabel: {
-    fontSize: 7,
+    fontSize: 8,
     color: '#706e6b',
     marginBottom: 1,
   },
   termsValue: {
-    fontSize: 8,
+    fontSize: 9,
     color: '#000000',
     lineHeight: 1.3,
   },
@@ -189,7 +189,7 @@ export const btlQuoteStyles = StyleSheet.create({
     width: 140,
   },
   brokerDetailsTitle: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#000000',
     marginBottom: 4,
@@ -200,11 +200,11 @@ export const btlQuoteStyles = StyleSheet.create({
     marginBottom: 3,
   },
   brokerDetailsLabel: {
-    fontSize: 7,
+    fontSize: 8,
     color: '#706e6b',
   },
   brokerDetailsValue: {
-    fontSize: 8,
+    fontSize: 9,
     color: '#000000',
   },
 
@@ -217,7 +217,7 @@ export const btlQuoteStyles = StyleSheet.create({
 
   // Full term row
   fullTermRow: {
-    fontSize: 8,
+    fontSize: 9,
     color: '#000000',
     lineHeight: 1.3,
     marginBottom: 8,

@@ -125,9 +125,9 @@ export default function BTLCalculator({ initialQuote = null }) {
   const handleCalculate = async () => {
     try {
       // Validate inputs
-      const validation = calculation.validateInputs();
-      if (!validation.valid) {
-        showToast('error', validation.error);
+      const validationError = calculation.validateInputs(inputs);
+      if (validationError) {
+        showToast('error', validationError);
         return;
       }
 
@@ -135,7 +135,7 @@ export default function BTLCalculator({ initialQuote = null }) {
       await rates.fetchRates(inputs);
       
       // Run calculation
-      const results = calculation.calculate(inputs, rates.relevantRates, resultsState);
+      const results = calculation.calculate(inputs, rates.relevantRates, brokerSettings);
       
       if (results && results.length > 0) {
         showToast('success', `Found ${results.length} matching products`);

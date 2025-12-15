@@ -86,7 +86,9 @@ function SalesforceNav() {
         ...(showUserManagement ? [
           { id: 'users', label: 'Users', path: '/admin/users' },
           { id: 'support-requests', label: 'Support Requests', path: '/admin/support-requests' }
-        ] : [])
+        ] : []),
+        { id: 'data-health', label: 'Data Health', path: '/admin/data-health' },
+        { id: 'data-access', label: 'Data Access', path: '/admin/data-access' }
       ]
     }] : [])
   ];
@@ -142,7 +144,7 @@ function SalesforceNav() {
               <div>
                 <Breadcrumbs items={breadcrumbs} />
                 <div style={{ marginTop: '0.5rem', fontSize: '1.25rem', fontWeight: 700 }}>
-                  {breadcrumbs[breadcrumbs.length - 1].label}
+                  {String(breadcrumbs[breadcrumbs.length - 1].label)}
                 </div>
               </div>
             </div>

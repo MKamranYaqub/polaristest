@@ -535,6 +535,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                 >
                   UPDATED
                 </th>
+                <th>DIP ISSUED</th>
                 <th className="sticky-action">ACTIONS</th>
               </tr>
             </thead>
@@ -603,6 +604,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                   </span>
                 </td>
                 <td>{q.updated_at ? new Date(q.updated_at).toLocaleString() : '—'}</td>
+                <td>{q.dip_issued_at ? new Date(q.dip_issued_at).toLocaleString() : '—'}</td>
                 <td className="sticky-action">
                   <div className="row-actions">
                     <button className="slds-button slds-button_neutral" onClick={() => handleLoad(q.id)}>Load</button>

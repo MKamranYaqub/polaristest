@@ -5,6 +5,7 @@ import RatesTable from '../components/admin/RatesTable';
 import BridgeFusionRates from '../components/admin/BridgeFusionRates';
 import GlobalSettings from '../components/admin/GlobalSettings';
 import UWRequirementsAdmin from '../components/admin/UWRequirementsAdmin';
+import DataHealthReport from '../components/admin/DataHealthReport';
 
 const AdminPage = ({ tab = 'constants' }) => {
   return (
@@ -42,6 +43,12 @@ const AdminPage = ({ tab = 'constants' }) => {
       {tab === 'uwRequirements' && (
         <div>
           <UWRequirementsAdmin />
+        </div>
+      )}
+
+      {tab === 'dataHealth' && (
+        <div>
+          <DataHealthReport />
         </div>
       )}
     </div>
