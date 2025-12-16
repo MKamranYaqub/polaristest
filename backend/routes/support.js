@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import logger from '../utils/logger.js';
+import { sendSupportRequestNotification } from '../utils/emailService.js';
 
 const router = express.Router();
 
@@ -51,6 +52,18 @@ router.post('/', async (req, res) => {
     }
 
     logger.info(`Support request created: ${data.id} from ${email}`);
+
+    // Send email notification (non-blocking)
+    sendSupportRequestNotification({
+      name,
+      email,
+      bugType,
+      suggestion,
+      page
+    }).catch(err => {
+      logger.error('Failed to send email notification for support request:', err);
+      // Don't fail the request if email fails
+    });
 
     res.status(201).json({
       success: true,

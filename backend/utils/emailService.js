@@ -1,0 +1,160 @@
+import nodemailer from 'nodemailer';
+import logger from './logger.js';
+
+/**
+ * Email service for sending notifications
+ * Uses Gmail SMTP or other email providers
+ */
+
+// Create reusable transporter
+let transporter = null;
+
+function createTransporter() {
+  if (transporter) return transporter;
+
+  const emailConfig = {
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  };
+
+  // Only create transporter if credentials are provided
+  if (!emailConfig.auth.user || !emailConfig.auth.pass) {
+    logger.warn('Email credentials not configured. Email notifications will be disabled.');
+    return null;
+  }
+
+  transporter = nodemailer.createTransport(emailConfig);
+
+  // Verify connection configuration
+  transporter.verify(function (error, success) {
+    if (error) {
+      logger.error('Email server connection failed:', error);
+    } else {
+      logger.info('Email server is ready to send messages');
+    }
+  });
+
+  return transporter;
+}
+
+/**
+ * Send support request notification email
+ * @param {Object} supportRequest - The support request data
+ * @param {string} supportRequest.name - Name of the person submitting
+ * @param {string} supportRequest.email - Email of the person submitting
+ * @param {string} supportRequest.bugType - Type of bug/issue
+ * @param {string} supportRequest.suggestion - Suggestion/description
+ * @param {string} supportRequest.page - Page where issue occurred
+ */
+export async function sendSupportRequestNotification(supportRequest) {
+  const smtp = createTransporter();
+  
+  if (!smtp) {
+    logger.warn('Email not configured. Skipping notification for support request.');
+    return { success: false, message: 'Email not configured' };
+  }
+
+  const recipientEmail = process.env.SUPPORT_EMAIL || process.env.SMTP_USER;
+
+  if (!recipientEmail) {
+    logger.error('SUPPORT_EMAIL not configured. Cannot send notification.');
+    return { success: false, message: 'Recipient email not configured' };
+  }
+
+  const { name, email, bugType, suggestion, page } = supportRequest;
+
+  const mailOptions = {
+    from: `"Polaris Support System" <${process.env.SMTP_USER}>`,
+    to: recipientEmail,
+    subject: `🆘 New Support Request: ${bugType || 'General'} - ${page}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1a5276; border-bottom: 2px solid #1a5276; padding-bottom: 10px;">
+          New Support Request Received
+        </h2>
+        
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
+          <p style="margin: 10px 0;"><strong>From:</strong> ${name}</p>
+          <p style="margin: 10px 0;"><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
+          <p style="margin: 10px 0;"><strong>Issue Type:</strong> ${bugType || 'Not specified'}</p>
+          <p style="margin: 10px 0;"><strong>Page:</strong> ${page || 'Not specified'}</p>
+        </div>
+        
+        <div style="margin: 20px 0;">
+          <h3 style="color: #34495e;">Details:</h3>
+          <div style="background-color: #ffffff; border-left: 4px solid #3498db; padding: 15px; margin: 10px 0;">
+            ${suggestion ? suggestion.replace(/\n/g, '<br>') : '<em>No details provided</em>'}
+          </div>
+        </div>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px;">
+          <p>This is an automated notification from the Polaris Support System.</p>
+          <p>Please respond to <a href="mailto:${email}">${email}</a> to address this request.</p>
+        </div>
+      </div>
+    `,
+    text: `
+New Support Request Received
+
+From: ${name}
+Email: ${email}
+Issue Type: ${bugType || 'Not specified'}
+Page: ${page || 'Not specified'}
+
+Details:
+${suggestion || 'No details provided'}
+
+---
+Please respond to ${email} to address this request.
+    `,
+  };
+
+  try {
+    const info = await smtp.sendMail(mailOptions);
+    logger.info('Support notification email sent:', {
+      messageId: info.messageId,
+      to: recipientEmail,
+      from: email
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    logger.error('Failed to send support notification email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Send test email to verify configuration
+ */
+export async function sendTestEmail(recipientEmail) {
+  const smtp = createTransporter();
+  
+  if (!smtp) {
+    throw new Error('Email not configured');
+  }
+
+  const mailOptions = {
+    from: `"Polaris System" <${process.env.SMTP_USER}>`,
+    to: recipientEmail,
+    subject: '✅ Email Configuration Test',
+    html: `
+      <h2>Email Configuration Successful!</h2>
+      <p>This is a test email to verify that your email service is working correctly.</p>
+      <p>If you received this, your SMTP settings are configured properly.</p>
+    `,
+  };
+
+  const info = await smtp.sendMail(mailOptions);
+  logger.info('Test email sent:', info.messageId);
+  return info;
+}
+
+export default {
+  sendSupportRequestNotification,
+  sendTestEmail
+};
