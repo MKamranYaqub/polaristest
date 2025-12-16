@@ -5,7 +5,7 @@
  */
 
 import { parseNumber } from './calculator/numberFormatting';
-import { LOAN_TYPES, PRODUCT_GROUPS, PROPERTY_TYPES, MARKET_RATES } from '../config/constants';
+import { LOAN_TYPES, PRODUCT_GROUPS, PROPERTY_TYPES, getMarketRates } from '../config/constants';
 
 /**
  * Map UI loan type strings to LOAN_TYPES constants
@@ -158,8 +158,9 @@ export class BTLCalculationEngine {
     this.minDeferredRate = selectedRate?.min_defer_int ?? 0;
     
     // Market rates from constants
-    this.standardBBR = MARKET_RATES.STANDARD_BBR ?? 0.04;
-    this.stressBBR = MARKET_RATES.STRESS_BBR ?? 0.0425;
+    const market = getMarketRates();
+    this.standardBBR = market.STANDARD_BBR ?? 0.04;
+    this.stressBBR = market.STRESS_BBR ?? 0.0425;
     
     // Max LTV from rate table or user input
     this.rateLtvLimit = selectedRate?.max_ltv ? parseNumber(selectedRate.max_ltv) / 100 : null;
@@ -678,12 +679,13 @@ export class BTLCalculationEngine {
     let revertIndexLabel = null; // For display e.g., 'MVR' or 'BBR'
     if (revertIndexRaw != null && revertIndexRaw !== '') {
       const idx = String(revertIndexRaw).toLowerCase();
+      const marketRates = getMarketRates();
       if (idx.includes('bbr')) {
-        const bbrDecimal = (this.standardBBR ?? MARKET_RATES.STANDARD_BBR);
+        const bbrDecimal = (this.standardBBR ?? marketRates.STANDARD_BBR);
         revertIndexBasePct = ((bbrDecimal != null ? bbrDecimal : 0) * 100); // decimals -> percent
         revertIndexLabel = 'BBR';
       } else if (idx.includes('mvr')) {
-        revertIndexBasePct = (MARKET_RATES.CURRENT_MVR || 0) * 100; // decimal to percent
+        revertIndexBasePct = (marketRates.CURRENT_MVR || 0) * 100; // decimal to percent
         revertIndexLabel = 'MVR';
       } else {
         const parsed = parseNumber(revertIndexRaw);

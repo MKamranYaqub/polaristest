@@ -13,9 +13,9 @@
  */
 
 import { parseNumber } from '../../../utils/calculator/numberFormatting';
-import { MARKET_RATES } from '../../../config/constants';
+import { getMarketRates } from '../../../config/constants';
 
-// Export MARKET_RATES and parseNumber for use in PDF component
+const MARKET_RATES = getMarketRates();
 export { MARKET_RATES, parseNumber };
 
 // ============================================================================

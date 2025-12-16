@@ -139,12 +139,34 @@ function RatesTable() {
       const { error } = await supabase
         .from('rates_flat')
         .update({
+          tier: updatedRate.tier || null,
+          property: updatedRate.property || null,
+          product: updatedRate.product || null,
+          rate_type: updatedRate.rate_type || null,
           rate: updatedRate.rate,
           product_fee: updatedRate.product_fee,
+          max_ltv: updatedRate.max_ltv ?? null,
+          revert_index: updatedRate.revert_index || null,
+          revert_margin: updatedRate.revert_margin ?? null,
+          min_loan: updatedRate.min_loan ?? null,
+          max_loan: updatedRate.max_loan ?? null,
+          max_rolled_months: updatedRate.max_rolled_months ?? null,
+          max_defer_int: updatedRate.max_defer_int ?? null,
+          min_icr: updatedRate.min_icr ?? null,
+          max_top_slicing: updatedRate.max_top_slicing ?? null,
+          admin_fee: updatedRate.admin_fee ?? null,
+          erc_1: updatedRate.erc_1 ?? null,
+          erc_2: updatedRate.erc_2 ?? null,
+          erc_3: updatedRate.erc_3 ?? null,
+          erc_4: updatedRate.erc_4 ?? null,
+          erc_5: updatedRate.erc_5 ?? null,
+          status: updatedRate.status || null,
+          floor_rate: updatedRate.floor_rate ?? null,
+          proc_fee: updatedRate.proc_fee ?? null,
           is_tracker: updatedRate.is_tracker,
+          is_retention: updatedRate.is_retention || false,
           initial_term: updatedRate.initial_term ?? null,
           full_term: updatedRate.full_term ?? null,
-          // Add other fields as needed
         })
         .eq('id', updatedRate.id);
 

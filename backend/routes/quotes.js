@@ -219,21 +219,65 @@ router.put('/:id', validate(updateQuoteSchema), asyncHandler(async (req, res) =>
   const { calculator_type, results, ...updates } = req.body;
   updates.updated_at = new Date().toISOString();
 
-  // If issuance status is being set to an issued state, stamp timestamps when absent
-  const nowIso = updates.updated_at;
-  if (typeof updates.quote_status === 'string' && /issued/i.test(updates.quote_status)) {
-    if (!updates.quote_issued_at) {
-      updates.quote_issued_at = nowIso;
-    }
-  }
-  if (typeof updates.dip_status === 'string' && /issued/i.test(updates.dip_status)) {
-    if (!updates.dip_issued_at) {
-      updates.dip_issued_at = nowIso;
-    }
+  // DEBUG: Log status updates
+  if (updates.dip_status || updates.quote_status) {
+    log.info('📝 Status update for quote', {
+      quote_id: id,
+      dip_status: updates.dip_status,
+      quote_status: updates.quote_status,
+      existing_dip_issued_at: updates.dip_issued_at,
+      existing_quote_issued_at: updates.quote_issued_at
+    });
   }
 
+  // Fetch current quote to preserve issued timestamps if they exist
   const isBridge = calculator_type && (calculator_type.toLowerCase() === 'bridging' || calculator_type.toLowerCase() === 'bridge');
   const table = isBridge ? 'bridge_quotes' : 'quotes';
+  
+  const { data: currentQuote, error: fetchErr } = await supabase
+    .from(table)
+    .select('quote_issued_at, dip_issued_at, dip_status, quote_status')
+    .eq('id', id)
+    .single();
+  
+  // Handle fallback to other table if not found
+  let existingQuoteIssuedAt = currentQuote?.quote_issued_at;
+  let existingDipIssuedAt = currentQuote?.dip_issued_at;
+  
+  if (fetchErr && (fetchErr.code === 'PGRST116' || fetchErr.details?.includes('0 rows'))) {
+    const fallbackTable = isBridge ? 'quotes' : 'bridge_quotes';
+    const { data: fallbackQuote } = await supabase
+      .from(fallbackTable)
+      .select('quote_issued_at, dip_issued_at, dip_status, quote_status')
+      .eq('id', id)
+      .single();
+    existingQuoteIssuedAt = fallbackQuote?.quote_issued_at;
+    existingDipIssuedAt = fallbackQuote?.dip_issued_at;
+  }
+
+  // If issuance status is being set to an issued state, stamp timestamps when absent
+  const nowIso = updates.updated_at;
+  
+  // Handle quote_status and quote_issued_at
+  if (typeof updates.quote_status === 'string' && /issued/i.test(updates.quote_status)) {
+    // Preserve existing timestamp or set new one
+    updates.quote_issued_at = existingQuoteIssuedAt || updates.quote_issued_at || nowIso;
+    log.info('✅ Set quote_issued_at', { quote_id: id, timestamp: updates.quote_issued_at, was_existing: !!existingQuoteIssuedAt });
+  } else if (existingQuoteIssuedAt && !updates.quote_issued_at) {
+    // Preserve existing timestamp even if status isn't being updated
+    updates.quote_issued_at = existingQuoteIssuedAt;
+  }
+  
+  // Handle dip_status and dip_issued_at
+  if (typeof updates.dip_status === 'string' && /issued/i.test(updates.dip_status)) {
+    // Preserve existing timestamp or set new one
+    updates.dip_issued_at = existingDipIssuedAt || updates.dip_issued_at || nowIso;
+    log.info('✅ Set dip_issued_at', { quote_id: id, timestamp: updates.dip_issued_at, was_existing: !!existingDipIssuedAt });
+  } else if (existingDipIssuedAt && !updates.dip_issued_at) {
+    // Preserve existing timestamp even if status isn't being updated
+    updates.dip_issued_at = existingDipIssuedAt;
+  }
+
   const resultsTable = isBridge ? 'bridge_quote_results' : 'quote_results';
 
   const { data: updated, error: upErr } = await supabase.from(table).update(updates).eq('id', id).select('*');

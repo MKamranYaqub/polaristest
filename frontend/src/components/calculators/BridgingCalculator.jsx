@@ -23,7 +23,7 @@ import { getQuote, upsertQuoteData, requestDipPdf, requestQuotePdf, saveUWCheckl
 import { parseNumber, formatCurrencyInput } from '../../utils/calculator/numberFormatting';
 import { computeLoanLtv, computeLoanSize } from '../../utils/calculator/loanCalculations';
 import { pickBestRate, computeModeFromAnswers } from '../../utils/calculator/rateFiltering';
-import { LOCALSTORAGE_CONSTANTS_KEY, MARKET_RATES } from '../../config/constants';
+import { LOCALSTORAGE_CONSTANTS_KEY, getMarketRates } from '../../config/constants';
 import { BridgeFusionCalculator } from '../../utils/bridgeFusionCalculationEngine';
 import UWRequirementsChecklist from '../shared/UWRequirementsChecklist';
 
@@ -407,7 +407,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
       // Load calculated results if available (from bridge_quote_results table)
       if (quote.results && Array.isArray(quote.results) && quote.results.length > 0) {
         // Map database results back to the format expected by the calculator
-        const bbrPercent = (MARKET_RATES?.STANDARD_BBR || 0) * 100; // e.g., 4% => 4
+        const bbrPercent = (getMarketRates()?.STANDARD_BBR || 0) * 100; // e.g., 4% => 4
         const loadedRates = quote.results.map(result => {
           const productName = result.product_name;
           const initialRatePct = Number(result.initial_rate);
@@ -937,7 +937,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
     }
 
     // Get BBR from constants
-    const bbrAnnual = MARKET_RATES?.STANDARD_BBR || 0.04;
+    const bbrAnnual = getMarketRates()?.STANDARD_BBR || 0.04;
 
     return relevantRates.map(rate => {
       try {

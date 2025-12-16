@@ -76,6 +76,29 @@ export const MARKET_RATES = {
   CURRENT_MVR: 0.0859,
 };
 
+// Helpers to read runtime overrides safely from localStorage
+function readJson(key) {
+  try {
+    const raw = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getMarketRates() {
+  const overrides = readJson(LOCALSTORAGE_CONSTANTS_KEY);
+  const fromOverrides = overrides?.marketRates;
+  if (fromOverrides && typeof fromOverrides === 'object') {
+    return {
+      STANDARD_BBR: typeof fromOverrides.STANDARD_BBR === 'number' ? fromOverrides.STANDARD_BBR : MARKET_RATES.STANDARD_BBR,
+      STRESS_BBR: typeof fromOverrides.STRESS_BBR === 'number' ? fromOverrides.STRESS_BBR : MARKET_RATES.STRESS_BBR,
+      CURRENT_MVR: typeof fromOverrides.CURRENT_MVR === 'number' ? fromOverrides.CURRENT_MVR : MARKET_RATES.CURRENT_MVR,
+    };
+  }
+  return MARKET_RATES;
+}
+
 // Broker routes and default commission percentages
 // These are editable via the Constants admin UI
 export const BROKER_ROUTES = {
