@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
+import { API_BASE_URL } from '../../config/api';
 
 function MaskedValue({ value }) {
   const [show, setShow] = useState(false);
@@ -37,7 +38,7 @@ export default function DataAccessVariables() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/data-access/variables', {
+      const res = await fetch(`${API_BASE_URL}/api/admin/data-access/variables`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -56,7 +57,7 @@ export default function DataAccessVariables() {
     e.preventDefault();
     setError(null);
     try {
-      const res = await fetch('/api/admin/data-access/variables', {
+      const res = await fetch(`${API_BASE_URL}/api/admin/data-access/variables`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(form),
@@ -74,7 +75,7 @@ export default function DataAccessVariables() {
 
   const handleUpdate = async (id, updates) => {
     try {
-      const res = await fetch(`/api/admin/data-access/variables/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/data-access/variables/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(updates),
@@ -91,7 +92,7 @@ export default function DataAccessVariables() {
 
   const handleDeactivate = async (id) => {
     try {
-      const res = await fetch(`/api/admin/data-access/variables/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/data-access/variables/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

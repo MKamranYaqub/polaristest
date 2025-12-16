@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import WelcomeHeader from '../shared/WelcomeHeader';
 import SalesforceIcon from '../shared/SalesforceIcon';
+import { API_BASE_URL } from '../../config/api';
 import '../../styles/slds.css';
 import '../../styles/admin-tables.css';
 
@@ -91,7 +92,7 @@ export default function DataHealthReport() {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`/api/admin/data-health?${queryString}`);
+      const res = await fetch(`${API_BASE_URL}/api/admin/data-health?${queryString}`);
       if (!res.ok) {
         const msg = await res.text();
         throw new Error(msg || 'Failed to fetch data health');
