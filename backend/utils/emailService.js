@@ -129,6 +129,90 @@ Please respond to ${email} to address this request.
 }
 
 /**
+ * Send confirmation email to the person who submitted the support request
+ * @param {Object} supportRequest - The support request data
+ */
+export async function sendSubmitterConfirmation(supportRequest) {
+  const smtp = createTransporter();
+  
+  if (!smtp) {
+    logger.warn('Email not configured. Skipping confirmation email.');
+    return { success: false, message: 'Email not configured' };
+  }
+
+  const { name, email, bugType, suggestion, page } = supportRequest;
+
+  const mailOptions = {
+    from: `"Polaris Support System" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: '✅ Support Request Received - Polaris',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 10px;">
+          ✅ Your Support Request Has Been Received
+        </h2>
+        
+        <p style="font-size: 16px; color: #333;">Hi ${name},</p>
+        
+        <p style="font-size: 14px; color: #555;">
+          Thank you for contacting Polaris support. We've received your request and our team will review it shortly.
+        </p>
+        
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
+          <h3 style="color: #34495e; margin-top: 0;">Your Request Details:</h3>
+          <p style="margin: 10px 0;"><strong>Issue Type:</strong> ${bugType || 'General'}</p>
+          <p style="margin: 10px 0;"><strong>Page:</strong> ${page || 'Not specified'}</p>
+          <div style="margin-top: 15px;">
+            <strong>Your Message:</strong>
+            <div style="background-color: #ffffff; border-left: 4px solid #3498db; padding: 15px; margin-top: 10px;">
+              ${suggestion ? suggestion.replace(/\n/g, '<br>') : '<em>No details provided</em>'}
+            </div>
+          </div>
+        </div>
+        
+        <p style="font-size: 14px; color: #555;">
+          Our support team typically responds within 24-48 hours. If your issue is urgent, please contact us directly.
+        </p>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px;">
+          <p>This is an automated confirmation email from the Polaris Support System.</p>
+          <p>Please do not reply to this email. Our team will contact you at <strong>${email}</strong> soon.</p>
+        </div>
+      </div>
+    `,
+    text: `
+Your Support Request Has Been Received
+
+Hi ${name},
+
+Thank you for contacting Polaris support. We've received your request and our team will review it shortly.
+
+Your Request Details:
+- Issue Type: ${bugType || 'General'}
+- Page: ${page || 'Not specified'}
+- Your Message: ${suggestion || 'No details provided'}
+
+Our support team typically responds within 24-48 hours.
+
+---
+This is an automated confirmation. Our team will contact you at ${email} soon.
+    `,
+  };
+
+  try {
+    const info = await smtp.sendMail(mailOptions);
+    logger.info('Confirmation email sent to submitter:', {
+      messageId: info.messageId,
+      to: email
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    logger.error('Failed to send confirmation email to submitter:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Send test email to verify configuration
  */
 export async function sendTestEmail(recipientEmail) {
