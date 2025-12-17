@@ -18,31 +18,6 @@ const useDashboardData = (timeRange, volumeFilter) => {
       setError(null);
       try {
         const res = await listQuotes({ limit: 1000 }); // Get all quotes
-        console.log('=== FETCHED QUOTES ===');
-        console.log('Total quotes fetched:', res.quotes?.length || 0);
-        if (res.quotes && res.quotes.length > 0) {
-          console.log('Sample quote structure:', res.quotes[0]);
-          console.log('All calculator types:', [...new Set(res.quotes.map(q => q.calculator_type))]);
-          console.log('All product_scope values:', [...new Set(res.quotes.map(q => q.product_scope))]);
-          console.log('All quote_status values:', [...new Set(res.quotes.map(q => q.quote_status))]);
-          console.log('All dip_status values:', [...new Set(res.quotes.map(q => q.dip_status))]);
-
-          // Show breakdown by calculator type and status
-          const btlQuotes = res.quotes.filter(q => q.calculator_type === 'BTL');
-          const bridgingQuotes = res.quotes.filter(q => q.calculator_type === 'BRIDGING');
-          console.log('BTL quotes by status:', {
-            total: btlQuotes.length,
-            byStatus: [...new Set(btlQuotes.map(q => q.quote_status))],
-            issued: btlQuotes.filter(q => q.quote_status === 'Issued').length,
-            draft: btlQuotes.filter(q => q.quote_status === 'Draft' || q.quote_status === 'draft').length
-          });
-          console.log('Bridging quotes by status:', {
-            total: bridgingQuotes.length,
-            byStatus: [...new Set(bridgingQuotes.map(q => q.quote_status))],
-            issued: bridgingQuotes.filter(q => q.quote_status === 'Issued').length,
-            draft: bridgingQuotes.filter(q => q.quote_status === 'Draft' || q.quote_status === 'draft').length
-          });
-        }
         setQuotes(res.quotes || []);
       } catch (e) {
         setError(e.message);
@@ -81,29 +56,20 @@ const useDashboardData = (timeRange, volumeFilter) => {
 
   // Filter by volume filter (all/quotes/dips)
   const filteredByVolume = useMemo(() => {
-    console.log('=== VOLUME FILTERING ===');
-    console.log('Volume filter:', volumeFilter);
-    console.log('Filtered by time count:', filteredByTime.length);
-
     if (volumeFilter === 'quotes') {
       // Only quotes that are issued but NOT DIPs
-      const filtered = filteredByTime.filter(q =>
+      return filteredByTime.filter(q =>
         q.quote_status === 'Issued' && q.dip_status !== 'Issued'
       );
-      console.log('Quotes only count:', filtered.length);
-      return filtered;
     } else if (volumeFilter === 'dips') {
       // Only DIPs
-      const filtered = filteredByTime.filter(q => q.dip_status === 'Issued');
-      console.log('DIPs only count:', filtered.length);
-      return filtered;
+      return filteredByTime.filter(q => q.dip_status === 'Issued');
     } else {
       // All (both quotes and DIPs) - For testing, include all quotes regardless of status
       // In production, you'd want to only include issued quotes:
       // return filteredByTime.filter(q => q.quote_status === 'Issued' || q.dip_status === 'Issued');
 
       // For now, let's include ALL quotes to see the data:
-      console.log('All quotes (including drafts for testing):', filteredByTime.length);
       return filteredByTime;
     }
   }, [filteredByTime, volumeFilter]);
@@ -165,14 +131,6 @@ const useDashboardData = (timeRange, volumeFilter) => {
       q.calculator_type && q.calculator_type.toUpperCase() === 'BTL'
     );
 
-    console.log('=== BTL AGGREGATION ===');
-    console.log('Dashboard: BTL quotes count:', btlQuotes.length);
-    if (btlQuotes.length > 0) {
-      console.log('Sample BTL quote:', btlQuotes[0]);
-      console.log('BTL product_scope values:', [...new Set(btlQuotes.map(q => q.product_scope))]);
-      console.log('BTL selected_range values:', [...new Set(btlQuotes.map(q => q.selected_range))]);
-    }
-
     // Group by property type and product
     const categories = ['Core', 'Specialist', 'Commercial', 'Semi-Commercial'];
     const productNames = ['2yr Fix', '3yr Fix', '2yr Tracker'];
@@ -209,15 +167,12 @@ const useDashboardData = (timeRange, volumeFilter) => {
           });
         }
 
-        console.log(`${category} quotes found: ${categoryQuotes.length}`);
-
         // Sum loan amounts
         const total = categoryQuotes.reduce((sum, q) => {
           const loanAmount = getLoanAmount(q);
           return sum + loanAmount;
         }, 0);
 
-        console.log(`BTL ${category} - ${productName}: ${categoryQuotes.length} quotes, £${total.toLocaleString()}`);
         segments[productName] = total;
       });
 
@@ -241,20 +196,6 @@ const useDashboardData = (timeRange, volumeFilter) => {
       return type.includes('bridg') || type.includes('bridge');
     });
 
-    console.log('=== BRIDGING AGGREGATION ===');
-    console.log('Dashboard: Bridging quotes count:', bridgingQuotes.length);
-    if (bridgingQuotes.length > 0) {
-      console.log('Sample Bridging quote:', bridgingQuotes[0]);
-      console.log('Bridging product_scope values:', [...new Set(bridgingQuotes.map(q => q.product_scope))]);
-      console.log('Bridging product type fields:', {
-        product_type: bridgingQuotes[0].product_type,
-        product_name: bridgingQuotes[0].product_name,
-        selected_product: bridgingQuotes[0].selected_product,
-        bridge_type: bridgingQuotes[0].bridge_type,
-        loan_type: bridgingQuotes[0].loan_type
-      });
-    }
-
     // Group by property type only (no Core/Specialist for Bridging)
     const categories = ['Residential', 'Commercial', 'Semi-Commercial'];
     const productTypes = ['Fusion', 'Fixed Bridge', 'Variable Bridge'];
@@ -269,29 +210,11 @@ const useDashboardData = (timeRange, volumeFilter) => {
           return propertyType === category;
         });
 
-        console.log(`Bridging ${category} quotes found: ${categoryQuotes.length}`);
-
         // Sum loan amounts
         const total = categoryQuotes.reduce((sum, q) => {
           const loanAmount = getLoanAmount(q);
-          if (categoryQuotes.length > 0 && categoryQuotes.indexOf(q) === 0) {
-            // Only log first quote to avoid spam
-            console.log(`Bridging ${category} quote loan calculation (first quote):`, {
-              id: q.id,
-              property_value: q.property_value,
-              target_ltv: q.target_ltv,
-              ltv: q.ltv,
-              loan_amount: q.loan_amount,
-              gross_loan: q.gross_loan,
-              net_loan: q.net_loan,
-              loan_required: q.loan_required,
-              calculated: loanAmount
-            });
-          }
           return sum + loanAmount;
         }, 0);
-
-        console.log(`Bridging ${category} - ${productType}: ${categoryQuotes.length} quotes, £${total.toLocaleString()}`);
 
         // Since product type is not available in the quote (it's in bridge_quote_results),
         // distribute the total volume equally across all three product types
