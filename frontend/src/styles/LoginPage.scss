@@ -45,7 +45,7 @@
       .welcome-text {
         text-align: center;
         font-size: 1rem;
-        color: var(--mfs-brand-navy);
+        color: var(--token-text-primary);
         margin-bottom: 2rem;
         font-weight: 400;
       }
@@ -101,16 +101,16 @@
             right: 12px;
             top: 50%;
             transform: translateY(-50%);
-            background: none;
+            background: var(--token-layer-surface);
             border: none;
             cursor: pointer;
             padding: 4px;
             display: flex;
             align-items: center;
-            color: var(--token-text-muted);
+            color: var(--token-text-secondary);
 
             &:hover {
-              color: var(--token-text-secondary);
+              color: var(--token-text-primary);
             }
 
             svg {
@@ -207,7 +207,7 @@
       padding: 1.5rem;
       margin-top: 2rem;
       font-size: 0.8125rem;
-      color: var(--mfs-brand-navy);
+      color: var(--token-text-secondary);
     }
   }
 

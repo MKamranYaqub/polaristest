@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import '../styles/LoginPage.scss';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login, error: authError } = useAuth();
+  const { isDark } = useTheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -64,7 +66,7 @@ export default function LoginPage() {
         <div className="login-card">
           <div className="logo-container">
             <img
-              src="/assets/mfs-logo.png"
+              src={isDark ? '/assets/mfs-logo-dark.png' : '/assets/mfs-logo.png'}
               alt="MFS Logo"
             />
           </div>

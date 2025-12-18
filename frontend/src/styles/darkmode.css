@@ -274,7 +274,8 @@ body.dark-mode #root {
    ============================================ */
 .dark-mode .slds-button_neutral,
 .dark-mode button[type="button"]:not(.slds-button_brand):not(.slds-button_icon) {
-  background-color: var(--token-border-subtle) !important;
+  background-color: transparent ;
+  
   border-color: var(--token-border-strong) !important;
   color: var(--token-text-primary) !important;
 }
