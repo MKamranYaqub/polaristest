@@ -86,8 +86,8 @@
 }
 
 .totals-card {
-  background-color: white;
-  border: 1px solid #e5e7eb;
+  background-color: var(--token-layer-surface);
+  border: 1px solid var(--slds-g-color-border-1);
   border-radius: var(--token-radius-md);
   padding: var(--token-spacing-lg);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -105,7 +105,7 @@
 .totals-card-value {
   font-size: 2.5rem;
   font-weight: var(--token-font-weight-bold);
-  color: var(--token-color-brand-navy);
+  color: var(--token-color-text-primary, var(--token-text-primary));
   line-height: 1;
 }
 
@@ -131,9 +131,9 @@
 
 .volume-filter-dropdown {
   padding: 8px 16px;
-  border: 1px solid #d0d0d0;
+  border: 1px solid var(--slds-g-color-border-1);
   border-radius: var(--token-radius-sm);
-  background-color: white;
+  background-color: var(--token-layer-surface);
   font-size: var(--token-font-size-sm);
   font-weight: var(--token-font-weight-medium);
   color: var(--token-color-text-primary);
@@ -143,8 +143,8 @@
 
 .volume-filter-dropdown:focus {
   outline: none;
-  border-color: var(--token-color-brand-primary, #0176d3);
-  box-shadow: 0 0 0 2px rgba(1, 118, 211, 0.1);
+  border-color: var(--token-interactive, #0176d3);
+  box-shadow: 0 0 0 2px var(--token-focus-ring, rgba(1, 118, 211, 0.12));
 }
 
 .volume-charts-grid {
@@ -154,8 +154,8 @@
 }
 
 .volume-chart-container {
-  background-color: white;
-  border: 1px solid #e5e7eb;
+  background-color: var(--token-layer-surface);
+  border: 1px solid var(--slds-g-color-border-1);
   border-radius: var(--token-radius-md);
   padding: var(--token-spacing-xl);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -173,7 +173,7 @@
   gap: var(--token-spacing-sm);
   margin-top: var(--token-spacing-lg);
   padding-top: var(--token-spacing-lg);
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--slds-g-color-border-1);
   justify-content: flex-end;
 }
 
@@ -191,7 +191,7 @@
 .volume-chart-total {
   font-size: var(--token-font-size-xl);
   font-weight: var(--token-font-weight-bold);
-  color: var(--token-color-brand-navy);
+  color: var(--token-color-text-primary, var(--token-text-primary));
 }
 
 .volume-chart-total-currency {
@@ -315,8 +315,8 @@
 }
 
 .constant-item {
-  background-color: white;
-  border: 1px solid #e5e7eb;
+  background-color: var(--token-layer-surface);
+  border: 1px solid var(--slds-g-color-border-1);
   border-radius: var(--token-radius-md);
   padding: var(--token-spacing-md) var(--token-spacing-lg);
   display: flex;
@@ -333,7 +333,7 @@
 .constant-value {
   font-size: var(--token-font-size-lg);
   font-weight: var(--token-font-weight-bold);
-  color: var(--token-color-brand-navy);
+  color: var(--token-color-text-primary, var(--token-text-primary));
 }
 
 /* Loading State */

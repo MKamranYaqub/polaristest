@@ -1,14 +1,13 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import WelcomeHeader from '../shared/WelcomeHeader';
 
 const DashboardHeader = ({ timeRange, onTimeRangeChange }) => {
   const { user } = useAuth();
 
   return (
     <div className="dashboard-header">
-      <div className="dashboard-welcome">
-        Welcome back, <span className="dashboard-welcome-name">{user?.name || 'User'}</span>
-      </div>
+      <WelcomeHeader className="dashboard-welcome" />
 
       <div className="time-range-toggle">
         <button
