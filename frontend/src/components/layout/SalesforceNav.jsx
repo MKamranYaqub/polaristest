@@ -62,7 +62,6 @@ function SalesforceNav() {
       label: 'Calculator',
       type: 'dropdown',
       children: [
-        { id: 'calc-preview', label: 'Calculator Preview', path: '/calculator' },
         { id: 'calc-btl', label: 'BTL Calculator', path: '/calculator/btl' },
         { id: 'calc-bridging', label: 'Bridging Calculator', path: '/calculator/bridging' }
       ]
