@@ -484,6 +484,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
           rent: result.rent,
           top_slicing: result.top_slicing,
           nbp: result.nbp,
+          nbpLTV: result.nbpLTV,
           total_cost_to_borrower: result.total_cost_to_borrower,
           total_loan_term: result.total_loan_term,
           product_name: result.product_name,
@@ -1824,7 +1825,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
                               'Broker Comission (Proc Fee £)', 'Commitment Fee £', 'Deferred Interest %', 'Deferred Interest £',
                               'Direct Debit', 'ERC 1 £', 'ERC 2 £', 'Exit Fee', 'Full Int BBR £', 'Full Int Coupon £', 'Full Term',
                               'Gross Loan', 'ICR', 'Initial Term', 'LTV', 'Monthly Interest Cost',
-                              'NBP', 'Net Loan', 'Net LTV', 'Pay Rate', 'Product Fee %', 'Product Fee £', 'Revert Rate', 'Revert Rate DD',
+                              'NBP', 'NBP LTV', 'Net Loan', 'Net LTV', 'Pay Rate', 'Product Fee %', 'Product Fee £', 'Revert Rate', 'Revert Rate DD',
                               'Rolled Months', 'Rolled Months Interest', 'Serviced Interest', 'Serviced Months', 'Title Insurance Cost', 'Total Interest'
                             ];
                             
@@ -1884,6 +1885,11 @@ export default function BridgingCalculator({ initialQuote = null }) {
                               // NBP (Net Proceeds to Borrower)
                               if (best.nbp && values['NBP']) {
                                 values['NBP'][col] = `£${Number(best.nbp).toLocaleString('en-GB')}`;
+                              }
+
+                              // NBP LTV
+                              if (best.nbpLTV != null && values['NBP LTV']) {
+                                values['NBP LTV'][col] = `${Number(best.nbpLTV).toFixed(2)}%`;
                               }
 
                               // LTV

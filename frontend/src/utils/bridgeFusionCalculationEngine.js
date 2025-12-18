@@ -613,6 +613,9 @@ export class BridgeFusionCalculator {
     const maxFeeForNBP = Math.max(gross * 0.02, arrangementFeeGBP);
     const nbp = netLoanGBP + maxFeeForNBP;
     
+    // NBP LTV = (NBP / Property Value) * 100
+    const nbpLTV = pv > 0 ? (nbp / pv) * 100 : 0;
+    
     return {
       // Basic loan metrics
       gross,
@@ -624,6 +627,7 @@ export class BridgeFusionCalculator {
       fusionCapApplied,
       netLoanGBP,
       npb: nbp, // Net Proceeds to Borrower
+      nbpLTV, // NBP LTV percentage
       grossLTV,
       netLTV: (netLoanGBP / pv) * 100, // Net LTV based on net loan
       ltv: ltvBucket,

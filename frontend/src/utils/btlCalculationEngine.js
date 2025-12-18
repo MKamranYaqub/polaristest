@@ -713,6 +713,9 @@ export class BTLCalculationEngine {
     // NBP (Net Borrowing Position) - Uses min of 2% of gross loan or actual product/arrangement fee
     // This ensures we take the lower of the two values
     const nbp = bestLoan.netLoan + Math.min(bestLoan.grossLoan * 0.02, bestLoan.productFeeAmount);
+    
+    // NBP LTV = (NBP / Property Value) * 100
+    const nbpLTV = this.propertyValue > 0 ? (nbp / this.propertyValue) * 100 : 0;
 
     // Serviced Interest - interest that's paid monthly (not rolled/deferred)
     const servicedInterest = bestLoan.directDebit * (this.termMonths - bestLoan.rolledMonths);
@@ -805,6 +808,7 @@ export class BTLCalculationEngine {
       erc_5: this.selectedRate?.erc_5 || null,
       exitFee,
       nbp,
+      nbpLTV,
   revertRate,
   revertRateText,
       revertRateDD,

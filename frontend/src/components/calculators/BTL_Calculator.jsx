@@ -925,6 +925,7 @@ export default function BTLcalculator({ initialQuote = null }) {
           rent: monthlyRentNum,
           top_slicing: topSlicingNum,
           nbp: result.nbp,
+          nbpLTV: result.nbpLTV,
           total_cost_to_borrower: result.totalCostToBorrower,
           total_loan_term: result.totalLoanTerm,
           titleInsuranceCost: result.titleInsuranceCost,
@@ -1846,7 +1847,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                       'APRC','Admin Fee','Broker Client Fee','Broker Commission (Proc Fee %)',
                                       'Broker Commission (Proc Fee £)','Deferred Interest %','Deferred Interest £',
                                       'Direct Debit','ERC','Exit Fee','Full Term','Gross Loan','ICR','Initial Term',
-                                      'LTV','Monthly Interest Cost','NBP','Net Loan','Net LTV','Pay Rate','Product Fee %',
+                                      'LTV','Monthly Interest Cost','NBP','NBP LTV','Net Loan','Net LTV','Pay Rate','Product Fee %',
                                       'Product Fee £','Revert Rate','Revert Rate DD','Rolled Months','Rolled Months Interest',
                                       'Serviced Interest','Serviced Months','Title Insurance Cost','Total Cost to Borrower'
                                     ];
@@ -2058,6 +2059,11 @@ export default function BTLcalculator({ initialQuote = null }) {
                                         // NBP
                                         if (values['NBP']) {
                                           values['NBP'][colKey] = formatCurrency(result.nbp, 0);
+                                        }
+
+                                        // NBP LTV
+                                        if (values['NBP LTV'] && result.nbpLTV != null) {
+                                          values['NBP LTV'][colKey] = `${result.nbpLTV.toFixed(2)}%`;
                                         }
 
                                         // Revert Rate

@@ -1070,15 +1070,15 @@ const Products = ({ initialTab = 'btl' }) => {
           className={`slds-tabs_default__content ${mainTab === 'btl' ? 'slds-show' : 'slds-hide'}`}
           role="tabpanel"
         >
-          {/* BTL Sub Tabs */}
-          <div className="slds-tabs_scoped">
-            <ul className="slds-tabs_scoped__nav" role="tablist">
+          {/* BTL Sub Tabs – switch to default tabs to match Bridging */}
+          <div className="slds-tabs_default">
+            <ul className="slds-tabs_default__nav" role="tablist">
               <li 
-                className={`slds-tabs_scoped__item ${subTab === 'specialist' ? 'slds-is-active' : ''}`}
+                className={`slds-tabs_default__item ${subTab === 'specialist' ? 'slds-is-active' : ''}`}
                 role="presentation"
               >
                 <button
-                  className="slds-tabs_scoped__link"
+                  className="slds-tabs_default__link"
                   role="tab"
                   aria-selected={subTab === 'specialist'}
                   onClick={() => setSubTab('specialist')}
@@ -1087,11 +1087,11 @@ const Products = ({ initialTab = 'btl' }) => {
                 </button>
               </li>
               <li 
-                className={`slds-tabs_scoped__item ${subTab === 'core' ? 'slds-is-active' : ''}`}
+                className={`slds-tabs_default__item ${subTab === 'core' ? 'slds-is-active' : ''}`}
                 role="presentation"
               >
                 <button
-                  className="slds-tabs_scoped__link"
+                  className="slds-tabs_default__link"
                   role="tab"
                   aria-selected={subTab === 'core'}
                   onClick={() => setSubTab('core')}
@@ -1100,11 +1100,11 @@ const Products = ({ initialTab = 'btl' }) => {
                 </button>
               </li>
               <li 
-                className={`slds-tabs_scoped__item ${subTab === 'commercial' ? 'slds-is-active' : ''}`}
+                className={`slds-tabs_default__item ${subTab === 'commercial' ? 'slds-is-active' : ''}`}
                 role="presentation"
               >
                 <button
-                  className="slds-tabs_scoped__link"
+                  className="slds-tabs_default__link"
                   role="tab"
                   aria-selected={subTab === 'commercial'}
                   onClick={() => setSubTab('commercial')}
@@ -1113,11 +1113,11 @@ const Products = ({ initialTab = 'btl' }) => {
                 </button>
               </li>
               <li 
-                className={`slds-tabs_scoped__item ${subTab === 'semi-commercial' ? 'slds-is-active' : ''}`}
+                className={`slds-tabs_default__item ${subTab === 'semi-commercial' ? 'slds-is-active' : ''}`}
                 role="presentation"
               >
                 <button
-                  className="slds-tabs_scoped__link"
+                  className="slds-tabs_default__link"
                   role="tab"
                   aria-selected={subTab === 'semi-commercial'}
                   onClick={() => setSubTab('semi-commercial')}
