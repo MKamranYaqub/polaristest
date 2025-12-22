@@ -1,5 +1,5 @@
-@import './variables';
-@import './controls';
+@use './variables' as *;
+@use './controls' as *;
 
 // Calculator-specific SCSS (SLDS-compliant)
 .calculator-container {

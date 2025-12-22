@@ -346,22 +346,6 @@ function BridgeFusionRates() {
             <span className="total-count">Total: {getFilteredRowsCount()}</span>
           </div>
         </div>
-        <div className="pagination-row">
-          <div className="pagination-controls">
-            <button className="slds-button slds-button_neutral" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</button>
-            <span className="pagination-info">Page {currentPage} of {totalPages}</span>
-            <button className="slds-button slds-button_neutral" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
-            <div className="rows-per-page">
-              <label>Rows:</label>
-              <select value={itemsPerPage} onChange={(e) => { const v = Number(e.target.value); setItemsPerPage(v); setCurrentPage(1); }}>
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div className="filters-section">
@@ -493,6 +477,23 @@ function BridgeFusionRates() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="pagination-row">
+        <div className="pagination-controls">
+          <button className="slds-button slds-button_neutral" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</button>
+          <span className="pagination-info">Page {currentPage} of {totalPages}</span>
+          <button className="slds-button slds-button_neutral" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</button>
+          <div className="rows-per-page">
+            <label>Rows:</label>
+            <select value={itemsPerPage} onChange={(e) => { const v = Number(e.target.value); setItemsPerPage(v); setCurrentPage(1); }}>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {editing && <BridgeRateEditModal rate={editing} onSave={handleSave} onCancel={() => setEditing(null)} />}

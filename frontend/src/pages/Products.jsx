@@ -586,8 +586,8 @@ const Products = ({ initialTab = 'btl' }) => {
                           </div>
                         </div>
                       ) : (
-                        <div 
-                          className={`slds-truncate ${isAdmin && !isNA ? 'products-rate-cell__value' : ''}`}
+                        <div
+                          className={`slds-truncate ${isAdmin && !isNA ? 'products-rate-cell__value products-rate-cell--pointer' : 'products-rate-cell--default'}`}
                           onClick={() => {
                             if (isAdmin && !isNA && rateId) {
                               handleStartEdit(rateId, 'rate', rateValue, {
@@ -600,7 +600,6 @@ const Products = ({ initialTab = 'btl' }) => {
                               });
                             }
                           }}
-                          className={isAdmin && !isNA ? 'products-rate-cell--pointer' : 'products-rate-cell--default'}
                           title={isAdmin && !isNA ? 'Click to edit' : undefined}
                         >
                           {isNA ? 'N/a' : `${rateValue}%`}

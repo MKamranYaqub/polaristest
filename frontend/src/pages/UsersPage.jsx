@@ -32,6 +32,10 @@ const UsersPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState(null);
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+
   useEffect(() => {
     if (!isAdmin()) {
       setError('Access denied. Admin privileges required.');
@@ -206,6 +210,12 @@ const UsersPage = () => {
     return new Date(dateString).toLocaleString();
   };
 
+  // Pagination calculations
+  const totalPages = Math.ceil(users.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentUsers = users.slice(startIndex, endIndex);
+
   const handleEditClick = (user) => {
     setEditingUser({ ...user });
     setShowEditModal(true);
@@ -289,7 +299,7 @@ const UsersPage = () => {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {currentUsers.map((user) => (
                 <tr key={user.id}>
                   <td>{user.name}</td>
                   <td>{user.email}</td>
@@ -330,6 +340,35 @@ const UsersPage = () => {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="pagination-row">
+          <div className="pagination-controls">
+            <button 
+              className="slds-button slds-button_neutral"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+            <span className="pagination-info">Page {currentPage} of {totalPages}</span>
+            <button 
+              className="slds-button slds-button_neutral"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+            <div className="rows-per-page">
+              <label>Rows:</label>
+              <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 

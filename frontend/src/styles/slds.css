@@ -879,7 +879,7 @@ body,
 
 /* Compact card header: reduce vertical padding and heading size to make Product Setup card less tall */
 .slds-card__header {
-  padding: 0.rem 0.75rem; /* reduced from larger defaults */
+  padding: 0.5rem 0.75rem; /* reduced from larger defaults */
   display: flex;
   flex-direction: column;
   gap: 0.25rem;

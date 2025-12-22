@@ -2,7 +2,7 @@
 @use '@carbon/styles/scss/themes' as themes;
 
 // Import SLDS design tokens (Figma POC foundation)
-@import './slds-tokens.css';
+@use './slds-tokens.css' as *;
 
 // Establish the default Carbon light theme so component tokens resolve.
 :root {

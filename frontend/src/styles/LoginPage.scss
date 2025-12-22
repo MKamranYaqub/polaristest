@@ -1,5 +1,5 @@
 // Import SLDS variables for consistent input styling
-@import './variables';
+@use './variables' as *;
 
 // Login Page Styles - Matching Design Specifications
 .login-page-container {

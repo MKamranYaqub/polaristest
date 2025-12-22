@@ -340,9 +340,6 @@ export default function IssueDIPModal({
         if (!value) error = 'Please select title insurance option';
         break;
       case 'product_range':
-        if (!value) error = 'Please select fee type';
-        break;
-      case 'product_range':
         if (showProductRangeSelection && !value) error = 'Please select product range';
         break;
     }

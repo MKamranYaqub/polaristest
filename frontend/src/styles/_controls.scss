@@ -1,4 +1,6 @@
 // Shared UI controls used across calculators
+@use './variables' as *;
+
 .modern-switch {
   display: flex;
   align-items: center;

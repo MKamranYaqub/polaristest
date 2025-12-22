@@ -84,6 +84,16 @@
   margin-top: var(--token-spacing-sm);
 }
 
+/* Pagination row when positioned below table */
+.pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: var(--token-spacing-xl);
+  padding-top: var(--token-spacing-lg);
+  border-top: 1px solid var(--token-border-subtle);
+}
+
 /* Filter date range grouping */
 .filter-field-group {
   display: flex;
