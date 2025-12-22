@@ -30,6 +30,7 @@ function SalesforceNav() {
   
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [showSupportPanel, setShowSupportPanel] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Get user's first name
   const getUserFirstName = () => {
@@ -106,11 +107,16 @@ function SalesforceNav() {
     if (path) {
       navigate(path);
       setActiveDropdown(null);
+      setMobileMenuOpen(false);
     }
   };
 
   const toggleDropdown = (id) => {
     setActiveDropdown(activeDropdown === id ? null : id);
+  };
+  
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
   };
 
   const handleClickOutside = (e) => {
@@ -126,6 +132,12 @@ function SalesforceNav() {
 
   return (
     <div className="sf-nav-container">
+      {/* Mobile overlay */}
+      <div 
+        className={`mobile-nav-overlay ${mobileMenuOpen ? 'active' : ''}`}
+        onClick={() => setMobileMenuOpen(false)}
+      />
+      
       {/* Single Header Bar with Logo, Breadcrumbs, and Actions */}
       <div className="sf-global-header">
         <div className="sf-global-header__left">
@@ -148,9 +160,22 @@ function SalesforceNav() {
               </div>
             </div>
           )}
+          
+          {/* Mobile Menu Toggle */}
+          <button 
+            className={`mobile-menu-toggle ${mobileMenuOpen ? 'open' : ''}`}
+            onClick={toggleMobileMenu}
+            aria-label="Toggle mobile menu"
+          >
+            <div className="hamburger-icon">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </button>
         </div>
         
-        <div className="sf-global-header__right">
+        <div className={`sf-global-header__right ${mobileMenuOpen ? 'mobile-nav-open' : ''}`}>
           {/* Navigation Tabs */}
           <nav className="sf-nav-tabs">
           {navItems.map(item => {
