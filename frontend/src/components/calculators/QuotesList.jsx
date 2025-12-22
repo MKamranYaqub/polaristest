@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loading } from '@carbon/react';
 import { listQuotes, getQuote, deleteQuote } from '../../utils/quotes';
 import { API_BASE_URL } from '../../config/api';
 import SalesforceIcon from '../shared/SalesforceIcon';

@@ -36,7 +36,7 @@ export const ThemeProvider = ({ children }) => {
     }
     setResolvedTheme(theme);
     
-    // Update the data-carbon-theme attribute on html element for Carbon components
+    // Update the data-carbon-theme attribute on html element (kept for backward compatibility with existing styles)
     document.documentElement.setAttribute('data-carbon-theme', theme);
     
     // Also add/remove dark mode class on body for custom styles

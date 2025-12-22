@@ -1,12 +1,8 @@
-@use '@carbon/styles/scss/theme' as theme;
-@use '@carbon/styles/scss/themes' as themes;
-
 // Import SLDS design tokens (Figma POC foundation)
 @use './slds-tokens.css' as *;
 
-// Establish the default Carbon light theme so component tokens resolve.
+// Root token definitions
 :root {
-  @include theme.theme(themes.$g10);
 
   /* Typography */
   --token-font-family-base: 'Inter', 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
@@ -316,8 +312,6 @@
 }
 
 [data-carbon-theme='g90'] { 
-  @include theme.theme(themes.$g90);
-  
   /* Override colors for dark theme */
   --token-layer-background: #262626;
   --token-layer-surface: #393939;
@@ -342,8 +336,6 @@
 }
 
 [data-carbon-theme='g100'] { 
-  @include theme.theme(themes.$g100);
-  
   /* Override colors for dark theme */
   --token-layer-background: #161616;
   --token-layer-surface: #262626;

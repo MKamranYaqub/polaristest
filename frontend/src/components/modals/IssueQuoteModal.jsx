@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { InlineLoading } from '@carbon/react';
+import Spinner from '../ui/Spinner';
 import { useSaveShortcut, useEscapeKey } from '../../hooks/useKeyboardShortcut';
 import { useUiPreferences } from '../../hooks/useUiPreferences';
 import { useToast } from '../../contexts/ToastContext';
@@ -239,7 +239,7 @@ export default function IssueQuoteModal({
         onClick={handleSave}
         disabled={isSaving}
       >
-        {isSaving && <InlineLoading description="Saving..." />}
+        {isSaving && <Spinner size="small" label="Saving..." />}
         {!isSaving && 'Save Quote Data'}
       </button>
       <button
@@ -247,7 +247,7 @@ export default function IssueQuoteModal({
         onClick={handleCreatePDF}
         disabled={isSaving}
       >
-        {isSaving && <InlineLoading description="Creating..." />}
+        {isSaving && <Spinner size="small" label="Creating..." />}
         {!isSaving && 'Create Quote PDF'}
       </button>
     </>
