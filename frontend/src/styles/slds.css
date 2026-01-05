@@ -667,6 +667,7 @@ body,
 
 .slds-grid_vertical-align-center {
   align-items: center;
+  gap: 1rem;
 }
 
 .slds-grid_align-center {

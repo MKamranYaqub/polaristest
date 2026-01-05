@@ -34,7 +34,7 @@ X-API-Key: pk_live_xxxxxxxxxxxxxxxxxxxx
 
 ### Base URL
 ```
-Production: https://your-domain.com/api/reporting
+Production: https://polaristest.onrender.com/api/reporting
 Development: http://localhost:3001/api/reporting
 ```
 
@@ -59,7 +59,7 @@ Development: http://localhost:3001/api/reporting
 
 **Example Request:**
 ```http
-GET /api/reporting/quotes?page=1&pageSize=1000&from=2025-01-01&calculator_type=btl
+GET https://polaristest.onrender.com/api/reporting/quotes?page=1&pageSize=1000&from=2025-01-01&calculator_type=btl
 X-API-Key: pk_live_xxxxxxxxxxxxxxxxxxxx
 ```
 

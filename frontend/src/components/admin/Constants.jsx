@@ -1144,7 +1144,7 @@ export default function Constants() {
       <WelcomeHeader />
       <p className="helper-text">Edit product lists, fee columns and LTV thresholds.</p>
       <div className="slds-actions">
-        <button className="slds-button slds-button_destructive" onClick={resetToDefaults}>Reset defaults</button>
+        <button className="slds-button slds-button_destructive" onClick={resetToDefaults} style={{ display: 'none' }}>Reset defaults</button>
         <button className="slds-button slds-button_brand" onClick={saveToStorage} disabled={saving}>
           {saving ? 'Saving...' : 'Save All to Database'}
         </button>
@@ -1781,7 +1781,7 @@ export default function Constants() {
       {/* Flat-above-commercial override removed — rule is now hard-coded in calculator logic per user request. */}
 
       <div className="slds-actions">
-        <button className="slds-button slds-button_destructive" onClick={resetToDefaults}>Reset defaults</button>
+        <button className="slds-button slds-button_destructive" onClick={resetToDefaults} style={{ display: 'none' }}>Reset defaults</button>
         <button className="slds-button slds-button_brand" onClick={saveToStorage} disabled={saving}>
           {saving ? 'Saving...' : 'Save All to Database'}
         </button>

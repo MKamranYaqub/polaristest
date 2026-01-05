@@ -373,6 +373,7 @@ export default function UWRequirementsAdmin() {
               className="slds-button slds-button_neutral slds-m-right_x-small"
               onClick={resetToDefaults}
               title="Reset all to defaults (removes customizations)"
+              style={{ display: 'none' }}
             >
               <SalesforceIcon name="refresh" size="x-small" className="slds-button__icon slds-button__icon_left" />
               Reset

@@ -28,7 +28,7 @@ This guide covers how to create, manage, and revoke API keys for external system
 
 ### Base URL
 ```
-Production: https://your-domain.com/api/admin/api-keys
+Production: https://polaristest.onrender.com/api/admin/api-keys
 Development: http://localhost:3001/api/admin/api-keys
 ```
 

@@ -287,6 +287,77 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 </div>
 ```
 
+#### Admin Tables - ALWAYS Use Professional Table Styling
+
+**CRITICAL:** All admin tables (users, rates, API keys, quotes, etc.) MUST use the standardized `professional-table` styling from `admin-tables.css` for consistency across the application.
+
+```jsx
+// ✅ GOOD - Professional Admin Table
+import '../../styles/admin-tables.css';
+
+function MyAdminTable() {
+  return (
+    <div className="table-wrapper">
+      <table className="professional-table">
+        <thead>
+          <tr>
+            <th className="sortable sorted-asc" onClick={() => handleSort('name')}>
+              Name
+            </th>
+            <th className="sortable" onClick={() => handleSort('created')}>
+              Created
+            </th>
+            <th className="sticky-action">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map(item => (
+            <tr key={item.id}>
+              <td><strong>{item.name}</strong></td>
+              <td>{formatDate(item.created_at)}</td>
+              <td className="sticky-action">
+                <div className="row-actions">
+                  <button className="slds-button slds-button_neutral">
+                    Edit
+                  </button>
+                  <button className="slds-button slds-button_destructive">
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ❌ BAD - Using SLDS table classes directly for admin tables
+<table className="slds-table slds-table_bordered">
+  <thead>
+    <tr className="slds-line-height_reset">
+      <th scope="col">
+        <div className="slds-truncate">Name</div>
+      </th>
+    </tr>
+  </thead>
+</table>
+```
+
+**Key Features of Professional Tables:**
+- **Sticky Actions Column:** Use `className="sticky-action"` on the last column header and cells
+- **Sortable Headers:** Add `className="sortable"` to enable sorting, plus `sorted-asc` or `sorted-desc` for active sort
+- **Hover Effects:** Automatic row hover highlighting via `admin-tables.css`
+- **Consistent Spacing:** All padding/margins use design tokens
+- **Dark Mode Support:** Full theme compatibility through token system
+- **Table Wrapper:** Always wrap tables in `<div className="table-wrapper">` for scrolling and shadow effects
+
+**Examples in Codebase:**
+- BTL Rates Table: `components/admin/RatesTable.jsx`
+- API Keys Table: `components/admin/ApiKeysManagement.jsx`
+- Users Table: `components/admin/UsersTable.jsx`
+
 ---
 
 ## State Management

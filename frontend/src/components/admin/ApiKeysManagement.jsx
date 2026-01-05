@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { API_BASE_URL } from '../../config/api';
 import WelcomeHeader from '../shared/WelcomeHeader';
+import '../../styles/admin-tables.css';
 
 /**
  * API Keys Management Component
@@ -20,28 +21,36 @@ import WelcomeHeader from '../shared/WelcomeHeader';
 function MaskedKey({ value }) {
   const [show, setShow] = useState(false);
   return (
-    <div className="slds-grid slds-grid_vertical-align-center">
-      <span className="slds-truncate" style={{ maxWidth: '28rem', fontFamily: 'monospace' }}>
-        {show ? value : '••••••••••••••••••••••••••••••••'}
-      </span>
-      <div className="slds-button_group slds-m-left_x-small" role="group">
-        <button 
-          className="slds-button slds-button_neutral" 
-          onClick={() => setShow(s => !s)}
-          type="button"
-        >
-          {show ? 'Hide' : 'Reveal'}
-        </button>
-        <button 
-          className="slds-button slds-button_neutral" 
-          onClick={() => {
-            navigator.clipboard.writeText(value);
+    <div className="slds-grid slds-wrap" style={{ gap: 'var(--token-form-field-gap)' }}>
+      <div className="slds-col slds-size_1-of-1 slds-medium-size_2-of-3 slds-large-size_3-of-4">
+        <input
+          type="text"
+          className="slds-input"
+          value={show ? value : '••••••••••••••••••••••••••••••••'}
+          readOnly
+          style={{ 
+            fontFamily: 'monospace',
+            fontSize: 'var(--token-font-size-large)',
+            padding: 'var(--token-spacing-medium)'
           }}
-          type="button"
-        >
-          Copy
-        </button>
+        />
       </div>
+      <button 
+        className="slds-button slds-button_neutral" 
+        onClick={() => setShow(s => !s)}
+        type="button"
+      >
+        {show ? 'Hide' : 'Reveal'}
+      </button>
+      <button 
+        className="slds-button slds-button_brand" 
+        onClick={() => {
+          navigator.clipboard.writeText(value);
+        }}
+        type="button"
+      >
+        Copy
+      </button>
     </div>
   );
 }
@@ -231,34 +240,6 @@ export default function ApiKeysManagement() {
         </div>
       )}
 
-      {/* Show newly created key (only once) */}
-      {createdKey && (
-        <div className="slds-notify slds-notify_alert slds-theme_success slds-m-bottom_medium" role="alert">
-          <span className="slds-assistive-text">Success</span>
-          <div className="slds-m-bottom_small">
-            <h2 className="slds-text-heading_small slds-m-bottom_x-small">
-              ✅ API Key Created: {createdKey.name}
-            </h2>
-            <p className="slds-text-body_small slds-m-bottom_small">
-              <strong>⚠️ IMPORTANT:</strong> Copy this key now. It cannot be retrieved later!
-            </p>
-            <MaskedKey value={createdKey.apiKey} />
-            {createdKey.expiresAt && (
-              <p className="slds-text-body_small slds-m-top_small">
-                Expires: {formatDate(createdKey.expiresAt)}
-              </p>
-            )}
-          </div>
-          <button 
-            className="slds-button slds-button_neutral"
-            onClick={() => setCreatedKey(null)}
-            type="button"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
       {/* Create New API Key Form */}
       <div className="slds-box slds-m-bottom_medium">
         <h2 className="slds-text-heading_small slds-m-bottom_medium">Create New API Key</h2>
@@ -328,7 +309,7 @@ export default function ApiKeysManagement() {
                   &nbsp;
                 </label>
                 <div className="slds-form-element__control">
-                  <button type="submit" className="slds-button slds-button_brand" style={{ width: '100%' }}>
+                  <button type="submit" className="slds-button slds-button_brand" >
                     Create API Key
                   </button>
                 </div>
@@ -338,6 +319,34 @@ export default function ApiKeysManagement() {
           </div>
         </form>
       </div>
+
+      {/* Show newly created key (only once) */}
+      {createdKey && (
+        <div className="slds-notify slds-notify_alert slds-theme_success slds-m-bottom_medium" role="alert" style={{ padding: 'var(--token-spacing-large)', borderRadius: 'var(--token-border-radius-medium)' }}>
+          <span className="slds-assistive-text">Success</span>
+          <div className="slds-m-bottom_small">
+            <h2 className="slds-text-heading_small slds-m-bottom_x-small">
+              ✅ API Key Created: {createdKey.name}
+            </h2>
+            <p className="slds-text-body_small slds-m-bottom_small">
+              <strong>⚠️ IMPORTANT:</strong> Copy this key now. It cannot be retrieved later!
+            </p>
+            <MaskedKey value={createdKey.apiKey} />
+            {createdKey.expiresAt && (
+              <p className="slds-text-body_small slds-m-top_small">
+                Expires: {formatDate(createdKey.expiresAt)}
+              </p>
+            )}
+          </div>
+          <button 
+            className="slds-button slds-button_neutral"
+            onClick={() => setCreatedKey(null)}
+            type="button"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* API Keys List */}
       <div className="slds-box">
@@ -352,69 +361,37 @@ export default function ApiKeysManagement() {
             </p>
           </div>
         ) : (
-          <div className="slds-table_container">
-            <table className="slds-table slds-table_cell-buffer slds-table_bordered">
+          <div className="table-wrapper">
+            <table className="professional-table">
               <thead>
-                <tr className="slds-line-height_reset">
-                  <th scope="col">
-                    <div className="slds-truncate" title="Name">Name</div>
-                  </th>
-                  <th scope="col">
-                    <div className="slds-truncate" title="Status">Status</div>
-                  </th>
-                  <th scope="col">
-                    <div className="slds-truncate" title="Created">Created</div>
-                  </th>
-                  <th scope="col">
-                    <div className="slds-truncate" title="Expires">Expires</div>
-                  </th>
-                  <th scope="col">
-                    <div className="slds-truncate" title="Last Used">Last Used</div>
-                  </th>
-                  <th scope="col">
-                    <div className="slds-truncate" title="Notes">Notes</div>
-                  </th>
-                  <th scope="col">
-                    <div className="slds-truncate" title="Actions">Actions</div>
-                  </th>
+                <tr>
+                  <th>Name</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th>Expires</th>
+                  <th>Last Used</th>
+                  <th>Notes</th>
+                  <th className="sticky-action">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {apiKeys.map((key) => (
-                  <tr key={key.id} className="slds-hint-parent">
-                    <td data-label="Name">
-                      <div className="slds-truncate" title={key.name}>
-                        <strong>{key.name}</strong>
-                      </div>
+                  <tr key={key.id}>
+                    <td>
+                      <strong>{key.name}</strong>
                     </td>
-                    <td data-label="Status">
+                    <td>
                       <StatusBadge isActive={key.is_active} />
                     </td>
-                    <td data-label="Created">
-                      <div className="slds-truncate" title={formatDate(key.created_at)}>
-                        {formatDate(key.created_at)}
-                      </div>
-                    </td>
-                    <td data-label="Expires">
-                      <div className="slds-truncate" title={formatDate(key.expires_at)}>
-                        {formatDate(key.expires_at)}
-                      </div>
-                    </td>
-                    <td data-label="Last Used">
-                      <div className="slds-truncate" title={formatDate(key.last_used_at)}>
-                        {formatDate(key.last_used_at)}
-                      </div>
-                    </td>
-                    <td data-label="Notes">
-                      <div className="slds-truncate" title={key.notes || '—'}>
-                        {key.notes || '—'}
-                      </div>
-                    </td>
-                    <td data-label="Actions">
-                      <div className="slds-button-group" role="group">
+                    <td>{formatDate(key.created_at)}</td>
+                    <td>{formatDate(key.expires_at)}</td>
+                    <td>{formatDate(key.last_used_at)}</td>
+                    <td>{key.notes || '—'}</td>
+                    <td className="sticky-action">
+                      <div className="row-actions">
                         {key.is_active ? (
                           <button
-                            className="slds-button slds-button_neutral slds-button_small"
+                            className="slds-button slds-button_neutral"
                             onClick={() => handleRevoke(key.id, key.name)}
                             title="Revoke this API key"
                             type="button"
@@ -423,7 +400,7 @@ export default function ApiKeysManagement() {
                           </button>
                         ) : (
                           <button
-                            className="slds-button slds-button_success slds-button_small"
+                            className="slds-button slds-button_success"
                             onClick={() => handleActivate(key.id, key.name)}
                             title="Activate this API key"
                             type="button"
@@ -432,7 +409,7 @@ export default function ApiKeysManagement() {
                           </button>
                         )}
                         <button
-                          className="slds-button slds-button_destructive slds-button_small"
+                          className="slds-button slds-button_destructive"
                           onClick={() => handleDelete(key.id, key.name)}
                           title="Permanently delete this API key"
                           type="button"
@@ -454,7 +431,10 @@ export default function ApiKeysManagement() {
         <h3 className="slds-text-heading_small slds-m-bottom_small">📘 Usage Instructions</h3>
         <ul className="slds-list_dotted">
           <li>
-            <strong>Power BI Connection:</strong> Use the API key in the <code>X-API-Key</code> header when connecting to <code>/api/reporting/*</code> endpoints
+            <strong>API Endpoint:</strong> <code>https://polaristest.onrender.com/api/reporting/quotes</code>
+          </li>
+          <li>
+            <strong>Power BI Connection:</strong> Use the API key in the <code>X-API-Key</code> header when connecting to reporting endpoints
           </li>
           <li>
             <strong>Rate Limits:</strong> Each API key is limited to 100 requests per hour

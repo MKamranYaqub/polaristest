@@ -105,7 +105,6 @@
   font-size: var(--token-font-size-xs);
   font-weight: var(--token-font-weight-medium);
   color: var(--token-text-secondary);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
@@ -308,7 +307,6 @@
   font-weight: var(--token-font-weight-semibold);
   color: var(--token-text-primary);
   font-size: var(--token-font-size-xs);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
@@ -426,7 +424,6 @@
   font-weight: var(--token-font-weight-semibold);
   font-size: var(--token-font-size-xs);
   color: var(--token-text-primary);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 2px solid var(--token-interactive);
   white-space: nowrap;

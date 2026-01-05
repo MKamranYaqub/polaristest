@@ -1467,6 +1467,7 @@ export default function GlobalSettings() {
           onClick={handleReset}
           disabled={saving}
           type="button"
+          style={{ display: 'none' }}
         >
           Reset to Defaults
         </button>
