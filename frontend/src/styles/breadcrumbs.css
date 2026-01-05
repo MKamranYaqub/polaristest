@@ -1,7 +1,7 @@
 /* Salesforce Lightning Design System Breadcrumbs */
 
 .slds-breadcrumb {
-  margin-bottom: 1rem;
+  margin-bottom: var(--token-spacing-16);
 }
 
 .slds-breadcrumb__list {
@@ -11,21 +11,21 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  gap: 0.5rem;
+  gap: var(--token-spacing-8);
 }
 
 .slds-breadcrumb__item {
   display: inline-flex;
   align-items: center;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
+  font-size: var(--token-font-size-sm);
+  line-height: var(--token-spacing-20);
 }
 
 .slds-breadcrumb__item:not(:last-child)::after {
   content: '›';
-  margin-left: 0.5rem;
+  margin-left: var(--token-spacing-8);
   color: var(--slds-color-text-weak, #706e6b);
-  font-size: 1rem;
+  font-size: var(--token-font-size-md);
 }
 
 .slds-breadcrumb__link {
@@ -40,9 +40,9 @@
 }
 
 .slds-breadcrumb__link:focus {
-  outline: 2px solid var(--slds-color-border-focus, #0176d3);
-  outline-offset: 2px;
-  border-radius: 0.125rem;
+  outline: var(--token-spacing-2) solid var(--slds-color-border-focus, #0176d3);
+  outline-offset: var(--token-spacing-2);
+  border-radius: var(--token-spacing-2);
 }
 
 .slds-breadcrumb__current {
@@ -70,6 +70,6 @@
 /* Responsive */
 @media (max-width: 768px) {
   .slds-breadcrumb__list {
-    font-size: 0.8125rem;
+    font-size: var(--token-font-size-xs-plus);
   }
 }

@@ -3,6 +3,7 @@ import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/render
 import { styles } from './shared/PDFStyles';
 import { btlQuoteStyles } from './shared/BTLQuoteStyles';
 import PDFFooter from './shared/PDFFooter';
+import { PDF_COLORS } from './shared/pdfColorConstants';
 import * as h from './utils/bridgingQuoteHelpers';
 
 // Logo path from public folder
@@ -128,7 +129,7 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
         {/* Header */}
         <View style={btlQuoteStyles.headerRow}>
           <Text style={btlQuoteStyles.headerTitle}>Bridging Finance - Indicative Quote</Text>
-          <Text style={{ fontSize: 10, color: '#706e6b' }}>Reference: {quoteReference}</Text>
+          <Text style={{ fontSize: 10, color: 'var(--token-text-muted)' }}>Reference: {quoteReference}</Text>
         </View>
 
         {/* Summary Grid */}
@@ -170,15 +171,15 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
         <View style={btlQuoteStyles.resultsTable}>
           {/* Table Header with Colored Columns */}
           <View style={btlQuoteStyles.tableHeaderRow}>
-            <Text style={[btlQuoteStyles.tableHeaderCell, { width: labelWidth, textAlign: 'left', backgroundColor: '#f2f2f2' }]}>
+            <Text style={[btlQuoteStyles.tableHeaderCell, { width: labelWidth, textAlign: 'left', backgroundColor: PDF_COLORS.bgMedium }]}>
               Field
             </Text>
             {displayProductTypes.map((productType, index) => {
               // Define colors for each column matching calculator: Navy, Navy 500, Orange
-              const columnColors = ['#002855', '#1B3B6F', '#E84E0F'];
+              const columnColors = [PDF_COLORS.columnNavy, PDF_COLORS.columnNavy500, PDF_COLORS.columnOrange];
               const bgColor = columnColors[index] || '#002855';
               return (
-                <Text key={index} style={[btlQuoteStyles.tableHeaderCell, { width: valueWidth, backgroundColor: bgColor, color: '#ffffff' }]}>
+                <Text key={index} style={[btlQuoteStyles.tableHeaderCell, { width: valueWidth, backgroundColor: bgColor, color: 'var(--token-color-white)' }]}>
                   {productType}
                 </Text>
               );
@@ -536,7 +537,7 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
           paddingVertical: 15,
           borderBottom: '1px solid #c9c9c9'
         }}>
-          <Text style={{ fontSize: 14, fontWeight: 700, color: '#00205B' }}>
+          <Text style={{ fontSize: 14, fontWeight: 700, color: 'var(--token-color-brand-navy)' }}>
             Packaging List
           </Text>
           <View style={{ width: 80, height: 32 }} />
@@ -545,17 +546,17 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
         <View style={{ padding: '20px 40px' }}>
           {/* Product Type and Date Section */}
           <View style={{ 
-            backgroundColor: '#dd7a01', 
+            backgroundColor: PDF_COLORS.columnOrangeDark, 
             padding: '8px 16px', 
             marginBottom: 10,
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center'
           }}>
-            <Text style={{ fontSize: 11, fontWeight: 700, color: '#ffffff' }}>
+            <Text style={{ fontSize: 11, fontWeight: 700, color: PDF_COLORS.textWhite }}>
               Bridging/Fusion – {quote.property_type || 'Residential'}
             </Text>
-            <Text style={{ fontSize: 11, fontWeight: 700, color: '#ffffff' }}>
+            <Text style={{ fontSize: 11, fontWeight: 700, color: 'var(--token-color-white)' }}>
               {new Date(quote.created_at || Date.now()).toLocaleDateString()}
             </Text>
           </View>
@@ -567,17 +568,17 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
 
           {/* DIP List Header */}
           <View style={{ 
-            backgroundColor: '#032d60', 
+            backgroundColor: PDF_COLORS.columnNavyDark, 
             padding: '8px 12px', 
             marginBottom: 10
           }}>
-            <Text style={{ fontSize: 12, fontWeight: 700, color: '#ffffff', textAlign: 'center' }}>
+            <Text style={{ fontSize: 12, fontWeight: 700, color: PDF_COLORS.textWhite, textAlign: 'center' }}>
               DIP List
             </Text>
           </View>
 
           {/* DIP List Items */}
-          <View style={{ border: '1px solid #dddbda', padding: 12 }}>
+          <View style={{ border: '1px solid var(--token-border-medium)', padding: 12 }}>
             {[
               {
                 label: 'Property address and description:',
@@ -642,7 +643,7 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
                   <Text style={{ fontSize: 10, fontWeight: 700 }}>
                     {item.label}
                   </Text>
-                  <Text style={{ fontSize: 9, color: '#5C5C5C', marginTop: 2, lineHeight: 1.3 }}>
+                  <Text style={{ fontSize: 9, color: 'var(--token-text-secondary)', marginTop: 2, lineHeight: 1.3 }}>
                     {item.value}
                   </Text>
                 </View>
@@ -658,4 +659,5 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
 };
 
 export default BridgingQuotePDF;
+
 

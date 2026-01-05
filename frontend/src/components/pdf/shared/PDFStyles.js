@@ -1,4 +1,5 @@
 import { StyleSheet } from '@react-pdf/renderer';
+import { PDF_COLORS } from './pdfColorConstants';
 
 export const styles = StyleSheet.create({
   page: {
@@ -8,7 +9,7 @@ export const styles = StyleSheet.create({
     paddingRight: 30,
     fontSize: 10,
     fontFamily: 'Helvetica',
-    backgroundColor: '#ffffff',
+    backgroundColor: PDF_COLORS.bgWhite,
   },
   
   // Header styles
@@ -20,13 +21,13 @@ export const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#0176d3',
+    color: PDF_COLORS.brandInfo,
     textAlign: 'center',
     marginBottom: 5,
   },
   subtitle: {
     fontSize: 10,
-    color: '#706e6b',
+    color: PDF_COLORS.textMuted,
     textAlign: 'center',
     marginBottom: 3,
   },
@@ -41,13 +42,13 @@ export const styles = StyleSheet.create({
   section: {
     marginBottom: 15,
     padding: 10,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: PDF_COLORS.bgLight,
     borderRadius: 3,
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#0176d3',
+    color: PDF_COLORS.brandInfo,
     marginBottom: 8,
     borderBottom: '1pt solid #dddbda',
     paddingBottom: 3,
@@ -56,7 +57,7 @@ export const styles = StyleSheet.create({
   // Text styles
   label: {
     fontSize: 9,
-    color: '#706e6b',
+    color: PDF_COLORS.textMuted,
     marginBottom: 2,
   },
   value: {
@@ -78,7 +79,7 @@ export const styles = StyleSheet.create({
   rowLabel: {
     fontSize: 10,
     width: '45%',
-    color: '#706e6b',
+    color: PDF_COLORS.textMuted,
   },
   rowValue: {
     fontSize: 10,
@@ -93,9 +94,9 @@ export const styles = StyleSheet.create({
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#0176d3',
+    backgroundcolor: PDF_COLORS.brandInfo,
     padding: 6,
-    color: '#ffffff',
+    color: PDF_COLORS.textWhite,
     fontWeight: 'bold',
     fontSize: 9,
   },
@@ -108,7 +109,7 @@ export const styles = StyleSheet.create({
   tableRowAlt: {
     flexDirection: 'row',
     borderBottom: '1pt solid #dddbda',
-    backgroundColor: '#f3f2f2',
+    backgroundColor: PDF_COLORS.bgSubtle,
     padding: 6,
     fontSize: 9,
   },
@@ -122,26 +123,26 @@ export const styles = StyleSheet.create({
   
   // Info box styles
   infoBox: {
-    backgroundColor: '#d8edff',
+    backgroundColor: PDF_COLORS.bgInfo,
     border: '1pt solid #0176d3',
     padding: 10,
     marginVertical: 8,
     borderRadius: 3,
   },
   infoIcon: {
-    color: '#0176d3',
+    color: PDF_COLORS.brandInfo,
     fontSize: 12,
     marginRight: 5,
   },
   infoText: {
     fontSize: 9,
-    color: '#014486',
+    color: PDF_COLORS.brandBlueDark,
     lineHeight: 1.4,
   },
   
   // Warning box styles
   warningBox: {
-    backgroundColor: '#fef7e5',
+    backgroundColor: PDF_COLORS.bgWarning,
     border: '1pt solid #dd7a01',
     padding: 10,
     marginVertical: 8,
@@ -149,7 +150,7 @@ export const styles = StyleSheet.create({
   },
   warningText: {
     fontSize: 9,
-    color: '#826100',
+    color: PDF_COLORS.textWarning,
     lineHeight: 1.4,
   },
   
@@ -162,7 +163,7 @@ export const styles = StyleSheet.create({
     borderTop: '1pt solid #dddbda',
     paddingTop: 8,
     fontSize: 8,
-    color: '#706e6b',
+    color: PDF_COLORS.textMuted,
     textAlign: 'center',
   },
   
@@ -194,14 +195,16 @@ export const styles = StyleSheet.create({
   // Currency
   currency: {
     fontWeight: 'bold',
-    color: '#080707',
+    color: PDF_COLORS.textDark,
   },
   
   // Highlighted value
   highlight: {
-    backgroundColor: '#fef7e5',
+    backgroundColor: PDF_COLORS.bgWarning,
     padding: 4,
     borderRadius: 2,
     fontWeight: 'bold',
   },
 });
+
+

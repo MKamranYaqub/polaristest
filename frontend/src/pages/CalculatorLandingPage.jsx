@@ -16,12 +16,12 @@ const CalculatorLandingPage = () => {
   ];
 
   return (
-    <div className="slds-p-around_none" style={{ backgroundColor: '#f8f9fb', minHeight: '100vh' }}>
+    <div className="slds-p-around_none" style={{ backgroundColor: 'var(--token-ui-background-neutral)', minHeight: '100vh' }}>
       {/* Premium Hero Section */}
       <div 
         className="slds-p-around_none" 
         style={{ 
-          background: 'linear-gradient(135deg, #00205B 0%, #003d8f 50%, #E84E0F 100%)',
+          background: 'linear-gradient(135deg, var(--token-color-brand-navy) 0%, #003d8f 50%, var(--token-color-brand-orange) 100%)',
           position: 'relative',
           overflow: 'hidden',
           padding: '5rem 2rem'
@@ -48,7 +48,7 @@ const CalculatorLandingPage = () => {
               marginBottom: '2rem',
               border: '1px solid rgba(232, 78, 15, 0.3)'
             }}>
-              <span style={{ color: '#E84E0F', fontSize: '0.875rem', fontWeight: '600', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>🚀 SMART CALCULATORS</span>
+              <span style={{ color: 'var(--token-color-brand-orange)', fontSize: 'var(--token-font-size-sm)', fontWeight: '600', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>🚀 SMART CALCULATORS</span>
             </div>
             
             <h1 
@@ -97,10 +97,10 @@ const CalculatorLandingPage = () => {
                     border: '1px solid rgba(255,255,255,0.2)',
                     justifyContent: 'center'
                   }}>
-                    <svg className="slds-icon slds-icon_xx-small" aria-hidden="true" style={{ fill: '#E84E0F', flexShrink: 0 }}>
+                    <svg className="slds-icon slds-icon_xx-small" aria-hidden="true" style={{ fill: 'var(--token-color-brand-orange)', flexShrink: 0 }}>
                       <use xlinkHref={`/assets/icons/utility-sprite/svg/symbols.svg#${feature.icon}`}></use>
                     </svg>
-                    <span style={{ color: 'white', fontSize: '0.875rem', fontWeight: '600', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', whiteSpace: 'nowrap' }}>{feature.title}</span>
+                    <span style={{ color: 'white', fontSize: 'var(--token-font-size-sm)', fontWeight: '600', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', whiteSpace: 'nowrap' }}>{feature.title}</span>
                   </div>
                 </div>
               ))}
@@ -149,13 +149,13 @@ const CalculatorLandingPage = () => {
                       </span>
                     </div>
                     <div className="slds-media__body slds-grid slds-grid_vertical-align-center">
-                      <h2 className="slds-text-heading_medium" style={{ color: '#00205B', fontWeight: '600', fontSize: '1.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
+                      <h2 className="slds-text-heading_medium" style={{ color: 'var(--token-color-brand-navy)', fontWeight: '600', fontSize: '1.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
                         Buy-to-Let Calculator
                       </h2>
                     </div>
                   </div>
                   
-                  <p style={{ fontSize: '0.9375rem', color: '#6b7280', lineHeight: '1.7', marginBottom: '1.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
+                  <p style={{ fontSize: '0.9375rem', color: 'var(--token-text-secondary)', lineHeight: '1.7', marginBottom: '1.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
                     Flexible buy-to-let mortgages designed to support both new and experienced landlords.
                     Ideal for complex circumstances including foreign nationals, expats, and offshore companies.
                   </p>
@@ -164,10 +164,10 @@ const CalculatorLandingPage = () => {
                     <ul className="slds-list_vertical slds-has-block-links_space">
                       {['Loan amounts from £150k to £3m per property', 'Up to 75% LTV', 'Deferred interest options', 'Bespoke underwriting'].map((item, i) => (
                         <li key={i} className="slds-item display-flex align-items-center" style={{ marginBottom: '0.75rem' }}>
-                          <svg className="slds-icon slds-icon_x-small" style={{ fill: '#10b981', flexShrink: 0, marginRight: '0.75rem' }} aria-hidden="true">
+                          <svg className="slds-icon slds-icon_x-small" style={{ fill: 'var(--token-success)', flexShrink: 0, marginRight: '0.75rem' }} aria-hidden="true">
                             <use xlinkHref="/assets/icons/utility-sprite/svg/symbols.svg#check"></use>
                           </svg>
-                          <span style={{ color: '#374151', fontSize: '0.875rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{item}</span>
+                          <span style={{ color: 'var(--token-text-primary)', fontSize: 'var(--token-font-size-sm)', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{item}</span>
                         </li>
                       ))}
                     </ul>
@@ -179,8 +179,8 @@ const CalculatorLandingPage = () => {
                     to="/calculator/btl"
                     className="slds-button slds-button_brand" 
                     style={{ 
-                      background: 'linear-gradient(135deg, #00205B 0%, #003d8f 100%)', 
-                      borderColor: '#00205B',
+                      background: 'linear-gradient(135deg, var(--token-color-brand-navy) 0%, #003d8f 100%)', 
+                      borderColor: 'var(--token-color-brand-navy)',
                       height: '48px',
                       fontSize: '0.9375rem',
                       fontWeight: '600',
@@ -239,13 +239,13 @@ const CalculatorLandingPage = () => {
                       </span>
                     </div>
                     <div className="slds-media__body slds-grid slds-grid_vertical-align-center">
-                      <h2 className="slds-text-heading_medium" style={{ color: '#00205B', fontWeight: '600', fontSize: '1.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
+                      <h2 className="slds-text-heading_medium" style={{ color: 'var(--token-color-brand-navy)', fontWeight: '600', fontSize: '1.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
                         Bridging Calculator
                       </h2>
                     </div>
                   </div>
                   
-                  <p style={{ fontSize: '0.9375rem', color: '#6b7280', lineHeight: '1.7', marginBottom: '1.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
+                  <p style={{ fontSize: '0.9375rem', color: 'var(--token-text-secondary)', lineHeight: '1.7', marginBottom: '1.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
                     Fast, flexible bridging finance for residential and commercial properties.
                     We can issue funds in as little as 3 days to help you seize opportunities.
                   </p>
@@ -254,10 +254,10 @@ const CalculatorLandingPage = () => {
                     <ul className="slds-list_vertical slds-has-block-links_space">
                       {['Loans from £100k to £50m', 'Up to 75% LTV', 'Residential & Commercial', 'Auction & Refurbishment'].map((item, i) => (
                         <li key={i} className="slds-item display-flex align-items-center" style={{ marginBottom: '0.75rem' }}>
-                          <svg className="slds-icon slds-icon_x-small" style={{ fill: '#10b981', flexShrink: 0, marginRight: '0.75rem' }} aria-hidden="true">
+                          <svg className="slds-icon slds-icon_x-small" style={{ fill: 'var(--token-success)', flexShrink: 0, marginRight: '0.75rem' }} aria-hidden="true">
                             <use xlinkHref="/assets/icons/utility-sprite/svg/symbols.svg#check"></use>
                           </svg>
-                          <span style={{ color: '#374151', fontSize: '0.875rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{item}</span>
+                          <span style={{ color: 'var(--token-text-primary)', fontSize: 'var(--token-font-size-sm)', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{item}</span>
                         </li>
                       ))}
                     </ul>
@@ -269,8 +269,8 @@ const CalculatorLandingPage = () => {
                     to="/calculator/bridging"
                     className="slds-button slds-button_brand" 
                     style={{ 
-                      background: 'linear-gradient(135deg, #E84E0F 0%, #d13a00 100%)', 
-                      borderColor: '#E84E0F',
+                      background: 'linear-gradient(135deg, var(--token-color-brand-orange) 0%, #d13a00 100%)', 
+                      borderColor: 'var(--token-color-brand-orange)',
                       height: '48px',
                       fontSize: '0.9375rem',
                       fontWeight: '600',
@@ -295,10 +295,10 @@ const CalculatorLandingPage = () => {
         {/* How It Works Section */}
         <div style={{ marginTop: '5rem' }}>
           <div className="slds-text-align_center" style={{ marginBottom: '4rem' }}>
-            <h2 style={{ fontSize: '2rem', color: '#00205B', fontWeight: '600', marginBottom: '1rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', letterSpacing: '-0.01em' }}>
+            <h2 style={{ fontSize: '2rem', color: 'var(--token-color-brand-navy)', fontWeight: '600', marginBottom: '1rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', letterSpacing: '-0.01em' }}>
               How It Works
             </h2>
-            <p style={{ fontSize: '1.0625rem', color: '#6b7280', maxWidth: '600px', margin: '0 auto', lineHeight: '1.6', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
+            <p style={{ fontSize: '1.0625rem', color: 'var(--token-text-secondary)', maxWidth: '600px', margin: '0 auto', lineHeight: '1.6', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
               Simple, fast, accurate — get professional quotes in 3 easy steps
             </p>
           </div>
@@ -311,7 +311,7 @@ const CalculatorLandingPage = () => {
                     width: '80px',
                     height: '80px',
                     margin: '0 auto 1.5rem',
-                    background: 'linear-gradient(135deg, #00205B 0%, #E84E0F 100%)',
+                    background: 'linear-gradient(135deg, var(--token-color-brand-navy) 0%, var(--token-color-brand-orange) 100%)',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
@@ -326,24 +326,24 @@ const CalculatorLandingPage = () => {
                       position: 'absolute',
                       top: '-8px',
                       right: '-8px',
-                      background: '#E84E0F',
+                      background: 'var(--token-color-brand-orange)',
                       width: '32px',
                       height: '32px',
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '0.875rem',
+                      fontSize: 'var(--token-font-size-sm)',
                       fontWeight: '700',
                       color: 'white',
                       boxShadow: '0 4px 12px rgba(232,78,15,0.3)',
                       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
                     }}>{step.step}</div>
                   </div>
-                  <h3 style={{ fontSize: '1.25rem', color: '#00205B', fontWeight: '600', marginBottom: '0.75rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
+                  <h3 style={{ fontSize: 'var(--token-font-size-lg)', color: 'var(--token-color-brand-navy)', fontWeight: '600', marginBottom: '0.75rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
                     {step.title}
                   </h3>
-                  <p style={{ fontSize: '0.9375rem', color: '#6b7280', lineHeight: '1.7', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{step.desc}</p>
+                  <p style={{ fontSize: '0.9375rem', color: 'var(--token-text-secondary)', lineHeight: '1.7', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{step.desc}</p>
                 </div>
               </div>
             ))}
@@ -357,7 +357,7 @@ const CalculatorLandingPage = () => {
             marginTop: '5rem',
             marginBottom: '5rem',
             padding: '4rem 2rem',
-            background: 'linear-gradient(135deg, #00205B 0%, #003d8f 100%)',
+            background: 'linear-gradient(135deg, var(--token-color-brand-navy) 0%, #003d8f 100%)',
             borderRadius: '16px',
             boxShadow: '0 8px 30px rgba(0,32,91,0.15)',
             position: 'relative',
@@ -389,7 +389,7 @@ const CalculatorLandingPage = () => {
                   className="slds-button slds-button_neutral"
                   style={{
                     background: 'white',
-                    color: '#00205B',
+                    color: 'var(--token-color-brand-navy)',
                     fontWeight: '600',
                     padding: '14px 32px',
                     fontSize: '0.9375rem',
@@ -408,7 +408,7 @@ const CalculatorLandingPage = () => {
                   href="tel:+442070601234" 
                   className="slds-button"
                   style={{
-                    background: '#E84E0F',
+                    background: 'var(--token-color-brand-orange)',
                     color: 'white',
                     fontWeight: '600',
                     padding: '14px 32px',
@@ -432,3 +432,4 @@ const CalculatorLandingPage = () => {
 };
 
 export default CalculatorLandingPage;
+

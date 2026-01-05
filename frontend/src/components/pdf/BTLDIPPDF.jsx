@@ -129,9 +129,9 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
         </View>
         
         {/* Date - Compact header */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, paddingBottom: 5, borderBottom: '1pt solid #dddbda' }}>
-          <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000000' }}>Decision in Principle</Text>
-          <Text style={{ fontSize: 9, color: '#706e6b' }}>{dipDate}</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, paddingBottom: 5, borderBottom: '1pt solid var(--token-border-medium)' }}>
+          <Text style={{ fontSize: 10, fontWeight: 'bold', color: 'var(--token-color-black)' }}>Decision in Principle</Text>
+          <Text style={{ fontSize: 9, color: 'var(--token-text-muted)' }}>{dipDate}</Text>
         </View>
 
         {/* Proposed Loan To */}
@@ -163,7 +163,7 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
 
         {/* THE SUMMARY Section - Simple underlined header */}
         <View style={{ marginTop: 8, marginBottom: 6 }}>
-          <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000', textDecoration: 'underline' }}>The Summary</Text>
+          <Text style={{ fontSize: 9, fontWeight: 'bold', color: 'var(--token-color-black)', textDecoration: 'underline' }}>The Summary</Text>
         </View>
 
         {/* Borrower */}
@@ -381,7 +381,7 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
         </View>
         
         <View style={{ marginTop: 8, marginBottom: 6 }}>
-          <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000', textDecoration: 'underline' }}>TERMS OF BUSINESS</Text>
+          <Text style={{ fontSize: 9, fontWeight: 'bold', color: 'var(--token-color-black)', textDecoration: 'underline' }}>TERMS OF BUSINESS</Text>
         </View>
 
         {/* DIP Expiry */}
@@ -526,7 +526,7 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
         
         {/* Tariff of Charges Header */}
         <View style={{ marginTop: 10, marginBottom: 5 }}>
-          <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000', textAlign: 'center' }}>Fee Structure Table - Post Completion</Text>
+          <Text style={{ fontSize: 9, fontWeight: 'bold', color: 'var(--token-color-black)', textAlign: 'center' }}>Fee Structure Table - Post Completion</Text>
         </View>
 
         {/* Fee Structure Table - Post Completion */}
@@ -628,7 +628,7 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
 
         {/* Fee Structure Table - In event of Default */}
         <View style={{ marginTop: 10, marginBottom: 5 }}>
-          <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000', textAlign: 'center' }}>Fee Structure Table - In event of Default</Text>
+          <Text style={{ fontSize: 9, fontWeight: 'bold', color: 'var(--token-color-black)', textAlign: 'center' }}>Fee Structure Table - In event of Default</Text>
         </View>
         
         <View style={btlDipStyles.tariffTable}>
@@ -788,7 +788,7 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
 
         {/* Signature Section - CONDITIONAL based on number of applicants */}
         <View style={{ marginTop: 8, marginBottom: 6 }}>
-          <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000', textDecoration: 'underline' }}>Signed by each Borrower</Text>
+          <Text style={{ fontSize: 9, fontWeight: 'bold', color: 'var(--token-color-black)', textDecoration: 'underline' }}>Signed by each Borrower</Text>
         </View>
 
         <View style={btlDipStyles.signatureGrid}>
@@ -839,3 +839,4 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
 };
 
 export default BTLDIPPDF;
+

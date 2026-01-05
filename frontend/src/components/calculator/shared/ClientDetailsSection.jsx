@@ -143,8 +143,8 @@ export default function ClientDetailsSection({
         )}
         {clientType === 'Broker' && (
           <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-            <span style={{ fontSize: '0.875rem', color: '#0176d3', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '1em' }}>ⓘ</span>
+            <span style={{ fontSize: 'var(--token-font-size-sm)', color: 'var(--token-info)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontSize: 'var(--token-font-size-md)' }}>ⓘ</span>
               Adjustable within ±{getBrokerRoutesAndDefaults().tolerance}% of default ({getBrokerRoutesAndDefaults().defaults[brokerRoute]}%)
             </span>
           </div>

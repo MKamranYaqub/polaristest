@@ -1,5 +1,6 @@
 import React from 'react';
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
+import { PDF_COLORS } from './shared/pdfColorConstants';
 
 // Logo path from public folder
 const MFS_LOGO_PATH = '/assets/mfs-logo.png';
@@ -13,7 +14,7 @@ const styles = StyleSheet.create({
     paddingRight: 35,
     fontSize: 9,
     fontFamily: 'Helvetica',
-    backgroundColor: '#ffffff',
+    backgroundColor: PDF_COLORS.bgWhite,
   },
   
   // Header - Modern gradient effect simulation with layered design
@@ -26,8 +27,8 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingLeft: 15,
     paddingRight: 15,
-    backgroundColor: '#f8f9fa',
-    borderLeft: '3pt solid #00205B',
+    backgroundColor: PDF_COLORS.bgLightGray,
+    borderLeft: `3pt solid ${PDF_COLORS.brandNavy}`,
     borderRadius: 2,
   },
   headerLeft: {
@@ -45,21 +46,21 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#00205B',
+    color: PDF_COLORS.brandNavy,
     marginBottom: 4,
     letterSpacing: 0.3,
   },
   subtitle: {
     fontSize: 9,
-    color: '#5c6b73',
+    color: PDF_COLORS.textGrayDark,
     marginBottom: 2,
   },
   referenceNumber: {
     fontSize: 9,
     fontWeight: 'bold',
-    color: '#00205B',
+    color: PDF_COLORS.brandNavy,
     marginTop: 4,
-    backgroundColor: '#e8f4f8',
+    backgroundColor: PDF_COLORS.bgInfoLight,
     padding: '3 6',
     borderRadius: 2,
   },
@@ -67,7 +68,7 @@ const styles = StyleSheet.create({
   // Summary box - Modern card design
   summaryBox: {
     flexDirection: 'row',
-    backgroundColor: '#ffffff',
+    backgroundColor: PDF_COLORS.bgWhite,
     padding: 12,
     marginBottom: 15,
     borderRadius: 4,
@@ -80,7 +81,7 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 7.5,
-    color: '#6a737d',
+    color: PDF_COLORS.textGray,
     marginBottom: 3,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
@@ -88,41 +89,41 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#00205B',
+    color: PDF_COLORS.brandNavy,
   },
   summaryValueComplete: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#28a745',
+    color: PDF_COLORS.success,
   },
   summaryValueIncomplete: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#dc3545',
+    color: PDF_COLORS.errorDark,
   },
   
   // Progress bar - Modern sleek design
   progressContainer: {
     marginBottom: 18,
     padding: 10,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: PDF_COLORS.bgLightGray,
     borderRadius: 4,
   },
   progressBarBg: {
     height: 8,
-    backgroundColor: '#e9ecef',
+    backgroundColor: PDF_COLORS.bgSubtle,
     borderRadius: 4,
     overflow: 'hidden',
     border: '1pt solid #dee2e6',
   },
   progressBarFill: {
     height: 8,
-    backgroundColor: '#00205B',
+    backgroundcolor: PDF_COLORS.brandNavy,
     borderRadius: 4,
   },
   progressText: {
     fontSize: 8.5,
-    color: '#495057',
+    color: PDF_COLORS.textSecondary,
     marginTop: 6,
     textAlign: 'center',
     fontWeight: 'bold',
@@ -136,7 +137,7 @@ const styles = StyleSheet.create({
     border: '1pt solid #e1e4e8',
   },
   categoryHeader: {
-    backgroundColor: '#00205B',
+    backgroundcolor: PDF_COLORS.brandNavy,
     padding: 8,
     marginBottom: 0,
   },
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
   
   // Requirements table - Clean modern layout
   table: {
-    backgroundColor: '#ffffff',
+    backgroundColor: PDF_COLORS.bgWhite,
   },
   tableHeader: {
     flexDirection: 'row',
@@ -172,12 +173,12 @@ const styles = StyleSheet.create({
   tableRow: {
     flexDirection: 'row',
     borderBottom: '0.5pt solid #e9ecef',
-    backgroundColor: '#ffffff',
+    backgroundColor: PDF_COLORS.bgWhite,
   },
   tableRowAlt: {
     flexDirection: 'row',
     borderBottom: '0.5pt solid #e9ecef',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: PDF_COLORS.bgLightGray,
   },
   tableCell: {
     padding: 7,
@@ -219,7 +220,7 @@ const styles = StyleSheet.create({
   checkboxChecked: {
     fontSize: 8,
     color: '#ffffff',
-    backgroundColor: '#28a745',
+    backgroundcolor: PDF_COLORS.success,
     padding: '2 5',
     borderRadius: 2,
     fontWeight: 'bold',
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
   checkboxUnchecked: {
     fontSize: 8,
     color: '#6c757d',
-    backgroundColor: '#ffffff',
+    backgroundColor: PDF_COLORS.bgWhite,
     padding: '2 5',
     borderRadius: 2,
     border: '1pt solid #ced4da',
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   stageIndicative: {
-    backgroundColor: '#28a745',
+    backgroundcolor: PDF_COLORS.success,
     color: '#ffffff',
     padding: '2 6',
     borderRadius: 3,
@@ -282,7 +283,7 @@ const styles = StyleSheet.create({
   },
   pageNumber: {
     fontSize: 7.5,
-    color: '#495057',
+    color: PDF_COLORS.textSecondary,
     fontWeight: 'bold',
   },
   
@@ -553,3 +554,4 @@ const UWRequirementsPDF = ({
 };
 
 export default UWRequirementsPDF;
+

@@ -822,7 +822,7 @@ export default function IssueDIPModal({
                     type="button"
                     onClick={() => removeSecurityProperty(index)}
                     className="slds-button slds-button_destructive"
-                    style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', fontSize: '0.75rem', padding: '0 0.5rem' }}
+                    style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', fontSize: 'var(--token-font-size-xs)', padding: '0 0.5rem' }}
                   >
                     Remove
                   </button>

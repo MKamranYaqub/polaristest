@@ -26,38 +26,38 @@
 
 .high-contrast button,
 .high-contrast .slds-button {
-  border: 2px solid currentColor !important;
+  border: var(--token-spacing-2) solid currentColor !important;
   font-weight: 600 !important;
 }
 
 .high-contrast input,
 .high-contrast textarea,
 .high-contrast select {
-  border: 2px solid var(--token-border-strong) !important;
+  border: var(--token-spacing-2) solid var(--token-border-strong) !important;
 }
 
 /* Font Size Settings */
 :root[data-font-size="small"] {
-  font-size: 12px;
+  font-size: var(--token-font-size-xs);
 }
 
 :root[data-font-size="medium"] {
-  font-size: 14px;
+  font-size: var(--token-font-size-sm);
 }
 
 :root[data-font-size="large"] {
-  font-size: 16px;
+  font-size: var(--token-font-size-md);
 }
 
 :root[data-font-size="x-large"] {
-  font-size: 18px;
+  font-size: var(--token-font-size-lg-minus);
 }
 
 /* Enhanced Focus Indicators */
 .enhanced-focus *:focus,
 .enhanced-focus *:focus-visible {
-  outline: 3px solid var(--token-interactive) !important;
-  outline-offset: 2px !important;
+  outline: var(--token-spacing-3) solid var(--token-interactive) !important;
+  outline-offset: var(--token-spacing-2) !important;
   box-shadow: 0 0 0 3px var(--token-focus-ring) !important;
 }
 
@@ -66,8 +66,8 @@
 .enhanced-focus input:focus,
 .enhanced-focus select:focus,
 .enhanced-focus textarea:focus {
-  outline: 3px solid var(--token-interactive) !important;
-  outline-offset: 2px !important;
+  outline: var(--token-spacing-3) solid var(--token-interactive) !important;
+  outline-offset: var(--token-spacing-2) !important;
 }
 
 /* Text Spacing - Improved readability */
@@ -103,7 +103,7 @@
 
 .link-underlines a:hover {
   text-decoration: underline !important;
-  text-decoration-thickness: 2px !important;
+  text-decoration-thickness: var(--token-spacing-2) !important;
 }
 
 /* Ensure proper color contrast in dark mode */
@@ -120,7 +120,7 @@
   left: 0;
   background: var(--token-interactive);
   color: white;
-  padding: 0.75rem 1.5rem;
+  padding: var(--token-spacing-12) 1.5rem;
   text-decoration: none;
   z-index: 9999;
   border-radius: 0 0 0.25rem 0;
@@ -129,8 +129,8 @@
 
 .skip-to-content:focus {
   top: 0;
-  outline: 3px solid var(--token-layer-surface);
-  outline-offset: 2px;
+  outline: var(--token-spacing-3) solid var(--token-layer-surface);
+  outline-offset: var(--token-spacing-2);
 }
 
 /* Ensure interactive elements are keyboard accessible */
@@ -143,8 +143,8 @@
 [role="button"]:focus,
 [role="link"]:focus,
 [role="menuitem"]:focus {
-  outline: 2px solid var(--token-interactive);
-  outline-offset: 2px;
+  outline: var(--token-spacing-2) solid var(--token-interactive);
+  outline-offset: var(--token-spacing-2);
 }
 
 /* Screen reader only content */
@@ -179,7 +179,7 @@ textarea:disabled {
 .high-contrast input:invalid,
 .high-contrast textarea:invalid {
   border-color: var(--token-critical) !important;
-  border-width: 3px !important;
+  border-width: var(--token-spacing-3) !important;
 }
 
 .high-contrast input:valid,
@@ -190,12 +190,12 @@ textarea:disabled {
 /* Improved table accessibility */
 .enhanced-focus table th,
 .enhanced-focus table td {
-  padding: 1rem;
+  padding: var(--token-spacing-16);
 }
 
 .enhanced-focus table tr:focus-within {
   background-color: var(--token-focus-ring);
-  outline: 2px solid var(--token-interactive);
+  outline: var(--token-spacing-2) solid var(--token-interactive);
 }
 
 /* Ensure modals are properly focused */
@@ -210,8 +210,8 @@ textarea:disabled {
 
 /* Keyboard navigation helper */
 .keyboard-nav *:focus {
-  outline: 2px solid var(--token-interactive);
-  outline-offset: 2px;
+  outline: var(--token-spacing-2) solid var(--token-interactive);
+  outline-offset: var(--token-spacing-2);
 }
 
 /* Print accessibility */
@@ -251,6 +251,6 @@ textarea:disabled {
   button,
   a,
   input {
-    border-width: 2px !important;
+    border-width: var(--token-spacing-2) !important;
   }
 }

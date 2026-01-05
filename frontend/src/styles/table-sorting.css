@@ -3,7 +3,7 @@
 .slds-th__action {
   background: transparent;
   border: none;
-  padding: 0.5rem;
+  padding: var(--token-spacing-8);
   width: 100%;
   text-align: left;
   cursor: pointer;
@@ -21,7 +21,7 @@
 }
 
 .slds-th__action:focus {
-  outline: 2px solid var(--slds-color-border-focus, #0176d3);
+  outline: var(--token-spacing-2) solid var(--slds-color-border-focus, #0176d3);
   outline-offset: -2px;
 }
 
@@ -30,8 +30,8 @@
 }
 
 .slds-th__sort-icon {
-  margin-left: 0.5rem;
-  font-size: 0.75rem;
+  margin-left: var(--token-spacing-8);
+  font-size: var(--token-font-size-xs);
   color: var(--slds-color-text-weak, #706e6b);
   transition: color 0.15s ease;
 }
@@ -61,25 +61,25 @@
 /* Empty state styles */
 .quotes-empty-state {
   text-align: center;
-  padding: 3rem 1rem;
+  padding: var(--token-spacing-48) 1rem;
 }
 
 .quotes-empty-state__icon {
-  font-size: 4rem;
+  font-size: var(--token-font-size-6xl);
   color: var(--slds-color-text-weak, #706e6b);
-  margin-bottom: 1rem;
+  margin-bottom: var(--token-spacing-16);
 }
 
 .quotes-empty-state__title {
-  font-size: 1.25rem;
+  font-size: var(--token-font-size-lg);
   font-weight: 600;
   color: var(--slds-color-text-default, #181818);
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--token-spacing-8);
 }
 
 .quotes-empty-state__message {
   color: var(--slds-color-text-weak, #706e6b);
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--token-spacing-24);
 }
 
 [data-carbon-theme='g100'] .quotes-empty-state__icon {

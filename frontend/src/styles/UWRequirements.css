@@ -34,7 +34,7 @@
 }
 
 .uw-requirements-admin__category-header:focus {
-  outline: 2px solid var(--slds-g-color-brand-base-50, #0176d3);
+  outline: var(--token-spacing-2) solid var(--slds-g-color-brand-base-50, #0176d3);
   outline-offset: -2px;
 }
 
@@ -62,7 +62,7 @@
 
 /* Table column widths */
 .uw-requirements-admin__col--checkbox {
-  width: 40px;
+  width: var(--token-spacing-40);
 }
 
 .uw-requirements-admin__col--stage {

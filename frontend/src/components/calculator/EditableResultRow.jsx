@@ -126,11 +126,11 @@ export default function EditableResultRow({
                 style={{
                   flex: 1,
                   padding: '0.25rem 0.5rem',
-                  border: hasOverride ? '2px solid #0176d3' : '1px solid #c6c6c6',
+                  border: hasOverride ? '2px solid var(--token-info)' : '1px solid var(--token-border-medium)',
                   borderRadius: '4px',
-                  fontSize: '0.875rem',
+                  fontSize: 'var(--token-font-size-sm)',
                   textAlign: 'center',
-                  backgroundColor: hasOverride ? '#f4f4f4' : 'white',
+                  backgroundColor: hasOverride ? 'var(--token-color-gray-light)' : 'white',
                   cursor: disabled ? 'not-allowed' : 'text'
                 }}
                 onFocus={() => setEditingColumn(col)}
@@ -140,12 +140,12 @@ export default function EditableResultRow({
                   onClick={() => handleReset(col)}
                   style={{
                     padding: 'var(--token-spacing-xs) var(--token-spacing-sm)',
-                    border: '1px solid #ddd',
+                    border: '1px solid var(--token-color-gray-border)',
                     borderRadius: '4px',
                     backgroundColor: 'white',
                     cursor: 'pointer',
-                    fontSize: '0.75rem',
-                    color: '#0176d3',
+                    fontSize: 'var(--token-font-size-xs)',
+                    color: 'var(--token-info)',
                     fontWeight: '600'
                   }}
                   title={`Reset to ${originalValue}`}

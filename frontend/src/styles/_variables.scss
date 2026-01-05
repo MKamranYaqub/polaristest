@@ -43,7 +43,7 @@ $breakpoint-wide: 1440px;    // Wide desktop screens
 // Mobile-first approach: use max-width for smaller screens, min-width for larger.
 //
 // Usage examples:
-//   @include mobile { font-size: 14px; }
+//   @include mobile { font-size: var(--token-font-size-sm); }
 //   @include tablet { grid-template-columns: repeat(2, 1fr); }
 //   @include desktop { grid-template-columns: repeat(4, 1fr); }
 

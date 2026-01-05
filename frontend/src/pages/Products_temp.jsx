@@ -883,7 +883,7 @@ const Products = () => {
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'ftb' ? null : 'ftb')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'ftb' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'ftb' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>First Time Buyer / First Time Landlord</span>
                       </button>
                     </div>
@@ -915,7 +915,7 @@ const Products = () => {
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'hmo' ? null : 'hmo')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'hmo' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'hmo' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>HMO &gt; 6 Beds</span>
                       </button>
                     </div>
@@ -947,9 +947,9 @@ const Products = () => {
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'mufb' ? null : 'mufb')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'mufb' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'mufb' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>MUFB &gt; 6 Units</span>
-                        <span style={{ fontSize: '1.2rem' }}>{expandedLtvSection === 'mufb' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)' }}>{expandedLtvSection === 'mufb' ? '−' : '+'}</span>
                       </button>
                     </div>
                     {expandedLtvSection === 'mufb' && (
@@ -981,7 +981,7 @@ const Products = () => {
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'nonstandard' ? null : 'nonstandard')}
                       >
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Non-Standard Construction</span>
-                        <span style={{ fontSize: '1.2rem' }}>{expandedLtvSection === 'nonstandard' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)' }}>{expandedLtvSection === 'nonstandard' ? '−' : '+'}</span>
                       </button>
                     </div>
                     {expandedLtvSection === 'nonstandard' && (
@@ -1013,7 +1013,7 @@ const Products = () => {
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'flats' ? null : 'flats')}
                       >
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Flats above commercial</span>
-                        <span style={{ fontSize: '1.2rem' }}>{expandedLtvSection === 'flats' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)' }}>{expandedLtvSection === 'flats' ? '−' : '+'}</span>
                       </button>
                     </div>
                     {expandedLtvSection === 'flats' && (
@@ -1049,7 +1049,7 @@ const Products = () => {
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'development' ? null : 'development')}
                       >
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Development Exit</span>
-                        <span style={{ fontSize: '1.2rem' }}>{expandedLtvSection === 'development' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)' }}>{expandedLtvSection === 'development' ? '−' : '+'}</span>
                       </button>
                     </div>
                     {expandedLtvSection === 'development' && (
@@ -1081,7 +1081,7 @@ const Products = () => {
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'vulnerable' ? null : 'vulnerable')}
                       >
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Vulnerable Tenants / SERCO Lease</span>
-                        <span style={{ fontSize: '1.2rem' }}>{expandedLtvSection === 'vulnerable' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)' }}>{expandedLtvSection === 'vulnerable' ? '−' : '+'}</span>
                       </button>
                     </div>
                     {expandedLtvSection === 'vulnerable' && (
@@ -1113,7 +1113,7 @@ const Products = () => {
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'longlease' ? null : 'longlease')}
                       >
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Long Leases / Non-standard Lease</span>
-                        <span style={{ fontSize: '1.2rem' }}>{expandedLtvSection === 'longlease' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)' }}>{expandedLtvSection === 'longlease' ? '−' : '+'}</span>
                       </button>
                     </div>
                     {expandedLtvSection === 'longlease' && (
@@ -1145,7 +1145,7 @@ const Products = () => {
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'holidaylet' ? null : 'holidaylet')}
                       >
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Holiday Let / Services Accommodation</span>
-                        <span style={{ fontSize: '1.2rem' }}>{expandedLtvSection === 'holidaylet' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)' }}>{expandedLtvSection === 'holidaylet' ? '−' : '+'}</span>
                       </button>
                     </div>
                     {expandedLtvSection === 'holidaylet' && (
@@ -1177,7 +1177,7 @@ const Products = () => {
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'holidayrestricted' ? null : 'holidayrestricted')}
                       >
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Holiday Let with Restricted Use</span>
-                        <span style={{ fontSize: '1.2rem' }}>{expandedLtvSection === 'holidayrestricted' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)' }}>{expandedLtvSection === 'holidayrestricted' ? '−' : '+'}</span>
                       </button>
                     </div>
                     {expandedLtvSection === 'holidayrestricted' && (
@@ -1209,7 +1209,7 @@ const Products = () => {
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'newbuilds' ? null : 'newbuilds')}
                       >
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>New Builds</span>
-                        <span style={{ fontSize: '1.2rem' }}>{expandedLtvSection === 'newbuilds' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)' }}>{expandedLtvSection === 'newbuilds' ? '−' : '+'}</span>
                       </button>
                     </div>
                     {expandedLtvSection === 'newbuilds' && (
@@ -1241,7 +1241,7 @@ const Products = () => {
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'retirement' ? null : 'retirement')}
                       >
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Retirement Property</span>
-                        <span style={{ fontSize: '1.2rem' }}>{expandedLtvSection === 'retirement' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)' }}>{expandedLtvSection === 'retirement' ? '−' : '+'}</span>
                       </button>
                     </div>
                     {expandedLtvSection === 'retirement' && (
@@ -1273,7 +1273,7 @@ const Products = () => {
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'highexposure' ? null : 'highexposure')}
                       >
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>High Exposure / Concentration in a particular building</span>
-                        <span style={{ fontSize: '1.2rem' }}>{expandedLtvSection === 'highexposure' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)' }}>{expandedLtvSection === 'highexposure' ? '−' : '+'}</span>
                       </button>
                     </div>
                     {expandedLtvSection === 'highexposure' && (
@@ -1305,7 +1305,7 @@ const Products = () => {
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'adverse' ? null : 'adverse')}
                       >
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Adverse Credit (Tier 4)</span>
-                        <span style={{ fontSize: '1.2rem' }}>{expandedLtvSection === 'adverse' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)' }}>{expandedLtvSection === 'adverse' ? '−' : '+'}</span>
                       </button>
                     </div>
                     {expandedLtvSection === 'adverse' && (
@@ -1337,7 +1337,7 @@ const Products = () => {
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'lowdemand' ? null : 'lowdemand')}
                       >
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Low Demand Area / Poor Condition</span>
-                        <span style={{ fontSize: '1.2rem' }}>{expandedLtvSection === 'lowdemand' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)' }}>{expandedLtvSection === 'lowdemand' ? '−' : '+'}</span>
                       </button>
                     </div>
                     {expandedLtvSection === 'lowdemand' && (

@@ -1,4 +1,5 @@
 import { StyleSheet } from '@react-pdf/renderer';
+import { PDF_COLORS } from './pdfColorConstants';
 
 /**
  * Styles for BTL Quote PDF - matches template formatting
@@ -16,7 +17,7 @@ export const btlQuoteStyles = StyleSheet.create({
   headerTitle: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#003087',
+    color: PDF_COLORS.brandNavy,
   },
 
   // Summary section
@@ -37,13 +38,13 @@ export const btlQuoteStyles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 9,
-    color: '#706e6b',
+    color: PDF_COLORS.textMuted,
     marginBottom: 1,
   },
   summaryValue: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#000000',
+    color: PDF_COLORS.textPrimary,
     marginBottom: 5,
   },
 
@@ -55,7 +56,7 @@ export const btlQuoteStyles = StyleSheet.create({
   },
   tierBox: {
     flex: 1,
-    backgroundColor: '#d8edff',
+    backgroundColor: PDF_COLORS.bgInfo,
     border: '1pt solid #0070d2',
     padding: 3,
     borderRadius: 2,
@@ -63,7 +64,7 @@ export const btlQuoteStyles = StyleSheet.create({
   tierLabel: {
     fontSize: 9,
     fontWeight: 'bold',
-    color: '#014486',
+    color: PDF_COLORS.brandBlueDark,
     textAlign: 'center',
   },
 
@@ -84,7 +85,7 @@ export const btlQuoteStyles = StyleSheet.create({
   tableHeaderCell: {
     fontSize: 9,
     fontWeight: 'bold',
-    color: '#000000',
+    color: PDF_COLORS.textPrimary,
     textAlign: 'center',
     paddingVertical: 4,
     paddingHorizontal: 4,
@@ -103,39 +104,39 @@ export const btlQuoteStyles = StyleSheet.create({
     borderBottom: '1pt solid #e6e6e6',
     paddingVertical: 3,
     paddingHorizontal: 4,
-    backgroundColor: '#ffffff',
+    backgroundColor: PDF_COLORS.bgWhite,
   },
   tableRowAlt: {
     flexDirection: 'row',
     borderBottom: '1pt solid #e6e6e6',
     paddingVertical: 3,
     paddingHorizontal: 4,
-    backgroundColor: '#fbfbfb',
+    backgroundColor: PDF_COLORS.bgSubtle,
   },
   tableRowSectionHeader: {
     flexDirection: 'row',
     borderBottom: '1pt solid #e0e0e0',
     paddingVertical: 4,
     paddingHorizontal: 4,
-    backgroundColor: '#f2f2f2',
+    backgroundColor: PDF_COLORS.bgMedium,
   },
   tableCellLabel: {
     width: '22%',
     fontSize: 9,
-    color: '#000000',
+    color: PDF_COLORS.textPrimary,
     paddingRight: 4,
   },
   tableCellValue: {
     width: '19.5%',
     fontSize: 9,
-    color: '#000000',
+    color: PDF_COLORS.textPrimary,
     textAlign: 'center',
     paddingRight: 4,
   },
   tableCellValueHighlight: {
     width: '19.5%',
     fontSize: 9,
-    color: '#000000',
+    color: PDF_COLORS.textPrimary,
     textAlign: 'center',
     fontWeight: 'bold',
     paddingRight: 4,
@@ -150,7 +151,7 @@ export const btlQuoteStyles = StyleSheet.create({
   termsTitle: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#000000',
+    color: PDF_COLORS.textPrimary,
     marginBottom: 4,
   },
   termsGrid: {
@@ -165,19 +166,19 @@ export const btlQuoteStyles = StyleSheet.create({
   },
   termsLabel: {
     fontSize: 8,
-    color: '#706e6b',
+    color: PDF_COLORS.textMuted,
     marginBottom: 1,
   },
   termsValue: {
     fontSize: 9,
-    color: '#000000',
+    color: PDF_COLORS.textPrimary,
     lineHeight: 1.3,
   },
 
   // Broker details box
   brokerDetailsBox: {
     width: 140,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: PDF_COLORS.bgLight,
     border: '1pt solid #dddbda',
     padding: 6,
     borderRadius: 3,
@@ -191,7 +192,7 @@ export const btlQuoteStyles = StyleSheet.create({
   brokerDetailsTitle: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#000000',
+    color: PDF_COLORS.textPrimary,
     marginBottom: 4,
     borderBottom: '1pt solid #dddbda',
     paddingBottom: 2,
@@ -201,16 +202,16 @@ export const btlQuoteStyles = StyleSheet.create({
   },
   brokerDetailsLabel: {
     fontSize: 8,
-    color: '#706e6b',
+    color: PDF_COLORS.textMuted,
   },
   brokerDetailsValue: {
     fontSize: 9,
-    color: '#000000',
+    color: PDF_COLORS.textPrimary,
   },
 
   // Fee boxes in results
   feeBoxHighlight: {
-    backgroundColor: '#d8edff',
+    backgroundColor: PDF_COLORS.bgInfo,
     padding: 2,
     borderRadius: 1,
   },
@@ -218,8 +219,9 @@ export const btlQuoteStyles = StyleSheet.create({
   // Full term row
   fullTermRow: {
     fontSize: 9,
-    color: '#000000',
+    color: PDF_COLORS.textPrimary,
     lineHeight: 1.3,
     marginBottom: 8,
   },
 });
+

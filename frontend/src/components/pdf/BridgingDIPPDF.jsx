@@ -106,9 +106,9 @@ const BridgingDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
         </View>
 
         {/* Date - Compact header */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, paddingBottom: 5, borderBottom: '1pt solid #dddbda' }}>
-          <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000000' }}>Decision in Principle - Bridging Finance</Text>
-          <Text style={{ fontSize: 9, color: '#706e6b' }}>{dipDate}</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, paddingBottom: 5, borderBottom: '1pt solid var(--token-border-medium)' }}>
+          <Text style={{ fontSize: 10, fontWeight: 'bold', color: 'var(--token-color-black)' }}>Decision in Principle - Bridging Finance</Text>
+          <Text style={{ fontSize: 9, color: 'var(--token-text-muted)' }}>{dipDate}</Text>
         </View>
 
         {/* Proposed Loan To */}
@@ -139,7 +139,7 @@ const BridgingDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
 
         {/* THE SUMMARY Section */}
         <View style={{ marginTop: 8, marginBottom: 6 }}>
-          <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000', textDecoration: 'underline' }}>The Summary</Text>
+          <Text style={{ fontSize: 9, fontWeight: 'bold', color: 'var(--token-color-black)', textDecoration: 'underline' }}>The Summary</Text>
         </View>
 
         {/* Borrower */}
@@ -330,7 +330,7 @@ const BridgingDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
 
         {/* Exit Strategy Section */}
         <View style={{ marginTop: 8, marginBottom: 6 }}>
-          <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000', textDecoration: 'underline' }}>EXIT STRATEGY</Text>
+          <Text style={{ fontSize: 9, fontWeight: 'bold', color: 'var(--token-color-black)', textDecoration: 'underline' }}>EXIT STRATEGY</Text>
         </View>
 
         <View style={btlDipStyles.termsSection}>
@@ -428,7 +428,7 @@ const BridgingDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
 
         {/* Signature Section - CONDITIONAL based on number of applicants */}
         <View style={{ marginTop: 8, marginBottom: 6 }}>
-          <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#000000', textDecoration: 'underline' }}>Signed by each Borrower</Text>
+          <Text style={{ fontSize: 9, fontWeight: 'bold', color: 'var(--token-color-black)', textDecoration: 'underline' }}>Signed by each Borrower</Text>
         </View>
 
         <View style={btlDipStyles.signatureGrid}>
@@ -474,10 +474,10 @@ const BridgingDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
 
         {/* Footer */}
         <View style={{ marginTop: 20 }}>
-          <Text style={{ fontSize: 8, color: '#706e6b', textAlign: 'center' }}>
+          <Text style={{ fontSize: 8, color: 'var(--token-text-muted)', textAlign: 'center' }}>
             Market Financial Solutions is authorised and regulated by the Financial Conduct Authority.
           </Text>
-          <Text style={{ fontSize: 8, color: '#706e6b', textAlign: 'center' }}>
+          <Text style={{ fontSize: 8, color: 'var(--token-text-muted)', textAlign: 'center' }}>
             This document is for information purposes only and does not constitute a binding offer of finance.
           </Text>
         </View>
@@ -489,3 +489,4 @@ const BridgingDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
 };
 
 export default BridgingDIPPDF;
+

@@ -100,13 +100,13 @@ input[type="range"] {
     margin-left: 0px;
     
     .tier-label {
-      font-size: 0.75rem;
+      font-size: var(--token-font-size-xs);
       color: $token-text-secondary;
       margin-bottom: var(--token-spacing-xs);
     }
     
     .tier-value {
-      font-size: 1rem;
+      font-size: var(--token-font-size-md);
       color: $token-text-primary;
     }
   }
@@ -243,12 +243,12 @@ input[type="range"] {
       border: 1px solid var(--token-info);
       
       .tier-label {
-        font-size: 0.875rem;
+        font-size: var(--token-font-size-sm);
         color: $token-text-secondary;
       }
       
       .tier-value {
-        font-size: 1rem;
+        font-size: var(--token-font-size-md);
         font-weight: 600;
         color: $token-text-primary;
       }
@@ -288,15 +288,15 @@ input[type="range"] {
   }
   
   .header-title {
-    font-size: 0.9375rem;
+    font-size: var(--token-font-size-base-minus);
     font-weight: 600;
     color: var(--slds-g-color-on-surface-2);
     margin: 0;
   }
   
   .chevron-icon {
-    width: 1rem;
-    height: 1rem;
+    width: var(--token-spacing-16);
+    height: var(--token-spacing-16);
     transition: transform 0.2s ease;
     fill: currentColor;
     color: var(--slds-g-color-on-surface-1);
@@ -386,8 +386,8 @@ input[type="range"] {
   // LTV slider styling to match input fields
   .ltv-slider {
     width: 100%;
-    height: 8px;
-    border-radius: 4px;
+    height: var(--token-spacing-8);
+    border-radius: var(--token-spacing-4);
     outline: none;
     -webkit-appearance: none;
     appearance: none;
@@ -396,22 +396,22 @@ input[type="range"] {
     &::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 20px;
-      height: 20px;
+      width: var(--token-spacing-20);
+      height: var(--token-spacing-20);
       border-radius: 50%;
       background: $token-color-interactive;
       cursor: pointer;
-      border: 2px solid $token-color-surface;
+      border: var(--token-spacing-2) solid $token-color-surface;
       box-shadow: $token-shadow-soft;
     }
 
     &::-moz-range-thumb {
-      width: 20px;
-      height: 20px;
+      width: var(--token-spacing-20);
+      height: var(--token-spacing-20);
       border-radius: 50%;
       background: $token-color-interactive;
       cursor: pointer;
-      border: 2px solid $token-color-surface;
+      border: var(--token-spacing-2) solid $token-color-surface;
       box-shadow: $token-shadow-soft;
     }
   }
@@ -441,12 +441,12 @@ input[type="range"] {
 .first-charge-warning {
   background: $token-warning-bg;
   padding: var(--token-spacing-sm);
-  border-radius: 4px;
+  border-radius: var(--token-spacing-4);
   border: none; /* remove outside border as requested */
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 48px; /* align visually with neighboring inputs */
+  min-height: var(--token-spacing-48); /* align visually with neighboring inputs */
 }
 
 .first-charge-warning .first-charge-label {
@@ -454,7 +454,7 @@ input[type="range"] {
 }
 
 .first-charge-warning .first-charge-hint {
-  font-size: 0.8em;
+  font-size: var(--token-font-size-sm-minus);
   color: $token-text-helper;
   margin-left: var(--token-spacing-xs);
 }
@@ -548,7 +548,7 @@ input[type="range"] {
   padding: $spacing-xs;
 
   .rates-count {
-    font-size: 0.875rem;
+    font-size: var(--token-font-size-sm);
     color: $token-text-secondary;
     margin-bottom: $spacing-md;
   }
@@ -556,7 +556,7 @@ input[type="range"] {
   .rate-item {
     padding: var(--token-spacing-sm) 0;
     border-bottom: 1px solid $token-color-border-subtle;
-    font-size: 0.9375rem;
+    font-size: var(--token-font-size-base-minus);
 
     &:last-child {
       border-bottom: none;
@@ -569,7 +569,7 @@ input[type="range"] {
 
     .rate-fee {
       color: $token-text-secondary;
-      font-size: 0.875rem;
+      font-size: var(--token-font-size-sm);
     }
   }
 
@@ -583,7 +583,7 @@ input[type="range"] {
     
     .no-rates__title {
       /* Extends .empty-state__title */
-      font-size: 1.1rem;
+      font-size: var(--token-font-size-md-plus);
       font-weight: 500;
       margin-bottom: var(--token-spacing-sm, 0.5rem);
       font-style: normal;
@@ -592,7 +592,7 @@ input[type="range"] {
     
     .no-rates__subtitle {
       /* Extends .empty-state__subtitle */
-      font-size: 0.9rem;
+      font-size: var(--token-font-size-sm-plus);
       color: var(--token-text-secondary, #6b6b6b);
       font-style: italic;
     }
@@ -651,7 +651,7 @@ input[type="range"] {
     box-shadow: $token-shadow-strong;
     z-index: 1100;
     white-space: normal;
-    font-size: 0.8125rem;
+    font-size: var(--token-font-size-xs-plus);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -692,7 +692,7 @@ input[type="range"] {
     text-align: center;
     font-weight: 600;
     padding: var(--token-spacing-md) var(--token-spacing-lg) !important;
-    border-bottom: 2px solid var(--mfs-brand-navy);
+    border-bottom: var(--token-spacing-2) solid var(--mfs-brand-navy);
     white-space: nowrap;
   }
   
@@ -891,14 +891,14 @@ input[type="range"] {
 
   .range-toggle-buttons .range-button {
     padding: var(--token-spacing-md) var(--token-spacing-lg);
-    font-size: 0.95rem;
+    font-size: var(--token-font-size-base);
   }
 
   .collapsible-header {
     padding: var(--token-spacing-sm) $spacing-sm;
     
     .header-title {
-      font-size: 0.95rem;
+      font-size: var(--token-font-size-base);
     }
   }
 
@@ -908,11 +908,11 @@ input[type="range"] {
 
   /* ensure results table becomes more compact */
   .results-section table {
-    font-size: 0.95rem;
+    font-size: var(--token-font-size-base);
   }
 
   .rates-display .rate-item {
-    font-size: 0.95rem;
+    font-size: var(--token-font-size-base);
   }
 }
 
@@ -943,7 +943,7 @@ input[type="range"] {
     padding: var(--token-spacing-sm) $spacing-xs;
     
     .header-title {
-      font-size: 0.9rem;
+      font-size: var(--token-font-size-sm-plus);
     }
     
     .chevron-icon {
@@ -961,16 +961,16 @@ input[type="range"] {
   }
 
   .slds-form-element__label {
-    font-size: 0.85rem;
+    font-size: var(--token-font-size-sm-minus);
   }
 
   .slds-input, .slds-select {
-    font-size: 0.95rem;
+    font-size: var(--token-font-size-base);
     padding: var(--token-spacing-sm) var(--token-spacing-md);
   }
 
   .slds-table {
-    font-size: 0.9rem;
+    font-size: var(--token-font-size-sm-plus);
     
     td, th {
       padding: var(--token-spacing-sm) var(--token-spacing-sm);
@@ -979,23 +979,23 @@ input[type="range"] {
 
   .range-toggle-buttons .range-button {
     padding: var(--token-spacing-sm) var(--token-spacing-md);
-    font-size: 0.9rem;
+    font-size: var(--token-font-size-sm-plus);
   }
 
   /* Make fee toggle more compact on mobile */
   .modern-switch {
     .switch-label {
-      font-size: 0.85rem;
+      font-size: var(--token-font-size-sm-minus);
     }
   }
 }
 
 // BTL Slider Controls
 .btl-slider-controls {
-  padding: 0.5rem;
+  padding: var(--token-spacing-8);
 
   .slds-form-element {
-    margin-bottom: 1rem;
+    margin-bottom: var(--token-spacing-16);
   }
 
   .slds-slider {
@@ -1003,7 +1003,7 @@ input[type="range"] {
   }
 
   .manual-mode-indicator {
-    margin-top: 0.5rem;
+    margin-top: var(--token-spacing-8);
   }
 }
 
@@ -1011,7 +1011,7 @@ input[type="range"] {
 .btl-results-summary {
   .no-results {
     text-align: center;
-    padding: 2rem;
+    padding: var(--token-spacing-32);
   }
 
   .results-table-wrapper {
@@ -1021,29 +1021,29 @@ input[type="range"] {
   }
 
   .action-buttons-row {
-    margin-top: 1rem;
+    margin-top: var(--token-spacing-16);
   }
 }
 
 // BTL Additional Fees
 .btl-additional-fees {
   .fees-grid {
-    margin-top: 1rem;
+    margin-top: var(--token-spacing-16);
   }
 }
 
 // BTL Calculator
 .btl-calculator {
   .input-card {
-    margin-bottom: 1rem;
+    margin-bottom: var(--token-spacing-16);
   }
 
   .action-card {
-    margin-bottom: 1rem;
+    margin-bottom: var(--token-spacing-16);
   }
 
   .empty-results {
     text-align: center;
-    padding: 2rem;
+    padding: var(--token-spacing-32);
   }
 }

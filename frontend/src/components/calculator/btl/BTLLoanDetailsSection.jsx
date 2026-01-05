@@ -119,7 +119,7 @@ const BTLLoanDetailsSection = ({
                 aria-valuemax={ltvMax}
                 aria-valuenow={maxLtvInput}
                 className="ltv-slider"
-                style={{ background: `linear-gradient(90deg, #0176d3 ${ltvPercent}%, #e9eef5 ${ltvPercent}%)` }}
+                style={{ background: `linear-gradient(90deg, var(--token-info) ${ltvPercent}%, var(--token-ui-background-subtle) ${ltvPercent}%)` }}
               />
               <div className="helper-text">
                 Selected: <strong>{maxLtvInput}%</strong> (Max available: <strong>{ltvMax}%</strong>)

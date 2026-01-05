@@ -20,13 +20,13 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
+    padding: var(--token-spacing-32);
     background-color: var(--token-layer-hover);
 
     .login-card {
       background: var(--token-layer-surface);
-      border-radius: 16px;
-      padding: 3rem 2.5rem;
+      border-radius: var(--token-spacing-16);
+      padding: var(--token-spacing-48) 2.5rem;
       width: 100%;
       max-width: 400px;
       box-shadow: var(--token-shadow-soft);
@@ -34,7 +34,7 @@
       .logo-container {
         display: flex;
         justify-content: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: var(--token-spacing-24);
 
         img {
           height: 80px;
@@ -44,20 +44,20 @@
 
       .welcome-text {
         text-align: center;
-        font-size: 1rem;
+        font-size: var(--token-font-size-md);
         color: var(--token-text-primary);
-        margin-bottom: 2rem;
+        margin-bottom: var(--token-spacing-32);
         font-weight: 400;
       }
 
       .form-group {
-        margin-bottom: 1.25rem;
+        margin-bottom: var(--token-spacing-20);
 
         label {
           display: block;
-          font-size: 0.875rem;
+          font-size: var(--token-font-size-sm);
           color: var(--token-text-secondary);
-          margin-bottom: 0.125rem;
+          margin-bottom: var(--token-spacing-2);
           font-weight: 400;
         }
 
@@ -75,7 +75,7 @@
             color: var(--token-ui-text-dark);
             transition: border 0.1s linear, background-color 0.1s linear;
             font-family: var(--token-font-family-base);
-            font-size: 0.875rem;
+            font-size: var(--token-font-size-sm);
 
             &:-webkit-autofill,
             &:-webkit-autofill:hover, 
@@ -98,7 +98,7 @@
 
           .toggle-password {
             position: absolute;
-            right: 12px;
+            right: var(--token-spacing-12);
             top: 50%;
             transform: translateY(-50%);
             background: var(--token-layer-surface);
@@ -113,8 +113,8 @@
             }
 
             svg {
-              width: 20px;
-              height: 20px;
+              width: var(--token-spacing-20);
+              height: var(--token-spacing-20);
             }
           }
         }
@@ -124,23 +124,23 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 1.5rem;
-        margin-top: 1rem;
+        margin-bottom: var(--token-spacing-24);
+        margin-top: var(--token-spacing-16);
 
         .remember-me-container {
           display: flex;
           align-items: center;
 
           input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            margin-right: 0.5rem;
+            width: var(--token-spacing-16);
+            height: var(--token-spacing-16);
+            margin-right: var(--token-spacing-8);
             cursor: pointer;
             accent-color: var(--token-brand-primary);
           }
 
           label {
-            font-size: 0.875rem;
+            font-size: var(--token-font-size-sm);
             color: var(--token-text-secondary);
             cursor: pointer;
             margin: 0;
@@ -150,12 +150,12 @@
 
         .login-button {
           width: auto;
-          padding: 0.5rem 2rem;
+          padding: var(--token-spacing-8) 2rem;
           background-color: var(--token-brand-primary);
           color: white;
           border: none;
-          border-radius: 20px;
-          font-size: 0.9375rem;
+          border-radius: var(--token-spacing-20);
+          font-size: var(--token-font-size-base-minus);
           font-weight: 500;
           cursor: pointer;
           transition: background-color 0.2s ease;
@@ -181,7 +181,7 @@
         a {
           color: var(--token-brand-primary);
           text-decoration: none;
-          font-size: 0.875rem;
+          font-size: var(--token-font-size-sm);
 
           &:hover {
             text-decoration: underline;
@@ -193,19 +193,19 @@
         background-color: var(--token-error-bg);
         border: 1px solid var(--token-error);
         color: var(--token-error);
-        padding: 0.75rem 1rem;
-        border-radius: 6px;
-        margin-bottom: 1.25rem;
-        font-size: 0.875rem;
+        padding: var(--token-spacing-12) 1rem;
+        border-radius: var(--token-spacing-6);
+        margin-bottom: var(--token-spacing-20);
+        font-size: var(--token-font-size-sm);
       }
     }
 
     // Copyright footer - positioned below login card
     .copyright {
       text-align: center;
-      padding: 1.5rem;
-      margin-top: 2rem;
-      font-size: 0.8125rem;
+      padding: var(--token-spacing-24);
+      margin-top: var(--token-spacing-32);
+      font-size: var(--token-font-size-xs-plus);
       color: var(--token-text-secondary);
     }
   }
@@ -251,16 +251,16 @@
 
   @media (max-width: 768px) {
     .login-left {
-      padding: 1.5rem;
+      padding: var(--token-spacing-24);
 
       .login-card {
-        padding: 2rem 1.5rem;
+        padding: var(--token-spacing-32) 1.5rem;
         max-width: 100%;
       }
 
       .copyright {
-        margin-top: 1.5rem;
-        font-size: 0.75rem;
+        margin-top: var(--token-spacing-24);
+        font-size: var(--token-font-size-xs);
       }
     }
   }

@@ -7,8 +7,8 @@
   justify-content: space-between;
   height: 44px;
   padding: 0 2rem;
-  background: #ffffff;
-  border-bottom: 1px solid #dddbda;
+  background: var(--token-color-white);
+  border-bottom: 1px solid var(--token-border-medium);
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -17,31 +17,31 @@
 .sf-global-header__left {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--token-spacing-12);
 }
 
 .sf-global-header__right {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--token-spacing-12);
 }
 
 /* Brand Section */
 .sf-brand {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--token-spacing-8);
 }
 
 .sf-brand__logo {
-  height: 24px;
+  height: var(--token-spacing-24);
   width: auto;
 }
 
 .sf-brand__name {
-  font-size: 0.875rem;
+  font-size: var(--token-font-size-sm);
   font-weight: 500;
-  color: #080707;
+  color: var(--token-text-primary);
   white-space: nowrap;
 }
 
@@ -50,27 +50,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: var(--token-spacing-32);
+  height: var(--token-spacing-32);
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--token-spacing-4);
   cursor: pointer;
   transition: background-color 0.15s ease;
-  color: #706e6b;
+  color: var(--token-text-muted);
 
   &:hover {
-    background-color: #f3f2f2;
-    color: #080707;
+    background-color: var(--token-ui-background-subtle);
+    color: var(--token-text-primary);
   }
 
   &:active {
-    background-color: #eaeaea;
+    background-color: var(--token-ui-background-neutral);
   }
 
   .sf-icon {
-    width: 20px;
-    height: 20px;
+    width: var(--token-spacing-20);
+    height: var(--token-spacing-20);
   }
 }
 
@@ -78,77 +78,77 @@
 .sf-profile-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.5rem;
+  gap: var(--token-spacing-8);
+  padding: var(--token-spacing-4) 0.5rem;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--token-spacing-4);
   cursor: pointer;
   transition: background-color 0.15s ease;
 
   &:hover {
-    background-color: #f3f2f2;
+    background-color: var(--token-ui-background-subtle);
   }
 
   &:active {
-    background-color: #eaeaea;
+    background-color: var(--token-ui-background-neutral);
   }
 
   .sf-profile-avatar {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background-color: #0176d3;
-    color: #ffffff;
+    background-color: var(--token-info);
+    color: var(--token-color-white);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: var(--token-font-size-xs);
     font-weight: 600;
     text-transform: uppercase;
   }
 
   .sf-profile-name {
-    font-size: 0.8125rem;
-    color: #080707;
+    font-size: var(--token-font-size-xs-plus);
+    color: var(--token-text-primary);
   }
 }
 
 /* Dark Theme Support */
 [data-carbon-theme="g100"] {
   .sf-global-header {
-    background: #161616;
-    border-bottom-color: #393939;
+    background: var(--token-layer-background);
+    border-bottom-color: var(--token-border-subtle);
   }
 
   .sf-brand__name {
-    color: #f4f4f4;
+    color: var(--token-text-primary);
   }
 
   .sf-icon-button {
-    color: #c6c6c6;
+    color: var(--token-text-muted);
 
     &:hover {
-      background-color: #262626;
-      color: #f4f4f4;
+      background-color: var(--token-ui-background-hover);
+      color: var(--token-text-primary);
     }
 
     &:active {
-      background-color: #393939;
+      background-color: var(--token-border-subtle);
     }
   }
 
   .sf-profile-button {
     &:hover {
-      background-color: #262626;
+      background-color: var(--token-ui-background-hover);
     }
 
     &:active {
-      background-color: #393939;
+      background-color: var(--token-border-subtle);
     }
 
     .sf-profile-name {
-      color: #f4f4f4;
+      color: var(--token-text-primary);
     }
   }
 }
@@ -164,11 +164,11 @@
   }
 
   .sf-global-header__left {
-    gap: 0.5rem;
+    gap: var(--token-spacing-8);
   }
 
   .sf-global-header__right {
-    gap: 0.5rem;
+    gap: var(--token-spacing-8);
   }
 
   .sf-profile-name {

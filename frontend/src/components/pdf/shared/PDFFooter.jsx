@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from '@react-pdf/renderer';
+import { PDF_COLORS } from './pdfColorConstants';
 
 const footerStyles = StyleSheet.create({
   footer: {
@@ -7,7 +8,7 @@ const footerStyles = StyleSheet.create({
     bottom: 25,
     left: 40,
     right: 40,
-    borderTop: '1pt solid #dddbda',
+    borderTop: `1pt solid ${PDF_COLORS.borderLight}`,
     paddingTop: 8,
   },
   footerContent: {
@@ -17,16 +18,16 @@ const footerStyles = StyleSheet.create({
   },
   pageNumber: {
     fontSize: 8,
-    color: '#3e3e3c',
+    color: PDF_COLORS.textSecondary,
   },
   generatedDate: {
     fontSize: 8,
-    color: '#706e6b',
+    color: PDF_COLORS.textMuted,
   },
   disclaimer: {
     marginTop: 4,
     fontSize: 7,
-    color: '#706e6b',
+    color: PDF_COLORS.textMuted,
     textAlign: 'center',
   },
 });

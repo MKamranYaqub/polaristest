@@ -77,7 +77,7 @@
 
 .uw-checklist__progress .slds-progress-bar {
   width: 120px;
-  height: 8px;
+  height: var(--token-spacing-8);
   background-color: var(--slds-g-color-neutral-base-90, #e5e5e5);
   border-radius: var(--slds-g-radius-border-1, 0.125rem);
   overflow: hidden;
@@ -123,7 +123,7 @@
 }
 
 .uw-checklist__category-header:focus {
-  outline: 2px solid var(--slds-g-color-brand-base-50, #0176d3);
+  outline: var(--token-spacing-2) solid var(--slds-g-color-brand-base-50, #0176d3);
   outline-offset: -2px;
 }
 
@@ -196,9 +196,9 @@
 /* Custom checkbox */
 .uw-checklist__item-checkbox {
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--slds-g-color-border-base-4, #939393);
+  width: var(--token-spacing-20);
+  height: var(--token-spacing-20);
+  border: var(--token-spacing-2) solid var(--slds-g-color-border-base-4, #939393);
   border-radius: var(--slds-g-radius-border-1, 0.125rem);
   margin-right: var(--slds-g-spacing-small, 0.75rem);
   display: flex;

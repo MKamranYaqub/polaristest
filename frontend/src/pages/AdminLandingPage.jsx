@@ -97,12 +97,12 @@ const AdminLandingPage = () => {
   ];
 
   return (
-    <div className="slds-p-around_none" style={{ backgroundColor: '#f8f9fb', minHeight: '100vh' }}>
+    <div className="slds-p-around_none" style={{ backgroundColor: 'var(--token-ui-background-neutral)', minHeight: '100vh' }}>
       {/* Premium Admin Hero */}
       <div 
         className="slds-p-around_none" 
         style={{ 
-          background: 'linear-gradient(135deg, #00205B 0%, #003d8f 100%)',
+          background: 'linear-gradient(135deg, var(--token-color-brand-navy) 0%, #003d8f 100%)',
           position: 'relative',
           overflow: 'hidden'
         }}
@@ -130,7 +130,7 @@ const AdminLandingPage = () => {
                   marginBottom: '1.5rem',
                   border: '1px solid rgba(232, 78, 15, 0.3)'
                 }}>
-                  <span style={{ color: '#E84E0F', fontSize: '0.875rem', fontWeight: '600', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>⚙️ SYSTEM ADMIN</span>
+                  <span style={{ color: 'var(--token-color-brand-orange)', fontSize: 'var(--token-font-size-sm)', fontWeight: '600', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>⚙️ SYSTEM ADMIN</span>
                 </div>
                 <h1 
                   style={{ 
@@ -158,8 +158,8 @@ const AdminLandingPage = () => {
                   borderRadius: '12px',
                   border: '1px solid rgba(255,255,255,0.25)'
                 }}>
-                  <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.875rem', marginBottom: '0.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>Logged in as</div>
-                  <div style={{ color: 'white', fontSize: '1rem', fontWeight: '600', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{user?.name || user?.email || 'Administrator'}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 'var(--token-font-size-sm)', marginBottom: '0.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>Logged in as</div>
+                  <div style={{ color: 'white', fontSize: 'var(--token-font-size-md)', fontWeight: '600', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{user?.name || user?.email || 'Administrator'}</div>
                 </div>
               </div>
             </div>
@@ -182,15 +182,15 @@ const AdminLandingPage = () => {
                 }}
               >
                 <div className="slds-grid slds-grid_align-spread" style={{ marginBottom: '1rem' }}>
-                  <span style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: '500', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{metric.label}</span>
+                  <span style={{ fontSize: 'var(--token-font-size-sm)', color: 'var(--token-text-secondary)', fontWeight: '500', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{metric.label}</span>
                   <svg className="slds-icon slds-icon_x-small" aria-hidden="true" style={{ 
-                    fill: metric.status === 'success' ? '#10b981' : metric.status === 'warning' ? '#E84E0F' : '#00205B',
+                    fill: metric.status === 'success' ? 'var(--token-success)' : metric.status === 'warning' ? 'var(--token-color-brand-orange)' : 'var(--token-color-brand-navy)',
                     flexShrink: 0
                   }}>
                     <use xlinkHref={`/assets/icons/utility-sprite/svg/symbols.svg#${metric.icon}`}></use>
                   </svg>
                 </div>
-                <div style={{ fontSize: '2rem', color: '#00205B', fontWeight: '700', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{metric.value}</div>
+                <div style={{ fontSize: '2rem', color: 'var(--token-color-brand-navy)', fontWeight: '700', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{metric.value}</div>
               </div>
             </div>
           ))}
@@ -200,10 +200,10 @@ const AdminLandingPage = () => {
       {/* Admin Tools Grid */}
       <div style={{ padding: '0 2rem', maxWidth: '1400px', margin: '0 auto 5rem' }}>
         <div style={{ marginBottom: '3rem' }}>
-          <h2 style={{ fontSize: '1.75rem', color: '#00205B', fontWeight: '600', marginBottom: '0.75rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', letterSpacing: '-0.01em' }}>
+          <h2 style={{ fontSize: '1.75rem', color: 'var(--token-color-brand-navy)', fontWeight: '600', marginBottom: '0.75rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', letterSpacing: '-0.01em' }}>
             Configuration Tools
           </h2>
-          <p style={{ fontSize: '1.0625rem', color: '#6b7280', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
+          <p style={{ fontSize: '1.0625rem', color: 'var(--token-text-secondary)', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
             Manage system settings, rates, and configurations
           </p>
         </div>
@@ -247,20 +247,20 @@ const AdminLandingPage = () => {
                           display: 'inline-flex'
                         }}
                       >
-                        <svg className="slds-icon slds-icon_small" aria-hidden="true" style={{ fill: '#00205B' }}>
+                        <svg className="slds-icon slds-icon_small" aria-hidden="true" style={{ fill: 'var(--token-color-brand-navy)' }}>
                           <use xlinkHref={`/assets/icons/utility-sprite/svg/symbols.svg#${tool.icon}`}></use>
                         </svg>
                       </div>
                       <div className="slds-text-align_right">
-                        <div style={{ fontSize: '0.75rem', color: '#9ca3af', fontWeight: '500', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{tool.stats.label}</div>
-                        <div style={{ fontSize: '1.375rem', color: '#00205B', fontWeight: '700', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{tool.stats.value}</div>
+                        <div style={{ fontSize: 'var(--token-font-size-xs)', color: 'var(--token-text-helper)', fontWeight: '500', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{tool.stats.label}</div>
+                        <div style={{ fontSize: '1.375rem', color: 'var(--token-color-brand-navy)', fontWeight: '700', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{tool.stats.value}</div>
                       </div>
                     </div>
                     
-                    <h2 style={{ fontSize: '1.25rem', color: '#00205B', fontWeight: '600', marginBottom: '0.75rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
+                    <h2 style={{ fontSize: 'var(--token-font-size-lg)', color: 'var(--token-color-brand-navy)', fontWeight: '600', marginBottom: '0.75rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
                       {tool.title}
                     </h2>
-                    <p style={{ fontSize: '0.9375rem', color: '#6b7280', lineHeight: '1.7', marginBottom: '1.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
+                    <p style={{ fontSize: '0.9375rem', color: 'var(--token-text-secondary)', lineHeight: '1.7', marginBottom: '1.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
                       {tool.description}
                     </p>
                   </div>
@@ -269,7 +269,7 @@ const AdminLandingPage = () => {
                     <div 
                       className="slds-button" 
                       style={{
-                        background: 'linear-gradient(135deg, #00205B 0%, #003d8f 100%)',
+                        background: 'linear-gradient(135deg, var(--token-color-brand-navy) 0%, #003d8f 100%)',
                         border: 'none',
                         color: 'white',
                         fontWeight: '600',
@@ -307,3 +307,4 @@ const AdminLandingPage = () => {
 };
 
 export default AdminLandingPage;
+

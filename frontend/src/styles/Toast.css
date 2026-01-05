@@ -57,8 +57,8 @@
 /* Toast Icon Container */
 .toast-notification::before {
   content: '';
-  width: 20px;
-  height: 20px;
+  width: var(--token-spacing-20);
+  height: var(--token-spacing-20);
   flex-shrink: 0;
   background-size: contain;
   background-repeat: no-repeat;
@@ -111,10 +111,10 @@
 }
 
 .toast-notification .slds-notify__close .slds-button {
-  width: 2rem;
-  height: 2rem;
-  min-width: 2rem;
-  min-height: 2rem;
+  width: var(--token-spacing-32);
+  height: var(--token-spacing-32);
+  min-width: var(--token-spacing-32);
+  min-height: var(--token-spacing-32);
   padding: 0;
   display: flex;
   align-items: center;

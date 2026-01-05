@@ -28,19 +28,19 @@ const VolumeChart = ({ title, total, data, type }) => {
   const getColor = (segment) => {
     if (type === 'btl') {
       const colorMap = {
-        '2yr Fix': '#5b8def',      // Blue
-        '3yr Fix': '#9dbef5',      // Light Blue
-        '2yr Tracker': '#c47bde',  // Purple
+        '2yr Fix': 'var(--token-chart-blue)',      // Blue
+        '3yr Fix': 'var(--token-chart-blue-light)',      // Light Blue
+        '2yr Tracker': 'var(--token-chart-purple)',  // Purple
       };
-      return colorMap[segment] || '#5b8def';
+      return colorMap[segment] || 'var(--token-chart-blue)';
     } else {
       // Bridging
       const colorMap = {
-        'Fusion': '#e91e63',        // Pink
-        'Fixed Bridge': '#ffc107',  // Yellow
-        'Variable Bridge': '#ff9800', // Orange
+        'Fusion': 'var(--token-chart-pink)',        // Pink
+        'Fixed Bridge': 'var(--token-chart-yellow)',  // Yellow
+        'Variable Bridge': 'var(--token-chart-orange)', // Orange
       };
-      return colorMap[segment] || '#e91e63';
+      return colorMap[segment] || 'var(--token-chart-pink)';
     }
   };
 

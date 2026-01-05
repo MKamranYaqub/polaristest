@@ -7,28 +7,28 @@
 import { useEffect } from 'react';
 import { useSupabase } from '../contexts/SupabaseContext';
 
-// Default column colors
+// Default column colors (these values are applied as CSS custom properties)
 const DEFAULT_COLUMNS = [
-  { bg: '#002855', text: '#ffffff' },  // Column 1 - navy
-  { bg: '#1B3B6F', text: '#ffffff' },  // Column 2 - navy-500
-  { bg: '#ED8B00', text: '#ffffff' }   // Column 3 - orange
+  { bg: 'var(--token-column-navy)', text: 'var(--token-color-white)' },  // Column 1 - navy
+  { bg: 'var(--token-column-navy-500)', text: 'var(--token-color-white)' },  // Column 2 - navy-500
+  { bg: 'var(--token-column-orange)', text: 'var(--token-color-white)' }   // Column 3 - orange
 ];
 
 // Default header colors per loan type (new format with columns array)
 const DEFAULT_HEADER_COLORS = {
   btl: {
-    labelBg: '#f4f6f9',
-    labelText: '#181818',
+    labelBg: 'var(--token-ui-background-subtle)',
+    labelText: 'var(--token-text-primary)',
     columns: [...DEFAULT_COLUMNS]
   },
   bridge: {
-    labelBg: '#f4f6f9',
-    labelText: '#181818',
+    labelBg: 'var(--token-ui-background-subtle)',
+    labelText: 'var(--token-text-primary)',
     columns: [...DEFAULT_COLUMNS]
   },
   core: {
-    labelBg: '#f4f6f9',
-    labelText: '#181818',
+    labelBg: 'var(--token-ui-background-subtle)',
+    labelText: 'var(--token-text-primary)',
     columns: [...DEFAULT_COLUMNS]
   }
 };
@@ -51,8 +51,8 @@ const migrateToColumnsFormat = (loanTypeColors, defaults) => {
   let i = 1;
   while (loanTypeColors[`col${i}Bg`] !== undefined || i <= 3) {
     columns.push({
-      bg: loanTypeColors[`col${i}Bg`] || defaults.columns[i-1]?.bg || '#002855',
-      text: loanTypeColors[`col${i}Text`] || defaults.columns[i-1]?.text || '#ffffff'
+      bg: loanTypeColors[`col${i}Bg`] || defaults.columns[i-1]?.bg || 'var(--token-column-navy)',
+      text: loanTypeColors[`col${i}Text`] || defaults.columns[i-1]?.text || 'var(--token-color-white)'
     });
     i++;
     if (i > 10) break; // Safety limit

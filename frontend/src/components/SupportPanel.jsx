@@ -89,10 +89,10 @@ export default function SupportPanel({ onClose }) {
           right: 0,
           height: '100vh',
           zIndex: 9001,
-          backgroundColor: '#ffffff'
+          backgroundColor: 'var(--token-color-white)'
         }}
       >
-        <div className="slds-panel__header" style={{ height: '4rem', minHeight: '4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.5rem', backgroundColor: '#f3f3f3', borderBottom: '1px solid #dddbda' }}>
+        <div className="slds-panel__header" style={{ height: '4rem', minHeight: '4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.5rem', backgroundColor: 'var(--token-layer-background)', borderBottom: '1px solid var(--token-border-medium)' }}>
           <h2 className="slds-panel__header-title slds-text-heading_small slds-truncate" style={{ margin: 0, fontWeight: 700 }}>Support</h2>
           <button 
             className="slds-button slds-button_icon slds-button_icon-small" 
@@ -188,9 +188,9 @@ export default function SupportPanel({ onClose }) {
             </div>
           </form>
         </div>
-        <footer style={{ position: 'absolute', bottom: 0, left: 0, right: 0, borderTop: '1px solid #dddbda', padding: '0.75rem 1.5rem', backgroundColor: '#f3f3f3' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#706e6b', fontSize: '0.875rem' }}>
-            <span style={{ fontSize: '1rem' }}>ℹ️</span>
+        <footer style={{ position: 'absolute', bottom: 0, left: 0, right: 0, borderTop: '1px solid var(--token-border-medium)', padding: '0.75rem 1.5rem', backgroundColor: 'var(--token-layer-background)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--token-text-muted)', fontSize: 'var(--token-font-size-sm)' }}>
+            <span style={{ fontSize: 'var(--token-font-size-md)' }}>ℹ️</span>
             <span>V. 2.4 - Updated Auto logout and Caching</span>
           </div>
         </footer>
@@ -198,3 +198,4 @@ export default function SupportPanel({ onClose }) {
     </>
   );
 }
+

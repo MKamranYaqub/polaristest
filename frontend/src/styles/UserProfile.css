@@ -4,8 +4,8 @@
 }
 
 .user-avatar-btn {
-  width: 40px;
-  height: 40px;
+  width: var(--token-spacing-40);
+  height: var(--token-spacing-40);
   border-radius: 50% !important;
   border: none !important;
   background-color: var(--token-brand-primary);
@@ -28,7 +28,7 @@
 
 .user-dropdown {
   position: absolute;
-  top: 48px;
+  top: var(--token-spacing-48);
   right: 0;
   z-index: calc(var(--token-z-dropdown) + 1);
   min-width: 280px;
@@ -72,7 +72,7 @@
 
 .dropdown-link-icon {
   margin-right: var(--token-spacing-sm);
-  font-size: 16px;
+  font-size: var(--token-font-size-md);
 }
 
 .password-modal-container {

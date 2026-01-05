@@ -26,21 +26,21 @@
 .sf-global-header__left {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--token-spacing-16);
   flex: 1;
 }
 
 .sf-global-header__right {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--token-spacing-12);
 }
 
 // Brand
 .sf-brand {
   display: flex;
   align-items: center;
-  padding-right: 1rem;
+  padding-right: var(--token-spacing-16);
   border-right: 1px solid #dddbda;
 }
 
@@ -77,13 +77,13 @@
 .sf-user-nav__left {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  margin-right: 1rem;
+  gap: var(--token-spacing-4);
+  margin-right: var(--token-spacing-16);
   min-width: auto;
 }
 
 .sf-user-label {
-  font-size: 0.875rem;
+  font-size: var(--token-font-size-sm);
   font-weight: 400;
   color: #3e3e3c;
   padding: 0 1rem;
@@ -99,7 +99,7 @@
   display: flex;
   align-items: center;
   height: 100%;
-  margin-right: 1rem;
+  margin-right: var(--token-spacing-16);
 }
 
 .sf-nav-item {
@@ -110,9 +110,9 @@
   padding: 0 1.5rem;
   background: transparent;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-bottom: var(--token-spacing-2) solid transparent;
   border-right: 1px solid #e5e5e5;
-  font-size: 0.8125rem;
+  font-size: var(--token-font-size-xs-plus);
   font-weight: 700;
   color: #3e3e3c;
   cursor: pointer;
@@ -155,14 +155,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--token-spacing-8);
   height: 36px;
   padding: 0 1.5rem;
   background: transparent;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-bottom: var(--token-spacing-2) solid transparent;
   border-right: 1px solid #e5e5e5;
-  font-size: 0.8125rem;
+  font-size: var(--token-font-size-xs-plus);
   font-weight: 700;
   color: #3e3e3c;
   cursor: pointer;
@@ -175,8 +175,8 @@
 }
 
 .sf-nav-chevron {
-  width: 12px;
-  height: 12px;
+  width: var(--token-spacing-12);
+  height: var(--token-spacing-12);
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -207,11 +207,11 @@
 .sf-dropdown__item {
   display: block;
   width: 100%;
-  padding: 0.5rem 1rem;
+  padding: var(--token-spacing-8) 1rem;
   background: transparent;
   border: none;
   text-align: left;
-  font-size: 0.8125rem;
+  font-size: var(--token-font-size-xs-plus);
   color: #161616;
   cursor: pointer;
   transition: background 0.15s;
@@ -227,14 +227,14 @@
 
 // Breadcrumbs Bar
 .sf-breadcrumbs-bar {
-  padding: 0.5rem 1rem;
+  padding: var(--token-spacing-8) 1rem;
   background: #f4f4f4;
   border-bottom: 1px solid #e5e5e5;
 }
 
 .sf-icon {
-  width: 20px;
-  height: 20px;
+  width: var(--token-spacing-20);
+  height: var(--token-spacing-20);
 }
 
 // Dark mode adjustments
@@ -342,20 +342,20 @@
   display: none;
   background: transparent;
   border: none;
-  padding: 0.5rem;
+  padding: var(--token-spacing-8);
   cursor: pointer;
   color: var(--token-text-primary, #3e3e3c);
   
   .hamburger-icon {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    width: 24px;
+    gap: var(--token-spacing-4);
+    width: var(--token-spacing-24);
     
     span {
       display: block;
       width: 100%;
-      height: 2px;
+      height: var(--token-spacing-2);
       background: currentColor;
       transition: all 0.3s ease;
     }
@@ -394,14 +394,14 @@
 @media (max-width: 768px) {
   .sf-global-header {
     height: 60px;
-    padding: 0.5rem 1rem;
+    padding: var(--token-spacing-8) 1rem;
     flex-direction: row;
     justify-content: space-between;
   }
 
   .sf-global-header__left {
     flex: 1;
-    gap: 1rem;
+    gap: var(--token-spacing-16);
     min-width: 0;
   }
 
@@ -423,7 +423,7 @@
     }
     
     > div > div:last-child {
-      font-size: 1rem !important;
+      font-size: var(--token-font-size-md) !important;
       margin-top: 0 !important;
       white-space: nowrap;
       overflow: hidden;
@@ -450,7 +450,7 @@
     background: var(--token-layer-surface, #fff);
     flex-direction: column;
     align-items: stretch;
-    padding: 1rem 0;
+    padding: var(--token-spacing-16) 0;
     box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
     transition: right 0.3s ease;
     z-index: 1000;
@@ -472,7 +472,7 @@
     width: 100%;
     height: auto;
     min-width: auto;
-    padding: 1rem 1.5rem;
+    padding: var(--token-spacing-16) 1.5rem;
     text-align: left;
     justify-content: flex-start;
     border-right: none;
@@ -492,7 +492,7 @@
     width: 100%;
     height: auto;
     min-width: auto;
-    padding: 1rem 1.5rem;
+    padding: var(--token-spacing-16) 1.5rem;
     text-align: left;
     justify-content: space-between;
     border-right: none;
@@ -509,12 +509,12 @@
   }
   
   .sf-dropdown__item {
-    padding: 0.875rem 2.5rem;
-    font-size: 0.875rem;
+    padding: var(--token-spacing-14) 2.5rem;
+    font-size: var(--token-font-size-sm);
   }
   
   .theme-toggle-btn,
   .user-profile-trigger {
-    margin: 1rem 1.5rem 0;
+    margin: var(--token-spacing-16) 1.5rem 0;
   }
 }

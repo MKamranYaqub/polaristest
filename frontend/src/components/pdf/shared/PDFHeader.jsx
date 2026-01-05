@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from '@react-pdf/renderer';
 import { styles } from './PDFStyles';
+import { PDF_COLORS } from './pdfColorConstants';
 
 // Logo path from public folder - will be resolved at runtime
 const MFS_LOGO_PATH = '/assets/mfs-logo.png';
@@ -12,7 +13,7 @@ const headerStyles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 15,
     paddingBottom: 10,
-    borderBottom: '2pt solid #1a3a5c',
+    borderBottom: `2pt solid ${PDF_COLORS.brandNavyDark}`,
   },
   headerLeft: {
     flex: 1,
@@ -30,17 +31,17 @@ const headerStyles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1a3a5c',
+    color: PDF_COLORS.brandNavyDark,
     marginBottom: 3,
   },
   subtitle: {
     fontSize: 11,
-    color: '#706e6b',
+    color: PDF_COLORS.textMuted,
     marginBottom: 2,
   },
   referenceNumber: {
     fontSize: 10,
-    color: '#3e3e3c',
+    color: PDF_COLORS.textSecondary,
     marginTop: 3,
   },
 });

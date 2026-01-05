@@ -89,22 +89,22 @@
 
 .modal-content h2 {
   margin-top: 0;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--token-spacing-24);
   color: var(--token-text-primary, #333);
 }
 
 /* ⚠️ DEPRECATED: Use .slds-form-element structure instead!
    See auth.css for migration example. */
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: var(--token-spacing-16);
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--token-spacing-8);
   font-weight: 500;
   color: var(--token-text-secondary, #666);
-  font-size: 0.875rem;
+  font-size: var(--token-font-size-sm);
 }
 
 /* ⚠️ DEPRECATED: Use .slds-input and .slds-textarea directly! */
@@ -115,7 +115,7 @@
   padding: 0 var(--slds-g-spacing-3);
   border: 1px solid var(--slds-g-color-border-1);
   border-radius: var(--slds-g-radius-border-2);
-  font-size: 1rem;
+  font-size: var(--token-font-size-md);
   line-height: 1.875rem;
   min-height: var(--slds-g-sizing-9);
   background-color: var(--slds-g-color-surface-container-1);
@@ -140,9 +140,9 @@
 }
 
 .modal-actions {
-  margin-top: 2rem;
+  margin-top: var(--token-spacing-32);
   display: flex;
-  gap: 1rem;
+  gap: var(--token-spacing-16);
   justify-content: flex-end;
 }
 
@@ -154,51 +154,51 @@
 /* Uses standard breakpoints: tablet (768px), mobile (480px) */
 @media (max-width: 768px) {
   .modal-content {
-    padding: 1.5rem;
+    padding: var(--token-spacing-24);
     width: 95%;
     max-height: 85vh;
   }
 
   .modal-content h2 {
-    font-size: 1.3rem;
+    font-size: var(--token-font-size-xl-small);
   }
 }
 
 @media (max-width: 480px) {
   .modal-content {
-    padding: 1.25rem;
+    padding: var(--token-spacing-20);
     width: 96%;
-    border-radius: 6px;
+    border-radius: var(--token-spacing-6);
   }
 
   .modal-content h2 {
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
+    font-size: var(--token-font-size-xl-minus);
+    margin-bottom: var(--token-spacing-16);
   }
 
   .form-group {
-    margin-bottom: 0.875rem;
+    margin-bottom: var(--token-spacing-14);
   }
 
   .form-group label {
-    font-size: 0.9rem;
+    font-size: var(--token-font-size-sm-plus);
   }
 
   .form-group input,
   .form-group textarea {
-    padding: 0.6rem;
-    font-size: 0.95rem;
+    padding: var(--token-spacing-10);
+    font-size: var(--token-font-size-base);
   }
 
   .modal-actions {
-    margin-top: 1.5rem;
+    margin-top: var(--token-spacing-24);
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--token-spacing-12);
   }
 
   .save-button,
   .cancel-button {
     width: 100%;
-    padding: 0.75rem;
+    padding: var(--token-spacing-12);
   }
 }

@@ -296,7 +296,7 @@ export default function UWRequirementsChecklist({
               onClick={handleExportPDF}
               disabled={exporting}
               title="Export to PDF"
-              style={{ backgroundColor: 'var(--token-brand-primary)', color: '#ffffff', padding: '0.5rem 1rem', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+              style={{ backgroundColor: 'var(--token-brand-primary)', color: 'var(--token-color-white)', padding: '0.5rem 1rem', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
             >
               {exporting ? (
                 <span className="slds-spinner slds-spinner_x-small slds-spinner_inline" role="status">
@@ -485,3 +485,4 @@ UWRequirementsChecklist.propTypes = {
   customRequirements: PropTypes.array,
   onRequirementsChange: PropTypes.func
 };
+

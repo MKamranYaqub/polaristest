@@ -4,7 +4,7 @@
 .modern-switch {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--token-spacing-12);
   
   .switch-track {
     width: 51px;
@@ -26,10 +26,10 @@
     
     .switch-thumb {
       position: absolute;
-      left: 2px;
+      left: var(--token-spacing-2);
       display: block;
-      width: 24px;
-      height: 24px;
+      width: var(--token-spacing-24);
+      height: var(--token-spacing-24);
       border-radius: 50%;
       background: $token-color-surface;
       box-shadow: 0 1px 3px rgba(0,0,0,0.3);
@@ -43,7 +43,7 @@
   }
   
   .switch-label {
-    font-size: 0.875rem;
+    font-size: var(--token-font-size-sm);
     color: $token-text-primary;
     line-height: 1.4;
   }
@@ -83,7 +83,7 @@
     border: none;
     border-right: 1px solid $token-color-border-subtle;
     color: $token-text-primary;
-    font-size: 0.9375rem;
+    font-size: var(--token-font-size-base-minus);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;

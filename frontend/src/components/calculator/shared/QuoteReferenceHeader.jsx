@@ -22,10 +22,10 @@ export default function QuoteReferenceHeader({ reference }) {
           size="x-small"
         />
         <div className="display-flex flex-direction-column flex-gap-2px">
-          <span className="text-color-white-semi font-weight-400" style={{ fontSize: '0.6875rem' }}>
+          <span className="text-color-white-semi font-weight-400" style={{ fontSize: 'var(--token-font-size-xs-minus)' }}>
             Quote Reference
           </span>
-          <span className="text-color-white font-weight-600 font-monospace" style={{ fontSize: '0.8125rem', letterSpacing: '0.02em' }}>
+          <span className="text-color-white font-weight-600 font-monospace" style={{ fontSize: 'var(--token-font-size-xs-plus)', letterSpacing: '0.02em' }}>
             {reference}
           </span>
         </div>

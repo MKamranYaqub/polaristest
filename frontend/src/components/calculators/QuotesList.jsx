@@ -351,7 +351,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                   placeholder="Search by ref..."
                   value={filterRef}
                   onChange={(e) => setFilterRef(e.target.value)}
-                  style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
+                  style={{ padding: '0.625rem 0.875rem', border: '1px solid var(--token-border-medium)', borderRadius: '6px', fontSize: '0.9rem' }}
                 />
               </div>
               <div className="filter-field" style={{ minWidth: '180px' }}>
@@ -361,7 +361,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                   placeholder="Search by name..."
                   value={filterName} 
                   onChange={(e) => setFilterName(e.target.value)}
-                  style={{ padding: '0.625rem 0.875rem', border: '1px solid #dddbda', borderRadius: '6px', fontSize: '0.9rem' }}
+                  style={{ padding: '0.625rem 0.875rem', border: '1px solid var(--token-border-medium)', borderRadius: '6px', fontSize: '0.9rem' }}
                 />
               </div>
 

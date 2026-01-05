@@ -2,7 +2,7 @@
 
 .error-fallback-container {
   text-align: center;
-  padding: 3rem;
+  padding: var(--token-spacing-48);
 }
 
 .error-text-muted {
@@ -18,13 +18,13 @@
 
 .error-details-pre {
   color: var(--token-critical);
-  margin-top: 0.5rem;
+  margin-top: var(--token-spacing-8);
 }
 
 .rates-error-container {
   position: fixed;
-  top: 1rem;
-  right: 1rem;
+  top: var(--token-spacing-16);
+  right: var(--token-spacing-16);
   z-index: 9999;
 }
 

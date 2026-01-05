@@ -41,16 +41,16 @@
   display: flex;
   align-items: center;
   padding: 0 1rem;
-  height: 2.5rem;
+  height: var(--token-spacing-40);
   color: var(--slds-color-text-weak, #3e3e3c);
-  font-size: 0.875rem;
+  font-size: var(--token-font-size-sm);
   font-weight: 400;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
   background: transparent;
   border: none;
-  border-bottom: 3px solid transparent;
+  border-bottom: var(--token-spacing-3) solid transparent;
   transition: color 0.1s ease, border-color 0.1s ease;
   border-radius: 0;
 }
@@ -91,15 +91,15 @@
 .products-rates-table {
   width: 100%;
   border-collapse: separate; /* Force separate for gaps */
-  border-spacing: 8px 8px; /* Horizontal gap 8px, Vertical gap 8px */
-  font-size: 11px;
+  border-spacing: var(--token-spacing-8) 8px; /* Horizontal gap 8px, Vertical gap 8px */
+  font-size: var(--token-font-size-xs-minus);
   border: none;
   background: transparent;
 }
 
 .products-rates-table th,
 .products-rates-table td {
-  padding: 4px 6px; /* Reduced padding (was 5px 8px) */
+  padding: var(--token-spacing-4) 6px; /* Reduced padding (was 5px 8px) */
   vertical-align: middle;
   text-align: center;
   background-color: transparent;
@@ -124,8 +124,8 @@
   min-width: 130px;
   text-align: left;
   color: var(--slds-g-color-on-surface-2);
-  font-size: 10px;
-  padding-left: 16px;
+  font-size: var(--token-font-size-2xs);
+  padding-left: var(--token-spacing-16);
 }
 
 .products-rates-table__label-cell {
@@ -133,8 +133,8 @@
   font-weight: 600;
   text-align: left;
   color: var(--slds-g-color-on-surface-1);
-  font-size: 10px;
-  padding-left: 16px;
+  font-size: var(--token-font-size-2xs);
+  padding-left: var(--token-spacing-16);
 }
 
 /* ========================================
@@ -143,31 +143,31 @@
 
 .products-rates-table__tier-header {
   font-weight: 700;
-  font-size: 12px;
+  font-size: var(--token-font-size-xs);
   letter-spacing: 0.3px;
-  padding: 8px 4px; /* Increased inner padding for better text legibility */
+  padding: var(--token-spacing-8) 4px; /* Increased inner padding for better text legibility */
   text-align: center;
-  height: 20px; /* Reduced height (was 24px) */
+  height: var(--token-spacing-20); /* Reduced height (was 24px) */
   vertical-align: middle;
 }
 
 /* Tier 1 - Blue (#5B9BD5) */
 .products-rates-table__tier-header--tier-1 {
-  background-color: #4992fe;
-  color: #FFFFFF;
+  background-color: var(--token-tier1-bg);
+  color: var(--token-color-white);
     
 }
 
 /* Tier 2 - Orange (#FF9339) */
 .products-rates-table__tier-header--tier-2 {
-  background-color: #ff5d2d;
-  color: #FFFFFF;
+  background-color: var(--token-tier2-bg);
+  color: var(--token-color-white);
 }
 
 /* Tier 3 - Pink/Magenta  */
 .products-rates-table__tier-header--tier-3 {
-  background-color: #e3066a;
-  color: #FFFFFF;
+  background-color: var(--token-tier3-bg);
+  color: var(--token-color-white);
 }
 
 
@@ -178,12 +178,12 @@
 
 .products-rates-table__product-col {
   font-weight: 600;
-  font-size: 11px;
+  font-size: var(--token-font-size-xs-minus);
   min-width: 90px;
   text-align: center;
-  height: 16px; /* Reduced height (was 20px) */
+  height: var(--token-spacing-16); /* Reduced height (was 20px) */
   vertical-align: middle;
-  padding: 3px 6px; /* Reduced padding (was 4px 8px) */
+  padding: var(--token-spacing-3) 6px; /* Reduced padding (was 4px 8px) */
   color: var(--slds-g-color-neutral-base-100);
 }
 
@@ -192,7 +192,7 @@
 .products-rates-table thead tr:nth-child(2) th:nth-of-type(4),
 .products-rates-table thead tr:nth-child(2) th:nth-of-type(7),
 .products-rates-table thead tr:nth-child(2) th:nth-of-type(10) {
-  background-color: #6CB4EE;
+  background-color: var(--token-product-3yr-fixed-bg);
 }
 
 /* 2 year fixed - Dark Blue */
@@ -200,7 +200,7 @@
 .products-rates-table thead tr:nth-child(2) th:nth-of-type(5),
 .products-rates-table thead tr:nth-child(2) th:nth-of-type(8),
 .products-rates-table thead tr:nth-child(2) th:nth-of-type(11) {
-  background-color: #003D7A;
+  background-color: var(--token-product-2yr-fixed-bg);
 }
 
 /* 2 year tracker - Gray */
@@ -208,7 +208,7 @@
 .products-rates-table thead tr:nth-child(2) th:nth-of-type(6),
 .products-rates-table thead tr:nth-child(2) th:nth-of-type(9),
 .products-rates-table thead tr:nth-child(2) th:nth-of-type(12) {
-  background-color: #6C6C6C;
+  background-color: var(--token-product-2yr-tracker-bg);
 }
 
 /* ========================================
@@ -225,10 +225,10 @@
 }
 
 .products-rates-table__fee-row td {
-  font-size: 10px;
+  font-size: var(--token-font-size-2xs);
   color: var(--token-text-secondary);
   font-weight: 400;
-  padding: 6px 8px;
+  padding: var(--token-spacing-6) 8px;
   background-color: var(--token-layer-surface); /* Theme-aware surface */
 }
 
@@ -244,8 +244,8 @@
 .products-rates-table__rate-row td {
   font-weight: 600;
   color: var(--token-text-primary);
-  font-size: 11px;
-  padding: 4px 8px; /* Reduced padding (was 5px 12px) */
+  font-size: var(--token-font-size-xs-minus);
+  padding: var(--token-spacing-4) 8px; /* Reduced padding (was 5px 12px) */
   background-color: var(--token-layer-surface);
 }
 
@@ -261,8 +261,8 @@
 .products-rates-table__revert-row td {
   font-weight: 400;
   color: var(--token-text-secondary);
-  font-size: 10px;
-  padding: 3px 8px; /* Reduced padding (was 4px 12px) */
+  font-size: var(--token-font-size-2xs);
+  padding: var(--token-spacing-3) 8px; /* Reduced padding (was 4px 12px) */
   background-color: var(--token-layer-surface);
 }
 
@@ -278,8 +278,8 @@
 .products-rates-table__info-row td {
   font-weight: 400;
   color: var(--token-text-secondary);
-  font-size: 9px;
-  padding: 3px 8px; /* Reduced padding (was 4px 12px) */
+  font-size: var(--token-font-size-4xs);
+  padding: var(--token-spacing-3) 8px; /* Reduced padding (was 4px 12px) */
   background-color: var(--token-layer-surface);
 }
 
@@ -301,14 +301,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: var(--token-spacing-4);
 }
 
 .products-rate-cell__edit-icon {
   opacity: 0;
   transition: opacity 0.2s ease;
   color: var(--token-interactive);
-  font-size: 11px;
+  font-size: var(--token-font-size-xs-minus);
 }
 
 .products-rate-cell--editable:hover .products-rate-cell__edit-icon {
@@ -319,16 +319,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: var(--token-spacing-6);
 }
 
 .products-rate-cell__input {
   width: 100%;
   max-width: 70px;
-  padding: 4px 6px;
-  border: 2px solid var(--token-interactive);
-  border-radius: 4px;
-  font-size: 11px;
+  padding: var(--token-spacing-4) 6px;
+  border: var(--token-spacing-2) solid var(--token-interactive);
+  border-radius: var(--token-spacing-4);
+  font-size: var(--token-font-size-xs-minus);
   text-align: center;
   font-family: inherit;
   font-weight: 600;
@@ -346,15 +346,15 @@
 
 .products-rate-cell__edit-actions {
   display: flex;
-  gap: 6px;
+  gap: var(--token-spacing-6);
   justify-content: center;
 }
 
 .products-rate-cell__save-btn,
 .products-rate-cell__cancel-btn {
-  padding: 4px 12px;
-  font-size: 11px;
-  border-radius: 4px;
+  padding: var(--token-spacing-4) 12px;
+  font-size: var(--token-font-size-xs-minus);
+  border-radius: var(--token-spacing-4);
   border: none;
   cursor: pointer;
   font-weight: 600;
@@ -363,12 +363,13 @@
 }
 
 .products-rate-cell__save-btn {
-  background-color: #04844B;
-  color: #FFFFFF;
+  background-color: var(--token-success);
+  color: var(--token-color-white);
 }
 
 .products-rate-cell__save-btn:hover:not(:disabled) {
-  background-color: #036938;
+  background-color: var(--token-success);
+  filter: brightness(0.9);
 }
 
 .products-rate-cell__cancel-btn {
@@ -405,8 +406,8 @@
 /* Increase specificity so bridging table overrides generic table rules */
 .products-rates-table.products-bridging-table {
   border-collapse: separate;
-  border-spacing: 12px 8px;
-  margin-top: 12px;
+  border-spacing: var(--token-spacing-12) 8px;
+  margin-top: var(--token-spacing-12);
   table-layout: fixed;
   width: 100%;
 }
@@ -420,8 +421,8 @@
 .products-bridging-table td {
   border: none;
   border-bottom: 1px solid var(--slds-g-color-border-1);
-  padding: 8px 10px;
-  font-size: 13px;
+  padding: var(--token-spacing-8) 10px;
+  font-size: var(--token-font-size-xs-plus);
   text-align: center;
   background-color: var(--token-layer-surface);
   color: var(--token-text-primary);
@@ -430,8 +431,8 @@
 .products-bridging-table th {
   border: none;
   border-bottom: 1px solid var(--slds-g-color-border-1);
-  padding: 8px 10px;
-  font-size: 13px;
+  padding: var(--token-spacing-8) 10px;
+  font-size: var(--token-font-size-xs-plus);
   text-align: center;
 }
 
@@ -439,7 +440,7 @@
 .products-bridging-table .products-bridging-table__product-header {
   background-color: var(--mfs-brand-navy-100);
   font-weight: 600;
-  padding: 12px 14px; /* increased header padding for better readability */
+  padding: var(--token-spacing-12) 14px; /* increased header padding for better readability */
   text-align: center;
   border: none;
   border-bottom: 1px solid var(--slds-g-color-border-1);
@@ -451,14 +452,14 @@
 /* Apply the same comfortable padding to gradient header variants */
 .products-bridging-table__header--variable,
 .products-bridging-table__header--fixed {
-  padding: 12px 14px;
+  padding: var(--token-spacing-12) 14px;
 }
 
 .products-bridging-table__product-name {
-  font-size: 13px;
+  font-size: var(--token-font-size-xs-plus);
   color: var(--slds-g-color-on-surface-1);
   font-weight: 600;
-  padding: 4px 10px; /* inner padding for better legibility */
+  padding: var(--token-spacing-4) 10px; /* inner padding for better legibility */
   line-height: 1.35;
 }
 
@@ -471,8 +472,8 @@
   background-color: var(--slds-g-color-neutral-base-95);
   font-weight: 600;
   text-align: left;
-  padding: 8px 10px;
-  font-size: 12px;
+  padding: var(--token-spacing-8) 10px;
+  font-size: var(--token-font-size-xs);
   color: var(--slds-g-color-on-surface-1);
   border: none;
   border-bottom: 1px solid var(--slds-g-color-border-1);
@@ -500,8 +501,8 @@
   background-color: var(--token-layer-surface);
   font-weight: 600;
   color: var(--token-text-primary);
-  font-size: 13px;
-  padding: 8px 10px;
+  font-size: var(--token-font-size-xs-plus);
+  padding: var(--token-spacing-8) 10px;
   border: none;
   border-bottom: 1px solid var(--slds-g-color-border-1);
 }
@@ -511,8 +512,8 @@
   background-color: var(--token-layer-surface);
   font-weight: 400;
   color: var(--token-text-secondary);
-  font-size: 12px;
-  padding: 8px 10px;
+  font-size: var(--token-font-size-xs);
+  padding: var(--token-spacing-8) 10px;
   border: none;
   border-bottom: 1px solid var(--slds-g-color-border-1);
 }
@@ -547,14 +548,14 @@
 
 /* Fusion text */
 .products-fusion-table__fusion-text {
-  color: #0d9488;
+  color: var(--token-success);
   font-weight: var(--token-font-weight-bold);
   font-size: var(--token-font-size-lg);
 }
 
 /* Fusion badge */
 .products-fusion-table__badge {
-  background-color: #0d9488;
+  background-color: var(--token-success);
   color: var(--slds-g-color-neutral-base-100);
   padding: var(--token-spacing-xs) var(--token-spacing-sm);
   border-radius: var(--slds-g-radius-border-2);
@@ -563,16 +564,16 @@
 }
 
 .products-fusion-table__badge--orange {
-  background-color: #f59e0b;
+  background-color: var(--token-warning);
 }
 
 .products-fusion-table__badge--teal {
-  background-color: #0d9488;
+  background-color: var(--token-success);
 }
 
 /* Fusion rate cell highlight */
 .products-fusion-table__rate-cell {
-  background-color: #ecfdf5;
+  background-color: var(--token-status-success-bg);
 }
 
 /* Editable rate cell */
@@ -644,63 +645,63 @@
 
 @media (max-width: 1024px) {
   .products-rates-table {
-    font-size: 12px;
+    font-size: var(--token-font-size-xs);
   }
 
   .products-rates-table__label-col,
   .products-rates-table__label-cell {
     min-width: 120px;
     width: 120px;
-    font-size: 11px;
+    font-size: var(--token-font-size-xs-minus);
   }
 
   .products-rates-table__product-col {
     min-width: 90px;
-    font-size: 12px;
+    font-size: var(--token-font-size-xs);
   }
   
   .slds-tabs_scoped__link {
-    padding: 10px 16px;
-    font-size: 13px;
+    padding: var(--token-spacing-10) 16px;
+    font-size: var(--token-font-size-xs-plus);
   }
 }
 
 @media (max-width: 768px) {
   .products-rates-table {
-    font-size: 11px;
+    font-size: var(--token-font-size-xs-minus);
   }
 
   .products-rates-table th,
   .products-rates-table td {
-    padding: 8px 6px;
+    padding: var(--token-spacing-8) 6px;
   }
 
   .products-rates-table__label-col,
   .products-rates-table__label-cell {
     min-width: 90px;
     width: 90px;
-    font-size: 10px;
-    padding-left: 8px;
+    font-size: var(--token-font-size-2xs);
+    padding-left: var(--token-spacing-8);
   }
 
   .products-rates-table__product-col {
     min-width: 70px;
-    font-size: 11px;
+    font-size: var(--token-font-size-xs-minus);
   }
   
   .products-rates-table__tier-header {
-    padding: 8px 0px;
-    height: 40px;
-    font-size: 13px;
+    padding: var(--token-spacing-8) 0px;
+    height: var(--token-spacing-40);
+    font-size: var(--token-font-size-xs-plus);
   }
   
   .slds-tabs_scoped__link {
-    padding: 8px 12px;
-    font-size: 12px;
+    padding: var(--token-spacing-8) 12px;
+    font-size: var(--token-font-size-xs);
   }
   
   .products-bridging-table__product-name {
-    font-size: 10px;
+    font-size: var(--token-font-size-2xs);
   }
 }
 
@@ -729,12 +730,12 @@
    ======================================== */
 
 .products-rates-table tbody tr:focus-within {
-  outline: 2px solid var(--token-interactive, #0176D3);
+  outline: var(--token-spacing-2) solid var(--token-interactive, #0176D3);
   outline-offset: -2px;
 }
 
 .products-rates-table th:focus,
 .products-rates-table td:focus {
-  outline: 2px solid var(--token-interactive, #0176D3);
+  outline: var(--token-spacing-2) solid var(--token-interactive, #0176D3);
   outline-offset: -2px;
 }

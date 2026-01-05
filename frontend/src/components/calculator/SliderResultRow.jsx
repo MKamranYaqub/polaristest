@@ -87,7 +87,7 @@ export default function SliderResultRow({
                     height: '6px',
                     borderRadius: 'var(--token-radius-sm)',
                     background: isManuallyChanged
-                      ? `linear-gradient(to right, var(--token-warning, #ff9800) 0%, var(--token-warning, #ff9800) ${percentage}%, var(--token-border-subtle) ${percentage}%, var(--token-border-subtle) 100%)`
+                      ? `linear-gradient(to right, var(--token-warning) 0%, var(--token-warning) ${percentage}%, var(--token-border-subtle) ${percentage}%, var(--token-border-subtle) 100%)`
                       : colDisabled
                       ? 'var(--token-border-subtle)'
                       : `linear-gradient(to right, var(--token-interactive) 0%, var(--token-interactive) ${percentage}%, var(--token-border-subtle) ${percentage}%, var(--token-border-subtle) 100%)`,
@@ -118,7 +118,7 @@ export default function SliderResultRow({
                       background: 'transparent',
                       border: 'none',
                       cursor: colDisabled ? 'not-allowed' : 'pointer',
-                      fontSize: '1.2rem',
+                      fontSize: 'var(--token-font-size-xl-minus)',
                       color: 'var(--token-interactive)',
                       padding: '0 var(--token-spacing-xs)',
                       lineHeight: 1,

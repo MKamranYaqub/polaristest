@@ -217,7 +217,7 @@ const SupportRequestsPage = () => {
               {unreadCount > 0 && (
                 <span 
                   className="slds-badge slds-badge_error slds-m-left_small"
-                  style={{ fontSize: '0.75rem', verticalAlign: 'middle' }}
+                  style={{ fontSize: 'var(--token-font-size-xs)', verticalAlign: 'middle' }}
                 >
                   {unreadCount} unread
                 </span>
@@ -315,7 +315,7 @@ const SupportRequestsPage = () => {
                               width: '8px', 
                               height: '8px', 
                               borderRadius: '50%', 
-                              backgroundColor: '#0176d3' 
+                              backgroundColor: 'var(--token-info)' 
                             }}
                             title="Unread"
                           />
@@ -343,7 +343,7 @@ const SupportRequestsPage = () => {
                           </button>
                           <select
                             className="slds-select"
-                            style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                            style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: 'var(--token-font-size-xs)' }}
                             value={request.status || 'pending'}
                             onChange={(e) => updateStatus(request.id, e.target.value)}
                           >
@@ -406,10 +406,10 @@ const SupportRequestsPage = () => {
               right: 0,
               height: '100vh',
               zIndex: 9001,
-              backgroundColor: '#ffffff'
+              backgroundColor: 'var(--token-color-white)'
             }}
           >
-            <div className="slds-panel__header" style={{ height: '4rem', minHeight: '4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.5rem', backgroundColor: '#f3f3f3', borderBottom: '1px solid #dddbda' }}>
+            <div className="slds-panel__header" style={{ height: '4rem', minHeight: '4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.5rem', backgroundColor: 'var(--token-ui-background-subtle)', borderBottom: '1px solid var(--token-border-medium)' }}>
               <h2 className="slds-panel__header-title slds-text-heading_small slds-truncate" style={{ margin: 0, fontWeight: 700 }}>Support Request Details</h2>
               <button 
                 className="slds-button slds-button_icon slds-button_icon-small" 
@@ -457,7 +457,7 @@ const SupportRequestsPage = () => {
                 </h3>
                 <div 
                   style={{ 
-                    backgroundColor: '#f3f3f3', 
+                    backgroundColor: 'var(--token-ui-background-subtle)', 
                     padding: '1rem', 
                     borderRadius: '4px',
                     whiteSpace: 'pre-wrap',

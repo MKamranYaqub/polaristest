@@ -74,7 +74,7 @@
   background-color: var(--token-color-brand-orange);
   border: none;
   color: var(--token-text-inverse);
-  padding: 12px 28px;
+  padding: var(--token-spacing-12) 28px;
   font-size: var(--token-font-size-md);
   font-weight: var(--token-font-weight-semibold);
   border-radius: var(--token-radius-sm);
@@ -89,7 +89,7 @@
   background-color: transparent;
   border: var(--token-border-width-thin) solid rgba(255, 255, 255, 0.3);
   color: var(--token-text-inverse);
-  padding: 12px 28px;
+  padding: var(--token-spacing-12) 28px;
   font-size: var(--token-font-size-md);
   font-weight: var(--token-font-weight-semibold);
   border-radius: var(--token-radius-sm);
@@ -147,7 +147,7 @@
 
 .calculator-card {
   background-color: var(--token-layer-surface);
-  border-radius: 12px;
+  border-radius: var(--token-spacing-12);
   border: var(--token-border-width-thin) solid #e5e7eb;
   height: 100%;
   display: flex;
@@ -160,8 +160,8 @@
 .calculator-icon-wrapper {
   width: var(--token-icon-2xl);
   height: var(--token-icon-2xl);
-  border-radius: 12px;
-  background-color: #f3f4f6;
+  border-radius: var(--token-spacing-12);
+  background-color: var(--token-ui-background-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -179,7 +179,7 @@
 }
 
 .calculator-card-description {
-  font-size: 0.95rem;
+  font-size: var(--token-font-size-base);
   color: var(--token-color-text-tertiary);
   line-height: var(--token-line-height-base);
   margin-bottom: var(--token-spacing-xl);
@@ -188,7 +188,7 @@
 
 .calculator-card-cta {
   color: var(--token-color-brand-orange);
-  font-size: 0.95rem;
+  font-size: var(--token-font-size-base);
   font-weight: var(--token-font-weight-semibold);
   display: flex;
   align-items: center;
@@ -196,8 +196,8 @@
 }
 
 .view-all-button {
-  padding: 10px 24px;
-  font-size: 0.9rem;
+  padding: var(--token-spacing-10) 24px;
+  font-size: var(--token-font-size-sm-plus);
   font-weight: var(--token-font-weight-semibold);
   border-radius: var(--token-radius-sm);
   border: var(--token-border-width-thin) solid var(--token-color-brand-navy);
@@ -247,8 +247,8 @@
 }
 
 .benefit-icon-wrapper {
-  width: 40px;
-  height: 40px;
+  width: var(--token-spacing-40);
+  height: var(--token-spacing-40);
   border-radius: 50%;
   background-color: var(--token-color-bg-subtle);
   display: flex;
@@ -297,8 +297,8 @@
   background-color: var(--token-color-brand-orange);
   border: none;
   color: var(--token-text-inverse);
-  padding: 10px 24px;
-  font-size: 0.9rem;
+  padding: var(--token-spacing-10) 24px;
+  font-size: var(--token-font-size-sm-plus);
   font-weight: var(--token-font-weight-semibold);
   border-radius: var(--token-radius-sm);
   text-transform: none;
@@ -309,7 +309,7 @@
 /* Footer */
 .footer-section {
   background-color: var(--token-color-brand-navy-dark);
-  color: #a8b7c7;
+  color: var(--token-text-muted);
   border-top: var(--token-border-width-thin) solid rgba(255, 255, 255, 0.1);
 }
 

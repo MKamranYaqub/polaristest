@@ -154,7 +154,7 @@ function SalesforceNav() {
             <div className="sf-header-breadcrumbs">
               <div>
                 <Breadcrumbs items={breadcrumbs} />
-                <div style={{ marginTop: '0.5rem', fontSize: '1.25rem', fontWeight: 700 }}>
+                <div style={{ marginTop: '0.5rem', fontSize: 'var(--token-font-size-lg)', fontWeight: 700 }}>
                   {String(breadcrumbs[breadcrumbs.length - 1].label)}
                 </div>
               </div>

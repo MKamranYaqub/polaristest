@@ -494,7 +494,7 @@ const Products = ({ initialTab = 'btl' }) => {
     // Determine header color based on tab
     const isVariable = subTab === 'variable';
     const headerStyle = isVariable 
-      ? { background: 'linear-gradient(135deg, #00205B 0%, #003d8f 100%)', color: '#ffffff' }
+      ? { background: 'linear-gradient(135deg, var(--token-color-brand-navy) 0%, #003d8f 100%)', color: '#ffffff' }
       : { background: 'linear-gradient(135deg, #dd7a01 0%, #fe9339 100%)', color: '#ffffff' };
 
     // LTV brackets to display
@@ -1272,7 +1272,7 @@ const Products = ({ initialTab = 'btl' }) => {
                 
                 {/* Version footer */}
                 <div className="slds-text-align_center slds-m-top_medium">
-                  <span style={{ fontSize: '0.75rem', color: '#706e6b' }}>(Version 12/2025-1)</span>
+                  <span style={{ fontSize: 'var(--token-font-size-xs)', color: 'var(--token-text-muted)' }}>(Version 12/2025-1)</span>
                 </div>
               </>
             )}
@@ -1324,203 +1324,203 @@ const Products = ({ initialTab = 'btl' }) => {
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Student Accommodation</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>C2, C4</td>
-                      <td style={{ backgroundColor: '#90ee90', wordWrap: 'break-word', overflow: 'hidden' }}>Strong</td>
+                      <td style={{ backgroundColor: 'var(--token-status-strong-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Strong</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>75% by exception (C3 class falls under residential)</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>70%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>HMOs</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>C4, SG</td>
-                      <td style={{ backgroundColor: '#90ee90', wordWrap: 'break-word', overflow: 'hidden' }}>Strong</td>
+                      <td style={{ backgroundColor: 'var(--token-status-strong-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Strong</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>75% by exception (C3 class falls under residential)</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>70%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Light Industrial</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>B2</td>
-                      <td style={{ backgroundColor: '#90ee90', wordWrap: 'break-word', overflow: 'hidden' }}>Strong</td>
+                      <td style={{ backgroundColor: 'var(--token-status-strong-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Strong</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>70%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Warehousing / Logistics</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>B8</td>
-                      <td style={{ backgroundColor: '#90ee90', wordWrap: 'break-word', overflow: 'hidden' }}>Strong</td>
+                      <td style={{ backgroundColor: 'var(--token-status-strong-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Strong</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>70%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Offices</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>A2, B1a / E</td>
-                      <td style={{ backgroundColor: '#90ee90', wordWrap: 'break-word', overflow: 'hidden' }}>Strong</td>
+                      <td style={{ backgroundColor: 'var(--token-status-strong-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Strong</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>70%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Medical Clinics</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>D1 / E</td>
-                      <td style={{ backgroundColor: '#90ee90', wordWrap: 'break-word', overflow: 'hidden' }}>Strong</td>
+                      <td style={{ backgroundColor: 'var(--token-status-strong-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Strong</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>70%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Education Centres</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>D1 / F1</td>
-                      <td style={{ backgroundColor: '#90ee90', wordWrap: 'break-word', overflow: 'hidden' }}>Strong</td>
+                      <td style={{ backgroundColor: 'var(--token-status-strong-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Strong</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>70%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Care Homes</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>C2</td>
-                      <td style={{ backgroundColor: '#d4edda', wordWrap: 'break-word', overflow: 'hidden' }}>Good</td>
+                      <td style={{ backgroundColor: 'var(--token-status-good-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Good</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>70% considered for strong borrower / tenant profile</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>65%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Retail</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>A1 / F2, E</td>
-                      <td style={{ backgroundColor: '#d4edda', wordWrap: 'break-word', overflow: 'hidden' }}>Good</td>
+                      <td style={{ backgroundColor: 'var(--token-status-good-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Good</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>70% considered for strong borrower / tenant profile</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>65%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Shopping Centres</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>A1 / E</td>
-                      <td style={{ backgroundColor: '#d4edda', wordWrap: 'break-word', overflow: 'hidden' }}>Good</td>
+                      <td style={{ backgroundColor: 'var(--token-status-good-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Good</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>70% considered for strong borrower / tenant profile</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>65%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Leisure</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>D2 / E</td>
-                      <td style={{ backgroundColor: '#d4edda', wordWrap: 'break-word', overflow: 'hidden' }}>Good</td>
+                      <td style={{ backgroundColor: 'var(--token-status-good-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Good</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>70% considered for strong borrower / tenant profile</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>65%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Hospitality Venues</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>C1, D2 / E</td>
-                      <td style={{ backgroundColor: '#d4edda', wordWrap: 'break-word', overflow: 'hidden' }}>Good</td>
+                      <td style={{ backgroundColor: 'var(--token-status-good-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Good</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>65%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Light Industrial (steel frame)</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>B2, B8</td>
-                      <td style={{ backgroundColor: '#d4edda', wordWrap: 'break-word', overflow: 'hidden' }}>Good</td>
+                      <td style={{ backgroundColor: 'var(--token-status-good-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Good</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>65%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Hotels / Holiday Lets (exc. B&B - Residential)</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>C1</td>
-                      <td style={{ backgroundColor: '#d4edda', wordWrap: 'break-word', overflow: 'hidden' }}>Good</td>
+                      <td style={{ backgroundColor: 'var(--token-status-good-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Good</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>65%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Pubs</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>A4 / SG</td>
-                      <td style={{ backgroundColor: '#fff3cd', wordWrap: 'break-word', overflow: 'hidden' }}>Limited</td>
+                      <td style={{ backgroundColor: 'var(--token-status-limited-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Limited</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>By referral and VP & M valuation only</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>65%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Takeaways</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>A5 / SG</td>
-                      <td style={{ backgroundColor: '#fff3cd', wordWrap: 'break-word', overflow: 'hidden' }}>Limited</td>
+                      <td style={{ backgroundColor: 'var(--token-status-limited-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Limited</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>By referral and VP & M valuation only</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>65%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Restaurants</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>A3 / E</td>
-                      <td style={{ backgroundColor: '#fff3cd', wordWrap: 'break-word', overflow: 'hidden' }}>Limited</td>
+                      <td style={{ backgroundColor: 'var(--token-status-limited-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Limited</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>By referral and VP & M valuation only</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>65%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Petrol Stations</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>SG</td>
-                      <td style={{ backgroundColor: '#fff3cd', wordWrap: 'break-word', overflow: 'hidden' }}>Limited</td>
+                      <td style={{ backgroundColor: 'var(--token-status-limited-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Limited</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>By referral and VP & M valuation only</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>65%</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Derelict / Uninhabitable Buildings</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>All</td>
-                      <td style={{ backgroundColor: '#d6e9f5', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
+                      <td style={{ backgroundColor: 'var(--token-status-excluded-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Heavy Industrial / Manufacturing</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>B1c / E</td>
-                      <td style={{ backgroundColor: '#d6e9f5', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
+                      <td style={{ backgroundColor: 'var(--token-status-excluded-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Football Stadiums</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>D2 / F2</td>
-                      <td style={{ backgroundColor: '#d6e9f5', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
+                      <td style={{ backgroundColor: 'var(--token-status-excluded-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Contaminated Sites</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>All</td>
-                      <td style={{ backgroundColor: '#d6e9f5', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
+                      <td style={{ backgroundColor: 'var(--token-status-excluded-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Waste Management</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>SG</td>
-                      <td style={{ backgroundColor: '#d6e9f5', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
+                      <td style={{ backgroundColor: 'var(--token-status-excluded-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Cash Intensive Businesses</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>SG</td>
-                      <td style={{ backgroundColor: '#d6e9f5', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
+                      <td style={{ backgroundColor: 'var(--token-status-excluded-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>e.g. nightclubs, casinos, foreign exchange, arcades</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Land (with or without planning)</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
-                      <td style={{ backgroundColor: '#d6e9f5', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
+                      <td style={{ backgroundColor: 'var(--token-status-excluded-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Caravan Parks</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>A / D / SG</td>
-                      <td style={{ backgroundColor: '#d6e9f5', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
+                      <td style={{ backgroundColor: 'var(--token-status-excluded-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Religious Establishments</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>D1 / F1</td>
-                      <td style={{ backgroundColor: '#d6e9f5', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
+                      <td style={{ backgroundColor: 'var(--token-status-excluded-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Prisons / Secure Establishments</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>C2a</td>
-                      <td style={{ backgroundColor: '#d6e9f5', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
+                      <td style={{ backgroundColor: 'var(--token-status-excluded-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                     </tr>
                     <tr>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>Sporting Grounds</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>SG</td>
-                      <td style={{ backgroundColor: '#d6e9f5', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
+                      <td style={{ backgroundColor: 'var(--token-status-excluded-bg)', wordWrap: 'break-word', overflow: 'hidden' }}>Excluded</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                       <td style={{ wordWrap: 'break-word', overflow: 'hidden' }}>—</td>
                     </tr>
@@ -1548,7 +1548,7 @@ const Products = ({ initialTab = 'btl' }) => {
               backgroundColor: '#ffffff'
             }}
           >
-            <div className="slds-panel__header" style={{ height: '4rem', minHeight: '4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.5rem', backgroundColor: '#f3f3f3', borderBottom: '1px solid #dddbda' }}>
+            <div className="slds-panel__header" style={{ height: '4rem', minHeight: '4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.5rem', backgroundColor: 'var(--token-layer-background)', borderBottom: '1px solid var(--token-border-medium)' }}>
               <h2 className="slds-panel__header-title slds-text-heading_small slds-truncate" style={{ margin: 0, fontWeight: 700 }}>LTV Restrictions</h2>
               <button 
                 className="slds-button slds-button_icon slds-button_icon-small" 
@@ -1565,14 +1565,14 @@ const Products = ({ initialTab = 'btl' }) => {
                 {/* Accordion sections */}
                 <div className="slds-accordion">
                   {/* First Time Buyer / First Time Landlord */}
-                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid #dddbda' }}>
+                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid var(--token-border-medium)' }}>
                     <div className="slds-accordion__summary">
                       <button 
                         className="slds-button slds-button_reset slds-accordion__summary-action" 
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'ftb' ? null : 'ftb')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'ftb' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'ftb' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>First Time Buyer / First Time Landlord</span>
                       </button>
                     </div>
@@ -1581,13 +1581,13 @@ const Products = ({ initialTab = 'btl' }) => {
                         <table className="slds-table slds-table_bordered slds-table_cell-buffer" style={{ width: '100%', tableLayout: 'fixed' }}>
                           <thead>
                             <tr>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid #dddbda' }}>Description</th>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid var(--token-border-medium)' }}>Description</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid #dddbda' }}>Max LTV is reserved for standard property use as well as Borrowers with prior buy to let experience (not FTL / FTB)</td>
+                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid var(--token-border-medium)' }}>Max LTV is reserved for standard property use as well as Borrowers with prior buy to let experience (not FTL / FTB)</td>
                               <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal' }}>70%</td>
                             </tr>
                           </tbody>
@@ -1597,14 +1597,14 @@ const Products = ({ initialTab = 'btl' }) => {
                   </section>
 
                   {/* HMO > 6 Beds */}
-                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid #dddbda' }}>
+                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid var(--token-border-medium)' }}>
                     <div className="slds-accordion__summary">
                       <button 
                         className="slds-button slds-button_reset slds-accordion__summary-action" 
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'hmo' ? null : 'hmo')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'hmo' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'hmo' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>HMO &gt; 6 Beds</span>
                       </button>
                     </div>
@@ -1613,13 +1613,13 @@ const Products = ({ initialTab = 'btl' }) => {
                         <table className="slds-table slds-table_bordered slds-table_cell-buffer" style={{ width: '100%', tableLayout: 'fixed' }}>
                           <thead>
                             <tr>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid #dddbda' }}>Description</th>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid var(--token-border-medium)' }}>Description</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid #dddbda' }}>Max LTV is reserved for standard property use</td>
+                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid var(--token-border-medium)' }}>Max LTV is reserved for standard property use</td>
                               <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal' }}>70%</td>
                             </tr>
                           </tbody>
@@ -1629,14 +1629,14 @@ const Products = ({ initialTab = 'btl' }) => {
                   </section>
 
                   {/* MUFB > 6 Units */}
-                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid #dddbda' }}>
+                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid var(--token-border-medium)' }}>
                     <div className="slds-accordion__summary">
                       <button 
                         className="slds-button slds-button_reset slds-accordion__summary-action" 
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'mufb' ? null : 'mufb')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'mufb' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'mufb' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>MUFB &gt; 6 Units</span>
                       </button>
                     </div>
@@ -1645,13 +1645,13 @@ const Products = ({ initialTab = 'btl' }) => {
                         <table className="slds-table slds-table_bordered slds-table_cell-buffer" style={{ width: '100%', tableLayout: 'fixed' }}>
                           <thead>
                             <tr>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid #dddbda' }}>Description</th>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid var(--token-border-medium)' }}>Description</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid #dddbda' }}>Max LTV is reserved for standard property use</td>
+                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid var(--token-border-medium)' }}>Max LTV is reserved for standard property use</td>
                               <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal' }}>70%</td>
                             </tr>
                           </tbody>
@@ -1661,14 +1661,14 @@ const Products = ({ initialTab = 'btl' }) => {
                   </section>
 
                   {/* Non-Standard Construction */}
-                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid #dddbda' }}>
+                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid var(--token-border-medium)' }}>
                     <div className="slds-accordion__summary">
                       <button 
                         className="slds-button slds-button_reset slds-accordion__summary-action" 
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'nonstandard' ? null : 'nonstandard')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'nonstandard' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'nonstandard' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Non-Standard Construction</span>
                       </button>
                     </div>
@@ -1677,8 +1677,8 @@ const Products = ({ initialTab = 'btl' }) => {
                         <table className="slds-table slds-table_bordered slds-table_cell-buffer" style={{ width: '100%', tableLayout: 'fixed' }}>
                           <thead>
                             <tr>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid #dddbda' }}>Description</th>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid var(--token-border-medium)' }}>Description</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1693,14 +1693,14 @@ const Products = ({ initialTab = 'btl' }) => {
                   </section>
 
                   {/* Flats above commercial */}
-                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid #dddbda' }}>
+                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid var(--token-border-medium)' }}>
                     <div className="slds-accordion__summary">
                       <button 
                         className="slds-button slds-button_reset slds-accordion__summary-action" 
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'flats' ? null : 'flats')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'flats' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'flats' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Flats above commercial</span>
                       </button>
                     </div>
@@ -1709,17 +1709,17 @@ const Products = ({ initialTab = 'btl' }) => {
                         <table className="slds-table slds-table_bordered slds-table_cell-buffer" style={{ width: '100%', tableLayout: 'fixed' }}>
                           <thead>
                             <tr>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid #dddbda' }}>Description</th>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid var(--token-border-medium)' }}>Description</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid #dddbda' }}>Tier 2</td>
+                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid var(--token-border-medium)' }}>Tier 2</td>
                               <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal' }}>60%</td>
                             </tr>
                             <tr>
-                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid #dddbda' }}>Tier 3</td>
+                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid var(--token-border-medium)' }}>Tier 3</td>
                               <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal' }}>65%</td>
                             </tr>
                           </tbody>
@@ -1729,14 +1729,14 @@ const Products = ({ initialTab = 'btl' }) => {
                   </section>
 
                   {/* Development Exit */}
-                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid #dddbda' }}>
+                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid var(--token-border-medium)' }}>
                     <div className="slds-accordion__summary">
                       <button 
                         className="slds-button slds-button_reset slds-accordion__summary-action" 
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'development' ? null : 'development')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'development' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'development' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Development Exit</span>
                       </button>
                     </div>
@@ -1745,13 +1745,13 @@ const Products = ({ initialTab = 'btl' }) => {
                         <table className="slds-table slds-table_bordered slds-table_cell-buffer" style={{ width: '100%', tableLayout: 'fixed' }}>
                           <thead>
                             <tr>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid #dddbda' }}>Description</th>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid var(--token-border-medium)' }}>Description</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid #dddbda' }}>If repaying development lender, ground up builds, conversions, heavy works conducted</td>
+                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid var(--token-border-medium)' }}>If repaying development lender, ground up builds, conversions, heavy works conducted</td>
                               <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal' }}>70%</td>
                             </tr>
                           </tbody>
@@ -1761,14 +1761,14 @@ const Products = ({ initialTab = 'btl' }) => {
                   </section>
 
                   {/* Vulnerable Tenants / SERCO Lease */}
-                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid #dddbda' }}>
+                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid var(--token-border-medium)' }}>
                     <div className="slds-accordion__summary">
                       <button 
                         className="slds-button slds-button_reset slds-accordion__summary-action" 
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'vulnerable' ? null : 'vulnerable')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'vulnerable' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'vulnerable' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Vulnerable Tenants / SERCO Lease</span>
                       </button>
                     </div>
@@ -1777,13 +1777,13 @@ const Products = ({ initialTab = 'btl' }) => {
                         <table className="slds-table slds-table_bordered slds-table_cell-buffer" style={{ width: '100%', tableLayout: 'fixed' }}>
                           <thead>
                             <tr>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid #dddbda' }}>Description</th>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid var(--token-border-medium)' }}>Description</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid #dddbda' }}>Residential product if planning usage is C3, otherwise commercial</td>
+                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid var(--token-border-medium)' }}>Residential product if planning usage is C3, otherwise commercial</td>
                               <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal' }}>70%</td>
                             </tr>
                           </tbody>
@@ -1793,14 +1793,14 @@ const Products = ({ initialTab = 'btl' }) => {
                   </section>
 
                   {/* Long Leases / Non-standard Lease */}
-                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid #dddbda' }}>
+                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid var(--token-border-medium)' }}>
                     <div className="slds-accordion__summary">
                       <button 
                         className="slds-button slds-button_reset slds-accordion__summary-action" 
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'longlease' ? null : 'longlease')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'longlease' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'longlease' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Long Leases / Non-standard Lease</span>
                       </button>
                     </div>
@@ -1809,13 +1809,13 @@ const Products = ({ initialTab = 'btl' }) => {
                         <table className="slds-table slds-table_bordered slds-table_cell-buffer" style={{ width: '100%', tableLayout: 'fixed' }}>
                           <thead>
                             <tr>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid #dddbda' }}>Description</th>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid var(--token-border-medium)' }}>Description</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid #dddbda' }}>Leases over 3 years not let to individuals</td>
+                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid var(--token-border-medium)' }}>Leases over 3 years not let to individuals</td>
                               <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal' }}>70%</td>
                             </tr>
                           </tbody>
@@ -1824,14 +1824,14 @@ const Products = ({ initialTab = 'btl' }) => {
                     )}
                   </section>
                   {/* Holiday Let / Services Accommodation */}
-                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid #dddbda' }}>
+                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid var(--token-border-medium)' }}>
                     <div className="slds-accordion__summary">
                       <button 
                         className="slds-button slds-button_reset slds-accordion__summary-action" 
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'holidaylet' ? null : 'holidaylet')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'holidaylet' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'holidaylet' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Holiday Let / Services Accommodation</span>
                       </button>
                     </div>
@@ -1840,13 +1840,13 @@ const Products = ({ initialTab = 'btl' }) => {
                         <table className="slds-table slds-table_bordered slds-table_cell-buffer" style={{ width: '100%', tableLayout: 'fixed' }}>
                           <thead>
                             <tr>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid #dddbda' }}>Description</th>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid var(--token-border-medium)' }}>Description</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid #dddbda' }}>If C3 usage and can be let as either AST or Holiday let, potentially 75%</td>
+                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid var(--token-border-medium)' }}>If C3 usage and can be let as either AST or Holiday let, potentially 75%</td>
                               <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal' }}>70%</td>
                             </tr>
                           </tbody>
@@ -1856,14 +1856,14 @@ const Products = ({ initialTab = 'btl' }) => {
                   </section>
 
                   {/* Holiday Let with Restricted Use */}
-                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid #dddbda' }}>
+                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid var(--token-border-medium)' }}>
                     <div className="slds-accordion__summary">
                       <button 
                         className="slds-button slds-button_reset slds-accordion__summary-action" 
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'holidayrestricted' ? null : 'holidayrestricted')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'holidayrestricted' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'holidayrestricted' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Holiday Let with Restricted Use</span>
                       </button>
                     </div>
@@ -1872,13 +1872,13 @@ const Products = ({ initialTab = 'btl' }) => {
                         <table className="slds-table slds-table_bordered slds-table_cell-buffer" style={{ width: '100%', tableLayout: 'fixed' }}>
                           <thead>
                             <tr>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid #dddbda' }}>Description</th>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid var(--token-border-medium)' }}>Description</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid #dddbda' }}>If only able to use as a holiday let</td>
+                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid var(--token-border-medium)' }}>If only able to use as a holiday let</td>
                               <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal' }}>65%</td>
                             </tr>
                           </tbody>
@@ -1888,14 +1888,14 @@ const Products = ({ initialTab = 'btl' }) => {
                   </section>
 
                   {/* New Builds */}
-                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid #dddbda' }}>
+                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid var(--token-border-medium)' }}>
                     <div className="slds-accordion__summary">
                       <button 
                         className="slds-button slds-button_reset slds-accordion__summary-action" 
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'newbuilds' ? null : 'newbuilds')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'newbuilds' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'newbuilds' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>New Builds</span>
                       </button>
                     </div>
@@ -1904,13 +1904,13 @@ const Products = ({ initialTab = 'btl' }) => {
                         <table className="slds-table slds-table_bordered slds-table_cell-buffer" style={{ width: '100%', tableLayout: 'fixed' }}>
                           <thead>
                             <tr>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid #dddbda' }}>Description</th>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid var(--token-border-medium)' }}>Description</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid #dddbda' }}>First occupation</td>
+                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid var(--token-border-medium)' }}>First occupation</td>
                               <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal' }}>70%</td>
                             </tr>
                           </tbody>
@@ -1920,14 +1920,14 @@ const Products = ({ initialTab = 'btl' }) => {
                   </section>
 
                   {/* Retirement Property */}
-                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid #dddbda' }}>
+                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid var(--token-border-medium)' }}>
                     <div className="slds-accordion__summary">
                       <button 
                         className="slds-button slds-button_reset slds-accordion__summary-action" 
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'retirement' ? null : 'retirement')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'retirement' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'retirement' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Retirement Property</span>
                       </button>
                     </div>
@@ -1936,13 +1936,13 @@ const Products = ({ initialTab = 'btl' }) => {
                         <table className="slds-table slds-table_bordered slds-table_cell-buffer" style={{ width: '100%', tableLayout: 'fixed' }}>
                           <thead>
                             <tr>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid #dddbda' }}>Description</th>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid var(--token-border-medium)' }}>Description</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid #dddbda' }}>Restrictions for over 55's only</td>
+                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid var(--token-border-medium)' }}>Restrictions for over 55's only</td>
                               <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal' }}>65%</td>
                             </tr>
                           </tbody>
@@ -1952,14 +1952,14 @@ const Products = ({ initialTab = 'btl' }) => {
                   </section>
 
                   {/* High Exposure / Concentration in a particular building */}
-                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid #dddbda' }}>
+                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid var(--token-border-medium)' }}>
                     <div className="slds-accordion__summary">
                       <button 
                         className="slds-button slds-button_reset slds-accordion__summary-action" 
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'highexposure' ? null : 'highexposure')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'highexposure' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'highexposure' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>High Exposure / Concentration in a particular building</span>
                       </button>
                     </div>
@@ -1968,13 +1968,13 @@ const Products = ({ initialTab = 'btl' }) => {
                         <table className="slds-table slds-table_bordered slds-table_cell-buffer" style={{ width: '100%', tableLayout: 'fixed' }}>
                           <thead>
                             <tr>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid #dddbda' }}>Description</th>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid var(--token-border-medium)' }}>Description</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid #dddbda' }}>i.e. taking 10 flats in a block of 10</td>
+                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid var(--token-border-medium)' }}>i.e. taking 10 flats in a block of 10</td>
                               <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal' }}>70%</td>
                             </tr>
                           </tbody>
@@ -1984,14 +1984,14 @@ const Products = ({ initialTab = 'btl' }) => {
                   </section>
 
                   {/* Adverse Credit (Tier 3) */}
-                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid #dddbda' }}>
+                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid var(--token-border-medium)' }}>
                     <div className="slds-accordion__summary">
                       <button 
                         className="slds-button slds-button_reset slds-accordion__summary-action" 
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'adverse' ? null : 'adverse')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'adverse' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'adverse' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Adverse Credit (Tier 3)</span>
                       </button>
                     </div>
@@ -2000,13 +2000,13 @@ const Products = ({ initialTab = 'btl' }) => {
                         <table className="slds-table slds-table_bordered slds-table_cell-buffer" style={{ width: '100%', tableLayout: 'fixed' }}>
                           <thead>
                             <tr>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid #dddbda' }}>Description</th>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid var(--token-border-medium)' }}>Description</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid #dddbda' }}>LTV could be further restricted based on level and type of adverse</td>
+                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid var(--token-border-medium)' }}>LTV could be further restricted based on level and type of adverse</td>
                               <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal' }}>—</td>
                             </tr>
                           </tbody>
@@ -2016,14 +2016,14 @@ const Products = ({ initialTab = 'btl' }) => {
                   </section>
 
                   {/* Low Demand Area / Poor Condition */}
-                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid #dddbda' }}>
+                  <section className="slds-accordion__section" style={{ borderBottom: '1px solid var(--token-border-medium)' }}>
                     <div className="slds-accordion__summary">
                       <button 
                         className="slds-button slds-button_reset slds-accordion__summary-action" 
                         style={{ width: '100%', padding: '1rem', textAlign: 'left', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '0.75rem' }}
                         onClick={() => setExpandedLtvSection(expandedLtvSection === 'lowdemand' ? null : 'lowdemand')}
                       >
-                        <span style={{ fontSize: '1.2rem', minWidth: '1rem' }}>{expandedLtvSection === 'lowdemand' ? '−' : '+'}</span>
+                        <span style={{ fontSize: 'var(--token-font-size-xl-minus)', minWidth: '1rem' }}>{expandedLtvSection === 'lowdemand' ? '−' : '+'}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Low Demand Area / Poor Condition</span>
                       </button>
                     </div>
@@ -2032,13 +2032,13 @@ const Products = ({ initialTab = 'btl' }) => {
                         <table className="slds-table slds-table_bordered slds-table_cell-buffer" style={{ width: '100%', tableLayout: 'fixed' }}>
                           <thead>
                             <tr>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid #dddbda' }}>Description</th>
-                              <th style={{ backgroundColor: '#f3f3f3', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '75%', borderRight: '1px solid var(--token-border-medium)' }}>Description</th>
+                              <th style={{ backgroundColor: 'var(--token-layer-background)', fontWeight: 600, padding: '0.5rem', width: '25%' }}>Max LTV</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid #dddbda' }}>LTV could be further restricted</td>
+                              <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal', borderRight: '1px solid var(--token-border-medium)' }}>LTV could be further restricted</td>
                               <td style={{ padding: '0.5rem', wordWrap: 'break-word', whiteSpace: 'normal' }}>70%</td>
                             </tr>
                           </tbody>
@@ -2069,7 +2069,7 @@ const Products = ({ initialTab = 'btl' }) => {
               backgroundColor: '#ffffff'
             }}
           >
-            <div className="slds-panel__header" style={{ height: '4rem', minHeight: '4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.5rem', backgroundColor: '#f3f3f3', borderBottom: '1px solid #dddbda' }}>
+            <div className="slds-panel__header" style={{ height: '4rem', minHeight: '4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.5rem', backgroundColor: 'var(--token-layer-background)', borderBottom: '1px solid var(--token-border-medium)' }}>
               <h2 className="slds-panel__header-title slds-text-heading_small slds-truncate" style={{ margin: 0, fontWeight: 700 }}>Support</h2>
               <button 
                 className="slds-button slds-button_icon slds-button_icon-small" 
@@ -2166,9 +2166,9 @@ const Products = ({ initialTab = 'btl' }) => {
                 </div>
               </form>
             </div>
-            <footer style={{ position: 'absolute', bottom: 0, left: 0, right: 0, borderTop: '1px solid #dddbda', padding: '0.75rem 1.5rem', backgroundColor: '#f3f3f3' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#706e6b', fontSize: '0.875rem' }}>
-                <span style={{ fontSize: '1rem' }}>ℹ️</span>
+            <footer style={{ position: 'absolute', bottom: 0, left: 0, right: 0, borderTop: '1px solid var(--token-border-medium)', padding: '0.75rem 1.5rem', backgroundColor: 'var(--token-layer-background)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--token-text-muted)', fontSize: 'var(--token-font-size-sm)' }}>
+                <span style={{ fontSize: 'var(--token-font-size-md)' }}>ℹ️</span>
                 <span>V. 2.4 - Updated Auto logout and Caching</span>
               </div>
             </footer>
@@ -2180,3 +2180,6 @@ const Products = ({ initialTab = 'btl' }) => {
 };
 
 export default Products;
+
+
+

@@ -1749,7 +1749,7 @@ export default function Constants() {
                 borderRadius: '4px',
                 border: '1px solid var(--token-ui-border-light, #e5e5e5)'
               }}>
-                <p style={{ fontSize: '0.75rem', color: 'var(--token-text-secondary, #666)', marginBottom: '0.5rem', fontWeight: '500' }}>
+                <p style={{ fontSize: 'var(--token-font-size-xs)', color: 'var(--token-text-secondary, #666)', marginBottom: '0.5rem', fontWeight: '500' }}>
                   PREVIEW ({typographyEnabled ? 'Inter' : 'Salesforce Sans'})
                 </p>
                 <div style={{ fontFamily: typographyEnabled ? '"Inter", sans-serif' : 'inherit', color: 'var(--token-text-primary, #181818)' }}>

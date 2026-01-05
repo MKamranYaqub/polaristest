@@ -542,7 +542,7 @@ body.dark-mode #root {
 
 /* Table Striping */
 .dark-mode .slds-table tbody tr:nth-child(even) {
-  background-color: #1e1e1e !important;
+  background-color: var(--token-layer-background) !important;
 }
 
 .dark-mode .slds-table tbody tr:nth-child(odd) {
@@ -707,7 +707,7 @@ body.dark-mode #root {
 }
 
 .dark-mode .modern-switch .switch-track .switch-thumb {
-  background: #ffffff !important;
+  background: var(--token-color-white) !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
 }
 
@@ -717,7 +717,7 @@ body.dark-mode #root {
 }
 
 .dark-mode .modern-switch .switch-track.checked .switch-thumb {
-  background: #ffffff !important;
+  background: var(--token-color-white) !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
@@ -828,7 +828,7 @@ body.dark-mode #root {
 }
 
 .dark-mode .pagination button:hover:not(:disabled) {
-  background-color: #4c4c4c !important;
+  background-color: var(--token-layer-elevated) !important;
 }
 
 .dark-mode .pagination button:disabled {
@@ -849,7 +849,7 @@ body.dark-mode #root {
 .dark-mode .card-container {
   background-color: var(--token-layer-surface) !important;
   border: 1px solid var(--token-border-subtle) !important;
-  border-radius: 4px;
+  border-radius: var(--token-spacing-4);
 }
 
 .dark-mode .grid-container {
@@ -914,8 +914,8 @@ body.dark-mode #root {
    11. SCROLLBARS
    ============================================ */
 .dark-mode ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: var(--token-spacing-12);
+  height: var(--token-spacing-12);
 }
 
 .dark-mode ::-webkit-scrollbar-track {
@@ -924,19 +924,19 @@ body.dark-mode #root {
 
 .dark-mode ::-webkit-scrollbar-thumb {
   background: var(--token-border-strong);
-  border-radius: 6px;
+  border-radius: var(--token-spacing-6);
 }
 
 .dark-mode ::-webkit-scrollbar-thumb:hover {
-  background: #6f6f6f;
+  background: var(--token-text-placeholder);
 }
 
 /* ============================================
    12. ACCESSIBILITY
    ============================================ */
 .dark-mode *:focus-visible {
-  outline: 2px solid var(--token-interactive) !important;
-  outline-offset: 2px;
+  outline: var(--token-spacing-2) solid var(--token-interactive) !important;
+  outline-offset: var(--token-spacing-2);
 }
 
 .dark-mode .slds-button:focus-visible,
@@ -1314,14 +1314,14 @@ body.dark-mode #root {
 }
 
 /* Tabs bar underline */
-.dark-mode .slds-p-around_medium div[style*="border-bottom: 2px solid #e5e5e5"],
-.dark-mode .slds-p-around_medium div[style*="border-bottom:2px solid #e5e5e5"],
-.dark-mode .slds-p-around_medium div[style*="border-bottom: 2px solid rgb(229, 229, 229)"],
-.dark-mode .slds-p-around_medium div[style*="border-bottom:2px solid rgb(229,229,229)"],
-[data-carbon-theme="g100"] .slds-p-around_medium div[style*="border-bottom: 2px solid #e5e5e5"],
-[data-carbon-theme="g100"] .slds-p-around_medium div[style*="border-bottom:2px solid #e5e5e5"],
-[data-carbon-theme="g100"] .slds-p-around_medium div[style*="border-bottom: 2px solid rgb(229, 229, 229)"],
-[data-carbon-theme="g100"] .slds-p-around_medium div[style*="border-bottom:2px solid rgb(229,229,229)"] {
+.dark-mode .slds-p-around_medium div[style*="border-bottom: var(--token-spacing-2) solid #e5e5e5"],
+.dark-mode .slds-p-around_medium div[style*="border-bottom: var(--token-spacing-2) solid #e5e5e5"],
+.dark-mode .slds-p-around_medium div[style*="border-bottom: var(--token-spacing-2) solid rgb(229, 229, 229)"],
+.dark-mode .slds-p-around_medium div[style*="border-bottom: var(--token-spacing-2) solid rgb(229,229,229)"],
+[data-carbon-theme="g100"] .slds-p-around_medium div[style*="border-bottom: var(--token-spacing-2) solid #e5e5e5"],
+[data-carbon-theme="g100"] .slds-p-around_medium div[style*="border-bottom: var(--token-spacing-2) solid #e5e5e5"],
+[data-carbon-theme="g100"] .slds-p-around_medium div[style*="border-bottom: var(--token-spacing-2) solid rgb(229, 229, 229)"],
+[data-carbon-theme="g100"] .slds-p-around_medium div[style*="border-bottom: var(--token-spacing-2) solid rgb(229,229,229)"] {
   border-bottom-color: var(--token-border-subtle) !important;
 }
 
@@ -1509,7 +1509,7 @@ body.dark-mode #root {
 /* Tabs (Specialist/Core Range & Global Settings) */
 .dark-mode .slds-tabs_default__link {
   background-color: transparent !important;
-  border-bottom: 2px solid transparent !important;
+  border-bottom: var(--token-spacing-2) solid transparent !important;
 }
 
 .dark-mode .slds-tabs_default__item.slds-is-active .slds-tabs_default__link {
