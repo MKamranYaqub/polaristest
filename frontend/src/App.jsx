@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-const LazyDataAccess = React.lazy(() => import('./components/admin/DataAccessVariables'));
+const LazyApiKeys = React.lazy(() => import('./components/admin/ApiKeysManagement'));
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 // Removed Carbon Content/Theme; using SLDS + app styles
 import Calculator from './components/calculators/Calculator';
@@ -259,14 +259,14 @@ const AppContent = () => {
                   />
                 </Route>
 
-                {/* Data Access Variables - Admin only */}
-                <Route path="/admin/data-access" element={<ProtectedRoute requiredAccessLevel={1} allowedAccessLevels={[1]} />}>
+                {/* API Keys Management - Admin only */}
+                <Route path="/admin/api-keys" element={<ProtectedRoute requiredAccessLevel={1} allowedAccessLevels={[1]} />}>
                   <Route 
                     index
                     element={
                       <ErrorBoundary>
                         <React.Suspense fallback={<div className="slds-p-around_medium">Loading…</div>}>
-                          <LazyDataAccess />
+                          <LazyApiKeys />
                         </React.Suspense>
                       </ErrorBoundary>
                     }

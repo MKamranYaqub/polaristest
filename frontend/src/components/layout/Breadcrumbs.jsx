@@ -90,8 +90,8 @@ export function useBreadcrumbs() {
       breadcrumbs.push({ label: 'Support Requests', path: '/admin/support-requests' });
     } else if (path.includes('/data-health')) {
       breadcrumbs.push({ label: 'Data Health', path: '/admin/data-health' });
-    } else if (path.includes('/data-access')) {
-      breadcrumbs.push({ label: 'Data Access', path: '/admin/data-access' });
+    } else if (path.includes('/api-keys')) {
+      breadcrumbs.push({ label: 'API Keys', path: '/admin/api-keys' });
     }
   } else if (path.includes('/settings')) {
     breadcrumbs.push({ label: 'Settings', path: '/settings' });

@@ -67,7 +67,7 @@ function Navigation() {
           { id: 'support-requests', label: 'Support Requests', path: '/admin/support-requests' }
         ] : []),
         { id: 'data-health', label: 'Data Health', path: '/admin/data-health' },
-        { id: 'data-access', label: 'Data Access', path: '/admin/data-access' }
+        { id: 'api-keys', label: 'API Keys', path: '/admin/api-keys' }
       ]
     }] : [])
   ];

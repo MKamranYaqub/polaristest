@@ -14,8 +14,10 @@ import postcodeLookupRouter from './routes/postcodeLookup.js';
 import ratesRouter from './routes/rates.js';
 import supportRouter from './routes/support.js';
 import adminRouter from './routes/admin.js';
+import reportingRouter from './routes/reporting.js';
+import apiKeysRouter from './routes/apiKeys.js';
 // Rate limiting middleware
-import { apiLimiter, exportLimiter, pdfLimiter } from './middleware/rateLimiter.js';
+import { apiLimiter, exportLimiter, pdfLimiter, reportingLimiter } from './middleware/rateLimiter.js';
 
 // Load environment variables
 dotenv.config();
@@ -89,6 +91,13 @@ app.use('/api/support', supportRouter);
 
 // Admin data health endpoint
 app.use('/api/admin', adminRouter);
+
+// API Key management endpoint (admin only)
+app.use('/api/admin/api-keys', apiKeysRouter);
+
+// Reporting API (Power BI / Data Teams) - uses API key authentication
+app.use('/api/reporting', reportingLimiter);
+app.use('/api/reporting', reportingRouter);
 
 // DIP PDF generation endpoint
 app.use('/api/dip/pdf', pdfLimiter);

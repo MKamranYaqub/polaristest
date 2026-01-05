@@ -47,7 +47,8 @@ Vercel (Frontend) → VITE_API_URL → Render (Backend)
   index.html                         Express API
      ↓                                    ↓
   React App  -------- API Calls ----→  /api/admin/data-health
-                                       /api/admin/data-access
+                                       /api/admin/api-keys
+                                       /api/reporting/*
 ```
 
 ## Troubleshooting

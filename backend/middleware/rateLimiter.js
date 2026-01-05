@@ -94,5 +94,25 @@ export const authLimiter = rateLimit({
   skipSuccessfulRequests: true // Don't count successful requests
 });
 
+/**
+ * Reporting API rate limiter
+ * For external reporting systems (Power BI, data teams)
+ * 100 requests per hour - generous for scheduled refreshes
+ */
+export const reportingLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 100, // Limit to 100 requests per hour
+  message: {
+    error: 'Reporting API rate limit exceeded. Please wait before making more requests.',
+    retryAfter: '1 hour'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Use API key name for rate limiting instead of IP if available
+  keyGenerator: (req) => {
+    return req.apiKey?.name || req.ip;
+  }
+});
+
 // Export default general limiter
 export default apiLimiter;
