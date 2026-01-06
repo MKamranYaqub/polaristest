@@ -45,7 +45,7 @@ const HomePage = () => {
           <h4 className="totals-title">Totals</h4>
           <div className="totals-grid">
             <TotalsCard label="Quotes issued" value={totals.totalQuotes} />
-            <TotalsCard label="DIP issued" value={totals.totalDIPs} />
+            <TotalsCard label="DIPs issued" value={totals.totalDIPs} />
           </div>
         </div>
 
