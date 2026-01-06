@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { listQuotes, getQuote, deleteQuote } from '../../utils/quotes';
 import { API_BASE_URL } from '../../config/api';
+import { useAuth } from '../../contexts/AuthContext';
 import SalesforceIcon from '../shared/SalesforceIcon';
 import WelcomeHeader from '../shared/WelcomeHeader';
 import NotificationModal from '../modals/NotificationModal';
@@ -25,9 +26,13 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
   const [filterCreatedTo, setFilterCreatedTo] = useState('');
   const [filterUpdatedFrom, setFilterUpdatedFrom] = useState('');
   const [filterUpdatedTo, setFilterUpdatedTo] = useState('');
+  const [showMyQuotesOnly, setShowMyQuotesOnly] = useState(false);
   
   // Advanced filters toggle
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  
+  // Get current user from auth context
+  const { user } = useAuth();
   
   // Notification state
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
@@ -215,6 +220,15 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
 
   // Apply filters
   const filteredQuotes = quotes.filter(q => {
+    // My Quotes Only filter - check both created_by_id and user_id
+    if (showMyQuotesOnly && user) {
+      const matchesCreatedById = q.created_by_id === user.id;
+      const matchesUserId = q.user_id === user.id;
+      if (!matchesCreatedById && !matchesUserId) {
+        return false;
+      }
+    }
+    
     // Ref # filter
     if (filterRef) {
       const ref = (q.reference_number || '').toString().toLowerCase();
@@ -304,7 +318,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterRef, filterName, filterType, filterBorrowerType, filterCreatedFrom, filterCreatedTo, filterUpdatedFrom, filterUpdatedTo]);
+  }, [filterRef, filterName, filterType, filterBorrowerType, filterCreatedFrom, filterCreatedTo, filterUpdatedFrom, filterUpdatedTo, showMyQuotesOnly]);
 
   return (
     <div className="admin-table-container">
@@ -387,12 +401,19 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                 <label style={{ visibility: 'hidden' }}>Actions</label>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button 
+                    className={`slds-button ${showMyQuotesOnly ? 'slds-button_brand' : 'slds-button_neutral'}`}
+                    onClick={() => setShowMyQuotesOnly(!showMyQuotesOnly)}
+                    title="Show only quotes created by you"
+                  >
+                    {showMyQuotesOnly ? '✓ My Quotes' : 'My Quotes'}
+                  </button>
+                  <button 
                     className="slds-button slds-button_neutral" 
                     onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                   >
                     {showAdvancedFilters ? 'Hide Filters' : 'More Filters'}
                   </button>
-                  {(filterName || filterRef || filterType || filterBorrowerType || filterCreatedFrom || filterCreatedTo || filterUpdatedFrom || filterUpdatedTo) && (
+                  {(filterName || filterRef || filterType || filterBorrowerType || filterCreatedFrom || filterCreatedTo || filterUpdatedFrom || filterUpdatedTo || showMyQuotesOnly) && (
                     <button 
                       className="slds-button slds-button_text-destructive" 
                       onClick={() => {
@@ -404,6 +425,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                         setFilterCreatedTo('');
                         setFilterUpdatedFrom('');
                         setFilterUpdatedTo('');
+                        setShowMyQuotesOnly(false);
                       }}
                     >
                       Clear All

@@ -44,11 +44,12 @@ router.post('/', validate(createQuoteSchema), asyncHandler(async (req, res) => {
   }
   const referenceNumber = refData || `MFS${Date.now()}`;
   
-  // Add the normalized calculator_type and reference_number to the data
+  // Add the normalized calculator_type, reference_number, and user_id from auth token
   const dataToInsert = { 
     ...quoteData,
     calculator_type: normalizedType,
-    reference_number: referenceNumber
+    reference_number: referenceNumber,
+    user_id: req.user?.id || quoteData.user_id // Use authenticated user's ID
   };
 
   const { data, error } = await supabase.from(table).insert([dataToInsert]).select('*');
