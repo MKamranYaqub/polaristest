@@ -24,23 +24,28 @@ ChartJS.register(
 const VolumeChart = ({ title, total, data, type }) => {
   const navigate = useNavigate();
 
+  // Get computed color from CSS variable
+  const getComputedColor = (cssVar) => {
+    return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim();
+  };
+
   // Define colors based on chart type - matching original CSS
   const getColor = (segment) => {
     if (type === 'btl') {
       const colorMap = {
-        '2yr Fix': 'var(--token-chart-blue)',      // Blue
-        '3yr Fix': 'var(--token-chart-blue-light)',      // Light Blue
-        '2yr Tracker': 'var(--token-chart-purple)',  // Purple
+        '2yr Fix': getComputedColor('--token-chart-blue') || '#5b8def',
+        '3yr Fix': getComputedColor('--token-chart-blue-light') || '#6CB4EE',
+        '2yr Tracker': getComputedColor('--token-chart-purple') || '#c47bde',
       };
-      return colorMap[segment] || 'var(--token-chart-blue)';
+      return colorMap[segment] || (getComputedColor('--token-chart-blue') || '#5b8def');
     } else {
       // Bridging
       const colorMap = {
-        'Fusion': 'var(--token-chart-pink)',        // Pink
-        'Fixed Bridge': 'var(--token-chart-yellow)',  // Yellow
-        'Variable Bridge': 'var(--token-chart-orange)', // Orange
+        'Fusion': getComputedColor('--token-chart-pink') || '#e91e63',
+        'Fixed Bridge': getComputedColor('--token-chart-yellow') || '#ffc107',
+        'Variable Bridge': getComputedColor('--token-chart-orange') || '#ff9800',
       };
-      return colorMap[segment] || 'var(--token-chart-pink)';
+      return colorMap[segment] || (getComputedColor('--token-chart-pink') || '#e91e63');
     }
   };
 

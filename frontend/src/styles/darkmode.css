@@ -72,6 +72,14 @@
   /* Issue Quote button - same color in dark mode */
   --token-color-issue-quote: #ff5d2d;
   --token-color-issue-quote-hover: #e54a1a;
+  
+  /* Chart colors - Dashboard volume charts */
+  --token-chart-blue: #5b8def;
+  --token-chart-blue-light: #6CB4EE;
+  --token-chart-purple: #c47bde;
+  --token-chart-pink: #e91e63;
+  --token-chart-yellow: #ffc107;
+  --token-chart-orange: #ff9800;
 }
 
 /* ============================================

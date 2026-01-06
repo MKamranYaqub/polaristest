@@ -10,9 +10,10 @@ export default function useTypography() {
   const [enabled, setEnabled] = useState(() => {
     try {
       const stored = localStorage.getItem(TYPOGRAPHY_KEY);
-      return stored === 'true';
+      // Default to true if no stored preference
+      return stored === null ? true : stored === 'true';
     } catch {
-      return false;
+      return true;
     }
   });
 
