@@ -297,15 +297,15 @@ const AppContent = () => {
 function App() {
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <AuthProvider>
-        <ThemeProvider>
-          <AccessibilityProvider>
-            <ToastProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <AccessibilityProvider>
               <AppContent />
-            </ToastProvider>
-          </AccessibilityProvider>
-        </ThemeProvider>
-      </AuthProvider>
+            </AccessibilityProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </ToastProvider>
     </Router>
   );
 }export default App;

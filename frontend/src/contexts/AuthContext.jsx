@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { API_BASE_URL } from '../config/api';
+import { useToast } from './ToastContext';
 
 const AuthContext = createContext();
 
@@ -16,6 +17,14 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('auth_token'));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { showToast, removeToast } = useToast();
+  
+  // Idle timeout: 30 minutes in milliseconds (set to 1 min for testing)
+  const IDLE_TIMEOUT = 30 * 60 * 1000; // TODO: Change back to 30 * 60 * 1000 for production
+  const WARNING_TIME = 2 * 60 * 1000; // Show warning 2 minutes before logout (for testing)
+  const lastActivityRef = useRef(Date.now());
+  const [warningShown, setWarningShown] = useState(false);
+  const warningToastIdRef = useRef(null);
 
   // Access level definitions
   const ACCESS_LEVELS = {
@@ -103,6 +112,11 @@ export const AuthProvider = ({ children }) => {
       setToken(data.token);
       setUser(data.user);
       setError(null);
+      
+      // Reset activity timer on login
+      lastActivityRef.current = Date.now();
+      setWarningShown(false);
+      
       return { success: true, user: data.user };
     } catch (err) {
       setError(err.message);
@@ -158,6 +172,86 @@ export const AuthProvider = ({ children }) => {
 
     loadUser();
   }, []);
+
+  // Auto-logout on idle timeout
+  useEffect(() => {
+    if (!token || !user) return;
+
+    // Activity events to track
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+
+    // Reset activity timer and warning
+    const resetActivity = () => {
+      lastActivityRef.current = Date.now();
+      if (warningShown) {
+        setWarningShown(false);
+        // Remove the warning toast immediately when user interacts
+        if (warningToastIdRef.current) {
+          removeToast(warningToastIdRef.current);
+          warningToastIdRef.current = null;
+        }
+      }
+    };
+
+    // Check for idle timeout every 5 seconds for better accuracy
+    const checkIdleTimeout = setInterval(() => {
+      const now = Date.now();
+      const timeSinceActivity = now - lastActivityRef.current;
+      const timeRemaining = IDLE_TIMEOUT - timeSinceActivity;
+      
+      // Update countdown or show initial warning when within WARNING_TIME
+      if (timeRemaining <= WARNING_TIME && timeRemaining > 0) {
+        const secondsLeft = Math.ceil(timeRemaining / 1000);
+        
+        // Remove old warning toast if exists
+        if (warningToastIdRef.current) {
+          removeToast(warningToastIdRef.current);
+        }
+        
+        // Show updated warning toast
+        const toastId = Date.now();
+        warningToastIdRef.current = toastId;
+        showToast({
+          kind: 'warning',
+          title: 'Session Timeout Warning',
+          subtitle: `You will be logged out in ${secondsLeft} second${secondsLeft !== 1 ? 's' : ''} due to inactivity. Click anywhere to stay logged in.`,
+          timeout: 0 // Don't auto-dismiss, we'll handle it manually
+        });
+        setWarningShown(true);
+      }
+      
+      // Logout when time expires
+      if (timeSinceActivity >= IDLE_TIMEOUT) {
+        setWarningShown(false);
+        // Remove warning toast before logout
+        if (warningToastIdRef.current) {
+          removeToast(warningToastIdRef.current);
+          warningToastIdRef.current = null;
+        }
+        clearInterval(checkIdleTimeout);
+        logout();
+        showToast({
+          kind: 'error',
+          title: 'Session Expired',
+          subtitle: 'You have been logged out due to inactivity.',
+          timeout: 8000
+        });
+      }
+    }, 5000); // Check every 5 seconds
+
+    // Add event listeners
+    events.forEach(event => {
+      window.addEventListener(event, resetActivity);
+    });
+
+    return () => {
+      // Cleanup
+      clearInterval(checkIdleTimeout);
+      events.forEach(event => {
+        window.removeEventListener(event, resetActivity);
+      });
+    };
+  }, [token, user, warningShown]);
 
   const value = {
     user,
