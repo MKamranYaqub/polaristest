@@ -1083,7 +1083,9 @@ export default function Constants() {
       marketRates: marketRates,
       brokerRoutes: newRoutes,
       brokerCommissionDefaults: newDefaults,
-      brokerCommissionTolerance: brokerCommissionTolerance
+      brokerCommissionTolerance: brokerCommissionTolerance,
+      fundingLinesBTL: fundingLinesBTL,
+      fundingLinesBridge: fundingLinesBridge
     };
     writeOverrides(currentOverrides);
     
@@ -1124,7 +1126,9 @@ export default function Constants() {
       marketRates: marketRates,
       brokerRoutes: newRoutes,
       brokerCommissionDefaults: newDefaults,
-      brokerCommissionTolerance: brokerCommissionTolerance
+      brokerCommissionTolerance: brokerCommissionTolerance,
+      fundingLinesBTL: fundingLinesBTL,
+      fundingLinesBridge: fundingLinesBridge
     };
     writeOverrides(currentOverrides);
     
@@ -1791,37 +1795,48 @@ export default function Constants() {
       
       {/* Delete Confirmation Modal */}
       {deleteConfirmation.show && (
-        <div className="slds-modal slds-fade-in-open" role="dialog" aria-modal="true">
-          <div className="slds-modal__container">
-            <header className="slds-modal__header">
-              <h2 className="slds-text-heading_medium">Confirm Deletion</h2>
-            </header>
-            <div className="slds-modal__content slds-p-around_medium">
-              <p className="margin-bottom-1">
-                Are you sure you want to delete the route <strong>"{deleteConfirmation.routeKey}"</strong>?
-              </p>
-              <div className="slds-notify slds-notify_alert slds-alert_warning margin-top-1" role="alert">
-                <span className="slds-assistive-text">warning</span>
-                <h2 className="subsection-header">
-                  Warning
-                </h2>
-                <div className="slds-notify__content">
-                  <p>Existing quotes using this route will still reference it in the database. The route will simply not appear in the dropdown for new quotes.</p>
+        <>
+          <div 
+            className="slds-backdrop slds-backdrop_open" 
+            style={{ zIndex: 9000, pointerEvents: 'auto' }}
+            onClick={cancelDeleteBrokerRoute}
+          ></div>
+          <div 
+            className="slds-modal slds-fade-in-open" 
+            role="dialog" 
+            aria-modal="true"
+            style={{ zIndex: 9001, pointerEvents: 'none' }}
+          >
+            <div className="slds-modal__container" style={{ pointerEvents: 'auto' }}>
+              <header className="slds-modal__header">
+                <h2 className="slds-text-heading_medium">Confirm Deletion</h2>
+              </header>
+              <div className="slds-modal__content slds-p-around_medium">
+                <p className="margin-bottom-1">
+                  Are you sure you want to delete the route <strong>"{deleteConfirmation.routeKey}"</strong>?
+                </p>
+                <div className="slds-notify slds-notify_alert slds-alert_warning margin-top-1" role="alert">
+                  <span className="slds-assistive-text">warning</span>
+                  <h4 className="subsection-header">
+                    Warning
+                  </h4>
+                  <div className="slds-notify__content">
+                    <p>Existing quotes using this route will still reference it in the database. The route will simply not appear in the dropdown for new quotes.</p>
+                  </div>
                 </div>
               </div>
+              <footer className="slds-modal__footer">
+                <button className="slds-button slds-button_neutral" onClick={cancelDeleteBrokerRoute}>
+                  Cancel
+                </button>
+                <button className="slds-button slds-button_destructive" onClick={confirmDeleteBrokerRoute}>
+                  Delete Route
+                </button>
+              </footer>
             </div>
-            <footer className="slds-modal__footer">
-              <button className="slds-button slds-button_neutral" onClick={cancelDeleteBrokerRoute}>
-                Cancel
-              </button>
-              <button className="slds-button slds-button_destructive" onClick={confirmDeleteBrokerRoute}>
-                Delete Route
-              </button>
-            </footer>
           </div>
-        </div>
+        </>
       )}
-      {deleteConfirmation.show && <div className="slds-backdrop slds-backdrop_open"></div>}
 
       <NotificationModal
         isOpen={notification.show}

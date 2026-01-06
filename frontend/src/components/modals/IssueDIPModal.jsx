@@ -45,6 +45,8 @@ export default function IssueDIPModal({
     dip_expiry_date: existingDipData.dip_expiry_date || defaults.dipExpiryDate,
     applicant_type: existingDipData.applicant_type || '',
     guarantor_name: existingDipData.guarantor_name || '',
+    company_number: existingDipData.company_number || '',
+    title_number: existingDipData.title_number || '',
     lender_legal_fee: existingDipData.lender_legal_fee || '',
     number_of_applicants: existingDipData.number_of_applicants || '1',
     overpayments_percent: existingDipData.overpayments_percent || '10',
@@ -62,6 +64,13 @@ export default function IssueDIPModal({
       }));
     }
     return [{ street: '', city: '', postcode: '', country: 'United Kingdom' }];
+  });
+
+  const [shareholders, setShareholders] = useState(() => {
+    if (existingDipData.shareholders && Array.isArray(existingDipData.shareholders)) {
+      return existingDipData.shareholders;
+    }
+    return [{ name: '' }];
   });
 
   const [saving, setSaving] = useState(false);
@@ -88,6 +97,8 @@ export default function IssueDIPModal({
         dip_expiry_date: existingDipData.dip_expiry_date || defaultDates.dipExpiryDate,
         applicant_type: existingDipData.applicant_type || '',
         guarantor_name: existingDipData.guarantor_name || '',
+        company_number: existingDipData.company_number || '',
+        title_number: existingDipData.title_number || '',
         lender_legal_fee: existingDipData.lender_legal_fee || '',
         number_of_applicants: existingDipData.number_of_applicants ? String(existingDipData.number_of_applicants) : '1',
         overpayments_percent: existingDipData.overpayments_percent ? String(existingDipData.overpayments_percent) : '10',
@@ -95,6 +106,11 @@ export default function IssueDIPModal({
         product_range: existingDipData.product_range || 'specialist',
         title_insurance: existingDipData.title_insurance || ''
       });
+      
+      // Update shareholders
+      if (existingDipData.shareholders && Array.isArray(existingDipData.shareholders) && existingDipData.shareholders.length > 0) {
+        setShareholders(existingDipData.shareholders);
+      }
       
       // Update security properties with backward compatibility
       if (existingDipData.security_properties && Array.isArray(existingDipData.security_properties) && existingDipData.security_properties.length > 0) {
@@ -168,6 +184,22 @@ export default function IssueDIPModal({
   const removeSecurityProperty = (index) => {
     if (securityProperties.length > 1) {
       setSecurityProperties(securityProperties.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleShareholderChange = (index, value) => {
+    const updatedShareholders = [...shareholders];
+    updatedShareholders[index].name = value;
+    setShareholders(updatedShareholders);
+  };
+
+  const addShareholder = () => {
+    setShareholders([...shareholders, { name: '' }]);
+  };
+
+  const removeShareholder = (index) => {
+    if (shareholders.length > 1) {
+      setShareholders(shareholders.filter((_, i) => i !== index));
     }
   };
 
@@ -370,6 +402,7 @@ export default function IssueDIPModal({
       const dipData = {
         ...formData,
         security_properties: normalizedProperties,
+        shareholders: formData.applicant_type === 'Corporate' ? shareholders : undefined,
         dip_status: 'Issued'
       };
 
@@ -403,6 +436,7 @@ export default function IssueDIPModal({
       const dipData = {
         ...formData,
         security_properties: normalizedProperties,
+        shareholders: formData.applicant_type === 'Corporate' ? shareholders : undefined,
         dip_status: 'Issued'
       };
 
@@ -576,8 +610,8 @@ export default function IssueDIPModal({
             aria-describedby={fieldErrors.commercial_or_main_residence ? 'error-commercial_or_main_residence' : undefined}
           >
             <option value="">Select...</option>
-            <option value="Commercial">Commercial</option>
-            <option value="Main Residence">Main Residence</option>
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
           </select>
         </div>
         {fieldErrors.commercial_or_main_residence && (
@@ -638,8 +672,24 @@ export default function IssueDIPModal({
         </div>
       </div>
 
-      {/* Applicant Type and Guarantor Name */}
+      {/* Title Number and Applicant Type */}
       <div className="grid-2-col-gap-margin">
+        <div className="slds-form-element">
+          <label className="slds-form-element__label">
+            Title Number
+          </label>
+          <div className="slds-form-element__control">
+            <input 
+              type="text" 
+              className="slds-input"
+              name="title_number"
+              value={formData.title_number}
+              onChange={handleInputChange}
+              placeholder="Enter title number"
+            />
+          </div>
+        </div>
+
         <div className="slds-form-element">
           <label className="slds-form-element__label">
             <abbr className="slds-required" title="required">*</abbr> Applicant Type
@@ -666,8 +716,27 @@ export default function IssueDIPModal({
             </div>
           )}
         </div>
+      </div>
 
-        {formData.applicant_type === 'Corporate' && (
+      {/* Company Number and Guarantor Name (if Corporate) */}
+      {formData.applicant_type === 'Corporate' && (
+        <div className="grid-2-col-gap-margin">
+          <div className="slds-form-element">
+            <label className="slds-form-element__label">
+              Company Number
+            </label>
+            <div className="slds-form-element__control">
+              <input 
+                type="text" 
+                className="slds-input"
+                name="company_number"
+                value={formData.company_number}
+                onChange={handleInputChange}
+                placeholder="Enter company number"
+              />
+            </div>
+          </div>
+
           <div className="slds-form-element">
             <label className="slds-form-element__label">
               <abbr className="slds-required" title="required">*</abbr> Guarantor Name
@@ -692,8 +761,51 @@ export default function IssueDIPModal({
               </div>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Shareholders (if Corporate) */}
+      {formData.applicant_type === 'Corporate' && (
+        <div className="slds-form-element margin-bottom-1">
+          <label className="slds-form-element__label">
+            Shareholders
+          </label>
+          {shareholders.map((shareholder, index) => (
+            <div key={index} className="slds-form-element__control" style={{ marginBottom: '8px', display: 'flex', gap: '8px' }}>
+              <input 
+                type="text" 
+                className="slds-input"
+                value={shareholder.name}
+                onChange={(e) => handleShareholderChange(index, e.target.value)}
+                placeholder="Enter shareholder name"
+                style={{ flex: 1 }}
+              />
+              {shareholders.length > 1 && (
+                <button 
+                  type="button" 
+                  onClick={() => removeShareholder(index)}
+                  className="slds-button slds-button_icon slds-button_icon-container"
+                  title="Remove shareholder"
+                >
+                  <span className="slds-icon_container">
+                    <svg className="slds-icon slds-icon-text-default" style={{ width: '16px', height: '16px' }}>
+                      <use xlinkHref="/assets/icons/utility-sprite/svg/symbols.svg#delete"></use>
+                    </svg>
+                  </span>
+                </button>
+              )}
+            </div>
+          ))}
+          <button 
+            type="button" 
+            onClick={addShareholder}
+            className="slds-button slds-button_neutral"
+            style={{ marginTop: '4px' }}
+          >
+            + Add Shareholder
+          </button>
+        </div>
+      )}
 
       {/* Lender Legal Fee and Number of Applicants */}
       <div className="grid-2-col-gap-margin">
@@ -839,7 +951,7 @@ export default function IssueDIPModal({
                       className="slds-input flex-1" 
                       value={property.postcode}
                       onChange={(e) => handlePropertyChange(index, 'postcode', e.target.value.toUpperCase())}
-                      placeholder="e.g. KT3 4NY"
+                      placeholder="e.g. W1J 7DP"
                     />
                     <button
                       type="button"

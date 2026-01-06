@@ -200,12 +200,15 @@ export async function generateBTLDIPPDF(quoteId) {
     commercial_or_main_residence: quote.commercial_or_main_residence,
     applicant_type: quote.applicant_type,
     guarantor_name: quote.guarantor_name,
+    company_number: quote.company_number,
+    title_number: quote.title_number,
     lender_legal_fee: quote.lender_legal_fee,
     number_of_applicants: quote.number_of_applicants || 1,
     overpayments_percent: quote.overpayments_percent || 10,
     fee_type_selection: quote.fee_type_selection,
     funding_line: quote.funding_line,
     security_properties: quote.security_properties || [],
+    shareholders: quote.shareholders || [],
     title_insurance: quote.title_insurance || 'No', // Title Insurance dropdown selection
     product_range: quote.product_range || 'specialist' // Core or Specialist for full term
   };
@@ -260,12 +263,15 @@ export async function generateBridgingDIPPDF(quoteId) {
     commercial_or_main_residence: quote.commercial_or_main_residence,
     applicant_type: quote.applicant_type,
     guarantor_name: quote.guarantor_name,
+    company_number: quote.company_number,
+    title_number: quote.title_number,
     lender_legal_fee: quote.lender_legal_fee,
     number_of_applicants: quote.number_of_applicants || 1,
     overpayments_percent: quote.overpayments_percent || 10,
     fee_type_selection: quote.fee_type_selection,
     funding_line: quote.funding_line,
     security_properties: quote.security_properties || [],
+    shareholders: quote.shareholders || [],
     title_insurance: quote.title_insurance || 'No', // Title Insurance dropdown selection
     product_range: quote.product_range || 'specialist', // Core or Specialist for full term
     admin_fee: quote.admin_fee,

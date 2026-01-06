@@ -47,6 +47,11 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
   const securityAddress = h.getSecurityAddress(dipData);
   const dipDate = h.formatDateLong(dipData.dip_date);
   const dipExpiryDate = h.formatDateLong(dipData.dip_expiry_date);
+
+  // Title number and company number
+  const titleNumber = dipData.title_number || 'TBC';
+  const companyNumber = dipData.company_number || '';
+  const isCorporate = dipData.applicant_type === 'Corporate';
   
   // Loan details
   const grossLoan = h.getGrossLoan(quote);
@@ -137,7 +142,9 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
         {/* Proposed Loan To */}
         <View style={btlDipStyles.summaryRow}>
           <Text style={btlDipStyles.summaryLabel}>Proposed Loan to:</Text>
-          <Text style={btlDipStyles.summaryValue}>{borrowerName}</Text>
+          <Text style={btlDipStyles.summaryValue}>
+            {borrowerName}{isCorporate && companyNumber ? ` (Company No: ${companyNumber})` : ''}
+          </Text>
         </View>
 
         {/* Security Property */}
@@ -145,6 +152,18 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           <Text style={btlDipStyles.summaryLabel}>Security Property:</Text>
           <Text style={btlDipStyles.summaryValue}>{securityAddress}</Text>
         </View>
+
+        {/* Title Number */}
+                <View style={btlDipStyles.summaryRow}>
+                  <Text style={btlDipStyles.summaryLabel}>Title No:</Text>
+                  <Text style={btlDipStyles.summaryValue}>{titleNumber}</Text>
+                </View>
+
+        {/* Current Anticipated 180-Day Market Value */}
+                <View style={btlDipStyles.summaryRow}>
+                  <Text style={btlDipStyles.summaryLabel}>Current Anticipated 180-Day Market Value:</Text>
+                  <Text style={btlDipStyles.summaryValue}>{h.formatCurrency(propertyValue)}</Text>
+                </View>
 
         {/* Introduction Text */}
         <View style={btlDipStyles.introSection}>
@@ -434,15 +453,19 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           <Text style={btlDipStyles.termsText}>
             More than 60% of the Loan provided is being used for business purposes, and by signing this Decision in Principle you declare to us that the Loan is predominantly for the purposes of a business, profession or trade carried on, or intended to be carried on by you. The Loan will therefore be exempt from the provisions of the Financial Services & Markets Act 2000 and The Mortgage Credit Directive Order 2015 and the Consumer Credit Act 1974 and you will not get the protection afforded by those Acts. You will be required to provide and sign a declaration relating to business purposes before drawdown.
           </Text>
-          <Text style={btlDipStyles.termsText}>
-            You confirm to us that the Security Property has never been used as a dwelling by you or any spouse, unmarried partner, civil partner, parents, grandparents, siblings, children and grandchildren or any other related person and will not be occupied by you or any of the above-stated persons or any other related person in the future.
-          </Text>
-          <Text style={btlDipStyles.termsText}>
-            You will be required to sign a declaration to this effect before completion takes place. We will rely upon your declarations when completing the proposed Loan, and such declarations will be a condition of the lending.
-          </Text>
-          <Text style={btlDipStyles.termsTextBold}>
-            Do not sign this Decision in Principle or any declaration unless the above paragraphs are true.
-          </Text>
+          {dipData.commercial_or_main_residence !== 'Yes' && (
+            <>
+              <Text style={btlDipStyles.termsText}>
+                You confirm to us that the Security Property has never been used as a dwelling by you or any spouse, unmarried partner, civil partner, parents, grandparents, siblings, children and grandchildren or any other related person and will not be occupied by you or any of the above-stated persons or any other related person in the future.
+              </Text>
+              <Text style={btlDipStyles.termsText}>
+                You will be required to sign a declaration to this effect before completion takes place. We will rely upon your declarations when completing the proposed Loan, and such declarations will be a condition of the lending.
+              </Text>
+              <Text style={btlDipStyles.termsTextBold}>
+                Do not sign this Decision in Principle or any declaration unless the above paragraphs are true.
+              </Text>
+            </>
+          )}
         </View>
 
         <PDFFooter />

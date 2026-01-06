@@ -257,7 +257,7 @@ export const getInterestRate = (quote) => {
                parseNumber(quote.interest_rate) ||
                parseNumber(quote.rate) ||
                0;
-  return rate.toFixed(2);
+  return rate;
 };
 
 /**
