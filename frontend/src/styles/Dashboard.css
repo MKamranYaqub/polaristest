@@ -98,7 +98,6 @@
   color: var(--token-color-text-secondary);
   margin-bottom: var(--token-spacing-sm);
   font-weight: var(--token-font-weight-medium);
-  text-transform: uppercase;
   letter-spacing: 0.025em;
 }
 

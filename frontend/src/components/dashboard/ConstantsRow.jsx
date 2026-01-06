@@ -9,7 +9,7 @@ const ConstantsRow = () => {
 
   return (
     <div className="constants-section">
-      <h2 className="constants-title">Constants</h2>
+      <h4 className="constants-title">Constants</h4>
       <div className="constants-grid">
         <div className="constant-item">
           <span className="constant-label">BBR</span>

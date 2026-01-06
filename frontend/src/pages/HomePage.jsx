@@ -42,17 +42,17 @@ const HomePage = () => {
 
         {/* Totals Section */}
         <div className="totals-section">
-          <h2 className="totals-title">Totals</h2>
+          <h4 className="totals-title">Totals</h4>
           <div className="totals-grid">
-            <TotalsCard label="Total quotes issued" value={totals.totalQuotes} />
-            <TotalsCard label="Total DIPs issued" value={totals.totalDIPs} />
+            <TotalsCard label="Quotes issued" value={totals.totalQuotes} />
+            <TotalsCard label="DIP issued" value={totals.totalDIPs} />
           </div>
         </div>
 
         {/* Volumes Section */}
         <div className="volume-section">
           <div className="volume-header">
-            <h2 className="volume-title">Volumes</h2>
+            <h4 className="volume-title">Volumes</h4>
             <VolumeFilter value={volumeFilter} onChange={setVolumeFilter} />
           </div>
 
