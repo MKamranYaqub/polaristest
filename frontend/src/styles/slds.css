@@ -693,6 +693,11 @@ body,
    use the custom utilities in utilities.css (.margin-*, .padding-*)
    ============================================ */
 
+.slds-p-around_none {
+  padding: 0;
+  border-radius: var(--token-radius-md);
+}
+
 .slds-p-around_medium {
   padding: 1rem;
 }

@@ -42,7 +42,7 @@ const AdminLandingPage = () => {
       gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
       stats: { label: 'Rates', value: '28' }
     },
-    {
+    /*{
       id: 'uw-requirements',
       title: 'UW Requirements',
       description: 'Configure underwriting document checklist for DIP and Quote issuance.',
@@ -50,7 +50,7 @@ const AdminLandingPage = () => {
       link: '/admin/uw-requirements',
       gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
       stats: { label: 'Items', value: '40+' }
-    },
+    },*/
     {
       id: 'global-settings',
       title: 'Global Settings',
@@ -60,7 +60,7 @@ const AdminLandingPage = () => {
       gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
       stats: { label: 'Configs', value: '16' }
     },
-    {
+    /*{
       id: 'data-health',
       title: 'Data Health',
       description: 'Detect duplicate rates and anomalies across BTL/Bridging sets.',
@@ -68,7 +68,7 @@ const AdminLandingPage = () => {
       link: '/admin/data-health',
       gradient: 'linear-gradient(135deg, #ffd194 0%, #70e1f5 100%)',
       stats: { label: 'Checks', value: 'Live' }
-    },
+    },*/
     {
       id: 'users',
       title: 'User Management',
@@ -97,7 +97,7 @@ const AdminLandingPage = () => {
   ];
 
   return (
-    <div className="slds-p-around_none" style={{ backgroundColor: 'var(--token-ui-background-neutral)', minHeight: '100vh' }}>
+    <div className="page-container">
       {/* Premium Admin Hero */}
       <div 
         className="slds-p-around_none" 
@@ -176,7 +176,7 @@ const AdminLandingPage = () => {
                 style={{
                   background: 'white',
                   padding: '2rem 1.5rem',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--token-radius-md)',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
                   border: '1px solid rgba(0,0,0,0.08)'
                 }}
@@ -216,7 +216,7 @@ const AdminLandingPage = () => {
                   className="height-100 transition-all"
                   style={{
                     background: 'white',
-                    borderRadius: '16px',
+                    borderRadius: 'var(--token-radius-md)',
                     overflow: 'hidden',
                     boxShadow: '0 6px 25px rgba(0,0,0,0.08)',
                     border: '1px solid rgba(0,0,0,0.08)',

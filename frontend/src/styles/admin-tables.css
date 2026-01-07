@@ -12,7 +12,7 @@
   padding: var(--token-spacing-xl);
   max-width: 100%;
   background-color: var(--token-layer-surface);
-  border-radius: var(--slds-g-radius-border-3);
+  border-radius: var(--token-radius-md);
   box-shadow: var(--token-shadow-soft);
 }
 
@@ -26,7 +26,7 @@
   gap: var(--token-spacing-lg);
   padding: var(--token-spacing-lg);
   background: var(--token-layer-surface);
-  border-radius: var(--slds-g-radius-border-3);
+  border-radius: var(--token-radius-md);
 }
 
 .table-actions-left {
