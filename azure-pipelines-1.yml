@@ -1,21 +1,118 @@
-# Node.js
-# Build a general Node.js project with npm.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
-
+# azure-pipelines.yml
 trigger:
 - main
 
 pool:
   vmImage: ubuntu-latest
 
-steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '20.x'
-  displayName: 'Install Node.js'
+variables:
+  azureSubscription: 'your-service-connection-name' # Set in Azure DevOps
+  webAppName: 'wa-mfs-sf-calculator-001'
+  resourceGroup: 'rg-mfs-gbl-calculators'
 
-- script: |
-    npm install
-    npm run build
-  displayName: 'npm install and build'
+stages:
+- stage: Build
+  displayName: 'Build Application'
+  jobs:
+  - job: BuildJob
+    displayName: 'Build Frontend and Backend'
+    steps:
+    
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '20.x'
+      displayName: 'Install Node.js 20.x'
+    
+    # Build Frontend
+    - script: |
+        cd frontend
+        npm ci
+        npm run build
+      displayName: 'Build Frontend (Vite)'
+    
+    # Install Backend Dependencies
+    - script: |
+        cd backend
+        npm ci --production
+      displayName: 'Install Backend Dependencies'
+    
+    # Create deployment package
+    - script: |
+        mkdir -p $(Build.ArtifactStagingDirectory)/deploy
+        
+        # Copy backend files
+        cp -r backend/* $(Build.ArtifactStagingDirectory)/deploy/
+        
+        # Copy frontend build to backend public folder
+        mkdir -p $(Build.ArtifactStagingDirectory)/deploy/public
+        cp -r frontend/dist/* $(Build.ArtifactStagingDirectory)/deploy/public/
+        
+        # Copy package.json files
+        cp package.json $(Build.ArtifactStagingDirectory)/deploy/
+        
+        # Create web.config for Azure
+        cat > $(Build.ArtifactStagingDirectory)/deploy/web.config << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <configuration>
+          <system.webServer>
+            <handlers>
+              <add name="iisnode" path="server.js" verb="*" modules="iisnode"/>
+            </handlers>
+            <rewrite>
+              <rules>
+                <rule name="NodeInspector" patternSyntax="ECMAScript" stopProcessing="true">
+                  <match url="^server.js\/debug[\/]?" />
+                </rule>
+                <rule name="StaticContent">
+                  <action type="Rewrite" url="public{REQUEST_URI}"/>
+                </rule>
+                <rule name="DynamicContent">
+                  <conditions>
+                    <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="True"/>
+                  </conditions>
+                  <action type="Rewrite" url="server.js"/>
+                </rule>
+              </rules>
+            </rewrite>
+            <security>
+              <requestFiltering>
+                <hiddenSegments>
+                  <remove segment="bin"/>
+                </hiddenSegments>
+              </requestFiltering>
+            </security>
+            <httpErrors existingResponse="PassThrough" />
+          </system.webServer>
+        </configuration>
+        EOF
+      displayName: 'Create Deployment Package'
+    
+    # Publish artifact
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)/deploy'
+        artifactName: 'drop'
+        publishLocation: 'Container'
+      displayName: 'Publish Artifacts'
+
+- stage: Deploy
+  displayName: 'Deploy to Azure'
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - deployment: DeployWeb
+    displayName: 'Deploy to Azure Web App'
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webAppLinux'
+              appName: '$(webAppName)'
+              package: '$(Pipeline.Workspace)/drop'
+              runtimeStack: 'NODE|20-lts'
+              startUpCommand: 'node server.js'
+            displayName: 'Deploy to Azure Web App'
