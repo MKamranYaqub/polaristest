@@ -37,7 +37,7 @@ function Navigation() {
     },
     {
       id: 'calculator',
-      label: 'Calculator',
+      label: 'Calculators',
       icon: 'utility:calculator',
       children: [
         { id: 'calc-overview', label: 'Overview', path: '/calculator' },
@@ -56,7 +56,7 @@ function Navigation() {
       label: 'Admin',
       icon: 'utility:settings',
       children: [
-        { id: 'admin-overview', label: 'Overview', path: '/admin' },
+        { id: 'admin-overview', label: 'Dashboard', path: '/admin' },
         { id: 'constants', label: 'Constants', path: '/admin/constants' },
         { id: 'criteria', label: 'BTL Criteria', path: '/admin/criteria' },
         { id: 'btl-rates', label: 'BTL Rates', path: '/admin/btl-rates' },

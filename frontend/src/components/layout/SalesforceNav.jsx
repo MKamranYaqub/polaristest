@@ -49,18 +49,10 @@ function SalesforceNav() {
 
   // Navigation structure
   const navItems = [
-    {
-      id: 'products',
-      label: 'Products',
-      type: 'dropdown',
-      children: [
-        { id: 'btl', label: 'Buy to Let', path: '/products/btl' },
-        { id: 'bridging', label: 'Bridge & Fusion', path: '/products/bridging' }
-      ]
-    },
+    
     {
       id: 'calculator',
-      label: 'Calculator',
+      label: 'Calculators',
       type: 'dropdown',
       children: [
         { id: 'calc-btl', label: 'BTL Calculator', path: '/calculator/btl' },
@@ -73,11 +65,22 @@ function SalesforceNav() {
       path: '/quotes',
       type: 'link'
     },
+
+    {
+      id: 'products',
+      label: 'Products',
+      type: 'dropdown',
+      children: [
+        { id: 'btl', label: 'Buy to Let', path: '/products/btl' },
+        { id: 'bridging', label: 'Bridge & Fusion', path: '/products/bridging' }
+      ]
+    },
     ...(showAdminMenu ? [{
       id: 'admin',
       label: 'Admin',
       type: 'dropdown',
       children: [
+        { id: 'admin-dashboard', label: 'Dashboard', path: '/admin' },
         { id: 'constants', label: 'Constants', path: '/admin/constants' },
         { id: 'criteria', label: 'BTL Criteria', path: '/admin/criteria' },
         { id: 'btl-rates', label: 'BTL Rates', path: '/admin/btl-rates' },
