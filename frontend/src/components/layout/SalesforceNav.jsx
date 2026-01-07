@@ -56,7 +56,7 @@ function SalesforceNav() {
       type: 'dropdown',
       children: [
         { id: 'calc-btl', label: 'BTL Calculator', path: '/calculator/btl' },
-        { id: 'calc-bridging', label: 'Bridging Calculator', path: '/calculator/bridging' }
+        { id: 'calc-bridging', label: 'Bridging & Fusion Calculator', path: '/calculator/bridging' }
       ]
     },
     {

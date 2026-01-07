@@ -1,17 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Navigation from './Navigation';
 import ThemeToggle from '../ui/ThemeToggle';
 import UserProfileButton from '../ui/UserProfileButton';
 import { useTheme } from '../../contexts/ThemeContext';
 
 /**
  * AppNav - Consolidated navigation component
- * Contains the header with title, theme toggle, user profile button,
- * and the sidebar navigation
+ * Contains the header with title, theme toggle, user profile button
  * 
- * This component is extracted as a separate class to support
- * future Salesforce embedding scenarios where the host controls navigation
+ * Note: This component is currently not in use. The app uses SalesforceNav.jsx instead.
+ * Consider removing this file if it's confirmed to be unused.
  */
 function AppNav() {
   const { resolvedTheme } = useTheme();

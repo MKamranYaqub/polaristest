@@ -67,7 +67,7 @@ export function useBreadcrumbs() {
     if (path.includes('/btl')) {
       breadcrumbs.push({ label: 'Buy to Let', path: '/calculator/btl' });
     } else if (path.includes('/bridging')) {
-      breadcrumbs.push({ label: 'Bridging', path: '/calculator/bridging' });
+      breadcrumbs.push({ label: 'Bridging & Fusion', path: '/calculator/bridging' });
     }
   } else if (path.includes('/quotes')) {
     breadcrumbs.push({ label: 'Quotes', path: '/quotes' });
