@@ -32,7 +32,9 @@ const ResetPasswordPage = () => {
       const data = await response.json();
 
       if (!response.ok || !data.valid) {
-        setError(data.error || 'Invalid or expired reset token');
+        // Handle error object from backend: { success: false, error: { code: 'X', message: 'Y' } }
+        const errorMessage = data.error?.message || data.error || 'Invalid or expired reset token';
+        setError(errorMessage);
         setTokenValid(false);
       } else {
         setTokenValid(true);
@@ -78,7 +80,9 @@ const ResetPasswordPage = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to reset password');
+        // Handle error object from backend: { success: false, error: { code: 'X', message: 'Y' } }
+        const errorMessage = data.error?.message || data.error || 'Failed to reset password';
+        throw new Error(errorMessage);
       }
 
       setSuccess(true);

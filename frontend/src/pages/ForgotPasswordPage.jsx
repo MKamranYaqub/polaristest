@@ -28,7 +28,9 @@ const ForgotPasswordPage = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to request password reset');
+        // Handle error object from backend: { success: false, error: { code: 'X', message: 'Y' } }
+        const errorMessage = data.error?.message || data.error || 'Failed to request password reset';
+        throw new Error(errorMessage);
       }
 
       setSuccess(true);

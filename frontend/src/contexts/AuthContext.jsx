@@ -105,7 +105,9 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+        // Handle error object from backend: { success: false, error: { code: 'X', message: 'Y' } }
+        const errorMessage = data.error?.message || data.error || 'Login failed';
+        throw new Error(errorMessage);
       }
 
       localStorage.setItem('auth_token', data.token);
@@ -151,7 +153,9 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Password change failed');
+        // Handle error object from backend: { success: false, error: { code: 'X', message: 'Y' } }
+        const errorMessage = data.error?.message || data.error || 'Password change failed';
+        throw new Error(errorMessage);
       }
 
       return { success: true };
