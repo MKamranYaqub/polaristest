@@ -35,7 +35,7 @@ INSERT INTO users (email, password_hash, name, access_level, is_active) VALUES
 ('ollie.watts@mfsuk.com', '$2b$10$XkwNRyzKf69gEeFdzdzMjez0Dr9i.A1VHblBimQSsBaS6vOc974YK', 'Ollie Watts', 4, true),
 ('craig@mfsuk.com', '$2b$10$XkwNRyzKf69gEeFdzdzMjez0Dr9i.A1VHblBimQSsBaS6vOc974YK', 'Craig Rieselson', 4, true),
 ('shaun@mfsuk.com', '$2b$10$XkwNRyzKf69gEeFdzdzMjez0Dr9i.A1VHblBimQSsBaS6vOc974YK', 'Shaun Bains', 4, true),
-('agnieszka@mfsuk.com', '$2b$10$XkwNRyzKf69gEeFdzdzMjez0Dr9i.A1VHblBimQSsBaS6vOc974YK', 'Agnieszka Chmarowska', 4, true),
+('agnieszka@mfsuk.com', '$2b$10$XkwNRyzKf69gEeFdzdzMjez0Dr9i.A1VHblBimQSsBaS6vOc974YK', 'Agnieszka Chmarowska', 4, true)
 ON CONFLICT (email) DO UPDATE SET
   password_hash = EXCLUDED.password_hash,
   name = EXCLUDED.name,

@@ -26,8 +26,8 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const SALT_ROUNDS = 10;
 
 // POST /api/auth/register - Create new user account
-// POST /api/auth/login - Authenticate user
-router.post('/login', authLimiter, validate(loginSchema), asyncHandler(async (req, res) => {
+// POST /api/auth/login - Authenticate user (rate limiter temporarily removed)
+router.post('/login', validate(loginSchema), asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   // Find user
