@@ -132,28 +132,30 @@ export function useHeaderColors() {
         // Then load from Supabase for the latest values
         if (supabase) {
           const { data, error } = await supabase
-            .from('app_constants')
-            .select('value')
-            .eq('key', 'results_table_header_colors')
-            .maybeSingle();
+            .from('results_configuration')
+            .select('*')
+            .eq('key', 'header_colors');
 
-          if (!error && data && data.value) {
-            const parsed = typeof data.value === 'string' 
-              ? JSON.parse(data.value) 
-              : data.value;
+          if (!error && data && data.length > 0) {
+            const allColors = { ...DEFAULT_HEADER_COLORS };
             
-            // Check if it's the per-loan-type format
-            if (parsed.btl || parsed.bridge || parsed.core) {
-              const allColors = {
-                btl: migrateToColumnsFormat(parsed.btl, DEFAULT_HEADER_COLORS.btl),
-                bridge: migrateToColumnsFormat(parsed.bridge, DEFAULT_HEADER_COLORS.bridge),
-                core: migrateToColumnsFormat(parsed.core, DEFAULT_HEADER_COLORS.core)
-              };
-              applyAllHeaderColors(allColors);
+            // Reconstruct colors from the per-calculator-type rows
+            data.forEach(row => {
+              const config = typeof row.config === 'string' ? JSON.parse(row.config) : row.config;
               
-              // Update localStorage
-              localStorage.setItem('results_table_header_colors', JSON.stringify(allColors));
-            }
+              if (row.calculator_type === 'btl') {
+                allColors.btl = migrateToColumnsFormat(config, DEFAULT_HEADER_COLORS.btl);
+              } else if (row.calculator_type === 'bridge') {
+                allColors.bridge = migrateToColumnsFormat(config, DEFAULT_HEADER_COLORS.bridge);
+              } else if (row.calculator_type === 'core') {
+                allColors.core = migrateToColumnsFormat(config, DEFAULT_HEADER_COLORS.core);
+              }
+            });
+            
+            applyAllHeaderColors(allColors);
+            
+            // Update localStorage
+            localStorage.setItem('results_table_header_colors', JSON.stringify(allColors));
           }
         }
       } catch (e) {
