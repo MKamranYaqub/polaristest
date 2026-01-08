@@ -56,6 +56,14 @@ export const getPropertyValue = (quote) => {
   return formatCurrency(quote.property_value);
 };
 
+export const getMonthlyRent = (quote) => {
+  const rent = parseNumber(quote.monthly_rent) ||
+               parseNumber(quote.rent) ||
+               0;
+  if (rent === 0) return 'N/A';
+  return formatCurrency(rent);
+};
+
 export const getBridgingTerm = (quote) => {
   const term = parseNumber(quote.bridging_loan_term) || 
                parseNumber(quote.term_months) ||
@@ -71,10 +79,8 @@ export const getChargeType = (quote) => {
 };
 
 export const getVersion = (quote) => {
-  if (quote.version_number) {
-    return `Version ${quote.version_number}`;
-  }
-  return 'Version 1';
+  const version = quote.quote_version || quote.version_number || quote.version || 1;
+  return `Version ${version}`;
 };
 
 // ============================================================================
@@ -172,12 +178,20 @@ export const getNetLoan = (result) => {
 };
 
 export const getLTV = (result) => {
-  const ltv = parseNumber(result?.ltv);
-  return ltv ? ltv.toFixed(2) : '0.00';
+  // Database fields: gross_ltv, net_ltv, ltv_percentage, ltv
+  const ltv = parseNumber(result?.gross_ltv) ||
+              parseNumber(result?.ltv_percentage) ||
+              parseNumber(result?.net_ltv) ||
+              parseNumber(result?.ltv) ||
+              0;
+  return ltv.toFixed(2);
 };
 
 export const getInterestRate = (result) => {
-  const rate = parseNumber(result?.actual_rate) || 
+  // Check multiple fields for rate information, prioritizing initial_rate (saved overridden rate)
+  const rate = parseNumber(result?.initial_rate) ||
+               parseNumber(result?.pay_rate) ||
+               parseNumber(result?.actual_rate) || 
                parseNumber(result?.annual_rate) ||
                parseNumber(result?.rate) ||
                0;
@@ -199,9 +213,10 @@ export const getProductFeePercent = (result) => {
 };
 
 export const getProductFeeAmount = (result) => {
-  return parseNumber(result?.product_fee_amount) ||
+  // Database fields: product_fee_pounds, arrangement_fee_gbp
+  return parseNumber(result?.product_fee_pounds) ||
+         parseNumber(result?.arrangement_fee_gbp) ||
          parseNumber(result?.arrangement_fee) ||
-         parseNumber(result?.fee_amount) ||
          0;
 };
 
@@ -212,7 +227,8 @@ export const getRolledMonths = (result) => {
 };
 
 export const getRolledInterest = (result) => {
-  return parseNumber(result?.rolled_interest_amount) ||
+  // Database field: rolled_months_interest
+  return parseNumber(result?.rolled_months_interest) ||
          parseNumber(result?.rolled_interest) ||
          0;
 };
@@ -339,21 +355,31 @@ export const getBrokerEmail = (brokerSettings) => {
 // CLIENT INFORMATION HELPERS
 // ============================================================================
 
-export const getClientName = (quote, brokerSettings) => {
-  // Priority: quote_borrower_name -> client details from broker settings
-  if (quote.quote_borrower_name) {
-    return quote.quote_borrower_name;
+export const getClientName = (clientDetails, quote) => {
+  // Check clientDetails object first, then quote fields directly
+  const firstName = clientDetails?.clientFirstName || clientDetails?.client_first_name || quote?.client_first_name || '';
+  const lastName = clientDetails?.clientLastName || clientDetails?.client_last_name || quote?.client_last_name || '';
+  return `${firstName} ${lastName}`.trim() || 'N/A';
+};
+
+export const getClientCompany = (clientDetails, quote) => {
+  return clientDetails?.brokerCompanyName || clientDetails?.broker_company_name || quote?.broker_company_name || 'N/A';
+};
+
+export const getClientEmail = (clientDetails, quote) => {
+  return clientDetails?.clientEmail || clientDetails?.client_email || quote?.client_email || 'N/A';
+};
+
+export const getClientTelephone = (clientDetails, quote) => {
+  return clientDetails?.clientContact || clientDetails?.client_contact_number || quote?.client_contact_number || 'N/A';
+};
+
+export const getClientRoute = (clientDetails, quote) => {
+  // Check client type first
+  const clientType = clientDetails?.clientType || quote?.client_type;
+  if (clientType && clientType.toLowerCase() === 'direct') {
+    return 'Direct Client';
   }
-  
-  if (quote.client_first_name && quote.client_last_name) {
-    return `${quote.client_first_name} ${quote.client_last_name}`;
-  }
-  
-  if (brokerSettings?.clientFirstName && brokerSettings?.clientLastName) {
-    return `${brokerSettings.clientFirstName} ${brokerSettings.clientLastName}`;
-  }
-  
-  return brokerSettings?.clientFirstName || 
-         brokerSettings?.client_first_name ||
-         'Client Name';
+  // For brokers, return the broker route
+  return clientDetails?.broker_route || quote?.broker_route || clientDetails?.brokerRoute || 'N/A';
 };

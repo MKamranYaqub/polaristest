@@ -251,9 +251,11 @@ export const getChargeType = (quote) => {
  * Get interest rate percentage
  */
 export const getInterestRate = (quote) => {
-  const rate = parseNumber(quote.actual_rate) || 
-               parseNumber(quote.annual_rate) || 
+  // Check multiple fields for rate information, prioritizing initial_rate (saved overridden rate)
+  const rate = parseNumber(quote.initial_rate) ||
                parseNumber(quote.pay_rate) ||
+               parseNumber(quote.actual_rate) || 
+               parseNumber(quote.annual_rate) || 
                parseNumber(quote.interest_rate) ||
                parseNumber(quote.rate) ||
                0;

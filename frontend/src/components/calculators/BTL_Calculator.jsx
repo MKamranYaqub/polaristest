@@ -84,8 +84,8 @@ export default function BTLcalculator({ initialQuote = null }) {
   // Access levels 1-3 can edit, level 4 (Underwriter) is read-only
   const isReadOnly = !canEditCalculators();
   
-  // Use custom hook for broker settings
-  const brokerSettings = useBrokerSettings(effectiveInitialQuote);
+  // Use custom hook for broker settings - pass 'btl' as calculator type
+  const brokerSettings = useBrokerSettings(effectiveInitialQuote, 'btl');
   
   // Range toggle state (Core or Specialist) - moved before hooks that depend on it
   const [selectedRange, setSelectedRange] = useState('specialist');
@@ -1241,7 +1241,8 @@ export default function BTLcalculator({ initialQuote = null }) {
     brokerSettings.setClientContact('');
     brokerSettings.setBrokerCompanyName('');
     brokerSettings.setBrokerRoute(BROKER_ROUTES.DIRECT_BROKER);
-    brokerSettings.setBrokerCommissionPercent(BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER]);
+    const defaultCommission = BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER];
+    brokerSettings.setBrokerCommissionPercent(typeof defaultCommission === 'object' ? defaultCommission.btl : defaultCommission);
     brokerSettings.setAddFeesToggle(false);
     brokerSettings.setFeeCalculationType('pound');
     brokerSettings.setAdditionalFeeAmount('');
@@ -1306,7 +1307,8 @@ export default function BTLcalculator({ initialQuote = null }) {
     brokerSettings.setClientContact('');
     brokerSettings.setBrokerCompanyName('');
     brokerSettings.setBrokerRoute(BROKER_ROUTES.DIRECT_BROKER);
-    brokerSettings.setBrokerCommissionPercent(BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER]);
+    const defaultCommission = BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER];
+    brokerSettings.setBrokerCommissionPercent(typeof defaultCommission === 'object' ? defaultCommission.btl : defaultCommission);
     brokerSettings.setAddFeesToggle(false);
     brokerSettings.setFeeCalculationType('pound');
     brokerSettings.setAdditionalFeeAmount('');
@@ -1606,6 +1608,7 @@ export default function BTLcalculator({ initialQuote = null }) {
       {/* Client details section */}
       <ClientDetailsSection
         {...brokerSettings}
+        calculatorType="btl"
         expanded={clientDetailsExpanded}
         onToggle={handleClientDetailsToggle}
         isReadOnly={isReadOnly}

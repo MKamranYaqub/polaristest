@@ -202,11 +202,24 @@ const BridgingDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           <Text style={btlDipStyles.summaryValue}>{borrowerName}</Text>
         </View>
 
-        {/* Product Type */}
+        {/* Product Type - Dynamic based on fee_type_selection from Issue DIP Modal */}
         <View style={btlDipStyles.summaryRow}>
           <Text style={btlDipStyles.summaryLabel}>Product Type:</Text>
           <Text style={btlDipStyles.summaryValue}>
-            {isFusion ? `Bridge 'Fusion' ${propertyType}` : `${propertyType} Bridging Finance - ${productName}`}
+            {(() => {
+              const feeType = dipData.fee_type_selection || '';
+              if (feeType === 'Fusion') {
+                return `Bridge Fusion ${propertyType}`;
+              } else if (feeType === 'Fixed Bridge') {
+                return `Bridging Loan ${propertyType} with fixed interest rate (as defined below)`;
+              } else if (feeType === 'Variable Bridge') {
+                return `Bridging Loan ${propertyType} with variable interest rate (as defined below)`;
+              }
+              // Fallback to old detection logic if fee_type_selection is missing
+              return isFusion 
+                ? `Bridge Fusion ${propertyType}` 
+                : `Bridging Loan ${propertyType} with ${isFixedBridge ? 'fixed' : 'variable'} interest rate (as defined below)`;
+            })()}
           </Text>
         </View>
 

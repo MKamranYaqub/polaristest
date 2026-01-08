@@ -114,7 +114,8 @@ export default function IssueQuoteModal({
       errors.selectedFeeRanges = 'Please select at least one fee range';
     }
 
-    if (!productRange) {
+    // Only validate product range for BTL calculator
+    if (calculatorType === 'BTL' && !productRange) {
       errors.productRange = 'Please select a product range';
     }
     
@@ -146,7 +147,8 @@ export default function IssueQuoteModal({
         if (!value || value.length === 0) error = 'Please select at least one fee range';
         break;
       case 'productRange':
-        if (!value) error = 'Please select a product range';
+        // Only validate product range for BTL calculator
+        if (calculatorType === 'BTL' && !value) error = 'Please select a product range';
         break;
     }
     
@@ -256,26 +258,28 @@ export default function IssueQuoteModal({
   return (
     <>
       <ModalShell isOpen={isOpen} onClose={onClose} title={`Issue ${calculatorType} Quote`} footer={footerButtons}>
-      {/* Product Range for Quote */}
-      <div className="slds-form-element margin-bottom-15">
-        <label className="slds-form-element__label">
-          <span className="text-color-error">*</span> Product Range to use
-        </label>
-        <div className="slds-form-element__control">
-          <select
-            className={`slds-select ${fieldErrors.productRange ? 'error-border' : ''}`}
-            value={productRange}
-            onChange={(e) => setProductRange(e.target.value)}
-            onBlur={() => validateField('productRange', productRange)}
-          >
-            <option value="specialist">Specialist</option>
-            <option value="core">Core</option>
-          </select>
+      {/* Product Range for Quote - BTL Only */}
+      {calculatorType === 'BTL' && (
+        <div className="slds-form-element margin-bottom-15">
+          <label className="slds-form-element__label">
+            <span className="text-color-error">*</span> Product Range to use
+          </label>
+          <div className="slds-form-element__control">
+            <select
+              className={`slds-select ${fieldErrors.productRange ? 'error-border' : ''}`}
+              value={productRange}
+              onChange={(e) => setProductRange(e.target.value)}
+              onBlur={() => validateField('productRange', productRange)}
+            >
+              <option value="specialist">Specialist</option>
+              <option value="core">Core</option>
+            </select>
+          </div>
+          {fieldErrors.productRange && (
+            <div className="field-error-message" role="alert">⚠️ {fieldErrors.productRange}</div>
+          )}
         </div>
-        {fieldErrors.productRange && (
-          <div className="field-error-message" role="alert">⚠️ {fieldErrors.productRange}</div>
-        )}
-      </div>
+      )}
       {/* Borrower Name */}
       <div className="slds-form-element margin-bottom-15">
         <label className="slds-form-element__label">

@@ -27,6 +27,7 @@ import '../../../styles/Calculator.scss';
  * @param {number} props.brokerCommissionPercent - Broker commission percentage
  * @param {Function} props.handleBrokerCommissionChange - Commission change handler
  * @param {Function} props.getBrokerRoutesAndDefaults - Function to get broker config from localStorage
+ * @param {string} props.calculatorType - 'btl' or 'bridge' to determine which proc fee to use
  * @param {boolean} props.addFeesToggle - Whether additional fees are enabled
  * @param {Function} props.setAddFeesToggle - Additional fees toggle setter
  * @param {string} props.feeCalculationType - 'pound' or 'percentage'
@@ -55,6 +56,7 @@ export default function ClientDetailsSection({
   brokerCommissionPercent,
   handleBrokerCommissionChange,
   getBrokerRoutesAndDefaults,
+  calculatorType = 'btl',
   addFeesToggle,
   setAddFeesToggle,
   feeCalculationType,
@@ -136,7 +138,14 @@ export default function ClientDetailsSection({
                 value={brokerCommissionPercent} 
                 onChange={handleBrokerCommissionChange}
                 disabled={isReadOnly}
-                title={`Allowed range: ${(getBrokerRoutesAndDefaults().defaults[brokerRoute] - getBrokerRoutesAndDefaults().tolerance).toFixed(1)}% to ${(getBrokerRoutesAndDefaults().defaults[brokerRoute] + getBrokerRoutesAndDefaults().tolerance).toFixed(1)}%`}
+                title={(() => {
+                  const { defaults, tolerance } = getBrokerRoutesAndDefaults();
+                  const routeDefaults = defaults[brokerRoute];
+                  const defaultVal = typeof routeDefaults === 'object' ? routeDefaults[calculatorType] : (routeDefaults ?? 0.9);
+                  const min = (defaultVal - tolerance).toFixed(1);
+                  const max = (defaultVal + tolerance).toFixed(1);
+                  return `Allowed range: ${min}% to ${max}%`;
+                })()}
               />
             </div>
           </div>
@@ -145,7 +154,12 @@ export default function ClientDetailsSection({
           <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
             <span style={{ fontSize: 'var(--token-font-size-sm)', color: 'var(--token-info)', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <span style={{ fontSize: 'var(--token-font-size-md)' }}>ⓘ</span>
-              Adjustable within ±{getBrokerRoutesAndDefaults().tolerance}% of default ({getBrokerRoutesAndDefaults().defaults[brokerRoute]}%)
+              Adjustable within ±{getBrokerRoutesAndDefaults().tolerance}% of default ({(() => {
+                const { defaults } = getBrokerRoutesAndDefaults();
+                const routeDefaults = defaults[brokerRoute];
+                const defaultVal = typeof routeDefaults === 'object' ? routeDefaults[calculatorType] : (routeDefaults ?? 0.9);
+                return defaultVal;
+              })()}%)
             </span>
           </div>
         )}

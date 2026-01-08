@@ -204,7 +204,7 @@ const LoanDetailsSection = ({
             <input 
               className="slds-input" 
               value={topSlicing} 
-              onChange={(e) => onTopSlicingChange(e.target.value)} 
+              onChange={(e) => onTopSlicingChange(formatCurrencyInput(e.target.value))} 
               placeholder="£" 
               disabled={isReadOnly} 
             />

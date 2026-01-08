@@ -109,11 +109,12 @@ export const BROKER_ROUTES = {
 };
 
 // Default broker commission percentages by route (as decimal, e.g. 0.007 = 0.7%)
+// Each route now has separate proc fees for BTL and Bridge calculators
 export const BROKER_COMMISSION_DEFAULTS = {
-  'Direct Broker': 0.7,
-  'Mortgage club': 0.9,
-  'Network': 0.9,
-  'Packager': 0.9,
+  'Direct Broker': { btl: 0.7, bridge: 0.7 },
+  'Mortgage club': { btl: 0.9, bridge: 0.9 },
+  'Network': { btl: 0.9, bridge: 0.9 },
+  'Packager': { btl: 0.9, bridge: 0.9 },
 };
 
 // Broker commission tolerance (±0.2% from default value)

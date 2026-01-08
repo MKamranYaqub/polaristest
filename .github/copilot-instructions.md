@@ -24,9 +24,11 @@ This repository is a full-stack specialist mortgage calculation platform for UK 
 - **Frontend**: React 18.2, Vite 5.0, React Router DOM 6, Carbon Design 1.96, SLDS
 - **State**: React Context API (AuthContext, SupabaseContext, ThemeContext, ToastContext)
 - **Backend**: Express 4.18.2, Supabase 2.39.0, JWT auth, bcrypt
-- **PDFs**: @react-pdf/renderer 4.3.1 (client), PDFKit 0.17.2 (server)
+- **PDFs**: @react-pdf/renderer 4.3.1 (FRONTEND ONLY - all PDF generation is client-side)
 - **Testing**: Vitest, @testing-library/react
 - **Styling**: SCSS with design tokens, darkmode.css overrides
+
+**CRITICAL PDF NOTE**: All PDF generation (Quotes & DIPs) uses FRONTEND React components with @react-pdf/renderer. Backend PDF routes exist but are NOT USED. Always update frontend PDF components in `frontend/src/components/pdf/`.
 
 ---
 
@@ -47,6 +49,18 @@ This repository is a full-stack specialist mortgage calculation platform for UK 
 - **Design tokens**: `frontend/src/styles/slds-tokens.css`, `frontend/src/styles/tokens.scss`
 - **Dark mode**: `frontend/src/styles/darkmode.css` — All dark theme overrides
 - **Figma tokens**: `frontend/figma.config.json` — Token source of truth
+
+### PDF Components (FRONTEND ONLY)
+- **BTL Quote PDF**: `frontend/src/components/pdf/BTLQuotePDF.jsx`
+- **BTL DIP PDF**: `frontend/src/components/pdf/BTLDIPPDF.jsx`
+- **Bridging Quote PDF**: `frontend/src/components/pdf/BridgingQuotePDF.jsx`
+- **Bridging DIP PDF**: `frontend/src/components/pdf/BridgingDIPPDF.jsx`
+- **PDF Helpers**:
+  - BTL: `frontend/src/components/pdf/utils/btlQuoteHelpers.js`, `btlDipHelpers.js`
+  - Bridging: `frontend/src/components/pdf/utils/bridgingQuoteHelpers.js`, `bridgingDipHelpers.js`
+- **PDF Styles**: `frontend/src/components/pdf/shared/` — Shared styles and components
+
+**⚠️ NEVER update backend PDF routes** - they are deprecated and not used.
 
 ---
 
@@ -246,9 +260,9 @@ For questions about:
 - **Calculations**: Review `btlCalculationEngine.js` and `bridgeFusionCalculationEngine.js`
 - **Authentication**: See `contexts/AuthContext.jsx` and `backend/middleware/auth.js`
 - **Database**: Check `database/migrations/` for schema and `backend/routes/` for queries
-- **PDFs**: Examine `components/pdf/` for patterns and `BTLQuoteStyles.js` for styling
+- **PDFs**: All PDF components are in `frontend/src/components/pdf/`. Examine BTL/Bridging PDF components and their helpers. Backend PDF routes are deprecated.
 
 ---
 
-**Last Updated**: December 2024  
+**Last Updated**: January 2026  
 **Methodology**: Generated via bitovi/ai-enablement-prompts instruction-generation chain

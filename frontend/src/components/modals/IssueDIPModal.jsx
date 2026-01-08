@@ -6,7 +6,7 @@ import { useToast } from '../../contexts/ToastContext';
 import ModalShell from './ModalShell';
 import NotificationModal from './NotificationModal';
 import HelpIcon from '../ui/HelpIcon';
-import { FUNDING_LINES_BTL, FUNDING_LINES_BRIDGE, LOCALSTORAGE_CONSTANTS_KEY } from '../../config/constants';
+import { LOCALSTORAGE_CONSTANTS_KEY } from '../../config/constants';
 
 export default function IssueDIPModal({ 
   isOpen, 
@@ -39,8 +39,6 @@ export default function IssueDIPModal({
 
   const [formData, setFormData] = useState({
     commercial_or_main_residence: existingDipData.commercial_or_main_residence || '',
-    // New funding_line field (string) - do not rename
-    funding_line: existingDipData.funding_line || '',
     dip_date: existingDipData.dip_date || defaults.dipDate,
     dip_expiry_date: existingDipData.dip_expiry_date || defaults.dipExpiryDate,
     applicant_type: existingDipData.applicant_type || '',
@@ -92,7 +90,6 @@ export default function IssueDIPModal({
       const defaultDates = getDefaultDates();
       setFormData({
         commercial_or_main_residence: existingDipData.commercial_or_main_residence || '',
-        funding_line: existingDipData.funding_line || '',
         dip_date: existingDipData.dip_date || defaultDates.dipDate,
         dip_expiry_date: existingDipData.dip_expiry_date || defaultDates.dipExpiryDate,
         applicant_type: existingDipData.applicant_type || '',
@@ -121,7 +118,7 @@ export default function IssueDIPModal({
         setSecurityProperties(propertiesWithCountry);
       }
     }
-  }, [existingDipData, existingDipData?.funding_line]);
+  }, [existingDipData]);
   
   // Ensure all properties have country field set (normalize on mount and after changes)
   useEffect(() => {
@@ -269,9 +266,6 @@ export default function IssueDIPModal({
     if (!formData.commercial_or_main_residence) {
       errors.commercial_or_main_residence = 'Please select residence type';
     }
-    if (!formData.funding_line) {
-      errors.funding_line = 'Please select funding line';
-    }
     if (!formData.dip_date) {
       errors.dip_date = 'Please enter DIP date';
     }
@@ -338,9 +332,6 @@ export default function IssueDIPModal({
     switch(fieldName) {
       case 'commercial_or_main_residence':
         if (!value) error = 'Please select residence type';
-        break;
-      case 'funding_line':
-        if (!value) error = 'Please select funding line';
         break;
       case 'dip_date':
         if (!value) error = 'Please enter DIP date';
@@ -486,7 +477,7 @@ export default function IssueDIPModal({
   return (
     <>
       <ModalShell isOpen={isOpen} onClose={onClose} title="Issue DIP (Decision in Principle)" footer={footerButtons}>
-      {/* Product Range (BTL only), Fee Type and Funding Line moved to top per request */}
+      {/* Product Range (BTL only) and Fee Type moved to top per request */}
       {showProductRangeSelection && calculatorType === 'BTL' && (
         <div className="slds-form-element margin-bottom-1">
           <label className="slds-form-element__label">
@@ -543,53 +534,6 @@ export default function IssueDIPModal({
         {fieldErrors.fee_type_selection && (
           <div id="error-fee_type_selection" className="field-error-message" role="alert">
             ⚠️ {fieldErrors.fee_type_selection}
-          </div>
-        )}
-      </div>
-
-      {/* Funding Line (new dropdown) - options come from constants/localStorage overrides */}
-      <div className="slds-form-element margin-bottom-1">
-        <label className="slds-form-element__label">
-          <abbr className="slds-required" title="required">*</abbr> Funding Line
-          <HelpIcon content="The funding line determines the lender's capital allocation for this loan. Select the appropriate funding line based on the loan type and lender requirements." />
-        </label>
-        <div className="slds-form-element__control">
-          <select
-            className={`slds-select ${fieldErrors.funding_line ? 'error-border' : ''}`}
-            name="funding_line"
-            value={formData.funding_line}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            required
-            aria-invalid={fieldErrors.funding_line ? 'true' : 'false'}
-            aria-describedby={fieldErrors.funding_line ? 'error-funding_line' : undefined}
-          >
-            <option value="">Select...</option>
-            {(() => {
-              try {
-                const raw = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
-                if (raw) {
-                  const parsed = JSON.parse(raw);
-                  // Choose the correct funding lines based on calculator type
-                  const isBridge = calculatorType && (calculatorType.toLowerCase() === 'bridge' || calculatorType.toLowerCase() === 'bridging');
-                  const fundingLinesKey = isBridge ? 'fundingLinesBridge' : 'fundingLinesBTL';
-                  if (parsed && parsed[fundingLinesKey] && Array.isArray(parsed[fundingLinesKey]) && parsed[fundingLinesKey].length > 0) {
-                    return parsed[fundingLinesKey].map((f, i) => <option key={i} value={f}>{f}</option>);
-                  }
-                }
-              } catch (e) {
-                // ignore parse errors, fall back to default
-              }
-              // Fall back to appropriate default based on calculator type
-              const isBridge = calculatorType && (calculatorType.toLowerCase() === 'bridge' || calculatorType.toLowerCase() === 'bridging');
-              const defaultLines = isBridge ? FUNDING_LINES_BRIDGE : FUNDING_LINES_BTL;
-              return defaultLines.map((f, i) => <option key={i} value={f}>{f}</option>);
-            })()}
-          </select>
-        </div>
-        {fieldErrors.funding_line && (
-          <div id="error-funding_line" className="field-error-message" role="alert">
-            ⚠️ {fieldErrors.funding_line}
           </div>
         )}
       </div>

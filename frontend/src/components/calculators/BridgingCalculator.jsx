@@ -43,8 +43,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   const isReadOnly = !canEditCalculators();
 
-  // Use custom hook for broker settings
-  const brokerSettings = useBrokerSettings(effectiveInitialQuote);
+  // Use custom hook for broker settings - pass 'bridge' as calculator type
+  const brokerSettings = useBrokerSettings(effectiveInitialQuote, 'bridge');
   
   // Use custom hook for results table visibility
   const { isRowVisible } = useResultsVisibility('bridge');
@@ -372,12 +372,24 @@ export default function BridgingCalculator({ initialQuote = null }) {
       if (quote.gross_loan != null) setGrossLoan(formatCurrencyInput(quote.gross_loan));
       if (quote.first_charge_value != null) setFirstChargeValue(formatCurrencyInput(quote.first_charge_value));
       if (quote.monthly_rent != null) setMonthlyRent(formatCurrencyInput(quote.monthly_rent));
-      if (quote.top_slicing != null) setTopSlicing(String(quote.top_slicing));
+      // Load top_slicing - handle both 0 and non-zero values
+      if (quote.top_slicing !== undefined && quote.top_slicing !== null) {
+        setTopSlicing(formatCurrencyInput(quote.top_slicing));
+      }
       if (quote.use_specific_net_loan != null) setUseSpecificNet(quote.use_specific_net_loan ? 'Yes' : 'No');
       if (quote.specific_net_loan != null) setSpecificNetLoan(formatCurrencyInput(quote.specific_net_loan));
       if (quote.bridging_loan_term != null) setBridgingTerm(String(quote.bridging_loan_term));
-      if (quote.commitment_fee != null) setCommitmentFee(formatCurrencyInput(quote.commitment_fee));
-      if (quote.exit_fee_percent != null) setExitFeePercent(String(quote.exit_fee_percent));
+      // Handle commitment_fee - allow 0 values
+      if (quote.commitment_fee !== undefined && quote.commitment_fee !== null) {
+        const commitmentFeeValue = typeof quote.commitment_fee === 'number' 
+          ? quote.commitment_fee 
+          : parseFloat(String(quote.commitment_fee).replace(/[^0-9.-]/g, '')) || 0;
+        setCommitmentFee(formatCurrencyInput(commitmentFeeValue));
+      }
+      // Handle exit_fee_percent - allow 0 values
+      if (quote.exit_fee_percent !== undefined && quote.exit_fee_percent !== null) {
+        setExitFeePercent(String(quote.exit_fee_percent));
+      }
       if (quote.loan_calculation_requested) setLoanCalculationRequested(quote.loan_calculation_requested);
       if (quote.product_scope) setProductScope(quote.product_scope);
       if (quote.charge_type) setChargeType(quote.charge_type);
@@ -499,38 +511,59 @@ export default function BridgingCalculator({ initialQuote = null }) {
         // Mark that we loaded from a saved quote to prevent rates fetch from overwriting
         loadedFromSavedQuoteRef.current = true;
         
-        // Restore product fee overrides if they were edited
-        // We need to check if saved product_fee_percent differs from what would be calculated
-        const overrides = {};
-        quote.results.forEach(result => {
-          const productName = result.product_name;
-          if (productName && result.product_fee_percent !== null && result.product_fee_percent !== undefined) {
-            overrides[productName] = `${result.product_fee_percent}%`;
+        // Restore overrides from quote data if available (preferred method)
+        if (quote.rates_overrides) {
+          try {
+            const overridesData = typeof quote.rates_overrides === 'string' 
+              ? JSON.parse(quote.rates_overrides) 
+              : quote.rates_overrides;
+            if (overridesData && Object.keys(overridesData).length > 0) {
+              setRatesOverrides(overridesData);
+            }
+          } catch (e) {
+            // Failed to parse rates_overrides, fall back to reconstruction
+            console.warn('Failed to parse rates_overrides:', e);
           }
-        });
-        if (Object.keys(overrides).length > 0) {
-          setProductFeeOverrides(overrides);
         }
-
-        // Restore rate overrides per column (Fusion / Variable Bridge / Fixed Bridge)
-        const rateOverrides = {};
-        quote.results.forEach(result => {
-          const col = result.product_name;
-          const initialRate = Number(result.initial_rate);
-          if (!col || !Number.isFinite(initialRate)) return;
-          if (col === 'Fusion') {
-            const marginAnnual = initialRate - bbrPercent;
-            rateOverrides[col] = `${marginAnnual.toFixed(2)}% + BBR`;
-          } else if (col === 'Variable Bridge') {
-            const marginMonthly = (initialRate - bbrPercent) / 12;
-            rateOverrides[col] = `${marginMonthly.toFixed(2)}% + BBR`;
-          } else if (col === 'Fixed Bridge') {
-            const couponMonthly = initialRate / 12;
-            rateOverrides[col] = `${couponMonthly.toFixed(2)}%`;
+        
+        if (quote.product_fee_overrides) {
+          try {
+            const overridesData = typeof quote.product_fee_overrides === 'string' 
+              ? JSON.parse(quote.product_fee_overrides) 
+              : quote.product_fee_overrides;
+            if (overridesData && Object.keys(overridesData).length > 0) {
+              setProductFeeOverrides(overridesData);
+            }
+          } catch (e) {
+            // Failed to parse product_fee_overrides, fall back to reconstruction
+            console.warn('Failed to parse product_fee_overrides:', e);
           }
-        });
-        if (Object.keys(rateOverrides).length > 0) {
-          setRatesOverrides(rateOverrides);
+        }
+        
+        if (quote.rolled_months_per_column) {
+          try {
+            const overridesData = typeof quote.rolled_months_per_column === 'string' 
+              ? JSON.parse(quote.rolled_months_per_column) 
+              : quote.rolled_months_per_column;
+            if (overridesData && Object.keys(overridesData).length > 0) {
+              setRolledMonthsPerColumn(overridesData);
+            }
+          } catch (e) {
+            console.warn('Failed to parse rolled_months_per_column:', e);
+          }
+        }
+        
+        if (quote.deferred_interest_per_column) {
+          try {
+            const overridesData = typeof quote.deferred_interest_per_column === 'string' 
+              ? JSON.parse(quote.deferred_interest_per_column) 
+              : quote.deferred_interest_per_column;
+            if (overridesData && Object.keys(overridesData).length > 0) {
+              setDeferredInterestPerColumn(overridesData);
+            }
+          } catch (e) {
+            console.warn('Failed to parse deferred_interest_per_column:', e);
+          }
         }
       }
       
@@ -1411,7 +1444,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
     brokerSettings.setClientContact('');
     brokerSettings.setBrokerCompanyName('');
     brokerSettings.setBrokerRoute(BROKER_ROUTES.DIRECT_BROKER);
-    brokerSettings.setBrokerCommissionPercent(BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER]);
+    const defaultCommission = BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER];
+    brokerSettings.setBrokerCommissionPercent(typeof defaultCommission === 'object' ? defaultCommission.bridge : defaultCommission);
     brokerSettings.setAddFeesToggle(false);
     brokerSettings.setFeeCalculationType('pound');
     brokerSettings.setAdditionalFeeAmount('');
@@ -1475,7 +1509,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
     brokerSettings.setClientContact('');
     brokerSettings.setBrokerCompanyName('');
     brokerSettings.setBrokerRoute(BROKER_ROUTES.DIRECT_BROKER);
-    brokerSettings.setBrokerCommissionPercent(BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER]);
+    const defaultCommission = BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER];
+    brokerSettings.setBrokerCommissionPercent(typeof defaultCommission === 'object' ? defaultCommission.bridge : defaultCommission);
     brokerSettings.setAddFeesToggle(false);
     brokerSettings.setFeeCalculationType('pound');
     brokerSettings.setAdditionalFeeAmount('');
@@ -1563,7 +1598,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
               topSlicing,
               useSpecificNet,
               specificNetLoan,
-              term: bridgingTerm,
+              bridgingTerm,
               commitmentFee,
               exitFeePercent,
               loanCalculationRequested,
@@ -1643,6 +1678,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
       {/* Client details section */}
       <ClientDetailsSection
         {...brokerSettings}
+        calculatorType="bridge"
         expanded={clientDetailsExpanded}
         onToggle={handleClientDetailsToggle}
         isReadOnly={isReadOnly}

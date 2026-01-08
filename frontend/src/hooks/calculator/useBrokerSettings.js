@@ -11,18 +11,20 @@ import {
  * Handles broker routes, commission percentages, and additional fees
  * 
  * @param {Object} initialQuote - Optional initial quote data to populate fields
+ * @param {String} calculatorType - 'btl' or 'bridge' to determine which proc fee to use
  * @returns {Object} Broker settings state and handlers
  */
-export default function useBrokerSettings(initialQuote = null) {
+export default function useBrokerSettings(initialQuote = null, calculatorType = 'btl') {
   const [clientType, setClientType] = useState('Direct');
   const [clientFirstName, setClientFirstName] = useState('');
   const [clientLastName, setClientLastName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [clientContact, setClientContact] = useState('');
   const [brokerRoute, setBrokerRoute] = useState(BROKER_ROUTES.DIRECT_BROKER);
-  const [brokerCommissionPercent, setBrokerCommissionPercent] = useState(
-    BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER]
-  );
+  const [brokerCommissionPercent, setBrokerCommissionPercent] = useState(() => {
+    const defaults = BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER];
+    return typeof defaults === 'object' ? defaults[calculatorType] : defaults;
+  });
   const [brokerCompanyName, setBrokerCompanyName] = useState('');
   
   // Additional fees state
@@ -53,9 +55,11 @@ export default function useBrokerSettings(initialQuote = null) {
   useEffect(() => {
     if (clientType === 'Broker') {
       const { defaults } = getBrokerRoutesAndDefaults();
-      setBrokerCommissionPercent(defaults[brokerRoute] ?? 0.9);
+      const routeDefaults = defaults[brokerRoute];
+      const procFee = typeof routeDefaults === 'object' ? routeDefaults[calculatorType] : (routeDefaults ?? 0.9);
+      setBrokerCommissionPercent(procFee);
     }
-  }, [clientType, brokerRoute]);
+  }, [clientType, brokerRoute, calculatorType]);
 
   // Load initial data from quote
   useEffect(() => {
@@ -81,7 +85,8 @@ export default function useBrokerSettings(initialQuote = null) {
   // Validate broker commission within tolerance range
   const validateBrokerCommission = (value) => {
     const { defaults, tolerance } = getBrokerRoutesAndDefaults();
-    const defaultValue = defaults[brokerRoute] ?? 0.9;
+    const routeDefaults = defaults[brokerRoute];
+    const defaultValue = typeof routeDefaults === 'object' ? routeDefaults[calculatorType] : (routeDefaults ?? 0.9);
     const minValue = defaultValue - tolerance;
     const maxValue = defaultValue + tolerance;
     const numValue = Number(value);

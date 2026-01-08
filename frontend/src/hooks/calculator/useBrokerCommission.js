@@ -11,13 +11,14 @@ import {
  * Handles broker route selection, commission percentage, and tolerance validation
  * 
  * @param {string} clientType - 'Direct' or 'Broker'
+ * @param {string} calculatorType - 'btl' or 'bridge'
  * @returns {Object} Broker commission state and helper functions
  */
-export function useBrokerCommission(clientType) {
+export function useBrokerCommission(clientType, calculatorType = 'btl') {
   const [brokerRoute, setBrokerRoute] = useState(BROKER_ROUTES.DIRECT_BROKER);
-  const [brokerCommissionPercent, setBrokerCommissionPercent] = useState(
-    BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER]
-  );
+  const defaultCommission = BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER];
+  const initialCommission = typeof defaultCommission === 'object' ? defaultCommission[calculatorType] : defaultCommission;
+  const [brokerCommissionPercent, setBrokerCommissionPercent] = useState(initialCommission);
 
   const getBrokerRoutesAndDefaults = () => {
     try {
@@ -41,9 +42,11 @@ export function useBrokerCommission(clientType) {
   useEffect(() => {
     if (clientType === 'Broker') {
       const { defaults } = getBrokerRoutesAndDefaults();
-      setBrokerCommissionPercent(defaults[brokerRoute] ?? 0.9);
+      const routeDefaults = defaults[brokerRoute];
+      const procFee = typeof routeDefaults === 'object' ? routeDefaults[calculatorType] : (routeDefaults ?? 0.9);
+      setBrokerCommissionPercent(procFee);
     }
-  }, [clientType, brokerRoute]);
+  }, [clientType, brokerRoute, calculatorType]);
 
   const handleBrokerCommissionChange = (e) => {
     const val = parseFloat(e.target.value);
@@ -53,7 +56,8 @@ export function useBrokerCommission(clientType) {
     }
 
     const { defaults, tolerance } = getBrokerRoutesAndDefaults();
-    const defaultVal = defaults[brokerRoute] ?? 0.9;
+    const routeDefaults = defaults[brokerRoute];
+    const defaultVal = typeof routeDefaults === 'object' ? routeDefaults[calculatorType] : (routeDefaults ?? 0.9);
     const min = defaultVal - tolerance;
     const max = defaultVal + tolerance;
 
@@ -69,7 +73,8 @@ export function useBrokerCommission(clientType) {
     if (Number.isNaN(val)) return false;
 
     const { defaults, tolerance } = getBrokerRoutesAndDefaults();
-    const defaultVal = defaults[brokerRoute] ?? 0.9;
+    const routeDefaults = defaults[brokerRoute];
+    const defaultVal = typeof routeDefaults === 'object' ? routeDefaults[calculatorType] : (routeDefaults ?? 0.9);
     const min = defaultVal - tolerance;
     const max = defaultVal + tolerance;
 

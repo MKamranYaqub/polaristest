@@ -50,12 +50,24 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
   console.log('BridgingQuotePDF - Detected product types:', productTypes);
   
   // Check if specific product types are selected from Issue Quote modal
-  const selectedProductTypes = quote.quote_selected_product_types || quote.selected_product_types || [];
+  // The database field is quote_selected_fee_ranges (stores selected products like ["Fusion", "Fixed Bridge"])
+  const selectedProductTypes = quote.quote_selected_fee_ranges || [];
+  console.log('BridgingQuotePDF - Selected product types:', selectedProductTypes);
   
   // Use selected product types if provided, otherwise use all available
-  let displayProductTypes = selectedProductTypes.length > 0 
-    ? selectedProductTypes.filter(type => productTypes.includes(type))
-    : productTypes;
+  let displayProductTypes;
+  if (selectedProductTypes.length > 0) {
+    // Filter selected types to only those that exist in results
+    const filteredTypes = selectedProductTypes.filter(type => productTypes.includes(type));
+    // If all available products are selected (or selected types match available), show all
+    if (filteredTypes.length === productTypes.length || selectedProductTypes.length >= 3) {
+      displayProductTypes = productTypes;
+    } else {
+      displayProductTypes = filteredTypes;
+    }
+  } else {
+    displayProductTypes = productTypes;
+  }
   
   // If no product types detected but we have results, show them anyway with generic labels
   let useDirectProductNames = false;
@@ -146,6 +158,10 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
             <Text style={btlQuoteStyles.summaryLabel}>Property Value</Text>
             <Text style={btlQuoteStyles.summaryValue}>{propertyValue}</Text>
           </View>
+          <View style={btlQuoteStyles.summaryColumn}>
+            <Text style={btlQuoteStyles.summaryLabel}>Monthly Rent</Text>
+            <Text style={btlQuoteStyles.summaryValue}>{h.getMonthlyRent(quote)}</Text>
+          </View>
         </View>
 
         <View style={btlQuoteStyles.summaryGrid}>
@@ -161,6 +177,12 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
             <Text style={btlQuoteStyles.summaryLabel}>Charge Type</Text>
             <Text style={btlQuoteStyles.summaryValue}>{chargeType}</Text>
           </View>
+          {chargeType.includes('2nd') && (
+            <View style={btlQuoteStyles.summaryColumn}>
+              <Text style={btlQuoteStyles.summaryLabel}>First Charge Value</Text>
+              <Text style={btlQuoteStyles.summaryValue}>{h.formatCurrency(quote.first_charge_value || 0)}</Text>
+            </View>
+          )}
           <View style={btlQuoteStyles.summaryColumn}>
             <Text style={btlQuoteStyles.summaryLabel}>Version</Text>
             <Text style={btlQuoteStyles.summaryValue}>{version}</Text>
@@ -342,32 +364,6 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
             })}
           </View>
 
-          {/* Valuation Fee */}
-          <View style={btlQuoteStyles.tableRowAlt}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Valuation Fee</Text>
-            {displayProductTypes.map((productType, index) => {
-              const result = getResultForColumn(productType);
-              return (
-                <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {result ? h.getValuationFee(result) : 'TBC'}
-                </Text>
-              );
-            })}
-          </View>
-
-          {/* Legal Fees */}
-          <View style={btlQuoteStyles.tableRow}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Legal Fees</Text>
-            {displayProductTypes.map((productType, index) => {
-              const result = getResultForColumn(productType);
-              return (
-                <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {result ? h.getLegalFees(result) : 'TBC'}
-                </Text>
-              );
-            })}
-          </View>
-
           {/* Exit Fee */}
           <View style={btlQuoteStyles.tableRowAlt}>
             <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Exit Fee</Text>
@@ -418,22 +414,8 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
             })}
           </View>
 
-          {/* Retention */}
-          <View style={btlQuoteStyles.tableRow}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Retention Facility</Text>
-            {displayProductTypes.map((productType, index) => {
-              const result = getResultForColumn(productType);
-              const retention = result ? h.getRetention(result) : 0;
-              return (
-                <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {retention > 0 ? h.formatCurrency(retention) : 'None'}
-                </Text>
-              );
-            })}
-          </View>
-
           {/* Title Insurance */}
-          <View style={btlQuoteStyles.tableRowAlt}>
+          <View style={btlQuoteStyles.tableRow}>
             <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Title Insurance</Text>
             {displayProductTypes.map((productType, index) => {
               const result = getResultForColumn(productType);
@@ -479,40 +461,35 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
                   <Text style={btlQuoteStyles.termsLabel}>Fee payments</Text>
                   <Text style={btlQuoteStyles.termsValue}>Fees payable when DIP signed.</Text>
                 </View>
-                <View style={btlQuoteStyles.termsRow}>
-                  <Text style={btlQuoteStyles.termsLabel}>Total loan details</Text>
-                  <Text style={btlQuoteStyles.termsValue}>
-                    {h.getBridgingTerm(quote).replace(' months', '-year total loan term, made up of an initial fixed rate of 2 years, then followed by a Revert Rate for remaining ')}
-                    {parseInt(h.getBridgingTerm(quote)) - 24} years.
-                  </Text>
-                </View>
               </View>
             </View>
           </View>
 
-          {/* Right Column: Client Details */}
+          {/* Right Column: Broker/Client Details */}
           <View style={{ flex: 1 }}>
             <View style={btlQuoteStyles.brokerDetailsBox}>
-              <Text style={btlQuoteStyles.brokerDetailsTitle}>Client details</Text>
+              <Text style={btlQuoteStyles.brokerDetailsTitle}>
+                {((clientDetails?.clientType || quote?.client_type) === 'Direct') ? 'Client details' : 'Broker details'}
+              </Text>
               <View style={btlQuoteStyles.brokerDetailsRow}>
                 <Text style={btlQuoteStyles.brokerDetailsLabel}>Name</Text>
-                <Text style={btlQuoteStyles.brokerDetailsValue}>{clientDetails.clientName || 'N/A'}</Text>
+                <Text style={btlQuoteStyles.brokerDetailsValue}>{h.getClientName(clientDetails, quote)}</Text>
               </View>
               <View style={btlQuoteStyles.brokerDetailsRow}>
                 <Text style={btlQuoteStyles.brokerDetailsLabel}>Company</Text>
-                <Text style={btlQuoteStyles.brokerDetailsValue}>{clientDetails.clientCompany || 'N/A'}</Text>
+                <Text style={btlQuoteStyles.brokerDetailsValue}>{h.getClientCompany(clientDetails, quote)}</Text>
               </View>
               <View style={btlQuoteStyles.brokerDetailsRow}>
                 <Text style={btlQuoteStyles.brokerDetailsLabel}>Email</Text>
-                <Text style={btlQuoteStyles.brokerDetailsValue}>{clientDetails.clientEmail || 'N/A'}</Text>
+                <Text style={btlQuoteStyles.brokerDetailsValue}>{h.getClientEmail(clientDetails, quote)}</Text>
               </View>
               <View style={btlQuoteStyles.brokerDetailsRow}>
                 <Text style={btlQuoteStyles.brokerDetailsLabel}>Telephone</Text>
-                <Text style={btlQuoteStyles.brokerDetailsValue}>{clientDetails.clientTelephone || 'N/A'}</Text>
+                <Text style={btlQuoteStyles.brokerDetailsValue}>{h.getClientTelephone(clientDetails, quote)}</Text>
               </View>
               <View style={btlQuoteStyles.brokerDetailsRow}>
                 <Text style={btlQuoteStyles.brokerDetailsLabel}>Route</Text>
-                <Text style={btlQuoteStyles.brokerDetailsValue}>{clientDetails.clientRoute || 'Direct Client'}</Text>
+                <Text style={btlQuoteStyles.brokerDetailsValue}>{h.getClientRoute(clientDetails, quote)}</Text>
               </View>
             </View>
           </View>

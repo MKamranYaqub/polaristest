@@ -303,8 +303,26 @@ export default function SaveQuoteButton({
         quoteData.exit_fee_percent = calculationData.exitFeePercent ? Number(calculationData.exitFeePercent) : null;
         quoteData.charge_type = calculationData.chargeType || null;
         quoteData.sub_product = calculationData.subProduct || null;
+        quoteData.loan_calculation_requested = calculationData.loanCalculationRequested || null;
+        quoteData.add_fees_toggle = calculationData.addFeesToggle || false;
+        quoteData.fee_calculation_type = calculationData.feeCalculationType || null;
+        quoteData.additional_fee_amount = parseNumeric(calculationData.additionalFeeAmount);
         // Serialize criteria answers as JSON string
         quoteData.criteria_answers = calculationData.answers ? JSON.stringify(calculationData.answers) : null;
+        
+        // Save overrides as JSON strings
+        quoteData.rates_overrides = calculationData.ratesOverrides && Object.keys(calculationData.ratesOverrides).length > 0 
+          ? JSON.stringify(calculationData.ratesOverrides) 
+          : null;
+        quoteData.product_fee_overrides = calculationData.productFeeOverrides && Object.keys(calculationData.productFeeOverrides).length > 0 
+          ? JSON.stringify(calculationData.productFeeOverrides) 
+          : null;
+        quoteData.rolled_months_per_column = calculationData.rolledMonthsPerColumn && Object.keys(calculationData.rolledMonthsPerColumn).length > 0 
+          ? JSON.stringify(calculationData.rolledMonthsPerColumn) 
+          : null;
+        quoteData.deferred_interest_per_column = calculationData.deferredInterestPerColumn && Object.keys(calculationData.deferredInterestPerColumn).length > 0 
+          ? JSON.stringify(calculationData.deferredInterestPerColumn) 
+          : null;
         
         // Prepare all rate results for saving to bridge_quote_results table
         if (calculationData.results && Array.isArray(calculationData.results)) {
