@@ -20,10 +20,23 @@ This repository is a full-stack specialist mortgage calculation platform for UK 
   - Role-based access control (5 levels)
   - Dark mode support throughout
 
+### Deployment Architecture
+- **Frontend Hosting**: Vercel (https://polaristest-theta.vercel.app)
+- **Backend Hosting**: Render (separate from frontend)
+- **Database**: Supabase PostgreSQL (https://iwwgwwaeunyzqtkfhkid.supabase.co)
+- **Email Service**: Gmail SMTP (for password resets & support tickets)
+- **API Communication**: Frontend (Vercel) → Backend API (Render) → Supabase
+
+### Environment Variables Strategy
+- **Frontend (Vercel)**: Only `VITE_` prefixed vars (VITE_API_URL, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
+- **Backend (Render)**: All sensitive secrets (JWT_SECRET, SUPABASE_SERVICE_ROLE_KEY, SMTP credentials)
+- **NEVER expose**: Backend secrets to frontend - they run on separate platforms
+
 ### Tech Stack
 - **Frontend**: React 18.2, Vite 5.0, React Router DOM 6, Carbon Design 1.96, SLDS
 - **State**: React Context API (AuthContext, SupabaseContext, ThemeContext, ToastContext)
 - **Backend**: Express 4.18.2, Supabase 2.39.0, JWT auth, bcrypt
+- **Email**: Nodemailer with Gmail SMTP (password resets + support tickets)
 - **PDFs**: @react-pdf/renderer 4.3.1 (FRONTEND ONLY - all PDF generation is client-side)
 - **Testing**: Vitest, @testing-library/react
 - **Styling**: SCSS with design tokens, darkmode.css overrides
