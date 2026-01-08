@@ -28,6 +28,9 @@ validateEnvironment();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy - Required for Render/Vercel/etc to get real client IP
+app.set('trust proxy', 1);
+
 // Middleware
 const allowedOrigins = [
   'http://localhost:3000', // Local dev

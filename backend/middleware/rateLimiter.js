@@ -107,11 +107,9 @@ export const reportingLimiter = rateLimit({
     retryAfter: '1 hour'
   },
   standardHeaders: true,
-  legacyHeaders: false,
-  // Use API key name for rate limiting instead of IP if available
-  keyGenerator: (req) => {
-    return req.apiKey?.name || req.ip;
-  }
+  legacyHeaders: false
+  // Note: Removed custom keyGenerator to use default (handles IPv6 properly)
+  // Rate limiting by IP for reporting API
 });
 
 // Export default general limiter
