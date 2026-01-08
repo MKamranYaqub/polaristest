@@ -2381,8 +2381,8 @@ export default function BTLcalculator({ initialQuote = null }) {
       </div>
       </RangeToggle>
 
-      {/* UW Requirements Checklist */}
-      <div style={{ marginTop: '1rem' }}>
+      {/* UW Requirements Checklist - HIDDEN */}
+      {/* <div style={{ marginTop: '1rem' }}>
         <CollapsibleSection
           title="UW Requirements Checklist"
           expanded={uwChecklistExpanded}
@@ -2426,7 +2426,7 @@ export default function BTLcalculator({ initialQuote = null }) {
           allowEdit={true}
         />
       </CollapsibleSection>
-      </div>
+      </div> */}
 
       {/* Issue DIP Modal */}
       <IssueDIPModal

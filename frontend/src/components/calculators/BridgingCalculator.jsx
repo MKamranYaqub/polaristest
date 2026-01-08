@@ -2274,8 +2274,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
       {/* Placeholders are injected into the results table as rows (see above) */}
 
-      {/* UW Requirements Checklist */}
-      <div style={{ marginTop: '1rem' }}>
+      {/* UW Requirements Checklist - HIDDEN */}
+      {/* <div style={{ marginTop: '1rem' }}>
         <CollapsibleSection
           title="UW Requirements Checklist"
           expanded={uwChecklistExpanded}
@@ -2307,7 +2307,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
           allowEdit={true}
         />
       </CollapsibleSection>
-      </div>
+      </div> */}
 
       {/* Issue DIP Modal */}
       <IssueDIPModal
