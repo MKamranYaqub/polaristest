@@ -16,6 +16,8 @@ import {
 import { AppError, ErrorTypes, asyncHandler } from '../middleware/errorHandler.js';
 import { authenticateToken, requireAccessLevel } from '../middleware/auth.js';
 import { authLimiter } from '../middleware/rateLimiter.js';
+import { sendPasswordResetEmail } from '../utils/emailService.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -419,17 +421,29 @@ router.post('/request-password-reset', authLimiter, validate(resetPasswordReques
     new_values: { email: user.email }
   });
 
-  // In a real application, you would send an email here with the reset link
-  // For now, we'll return the token in the response (for development/testing)
-  // IMPORTANT: Remove this in production and use email service instead
+  // Generate reset link
   const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+
+  // Send password reset email
+  const emailResult = await sendPasswordResetEmail({
+    email: user.email,
+    name: user.name,
+    resetToken: resetToken,
+    resetLink: resetLink
+  });
+
+  if (!emailResult.success) {
+    logger.error('Failed to send password reset email:', emailResult.error);
+    // In production, you might want to throw an error here
+    // For now, we'll continue and return the link in development mode
+  }
 
   res.json({
     success: true,
     message: successMessage,
-    // DEVELOPMENT ONLY - Remove in production
+    // DEVELOPMENT ONLY - Return link in response for testing
     resetLink: process.env.NODE_ENV === 'development' ? resetLink : undefined,
-    resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined,
+    emailSent: emailResult.success,
   });
 }));
 

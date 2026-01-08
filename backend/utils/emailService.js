@@ -213,6 +213,111 @@ This is an automated confirmation. Our team will contact you at ${email} soon.
 }
 
 /**
+ * Send password reset email
+ * @param {Object} options - Reset email options
+ * @param {string} options.email - User's email address
+ * @param {string} options.name - User's name
+ * @param {string} options.resetToken - Password reset token
+ * @param {string} options.resetLink - Full reset link URL
+ */
+export async function sendPasswordResetEmail({ email, name, resetToken, resetLink }) {
+  const smtp = createTransporter();
+  
+  if (!smtp) {
+    logger.warn('Email not configured. Skipping password reset email.');
+    return { success: false, message: 'Email not configured' };
+  }
+
+  const mailOptions = {
+    from: `"Polaris Security" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: '🔐 Password Reset Request - Polaris',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">🔐 Password Reset</h1>
+        </div>
+        
+        <div style="background-color: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none;">
+          <p style="font-size: 16px; color: #333; margin-bottom: 20px;">Hi ${name || 'there'},</p>
+          
+          <p style="font-size: 14px; color: #555; line-height: 1.6;">
+            We received a request to reset your password for your Polaris account. Click the button below to create a new password:
+          </p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetLink}" 
+               style="background-color: #667eea; color: white; padding: 14px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold; display: inline-block;">
+              Reset Password
+            </a>
+          </div>
+          
+          <p style="font-size: 14px; color: #555; line-height: 1.6;">
+            Or copy and paste this link into your browser:
+          </p>
+          
+          <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 15px; margin: 15px 0; word-break: break-all;">
+            <a href="${resetLink}" style="color: #667eea; text-decoration: none;">${resetLink}</a>
+          </div>
+          
+          <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="margin: 0; font-size: 14px; color: #856404;">
+              <strong>⚠️ Security Notice:</strong><br>
+              This link will expire in <strong>1 hour</strong> for security reasons.
+            </p>
+          </div>
+          
+          <p style="font-size: 14px; color: #555; line-height: 1.6;">
+            If you didn't request a password reset, please ignore this email or contact support if you have concerns about your account security.
+          </p>
+        </div>
+        
+        <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; margin-top: -1px;">
+          <p style="margin: 5px 0; color: #666; font-size: 12px;">
+            This is an automated security email from Polaris.
+          </p>
+          <p style="margin: 5px 0; color: #666; font-size: 12px;">
+            © ${new Date().getFullYear()} Market Financial Services Ltd. All rights reserved.
+          </p>
+        </div>
+      </div>
+    `,
+    text: `
+Password Reset Request - Polaris
+
+Hi ${name || 'there'},
+
+We received a request to reset your password for your Polaris account.
+
+To reset your password, click on the link below or copy and paste it into your browser:
+
+${resetLink}
+
+⚠️ SECURITY NOTICE:
+This link will expire in 1 hour for security reasons.
+
+If you didn't request a password reset, please ignore this email or contact support if you have concerns about your account security.
+
+---
+This is an automated security email from Polaris.
+© ${new Date().getFullYear()} Market Financial Services Ltd.
+    `,
+  };
+
+  try {
+    const info = await smtp.sendMail(mailOptions);
+    logger.info('Password reset email sent:', {
+      messageId: info.messageId,
+      to: email
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    logger.error('Failed to send password reset email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Send test email to verify configuration
  */
 export async function sendTestEmail(recipientEmail) {
@@ -240,5 +345,6 @@ export async function sendTestEmail(recipientEmail) {
 
 export default {
   sendSupportRequestNotification,
+  sendPasswordResetEmail,
   sendTestEmail
 };
