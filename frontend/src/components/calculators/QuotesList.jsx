@@ -244,8 +244,8 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
       return false;
     }
 
-    // Borrower Type filter
-    if (filterBorrowerType && q.borrower_type !== filterBorrowerType) {
+    // Applicant Type filter
+    if (filterBorrowerType && q.applicant_type !== filterBorrowerType) {
       return false;
     }
 
@@ -380,7 +380,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
               </div>
 
               <div className="filter-field">
-                <label>TYPE</label>
+                <label>Type</label>
                 <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
                   <option value="">All Types</option>
                   <option value="BTL">BTL</option>
@@ -389,11 +389,11 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
               </div>
 
               <div className="filter-field">
-                <label>BORROWER TYPE</label>
+                <label>Applicant Type</label>
                 <select value={filterBorrowerType} onChange={(e) => setFilterBorrowerType(e.target.value)}>
                   <option value="">All</option>
                   <option value="Personal">Personal</option>
-                  <option value="Company">Company</option>
+                  <option value="Corporate">Corporate</option>
                 </select>
               </div>
 
@@ -487,49 +487,49 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                   onClick={() => handleSort('reference_number')}
                   title="Sort by Reference Number"
                 >
-                  REF #
+                  Ref #
                 </th>
                 <th 
                   className={`sortable ${sortField === 'name' ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}
                   onClick={() => handleSort('name')}
                   title="Sort by Quote Name"
                 >
-                  QUOTE NAME
+                  Quote Name
                 </th>
                 <th 
                   className={`sortable ${sortField === 'calculator_type' ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}
                   onClick={() => handleSort('calculator_type')}
                   title="Sort by Type"
                 >
-                  TYPE
+                  Type
                 </th>
-                <th>STATUS</th>
+                <th>Status</th>
                 <th 
-                  className={`sortable ${sortField === 'borrower_type' ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}
-                  onClick={() => handleSort('borrower_type')}
-                  title="Sort by Borrower Type"
+                  className={`sortable ${sortField === 'applicant_type' ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}
+                  onClick={() => handleSort('applicant_type')}
+                  title="Sort by Applicant Type"
                 >
-                  BORROWER TYPE
+                  Applicant Type
                 </th>
-                <th>BORROWER/COMPANY</th>
-                <th>CREATED BY</th>
+                <th>Applicant/Company</th>
+                <th>Created By</th>
                 <th 
                   className={`sortable ${sortField === 'created_at' ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}
                   onClick={() => handleSort('created_at')}
                   title="Sort by Created Date"
                 >
-                  CREATED
+                  Created
                 </th>
-                <th>UPDATED BY</th>
+                <th>Updated By</th>
                 <th 
                   className={`sortable ${sortField === 'updated_at' ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}
                   onClick={() => handleSort('updated_at')}
                   title="Sort by Updated Date"
                 >
-                  UPDATED
+                  Updated
                 </th>
-                <th>DIP ISSUED</th>
-                <th className="sticky-action">ACTIONS</th>
+                <th>DIP Issued</th>
+                <th className="sticky-action">Actions</th>
               </tr>
             </thead>
           <tbody>
@@ -583,8 +583,8 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                     {statusText}
                   </span>
                 </td>
-                <td>{q.borrower_type || '—'}</td>
-                <td>{q.borrower_type === 'Company' ? q.company_name : q.borrower_name || '—'}</td>
+                <td>{q.applicant_type || '—'}</td>
+                <td>{q.applicant_type === 'Corporate' ? q.company_name : q.borrower_name || '—'}</td>
                 <td>
                   <span title={q.created_by_id ? `User ID: ${q.created_by_id}` : 'No user info'}>
                     {q.created_by || '—'}

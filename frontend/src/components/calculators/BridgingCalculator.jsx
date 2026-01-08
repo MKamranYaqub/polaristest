@@ -311,7 +311,19 @@ export default function BridgingCalculator({ initialQuote = null }) {
     }
 
     Object.keys(map).forEach(k => {
-      map[k].options.sort((a, b) => (a.option_label || '').localeCompare(b.option_label || ''));
+      map[k].options.sort((a, b) => {
+        const labelA = (a.option_label || '').toString().trim().toLowerCase();
+        const labelB = (b.option_label || '').toString().trim().toLowerCase();
+        
+        // Keep "please select" or "select..." at the top
+        const isPlaceholderA = labelA === 'please select' || labelA === 'select...' || labelA === 'select';
+        const isPlaceholderB = labelB === 'please select' || labelB === 'select...' || labelB === 'select';
+        
+        if (isPlaceholderA && !isPlaceholderB) return -1;
+        if (!isPlaceholderA && isPlaceholderB) return 1;
+        
+        return (a.option_label || '').localeCompare(b.option_label || '');
+      });
     });
 
     setQuestions(map);
@@ -348,11 +360,13 @@ export default function BridgingCalculator({ initialQuote = null }) {
       // Store quote ID and DIP data for Issue DIP modal
       if (quote.id) setCurrentQuoteId(quote.id);
       if (quote.commercial_or_main_residence || quote.dip_date || quote.dip_expiry_date) {
+        // Map 'Company' to 'Corporate' for backward compatibility
+        const applicantType = quote.applicant_type === 'Company' ? 'Corporate' : quote.applicant_type;
         setDipData({
           commercial_or_main_residence: quote.commercial_or_main_residence,
           dip_date: quote.dip_date,
           dip_expiry_date: quote.dip_expiry_date,
-          applicant_type: quote.applicant_type,
+          applicant_type: applicantType,
           guarantor_name: quote.guarantor_name,
           company_number: quote.company_number,
           title_number: quote.title_number,
@@ -1270,11 +1284,13 @@ export default function BridgingCalculator({ initialQuote = null }) {
           const quote = response.quote;
           // Update dipData with latest values from database
           if (quote.commercial_or_main_residence || quote.dip_date || quote.dip_expiry_date) {
+            // Map 'Company' to 'Corporate' for backward compatibility
+            const applicantType = quote.applicant_type === 'Company' ? 'Corporate' : quote.applicant_type;
             setDipData({
               commercial_or_main_residence: quote.commercial_or_main_residence,
               dip_date: quote.dip_date,
               dip_expiry_date: quote.dip_expiry_date,
-              applicant_type: quote.applicant_type,
+              applicant_type: applicantType,
               guarantor_name: quote.guarantor_name,
               company_number: quote.company_number,
               title_number: quote.title_number,
@@ -2270,7 +2286,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
           quoteData={{
             property_type: answers['Property type'] || '',
             loan_purpose: answers['Loan purpose'] || '',
-            borrower_type: answers['Borrower type'] || '',
+            applicant_type: answers['Borrower type'] || '',
             borrower_name: currentQuoteData?.borrower_name || '',
             quote_borrower_name: currentQuoteData?.quote_borrower_name || ''
           }}

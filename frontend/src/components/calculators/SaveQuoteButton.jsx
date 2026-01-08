@@ -37,7 +37,9 @@ export default function SaveQuoteButton({
     if (existingQuote) {
       setName(existingQuote.name || '');
       // Read borrower info from the new flat structure
-      setBorrowerType(existingQuote.borrower_type || 'Personal');
+      // Map 'Company' to 'Corporate' for backward compatibility
+      const applicantType = existingQuote.applicant_type || 'Personal';
+      setBorrowerType(applicantType === 'Company' ? 'Corporate' : applicantType);
       setBorrowerName(existingQuote.borrower_name || '');
       setCompanyName(existingQuote.company_name || '');
       setNotes(existingQuote.notes || '');
@@ -146,9 +148,9 @@ export default function SaveQuoteButton({
         broker_company_name: calculationData.brokerCompanyName || null,
         broker_route: calculationData.brokerRoute || null, // Direct Broker | Mortgage club | Network | Packager
         broker_commission_percent: calculationData.brokerCommissionPercent != null ? Number(calculationData.brokerCommissionPercent) : null,
-        borrower_type: borrowerType,
+        applicant_type: borrowerType,
         borrower_name: borrowerType === 'Personal' ? borrowerName : null,
-        company_name: borrowerType === 'Company' ? companyName : null,
+        company_name: borrowerType === 'Corporate' ? companyName : null,
         notes: notes || null,
         created_by: user?.name || 'Unknown User', // Get name from authenticated user
         created_by_id: user?.id || null, // Store user ID for tracking
@@ -519,11 +521,11 @@ export default function SaveQuoteButton({
           </div>
 
           <div className="slds-form-element margin-top-1">
-            <label className="slds-form-element__label">Borrower Type</label>
+            <label className="slds-form-element__label">Applicant Type</label>
             <div className="slds-form-element__control">
               <select className="slds-select" value={borrowerType} onChange={(e) => setBorrowerType(e.target.value)}>
                 <option value="Personal">Personal</option>
-                <option value="Company">Company</option>
+                <option value="Corporate">Corporate</option>
               </select>
             </div>
           </div>
@@ -535,7 +537,7 @@ export default function SaveQuoteButton({
             </div>
           )}
 
-          {borrowerType === 'Company' && (
+          {borrowerType === 'Corporate' && (
             <div className="slds-form-element">
               <label className="slds-form-element__label">Company Name</label>
               <div className="slds-form-element__control"><input className="slds-input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} /></div>
@@ -625,7 +627,7 @@ SaveQuoteButton.propTypes = {
     calculator_type: PropTypes.string,
     calculation_data: PropTypes.object,
     name: PropTypes.string,
-    borrower_type: PropTypes.string,
+    applicant_type: PropTypes.string,
     borrower_name: PropTypes.string,
     company_name: PropTypes.string,
     notes: PropTypes.string,

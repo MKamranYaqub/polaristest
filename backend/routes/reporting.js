@@ -129,7 +129,7 @@ async function getReportingData(filters = {}, pagination = {}) {
           dip_issued_at: quote.dip_issued_at ?? null,
           
           // Borrower information
-          borrower_type: extractFromPayload(quote.payload, 'borrower_type'),
+          applicant_type: extractFromPayload(quote.payload, 'applicant_type'),
           borrower_name: extractFromPayload(quote.payload, 'borrower_name'),
           company_name: extractFromPayload(quote.payload, 'company_name'),
           
@@ -213,7 +213,7 @@ async function getReportingData(filters = {}, pagination = {}) {
         dip_issued_at: quote.dip_issued_at ?? null,
         loan_amount: quote.loan_amount,
         ltv: quote.ltv,
-        borrower_type: extractFromPayload(quote.payload, 'borrower_type'),
+        applicant_type: extractFromPayload(quote.payload, 'applicant_type'),
         borrower_name: extractFromPayload(quote.payload, 'borrower_name'),
         company_name: extractFromPayload(quote.payload, 'company_name'),
         created_at: quote.created_at,
@@ -260,7 +260,7 @@ async function getReportingData(filters = {}, pagination = {}) {
           dip_issued_at: quote.dip_issued_at ?? null,
           
           // Borrower information
-          borrower_type: extractFromPayload(quote.payload, 'borrower_type'),
+          applicant_type: extractFromPayload(quote.payload, 'applicant_type'),
           borrower_name: extractFromPayload(quote.payload, 'borrower_name'),
           company_name: extractFromPayload(quote.payload, 'company_name'),
           
@@ -344,7 +344,7 @@ async function getReportingData(filters = {}, pagination = {}) {
         dip_issued_at: quote.dip_issued_at ?? null,
         loan_amount: quote.gross_loan,
         ltv: quote.ltv ?? null,
-        borrower_type: extractFromPayload(quote.payload, 'borrower_type'),
+        applicant_type: extractFromPayload(quote.payload, 'applicant_type'),
         borrower_name: extractFromPayload(quote.payload, 'borrower_name'),
         company_name: extractFromPayload(quote.payload, 'company_name'),
         created_at: quote.created_at,

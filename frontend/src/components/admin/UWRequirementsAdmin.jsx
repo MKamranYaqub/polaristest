@@ -541,7 +541,7 @@ export default function UWRequirementsAdmin() {
                                   }}
                                 >
                                   <option value="">No condition</option>
-                                  <option value='{"field":"borrower_type","operator":"contains","value":"personal"}'>Personal borrower</option>
+                                  <option value='{"field":"applicant_type","operator":"contains","value":"personal"}'>Personal borrower</option>
                                   <option value='{"field":"borrower_type","operator":"contains","value":"company"}'>Company borrower</option>
                                   <option value='{"field":"hmo","operator":"notEquals","value":"No"}'>HMO property</option>
                                   <option value='{"field":"mufb","operator":"notEquals","value":"No"}'>MUFB property</option>

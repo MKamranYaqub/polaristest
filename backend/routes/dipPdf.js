@@ -242,12 +242,12 @@ function generateBTLDIPPDF(doc, quote, result) {
   // Borrower Details Section
   drawSectionHeader(doc, 'BORROWER DETAILS');
   
-  const borrowerName = quote.borrower_type === 'Company' 
+  const borrowerName = quote.applicant_type === 'Company' 
     ? quote.company_name || 'N/A'
     : quote.borrower_name || quote.name || 'N/A';
   
   drawLabelValue(doc, 'Borrower:', borrowerName);
-  drawLabelValue(doc, 'Borrower Type:', quote.borrower_type || 'Individual');
+  drawLabelValue(doc, 'Borrower Type:', quote.applicant_type || 'Individual');
   if (quote.guarantor_name) {
     drawLabelValue(doc, 'Guarantor:', quote.guarantor_name);
   }
@@ -491,12 +491,12 @@ function generateBridgingDIPPDF(doc, quote, displayResult, results, isBridge) {
   // Borrower Details Section
   drawSectionHeader(doc, 'BORROWER DETAILS');
 
-  const borrowerName = quote.borrower_type === 'Company'
+  const borrowerName = quote.applicant_type === 'Company'
     ? quote.company_name || 'N/A'
     : quote.borrower_name || quote.name || 'N/A';
 
   drawLabelValue(doc, 'Borrower:', borrowerName);
-  drawLabelValue(doc, 'Borrower Type:', quote.borrower_type || 'Individual');
+  drawLabelValue(doc, 'Borrower Type:', quote.applicant_type || 'Individual');
   if (quote.guarantor_name) {
     drawLabelValue(doc, 'Guarantor:', quote.guarantor_name);
   }

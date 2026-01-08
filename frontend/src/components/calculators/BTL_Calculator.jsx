@@ -297,12 +297,14 @@ export default function BTLcalculator({ initialQuote = null }) {
                          quote.funding_line || quote.product_range || quote.dip_status;
       
       if (hasDipData) {
+        // Map 'Company' to 'Corporate' for backward compatibility
+        const applicantType = quote.applicant_type === 'Company' ? 'Corporate' : quote.applicant_type;
         setDipData({
           commercial_or_main_residence: quote.commercial_or_main_residence,
           funding_line: quote.funding_line,
           dip_date: quote.dip_date,
           dip_expiry_date: quote.dip_expiry_date,
-          applicant_type: quote.applicant_type || (quote.borrower_type === 'Company' ? 'Corporate' : (quote.borrower_type ? 'Personal' : '')),
+          applicant_type: applicantType,
           guarantor_name: quote.guarantor_name,
           company_number: quote.company_number,
           title_number: quote.title_number,
@@ -1065,12 +1067,14 @@ export default function BTLcalculator({ initialQuote = null }) {
                              quote.funding_line || quote.product_range || quote.dip_status;
           
           if (hasDipData) {
+            // Map 'Company' to 'Corporate' for backward compatibility
+            const applicantType = quote.applicant_type === 'Company' ? 'Corporate' : quote.applicant_type;
             setDipData({
               commercial_or_main_residence: quote.commercial_or_main_residence,
               funding_line: quote.funding_line,
               dip_date: quote.dip_date,
               dip_expiry_date: quote.dip_expiry_date,
-              applicant_type: quote.applicant_type || (quote.borrower_type === 'Company' ? 'Corporate' : (quote.borrower_type ? 'Personal' : '')),
+              applicant_type: applicantType,
               guarantor_name: quote.guarantor_name,
               company_number: quote.company_number,
               title_number: quote.title_number,
@@ -2398,9 +2402,9 @@ export default function BTLcalculator({ initialQuote = null }) {
             hmo: answers['hmo'] || '',
             mufb: answers['mufb'] || '',
             holiday: answers['holiday'] || '',
-            // borrower_type comes from saved quote, not criteria answers
-            // Values are 'Personal' or 'Company'
-            borrower_type: currentQuoteData?.borrower_type || '',
+            // applicant_type comes from saved quote, not criteria answers
+            // Values are 'Personal' or 'Corporate'
+            applicant_type: currentQuoteData?.applicant_type || '',
             loan_purpose: answers['Loan purpose'] || ''
           }}
           checkedItems={uwCheckedItems || {}}
