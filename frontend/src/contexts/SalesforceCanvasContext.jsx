@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 const SalesforceCanvasContext = createContext();
@@ -27,7 +27,7 @@ export const SalesforceCanvasProvider = ({ children }) => {
   useEffect(() => {
     // Check if Sfdc.canvas SDK is available
     if (typeof window.Sfdc === 'undefined' || !window.Sfdc.canvas) {
-      console.log('Not running as Canvas app');
+      // Not running as Canvas app - this is normal for standalone mode
       setLoading(false);
       return;
     }
@@ -61,7 +61,7 @@ export const SalesforceCanvasProvider = ({ children }) => {
       return;
     }
 
-    console.log('Canvas Context:', sr.context);
+    // Canvas context loaded successfully
     setSignedRequest(sr);
     setCanvasContext(sr.context);
     setClient(sr.client);
