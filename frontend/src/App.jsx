@@ -17,6 +17,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { SalesforceCanvasProvider } from './contexts/SalesforceCanvasContext';
 import AdminPage from './pages/AdminPage';
 import UsersPage from './pages/UsersPage';
 import SettingsPage from './pages/SettingsPage';
@@ -298,13 +299,15 @@ function App() {
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <ToastProvider>
-        <AuthProvider>
-          <ThemeProvider>
-            <AccessibilityProvider>
-              <AppContent />
-            </AccessibilityProvider>
-          </ThemeProvider>
-        </AuthProvider>
+        <SalesforceCanvasProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <AccessibilityProvider>
+                <AppContent />
+              </AccessibilityProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </SalesforceCanvasProvider>
       </ToastProvider>
     </Router>
   );
