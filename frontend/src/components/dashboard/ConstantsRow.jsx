@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-import jwtDecode from "jwt-decode";
 import { getMarketRates } from "../../config/constants";
+import { useSalesforceCanvas } from "../../contexts/SalesforceCanvasContext";
 
 const ConstantsRow = () => {
   // Convert decimal to percentage string
@@ -8,31 +7,13 @@ const ConstantsRow = () => {
 
   const constants = getMarketRates();
 
-  const [recordId, setRecordId] = useState(null);
-  const [action, setAction] = useState(null);
-
-  useEffect(() => {
-    try {
-      // Canvas Previewer sometimes sends signed_request as query param
-      const params = new URLSearchParams(window.location.search);
-      const signedRequest = params.get("signed_request");
-
-      if (!signedRequest) {
-        console.error("No signed_request found");
-        return;
-      }
-
-      const decoded = jwtDecode(signedRequest.split(".")[1]);
-
-      const canvasParams =
-        decoded?.context?.environment?.parameters;
-
-      setRecordId(canvasParams?.recordId || null);
-      setAction(canvasParams?.action || null);
-    } catch (error) {
-      console.error("Error decoding signed_request", error);
-    }
-  }, []); // ✅ IMPORTANT: dependency array
+  // Use the existing Salesforce Canvas context to get record ID and action
+  const { canvasContext } = useSalesforceCanvas();
+  
+  // Extract parameters from Canvas context
+  const canvasParams = canvasContext?.environment?.parameters;
+  const recordId = canvasParams?.recordId || null;
+  const action = canvasParams?.action || null;
 
   return (
     <div className="constants-section">
