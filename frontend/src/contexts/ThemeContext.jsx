@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const ThemeContext = createContext();
 
@@ -11,6 +12,11 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
+  const location = useLocation();
+  
+  // Check if current route is a public calculator route (force light theme)
+  const isPublicRoute = location.pathname.startsWith('/calculator/public/');
+  
   // Theme can be 'light', 'dark', or 'system'
   const [themeMode, setThemeMode] = useState(() => {
     const saved = localStorage.getItem('app.theme.mode');
@@ -24,10 +30,14 @@ export const ThemeProvider = ({ children }) => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'g100' : 'g10';
   };
 
-  // Update resolved theme based on mode
+  // Update resolved theme based on mode (force light for public routes)
   useEffect(() => {
     let theme;
-    if (themeMode === 'system') {
+    
+    // Force light theme for public calculator routes
+    if (isPublicRoute) {
+      theme = 'g10';
+    } else if (themeMode === 'system') {
       theme = getSystemTheme();
     } else if (themeMode === 'dark') {
       theme = 'g100';
@@ -47,11 +57,11 @@ export const ThemeProvider = ({ children }) => {
       document.body.classList.remove('dark-mode');
       document.documentElement.classList.remove('dark-mode');
     }
-  }, [themeMode]);
+  }, [themeMode, isPublicRoute]);
 
-  // Listen for system theme changes when in system mode
+  // Listen for system theme changes when in system mode (skip for public routes)
   useEffect(() => {
-    if (themeMode !== 'system') return;
+    if (themeMode !== 'system' || isPublicRoute) return;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
@@ -71,7 +81,7 @@ export const ThemeProvider = ({ children }) => {
 
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [themeMode]);
+  }, [themeMode, isPublicRoute]);
 
   // Persist theme mode to localStorage
   const changeThemeMode = (mode) => {

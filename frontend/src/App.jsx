@@ -18,7 +18,6 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { SalesforceCanvasProvider } from './contexts/SalesforceCanvasContext';
-import CanvasDebug from './components/debug/CanvasDebug';
 import AdminPage from './pages/AdminPage';
 import UsersPage from './pages/UsersPage';
 import SettingsPage from './pages/SettingsPage';
@@ -335,8 +334,6 @@ function App() {
               </AccessibilityProvider>
             </ThemeProvider>
           </AuthProvider>
-          {/* Debug component - only shows in development */}
-          <CanvasDebug />
         </SalesforceCanvasProvider>
       </ToastProvider>
     </Router>
