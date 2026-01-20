@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
 import { getMarketRates } from "../../config/constants";
-import { useSalesforceCanvas } from "../../contexts/SalesforceCanvasContext";
 
 const ConstantsRow = () => {
   // Convert decimal to percentage string
@@ -7,13 +8,33 @@ const ConstantsRow = () => {
 
   const constants = getMarketRates();
 
-  // Use the existing Salesforce Canvas context to get record ID and action
-  const { canvasContext } = useSalesforceCanvas();
-  
-  // Extract parameters from Canvas context
-  const canvasParams = canvasContext?.environment?.parameters;
-  const recordId = canvasParams?.recordId || null;
-  const action = canvasParams?.action || null;
+  const [recordId, setRecordId] = useState(null);
+  const [action, setAction] = useState(null);
+
+  useEffect(() => {
+    try {
+      // Canvas Previewer sometimes sends signed_request as query param
+      const params = new URLSearchParams(window.location.search);
+      const signedRequest = params.get("signed_request");
+
+      if (!signedRequest) {
+        console.error("No signed_request found");
+        return;
+      }
+
+      // Decode JWT payload
+      const decoded = jwtDecode(signedRequest.split(".")[1]);
+
+      // ✅ Correct Canvas context locations
+      const recordIdFromContext = decoded?.context?.record?.Id;
+      const displayLocation = decoded?.context?.environment?.displayLocation;
+
+      setRecordId(recordIdFromContext || null);
+      setAction(displayLocation || null);
+    } catch (error) {
+      console.error("Error decoding signed_request", error);
+    }
+  }, []);
 
   return (
     <div className="constants-section">
