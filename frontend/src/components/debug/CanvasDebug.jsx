@@ -6,6 +6,8 @@ import { useSalesforceCanvas } from '../../contexts/SalesforceCanvasContext';
  * Use this temporarily to inspect what's coming through from Salesforce
  * 
  * Usage: <CanvasDebug /> anywhere in your app
+ * 
+ * In production, add ?debug=canvas to the URL to show this panel
  */
 const CanvasDebug = () => {
   const {
@@ -19,8 +21,12 @@ const CanvasDebug = () => {
     environment,
   } = useSalesforceCanvas();
 
-  // Don't render in production
-  if (import.meta.env.PROD) {
+  // Check for debug flag in URL (works in production too)
+  const params = new URLSearchParams(window.location.search);
+  const debugEnabled = params.get('debug') === 'canvas';
+
+  // In production, only show if debug flag is set
+  if (import.meta.env.PROD && !debugEnabled) {
     return null;
   }
 
