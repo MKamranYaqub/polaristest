@@ -42,7 +42,8 @@ function AppShell({ children }) {
 
   // Public routes that shouldn't show navigation
   const publicRoutes = ['/login', '/forgot-password', '/reset-password'];
-  const isPublicRoute = publicRoutes.includes(location.pathname);
+  const isPublicRoute = publicRoutes.includes(location.pathname) || 
+    location.pathname.startsWith('/calculator/public/');
 
   // Show navigation only if NOT public route AND NOT embedded
   const showNavigation = !isPublicRoute && !isEmbedded;

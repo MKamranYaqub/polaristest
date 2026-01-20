@@ -71,7 +71,13 @@ function parseRateMetadata(rate) {
   };
 }
 
-export default function BTLcalculator({ initialQuote = null }) {
+export default function BTLcalculator({ 
+  initialQuote = null,
+  publicMode = false,
+  fixedProductScope = null,
+  fixedRange = null,
+  allowedScopes = null // Optional: filter which product scopes are available in dropdown
+}) {
   const { supabase } = useSupabase();
   const { canEditCalculators, token } = useAuth();
   const { showToast } = useToast();
@@ -82,13 +88,15 @@ export default function BTLcalculator({ initialQuote = null }) {
   
   // Check if user has permission to edit calculator fields
   // Access levels 1-3 can edit, level 4 (Underwriter) is read-only
-  const isReadOnly = !canEditCalculators();
+  // In public mode, users can edit but product scope is locked
+  const isReadOnly = !publicMode && !canEditCalculators();
   
   // Use custom hook for broker settings - pass 'btl' as calculator type
   const brokerSettings = useBrokerSettings(effectiveInitialQuote, 'btl');
   
   // Range toggle state (Core or Specialist) - moved before hooks that depend on it
-  const [selectedRange, setSelectedRange] = useState('specialist');
+  // In public mode, use fixedRange if provided
+  const [selectedRange, setSelectedRange] = useState(fixedRange || 'specialist');
   
   // Use custom hook for results table visibility - dynamically switch based on selected range
   const calculatorTypeForSettings = selectedRange === 'core' ? 'core' : 'btl';
@@ -104,7 +112,8 @@ export default function BTLcalculator({ initialQuote = null }) {
   const [loading, setLoading] = useState(true);
   // This Calculator is restricted to BTL criteria only per user's request
   const criteriaSet = 'BTL';
-  const [productScope, setProductScope] = useState('');
+  // In public mode, use fixedProductScope if provided
+  const [productScope, setProductScope] = useState(fixedProductScope || '');
   const [retentionChoice, setRetentionChoice] = useState('No'); // default to 'No' to avoid 'Any' behaviour on load
   const [retentionLtv, setRetentionLtv] = useState('75'); // '65' or '75'
   const [topSlicing, setTopSlicing] = useState('');
@@ -877,8 +886,9 @@ export default function BTLcalculator({ initialQuote = null }) {
         retentionLtv,
         productFeePercent: rate.product_fee || 0,
         feeOverrides: productFeeOverrides,
-        manualRolled: rolledMonthsPerColumn[colKey],
-        manualDeferred: deferredInterestPerColumn[colKey],
+        // In public mode, force max values for rolled months and deferred interest (fully utilized)
+        manualRolled: publicMode ? (rate.max_rolled_months ?? 24) : rolledMonthsPerColumn[colKey],
+        manualDeferred: publicMode ? (rate.max_defer_int ?? 1.5) : deferredInterestPerColumn[colKey],
         brokerRoute: brokerSettings.brokerRoute,
         procFeePct: derivedProcFeePct,
         brokerFeePct: derivedBrokerFeePct,
@@ -1261,6 +1271,13 @@ export default function BTLcalculator({ initialQuote = null }) {
     navigate('/calculator/btl', { replace: true });
   };
 
+  // Handler for Submit Quote button in public mode
+  const handleSubmitQuote = () => {
+    // TODO: Implement submit quote logic for public mode
+    // This could open a modal to collect contact details, send to an API, etc.
+    showToast('Quote submitted successfully!', 'success');
+  };
+
   const handleNewQuote = () => {
     // Reset to initial state - clear currentQuoteId and reference
     setCurrentQuoteId(null);
@@ -1538,12 +1555,17 @@ export default function BTLcalculator({ initialQuote = null }) {
         onRetentionLtvChange={setRetentionLtv}
         currentTier={currentTier}
         availableScopes={productScopes}
+        allowedScopes={allowedScopes}
         quoteId={currentQuoteId}
         quoteReference={currentQuoteRef}
         onIssueDip={handleOpenDipModal}
         onIssueQuote={handleIssueQuote}
+        onSubmitQuote={handleSubmitQuote}
         onCancelQuote={handleCancelQuote}
         onNewQuote={handleNewQuote}
+        isReadOnly={isReadOnly}
+        isProductScopeLocked={publicMode && !!fixedProductScope && !allowedScopes}
+        publicMode={publicMode}
         saveQuoteButton={
           <SaveQuoteButton
             calculatorType="BTL"
@@ -1685,6 +1707,7 @@ export default function BTLcalculator({ initialQuote = null }) {
         specificGrossLoan={specificGrossLoan}
         onSpecificGrossLoanChange={setSpecificGrossLoan}
         isReadOnly={isReadOnly}
+        publicMode={publicMode}
       />
 
       
@@ -1693,6 +1716,8 @@ export default function BTLcalculator({ initialQuote = null }) {
       <RangeToggle
         selectedRange={selectedRange}
         onRangeChange={setSelectedRange}
+        showCore={!publicMode || fixedRange === 'core'}
+        showSpecialist={!publicMode || fixedRange === 'specialist'}
       >
         <div className="results-section">
         {/* Rates display */}
@@ -1846,6 +1871,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                             });
                                           }}
                                           disabled={isReadOnly}
+                                          displayOnly={publicMode}
                                           suffix={isTracker ? "% + BBR" : "%"}
                                         />
                                       </>
@@ -1889,8 +1915,9 @@ export default function BTLcalculator({ initialQuote = null }) {
                                       const isTracker = /tracker/i.test(productType || '');
 
                                       // Get manual slider values for this column
-                                      const manualRolled = rolledMonthsPerColumn[colKey];
-                                      const manualDeferred = deferredInterestPerColumn[colKey];
+                                      // In public mode, force max values for rolled months and deferred interest (fully utilized)
+                                      const manualRolled = publicMode ? (best?.max_rolled_months ?? 24) : rolledMonthsPerColumn[colKey];
+                                      const manualDeferred = publicMode ? (best?.max_defer_int ?? 1.5) : deferredInterestPerColumn[colKey];
 
                                       // Run calculation engine for this column
                                       // Derive broker-related fees from client details
@@ -2228,6 +2255,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                             step={1}
                                             suffix=" months"
                                             disabled={isReadOnly}
+                                            displayOnly={publicMode}
                                             columns={columnsHeaders}
                                             columnValues={currentRolledMonthsPerCol}
                                             columnMinValues={rolledMonthsMinPerCol}
@@ -2287,6 +2315,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                             step={0.01}
                                             suffix="%"
                                             disabled={isReadOnly}
+                                            displayOnly={publicMode}
                                             columns={columnsHeaders}
                                             columnValues={currentDeferredInterestPerCol}
                                             columnMinValues={deferredInterestMinPerCol}
@@ -2350,6 +2379,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                               });
                                             }}
                                             disabled={isReadOnly}
+                                            displayOnly={publicMode}
                                             suffix="%"
                                           />
                                         );

@@ -13,6 +13,7 @@ import React, { useState } from 'react';
  * @param {function} onValueChange - Callback when a value changes (newValue, columnKey)
  * @param {function} onReset - Callback when reset is clicked (columnKey)
  * @param {boolean} disabled - Whether editing is disabled
+ * @param {boolean} displayOnly - When true, renders as plain text like other result rows (no input styling)
  * @param {string} suffix - Optional default suffix (e.g., "%") - overridden by columnSuffixes
  */
 export default function EditableResultRow({
@@ -24,6 +25,7 @@ export default function EditableResultRow({
   onValueChange,
   onReset,
   disabled = false,
+  displayOnly = false,
   suffix = ''
 }) {
   const [editingColumn, setEditingColumn] = useState(null);
@@ -110,6 +112,15 @@ export default function EditableResultRow({
         
         const originalValue = originalValues?.[col] ?? '';
         const hasOverride = columnValues?.[col] !== originalValue && originalValue !== '';
+        
+        // If displayOnly mode, render as plain text like other result rows
+        if (displayOnly) {
+          return (
+            <td key={col} className="vertical-align-top text-align-center">
+              {displayValue || '—'}
+            </td>
+          );
+        }
         
         return (
           <td key={col} className="vertical-align-middle" style={{ padding: '0.5rem' }}>

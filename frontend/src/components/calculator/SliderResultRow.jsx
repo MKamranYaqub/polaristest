@@ -13,6 +13,7 @@ import React from 'react';
  * @param {number} step - Step increment
  * @param {string} suffix - Optional suffix to display (e.g., "%", "months")
  * @param {boolean} disabled - Whether the slider is disabled
+ * @param {boolean} displayOnly - When true, renders as plain text like other result rows (no slider)
  * @param {array} columns - Column headers for multi-column tables
  * @param {object} columnValues - Values for each column {columnKey: value}
  * @param {object} columnMinValues - Min values for each column {columnKey: min}
@@ -32,6 +33,7 @@ export default function SliderResultRow({
   step = 1, 
   suffix = '',
   disabled = false,
+  displayOnly = false,
   columns = null,
   columnValues = null,
   columnMinValues = null,
@@ -48,6 +50,29 @@ export default function SliderResultRow({
 
   // Multi-column mode
   if (Array.isArray(columns) && columns.length > 0) {
+    // In displayOnly mode, use max values (fully utilized)
+    if (displayOnly) {
+      return (
+        <tr>
+          <td className="vertical-align-top font-weight-600">{label}</td>
+          {columns.map((col) => {
+            const colMax = columnMaxValues && columnMaxValues[col] !== undefined ? columnMaxValues[col] : max;
+            const display = (n) => {
+              if (typeof formatValue === 'function') {
+                try { return formatValue(n); } catch { /* ignore */ }
+              }
+              return n;
+            };
+            return (
+              <td key={col} className="vertical-align-top text-align-center">
+                {display(colMax)}{suffix}
+              </td>
+            );
+          })}
+        </tr>
+      );
+    }
+    
     return (
       <tr>
         <td className="vertical-align-middle font-weight-600">{label}</td>
@@ -147,6 +172,18 @@ export default function SliderResultRow({
     }
     return n;
   };
+
+  // In displayOnly mode, show max value as text
+  if (displayOnly) {
+    return (
+      <tr>
+        <td className="vertical-align-top font-weight-600">{label}</td>
+        <td className="vertical-align-top text-align-center">
+          {display(max)}{suffix}
+        </td>
+      </tr>
+    );
+  }
 
   return (
     <tr>

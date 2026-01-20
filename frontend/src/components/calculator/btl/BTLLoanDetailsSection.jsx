@@ -31,7 +31,8 @@ const BTLLoanDetailsSection = ({
   ltvPercent,
   specificGrossLoan,
   onSpecificGrossLoanChange,
-  isReadOnly = false
+  isReadOnly = false,
+  publicMode = false
 }) => {
   // Format max top slicing value for display
   const formatMaxTopSlicing = () => {
@@ -77,8 +78,8 @@ const BTLLoanDetailsSection = ({
               <option value="">Select loan type...</option>
               <option value="Max gross loan">Max Gross Loan</option>
               <option value="Net loan required">Net loan required</option>
-              <option value="Specific LTV required">Specific LTV Required</option>
-              <option value="Specific gross loan">Specific Gross Loan</option>
+              {!publicMode && <option value="Specific LTV required">Specific LTV Required</option>}
+              {!publicMode && <option value="Specific gross loan">Specific Gross Loan</option>}
             </select>
           </div>
         </div>
@@ -198,28 +199,30 @@ const BTLLoanDetailsSection = ({
           </div>
         </div>
 
-        <div className="slds-form-element">
-          <label className="slds-form-element__label">
-            Top slicing
-            <HelpIcon 
-              content="Additional monthly income that can be used to supplement rental income for affordability calculations. Maximum top slicing is calculated as a percentage of the monthly rent." 
-              align="top"
-              label="Top slicing information"
-            />
-          </label>
-          <div className="slds-form-element__control">
-            <input 
-              className="slds-input" 
-              value={topSlicing} 
-              onChange={(e) => onTopSlicingChange(e.target.value)} 
-              placeholder="e.g. 600"
-              disabled={isReadOnly}
-            />
-            <div className="helper-text">
-              Maximum top slicing: {formatMaxTopSlicing()} ({maxTopSlicingPct}% of monthly rent)
+        {!publicMode && (
+          <div className="slds-form-element">
+            <label className="slds-form-element__label">
+              Top slicing
+              <HelpIcon 
+                content="Additional monthly income that can be used to supplement rental income for affordability calculations. Maximum top slicing is calculated as a percentage of the monthly rent." 
+                align="top"
+                label="Top slicing information"
+              />
+            </label>
+            <div className="slds-form-element__control">
+              <input 
+                className="slds-input" 
+                value={topSlicing} 
+                onChange={(e) => onTopSlicingChange(e.target.value)} 
+                placeholder="e.g. 600"
+                disabled={isReadOnly}
+              />
+              <div className="helper-text">
+                Maximum top slicing: {formatMaxTopSlicing()} ({maxTopSlicingPct}% of monthly rent)
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="slds-form-element">
           <label className="slds-form-element__label">

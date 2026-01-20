@@ -68,7 +68,8 @@ const AppContent = () => {
   }, []);
   
   // Public routes that shouldn't show navigation
-  const isPublicRoute = ['/login', '/forgot-password', '/reset-password'].includes(location.pathname);
+  const isPublicRoute = ['/login', '/forgot-password', '/reset-password'].includes(location.pathname) ||
+    location.pathname.startsWith('/calculator/public/');
   
   // Check if app is embedded (hides all navigation)
   const isEmbedded = isEmbeddedMode();
@@ -87,6 +88,32 @@ const AppContent = () => {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
+                
+                {/* Public calculator routes - no authentication required */}
+                <Route 
+                  path="/calculator/public/residential" 
+                  element={
+                    <ErrorBoundary fallback={CalculatorErrorFallback}>
+                      <BTLCalculator publicMode={true} fixedProductScope="Residential" fixedRange="specialist" />
+                    </ErrorBoundary>
+                  } 
+                />
+                <Route 
+                  path="/calculator/public/commercial" 
+                  element={
+                    <ErrorBoundary fallback={CalculatorErrorFallback}>
+                      <BTLCalculator publicMode={true} fixedProductScope="Commercial" fixedRange="specialist" allowedScopes={['Commercial', 'Semi-Commercial']} />
+                    </ErrorBoundary>
+                  } 
+                />
+                <Route 
+                  path="/calculator/public/core-range" 
+                  element={
+                    <ErrorBoundary fallback={CalculatorErrorFallback}>
+                      <BTLCalculator publicMode={true} fixedProductScope="Residential" fixedRange="core" />
+                    </ErrorBoundary>
+                  } 
+                />
                 
                 {/* Settings - Protected route accessible to all authenticated users */}
                 <Route path="/settings" element={<ProtectedRoute requiredAccessLevel={5} />}>
