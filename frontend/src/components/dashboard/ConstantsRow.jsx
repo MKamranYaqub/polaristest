@@ -9,7 +9,7 @@ const ConstantsRow = () => {
   const [debugInfo, setDebugInfo] = useState({});
   
   // Use the existing SalesforceCanvasContext
-  const { isCanvasApp, loading, environment, canvasContext, signedRequest } = useSalesforceCanvas();
+  const { isCanvasApp, loading, environment, canvasContext, signedRequest, debugLog } = useSalesforceCanvas();
 
   // Convert decimal to percentage string
   const toPercent = (decimal) => `${(decimal * 100).toFixed(2)}%`;
@@ -144,6 +144,12 @@ const ConstantsRow = () => {
           <summary>Debug Info</summary>
           <pre className="constants-debug-pre">
             {JSON.stringify(debugInfo, null, 2)}
+          </pre>
+        </details>
+        <details>
+          <summary>Canvas SDK Log</summary>
+          <pre className="constants-debug-pre">
+            {JSON.stringify(debugLog || [], null, 2)}
           </pre>
         </details>
       </div>

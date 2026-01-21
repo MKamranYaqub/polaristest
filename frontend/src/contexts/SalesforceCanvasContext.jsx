@@ -23,49 +23,125 @@ export const SalesforceCanvasProvider = ({ children }) => {
   const [isCanvasApp, setIsCanvasApp] = useState(false);
   const [loading, setLoading] = useState(true);
   const [client, setClient] = useState(null);
+  const [debugLog, setDebugLog] = useState([]);
+
+  const addDebugLog = (message, data = null) => {
+    const entry = { time: new Date().toISOString(), message, data };
+    console.warn('[Canvas]', message, data);
+    setDebugLog(prev => [...prev, entry]);
+  };
 
   useEffect(() => {
     // Check if Sfdc.canvas SDK is available
     if (typeof window.Sfdc === 'undefined' || !window.Sfdc.canvas) {
-      // Not running as Canvas app - this is normal for standalone mode
+      addDebugLog('Sfdc.canvas SDK not available');
       setLoading(false);
       return;
     }
 
+    addDebugLog('Sfdc.canvas SDK detected');
     setIsCanvasApp(true);
 
-    // Get signed request from parent
-    const sr = window.Sfdc.canvas.client.signedrequest();
+    // Method 1: Check if signed request is already available (synchronous)
+    let sr = null;
+    try {
+      sr = window.Sfdc.canvas.client.signedrequest();
+      addDebugLog('signedrequest() returned', sr ? 'object' : 'null');
+    } catch (e) {
+      addDebugLog('signedrequest() error', e.message);
+    }
     
     if (sr) {
-      // Signed request already available (from page load)
-      handleSignedRequest(sr);
-    } else {
-      // Request fresh signed request from Salesforce
-      window.Sfdc.canvas.client.refreshSignedRequest((signedRequestData) => {
-        handleSignedRequest(signedRequestData);
-      });
+      handleSignedRequest(sr, 'signedrequest()');
+      return;
     }
 
-    // Setup auto-resize
-    const clientInfo = getClientInfo();
-    if (clientInfo) {
-      window.Sfdc.canvas.client.autogrow(clientInfo);
+    // Method 2: Try refreshSignedRequest (async callback)
+    addDebugLog('Trying refreshSignedRequest...');
+    try {
+      window.Sfdc.canvas.client.refreshSignedRequest((data) => {
+        addDebugLog('refreshSignedRequest callback received', data ? 'object' : 'null');
+        if (data) {
+          // The response might be the signed request itself or have a payload
+          const srData = data.payload || data;
+          handleSignedRequest(srData, 'refreshSignedRequest');
+        } else {
+          addDebugLog('refreshSignedRequest returned no data');
+          tryContextMethod();
+        }
+      });
+    } catch (e) {
+      addDebugLog('refreshSignedRequest error', e.message);
+      tryContextMethod();
     }
+
+    // Method 3: Try to get context directly using ctx()
+    const tryContextMethod = () => {
+      addDebugLog('Trying ctx() method...');
+      try {
+        // Build a minimal client object for ctx request
+        const frameId = window.name?.replace('canvas-frame-', '') || '';
+        const minimalClient = {
+          oauthToken: 'null',
+          instanceId: frameId,
+          targetOrigin: '*'
+        };
+        
+        window.Sfdc.canvas.client.ctx((response) => {
+          addDebugLog('ctx() callback received', response);
+          if (response && response.payload) {
+            setCanvasContext(response.payload);
+            setLoading(false);
+          } else if (response) {
+            setCanvasContext(response);
+            setLoading(false);
+          } else {
+            addDebugLog('ctx() returned no payload');
+            setLoading(false);
+          }
+        }, minimalClient);
+      } catch (e) {
+        addDebugLog('ctx() error', e.message);
+        setLoading(false);
+      }
+    };
+
+    // Fallback timeout - if nothing works after 3 seconds, stop loading
+    const timeout = setTimeout(() => {
+      if (loading) {
+        addDebugLog('Timeout - no Canvas context received');
+        setLoading(false);
+      }
+    }, 3000);
+
+    return () => clearTimeout(timeout);
   }, []);
 
-  const handleSignedRequest = (sr) => {
-    if (!sr || !sr.context) {
-      console.error('Invalid signed request received');
+  const handleSignedRequest = (sr, source) => {
+    addDebugLog(`handleSignedRequest from ${source}`, { 
+      hasContext: !!sr?.context,
+      keys: sr ? Object.keys(sr) : []
+    });
+
+    if (!sr) {
       setLoading(false);
       return;
     }
 
+    // Handle different signed request structures
+    let context = sr.context || sr.payload?.context || sr;
+    
     // Canvas context loaded successfully
     setSignedRequest(sr);
-    setCanvasContext(sr.context);
-    setClient(sr.client);
+    setCanvasContext(context);
+    setClient(sr.client || null);
     setLoading(false);
+    
+    addDebugLog('Canvas context set', {
+      hasEnvironment: !!context?.environment,
+      hasUser: !!context?.user,
+      environmentKeys: context?.environment ? Object.keys(context.environment) : []
+    });
   };
 
   const getClientInfo = () => {
@@ -146,6 +222,7 @@ export const SalesforceCanvasProvider = ({ children }) => {
     canvasContext,
     signedRequest,
     client,
+    debugLog,
     // User info from Canvas context
     user: canvasContext?.user,
     organization: canvasContext?.organization,
