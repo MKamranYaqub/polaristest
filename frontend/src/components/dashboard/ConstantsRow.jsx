@@ -69,7 +69,7 @@ const ConstantsRow = () => {
   const [recordId, setRecordId] = useState(null);
   const [action, setAction] = useState(null);
   const [params, setParams] = useState({});
-alert('rag')
+
   // Convert decimal to percentage string
   const toPercent = (decimal) => `${(decimal * 100).toFixed(2)}%`;
 
@@ -95,9 +95,10 @@ alert('rag')
         console.warn('Canvas context not available');
         return;
       }
-
+alert('rag1')
       const contextParams = context?.environment?.parameters || {};
       console.log('Canvas context parameters:', contextParams);
+      alert('rag')
       alert(contextParams);
      
       setRecordId(contextParams.recordId || null);
