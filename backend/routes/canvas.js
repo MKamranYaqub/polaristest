@@ -13,6 +13,29 @@ const router = express.Router();
 const CANVAS_CONSUMER_SECRET = process.env.CANVAS_CONSUMER_SECRET;
 
 /**
+ * GET /api/canvas/signed-request
+ * 
+ * If Salesforce hits this with GET, it means the Connected App is misconfigured
+ */
+router.get('/signed-request', (req, res) => {
+  const authType = req.query._sfdc_canvas_auth;
+  
+  if (authType === 'user_approval_required') {
+    return res.status(400).json({
+      error: 'Canvas App Misconfigured',
+      message: 'Your Salesforce Connected App is using OAuth (User Approval Required). Please change Access Method to "Signed Request (POST)" in Connected App settings.',
+      receivedParams: req.query
+    });
+  }
+  
+  res.status(400).json({
+    error: 'Invalid Request',
+    message: 'This endpoint expects a POST request with signed_request from Salesforce Canvas. If you see this, check your Connected App settings.',
+    hint: 'Access Method should be "Signed Request (POST)"'
+  });
+});
+
+/**
  * POST /api/canvas/signed-request
  * 
  * Receives signed_request from Salesforce, verifies it, and returns the context
