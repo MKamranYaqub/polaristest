@@ -1537,12 +1537,24 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   const handleSaveQuoteData = async (quoteId, updatedQuoteData) => {
     try {
+      // Increment version when issuing quote
+      const currentVersion = currentQuoteData?.quote_version || 0;
+      const newVersion = currentVersion + 1;
+
       await upsertQuoteData({
         quoteId,
         calculatorType: 'BRIDGING',
-        payload: updatedQuoteData,
+        payload: {
+          ...updatedQuoteData,
+          quote_version: newVersion,
+        },
         token,
       });
+
+      // Update local quote data with new version
+      if (currentQuoteData) {
+        setCurrentQuoteData({ ...currentQuoteData, quote_version: newVersion });
+      }
 
       // Note: Success toast is shown by IssueQuoteModal
     } catch (err) {

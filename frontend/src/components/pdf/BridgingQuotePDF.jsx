@@ -194,14 +194,14 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
           {/* Table Header with Colored Columns */}
           <View style={btlQuoteStyles.tableHeaderRow}>
             <Text style={[btlQuoteStyles.tableHeaderCell, { width: labelWidth, textAlign: 'left', backgroundColor: PDF_COLORS.bgMedium }]}>
-              Field
+              
             </Text>
             {displayProductTypes.map((productType, index) => {
               // Define colors for each column matching calculator: Navy, Navy 500, Orange
               const columnColors = [PDF_COLORS.columnNavy, PDF_COLORS.columnNavy500, PDF_COLORS.columnOrange];
               const bgColor = columnColors[index] || '#002855';
               return (
-                <Text key={index} style={[btlQuoteStyles.tableHeaderCell, { width: valueWidth, backgroundColor: bgColor, color: 'var(--token-color-white)' }]}>
+                <Text key={index} style={[btlQuoteStyles.tableHeaderCell, { width: valueWidth, backgroundColor: bgColor, color: PDF_COLORS.textWhite }]}>
                   {productType}
                 </Text>
               );

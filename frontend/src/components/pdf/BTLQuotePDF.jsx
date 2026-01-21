@@ -128,6 +128,7 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
         {/* Header */}
         <View style={btlQuoteStyles.headerRow}>
           <Text style={btlQuoteStyles.headerTitle}>Summary of terms - Indicative Quote</Text>
+          <Text style={{ fontSize: 10, color: 'var(--token-text-muted)' }}>Reference: {quote.reference_number || quote.id || 'N/A'}</Text>
         </View>
 
         {/* Summary Grid */}

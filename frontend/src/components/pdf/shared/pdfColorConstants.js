@@ -41,9 +41,9 @@ export const PDF_COLORS = {
   
   // Column colors (matching calculator headers)
   columnNavy: '#002855',
-  columnNavy500: '#1B3B6F',
+  columnNavy500: '#27723e',
   columnNavyDark: '#032d60',
-  columnOrange: '#E84E0F',
+  columnOrange: '#ed8b00',
   columnOrangeDark: '#dd7a01',
   
   // Border colors
