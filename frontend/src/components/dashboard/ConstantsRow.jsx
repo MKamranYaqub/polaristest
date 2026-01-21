@@ -1,39 +1,26 @@
-import { useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
-import { getMarketRates } from "../../config/constants";
+import React, { useEffect, useState } from 'react';
+import { getMarketRates } from '../../config/constants';
 
 const ConstantsRow = () => {
+  const [recordId, setRecordId] = useState(null);
+  const [action, setAction] = useState(null);
+
   // Convert decimal to percentage string
   const toPercent = (decimal) => `${(decimal * 100).toFixed(2)}%`;
 
   const constants = getMarketRates();
 
-  const [recordId, setRecordId] = useState(null);
-  const [action, setAction] = useState(null);
-
   useEffect(() => {
-    try {
-      // Canvas Previewer sometimes sends signed_request as query param
-      const params = new URLSearchParams(window.location.search);
-      const signedRequest = params.get("signed_request");
-
-      if (!signedRequest) {
-        console.error("No signed_request found");
-        return;
-      }
-
-      // Decode JWT payload
-      const decoded = jwtDecode(signedRequest.split(".")[1]);
-
-      // ✅ Correct Canvas context locations
-      const recordIdFromContext = decoded?.context?.record?.Id;
-      const displayLocation = decoded?.context?.environment?.displayLocation;
-
-      setRecordId(recordIdFromContext || null);
-      setAction(displayLocation || null);
-    } catch (error) {
-      console.error("Error decoding signed_request", error);
+    if (!window.Sfdc || !window.Sfdc.canvas) {
+      console.error('Salesforce Canvas SDK not available');
+      return;
     }
+
+    window.Sfdc.canvas.client.ctx((context) => {
+      const params = context?.environment?.parameters || {};
+      setRecordId(params.recordId || null);
+      setAction(params.action || null);
+    });
   }, []);
 
   return (
@@ -65,8 +52,8 @@ const ConstantsRow = () => {
 
       <div>
         <h2>Canvas App (React)</h2>
-        <p><b>Record Id:</b> {recordId}</p>
-        <p><b>Action:</b> {action}</p>
+        <p><b>Record Id:</b> {recordId || 'N/A'}</p>
+        <p><b>Action:</b> {action || 'N/A'}</p>
       </div>
     </div>
   );
