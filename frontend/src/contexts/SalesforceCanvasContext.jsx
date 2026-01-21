@@ -3,6 +3,9 @@ import PropTypes from 'prop-types';
 
 const SalesforceCanvasContext = createContext();
 
+// API URL for backend
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 export const useSalesforceCanvas = () => {
   const context = useContext(SalesforceCanvasContext);
   if (!context) {
@@ -15,7 +18,9 @@ export const useSalesforceCanvas = () => {
  * SalesforceCanvasProvider
  * 
  * Manages Salesforce Canvas SDK integration
- * Provides context, signed request, and client info to child components
+ * Supports two modes:
+ * 1. URL Parameters mode: Backend receives signed_request, verifies, and redirects with canvasToken
+ * 2. SDK mode: Client-side Canvas SDK (fallback)
  */
 export const SalesforceCanvasProvider = ({ children }) => {
   const [canvasContext, setCanvasContext] = useState(null);
@@ -31,18 +36,66 @@ export const SalesforceCanvasProvider = ({ children }) => {
     setDebugLog(prev => [...prev, entry]);
   };
 
+  // Check for canvas context from URL parameters (set by backend redirect)
+  const getCanvasFromURL = () => {
+    const params = new URLSearchParams(window.location.search);
+    const canvasToken = params.get('canvasToken');
+    const recordId = params.get('recordId');
+    const action = params.get('action');
+
+    if (canvasToken) {
+      try {
+        // Decode the full context from the token
+        const context = JSON.parse(atob(canvasToken));
+        addDebugLog('Canvas context from URL token', { 
+          hasEnvironment: !!context?.environment,
+          parameters: context?.parameters 
+        });
+        return context;
+      } catch (e) {
+        addDebugLog('Failed to decode canvasToken', e.message);
+      }
+    }
+
+    // Even without full token, we might have recordId/action directly
+    if (recordId || action) {
+      addDebugLog('Canvas parameters from URL', { recordId, action });
+      return {
+        environment: {
+          parameters: { recordId, action }
+        }
+      };
+    }
+
+    return null;
+  };
+
   useEffect(() => {
-    // Check if Sfdc.canvas SDK is available
+    // Method 0: Check URL parameters first (from backend redirect)
+    const urlContext = getCanvasFromURL();
+    if (urlContext) {
+      addDebugLog('Using canvas context from URL');
+      setIsCanvasApp(true);
+      setCanvasContext(urlContext);
+      setClient(urlContext.client || null);
+      setLoading(false);
+      
+      // Clean up URL parameters (optional - prevents confusion on refresh)
+      // window.history.replaceState({}, '', window.location.pathname);
+      return;
+    }
+
+    // Method 1: Check if Sfdc.canvas SDK is available (client-side fallback)
     if (typeof window.Sfdc === 'undefined' || !window.Sfdc.canvas) {
-      addDebugLog('Sfdc.canvas SDK not available');
+      addDebugLog('No URL context and Sfdc.canvas SDK not available');
       setLoading(false);
       return;
     }
 
-    addDebugLog('Sfdc.canvas SDK detected');
+    addDebugLog('Sfdc.canvas SDK detected, trying SDK methods...');
     setIsCanvasApp(true);
 
-    // Method 1: Check if signed request is already available (synchronous)
+    // Method 2: Check if signed request is already available (synchronous)
     let sr = null;
     try {
       sr = window.Sfdc.canvas.client.signedrequest();
@@ -56,7 +109,7 @@ export const SalesforceCanvasProvider = ({ children }) => {
       return;
     }
 
-    // Method 2: Try refreshSignedRequest (async callback)
+    // Method 3: Try refreshSignedRequest (async callback)
     addDebugLog('Trying refreshSignedRequest...');
     try {
       window.Sfdc.canvas.client.refreshSignedRequest((data) => {
@@ -75,7 +128,7 @@ export const SalesforceCanvasProvider = ({ children }) => {
       tryContextMethod();
     }
 
-    // Method 3: Try to get context directly using ctx()
+    // Method 4: Try to get context directly using ctx()
     const tryContextMethod = () => {
       addDebugLog('Trying ctx() method...');
       try {
