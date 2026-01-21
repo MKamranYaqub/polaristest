@@ -63,20 +63,12 @@ export default ConstantsRow;*/
 
 import React, { useEffect, useState } from 'react';
 import { getMarketRates } from '../../config/constants';
-//import '@salesforce/canvas-js-sdk';
-
 import '@salesforce/canvas-js-sdk';
-
-Sfdc.canvas(function () {
-  const ctx = Sfdc.canvas.context();
-  console.log("Canvas parameters:", ctx.environment.parameters);
-  const params = ctx.environment.parameters;
-
-});
 
 const ConstantsRow = () => {
   const [recordId, setRecordId] = useState(null);
   const [action, setAction] = useState(null);
+  const [params, setParams] = useState({});
 
   // Convert decimal to percentage string
   const toPercent = (decimal) => `${(decimal * 100).toFixed(2)}%`;
@@ -84,15 +76,32 @@ const ConstantsRow = () => {
   const constants = getMarketRates();
 
   useEffect(() => {
+    // Check if Salesforce Canvas SDK is available
     if (!window.Sfdc || !window.Sfdc.canvas) {
-      console.error('Salesforce Canvas SDK not available');
+      console.warn('Salesforce Canvas SDK not available - this component may not be in a Salesforce Canvas context');
       return;
     }
 
-    window.Sfdc.canvas.client.ctx((context) => {
-      const params = context?.environment?.parameters || {};
-      setRecordId(params.recordId || null);
-      setAction(params.action || null);
+    // Use Sfdc.canvas to get the context
+    window.Sfdc.canvas(function (error) {
+      if (error) {
+        console.error('Canvas error:', error);
+        return;
+      }
+
+      // Get the context synchronously after canvas is initialized
+      const context = window.Sfdc.canvas.peek();
+      if (!context) {
+        console.warn('Canvas context not available');
+        return;
+      }
+
+      const contextParams = context?.environment?.parameters || {};
+      console.log('Canvas context parameters:', contextParams);
+     
+      setRecordId(contextParams.recordId || null);
+      setAction(contextParams.action || null);
+      setParams(contextParams);
     });
   }, []);
 
@@ -135,6 +144,5 @@ const ConstantsRow = () => {
 };
 
 export default ConstantsRow;
-
 
 
