@@ -18,6 +18,13 @@ const CANVAS_CONSUMER_SECRET = process.env.CANVAS_CONSUMER_SECRET;
  * If Salesforce hits this with GET, it means the Connected App is misconfigured
  */
 router.get('/signed-request', (req, res) => {
+  console.log('Canvas GET request received:', {
+    method: req.method,
+    query: req.query,
+    headers: req.headers,
+    url: req.url
+  });
+  
   const authType = req.query._sfdc_canvas_auth;
   
   if (authType === 'user_approval_required') {
