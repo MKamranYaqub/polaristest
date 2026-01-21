@@ -69,7 +69,7 @@ const ConstantsRow = () => {
   const [recordId, setRecordId] = useState(null);
   const [action, setAction] = useState(null);
   const [params, setParams] = useState({});
-
+alert('rag')
   // Convert decimal to percentage string
   const toPercent = (decimal) => `${(decimal * 100).toFixed(2)}%`;
 
