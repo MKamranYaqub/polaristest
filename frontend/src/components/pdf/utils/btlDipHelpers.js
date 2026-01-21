@@ -16,9 +16,15 @@
 import { parseNumber } from '../../../utils/calculator/numberFormatting';
 import { getMarketRates } from '../../../config/constants';
 
-// Resolve dynamic market rates at render time
-const MARKET_RATES = getMarketRates();
-export { MARKET_RATES, parseNumber };
+// For backward compatibility, export a Proxy that always fetches fresh values
+// This ensures values are fetched after AppSettingsContext syncs from Supabase
+// (not cached at module load time)
+export const MARKET_RATES = new Proxy({}, {
+  get(_, prop) {
+    return getMarketRates()[prop];
+  }
+});
+export { parseNumber, getMarketRates };
 
 // ============================================================================
 // BORROWER & PROPERTY HELPERS

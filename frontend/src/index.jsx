@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { Buffer } from 'buffer';
 import App from './App';
 import { SupabaseProvider } from './contexts/SupabaseContext';
+import { AppSettingsProvider } from './contexts/AppSettingsContext';
 
 // Polyfill Buffer for @react-pdf/renderer
 window.Buffer = Buffer;
@@ -10,7 +11,9 @@ window.Buffer = Buffer;
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <SupabaseProvider>
-      <App />
+      <AppSettingsProvider>
+        <App />
+      </AppSettingsProvider>
     </SupabaseProvider>
   </React.StrictMode>
 );
