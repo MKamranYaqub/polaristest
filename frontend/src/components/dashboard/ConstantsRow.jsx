@@ -63,7 +63,7 @@ export default ConstantsRow;*/
 
 import React, { useEffect, useState } from 'react';
 import { getMarketRates } from '../../config/constants';
-import '@salesforce/canvas-js-sdk';
+/*import '@salesforce/canvas-js-sdk';*/
 
 const ConstantsRow = () => {
   const [recordId, setRecordId] = useState(null);
