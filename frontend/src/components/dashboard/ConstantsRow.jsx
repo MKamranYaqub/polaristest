@@ -61,9 +61,9 @@ const ConstantsRow = () => {
 
 export default ConstantsRow;*/
 
-import { useEffect, useState } from 'react';
-import { useMarketRates } from '../../contexts/AppSettingsContext';
-/*import '@salesforce/canvas-js-sdk';*/
+import React, { useEffect, useState } from 'react';
+import { getMarketRates } from '../../config/constants';
+
 
 const ConstantsRow = () => {
   const [recordId, setRecordId] = useState(null);
@@ -73,8 +73,7 @@ const ConstantsRow = () => {
   // Convert decimal to percentage string
   const toPercent = (decimal) => `${(decimal * 100).toFixed(2)}%`;
 
-  // Use the context-based hook that fetches from Supabase (works in iframe)
-  const { STANDARD_BBR, STRESS_BBR, CURRENT_MVR, loading } = useMarketRates();
+  const constants = getMarketRates();
 
   useEffect(() => {
     // Check if Salesforce Canvas SDK is available
@@ -98,24 +97,14 @@ const ConstantsRow = () => {
       }
 
       const contextParams = context?.environment?.parameters || {};
-      // Canvas context parameters loaded
+      console.log('Canvas context parameters:', contextParams);
+      alert(contextParams);
      
       setRecordId(contextParams.recordId || null);
       setAction(contextParams.action || null);
       setParams(contextParams);
     });
   }, []);
-
-  if (loading) {
-    return (
-      <div className="constants-section">
-        <h4 className="constants-title">Constants</h4>
-        <div className="constants-grid">
-          <span>Loading...</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="constants-section">
@@ -125,21 +114,21 @@ const ConstantsRow = () => {
         <div className="constant-item">
           <span className="constant-label">BBR</span>
           <span className="constant-value">
-            {toPercent(STANDARD_BBR)}
+            {toPercent(constants.STANDARD_BBR)}
           </span>
         </div>
 
         <div className="constant-item">
           <span className="constant-label">Stressed BBR</span>
           <span className="constant-value">
-            {toPercent(STRESS_BBR)}
+            {toPercent(constants.STRESS_BBR)}
           </span>
         </div>
 
         <div className="constant-item">
           <span className="constant-label">MVR</span>
           <span className="constant-value">
-            {toPercent(CURRENT_MVR)}
+            {toPercent(constants.CURRENT_MVR)}
           </span>
         </div>
       </div>
