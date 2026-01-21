@@ -78,6 +78,7 @@ const ConstantsRow = () => {
   useEffect(() => {
     // Check if Salesforce Canvas SDK is available
     alert('rag4')
+    alert(window.Sfdc.contextParams);
     if (!window.Sfdc || !window.Sfdc.canvas) {
       console.warn('Salesforce Canvas SDK not available - this component may not be in a Salesforce Canvas context');
       alert('rag3')
