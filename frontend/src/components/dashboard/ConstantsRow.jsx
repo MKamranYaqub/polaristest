@@ -77,6 +77,7 @@ const ConstantsRow = () => {
 
   useEffect(() => {
     // Check if Salesforce Canvas SDK is available
+    alert('rag4')
     if (!window.Sfdc || !window.Sfdc.canvas) {
       console.warn('Salesforce Canvas SDK not available - this component may not be in a Salesforce Canvas context');
       alert('rag3')
@@ -85,6 +86,7 @@ const ConstantsRow = () => {
 
     // Use Sfdc.canvas to get the context
     window.Sfdc.canvas(function (error) {
+     alert('rag5'+error)
       if (error) {
         console.error('Canvas error:', error);
         alert('rag2')
@@ -93,6 +95,7 @@ const ConstantsRow = () => {
 
       // Get the context synchronously after canvas is initialized
       const context = window.Sfdc.canvas.peek();
+      alert('rag6')
       if (!context) {
         console.warn('Canvas context not available');
         alert('rag1')
