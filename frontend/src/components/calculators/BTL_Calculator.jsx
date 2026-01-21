@@ -244,9 +244,14 @@ export default function BTLcalculator({
       });
     });
 
-    // sort options by tier ascending
+    // Sort options by tier ascending, then by id as tiebreaker for same tier
     Object.keys(map).forEach((k) => {
-      map[k].options.sort((a, b) => (Number(a.tier) || 0) - (Number(b.tier) || 0));
+      map[k].options.sort((a, b) => {
+        const tierDiff = (Number(a.tier) || 0) - (Number(b.tier) || 0);
+        if (tierDiff !== 0) return tierDiff;
+        // Same tier: sort by id (database row order) to maintain consistent order
+        return (Number(a.id) || 0) - (Number(b.id) || 0);
+      });
     });
 
   setQuestions(map);

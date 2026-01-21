@@ -32,19 +32,40 @@ const ConstantsRow = () => {
       return;
     }
 
+    // Method 1b: Canvas app detected but environment missing - check canvasContext directly
+    if (!loading && isCanvasApp && canvasContext) {
+      const params = canvasContext?.environment?.parameters || {};
+      console.warn('Canvas context parameters (direct):', params);
+      setRecordId(params.recordId || null);
+      setAction(params.action || null);
+      setDebugInfo({
+        source: 'SalesforceCanvasContext (canvasContext direct)',
+        params,
+        hasSignedRequest: !!signedRequest,
+        canvasContext,
+      });
+      return;
+    }
+
     // Method 2: Fallback - Try to get signed request directly from SDK
-    if (!loading && !isCanvasApp && window.Sfdc?.canvas?.client) {
+    if (!loading && window.Sfdc?.canvas?.client) {
       try {
         const sr = window.Sfdc.canvas.client.signedrequest();
-        if (sr && sr.context) {
-          const params = sr.context?.environment?.parameters || {};
-          console.warn('Direct SDK signed request parameters:', params);
+        if (sr) {
+          // Check different possible structures
+          const params = sr.context?.environment?.parameters 
+            || sr.payload?.context?.environment?.parameters
+            || sr.parameters
+            || {};
+          console.warn('Direct SDK signed request:', sr);
+          console.warn('Extracted parameters:', params);
           setRecordId(params.recordId || null);
           setAction(params.action || null);
           setDebugInfo({
             source: 'Direct SDK signedrequest()',
             params,
-            context: sr.context,
+            signedRequestKeys: sr ? Object.keys(sr) : [],
+            signedRequestRaw: sr,
           });
           return;
         }
@@ -69,14 +90,19 @@ const ConstantsRow = () => {
       return;
     }
 
-    // No context available
+    // No context available - show detailed debug info
     if (!loading) {
       setDebugInfo({
         source: 'None',
         isCanvasApp,
         hasSfdc: !!window.Sfdc,
         hasSfdcCanvas: !!window.Sfdc?.canvas,
-        message: 'Not running in Salesforce Canvas context or no recordId passed',
+        hasEnvironment: !!environment,
+        hasCanvasContext: !!canvasContext,
+        hasSignedRequest: !!signedRequest,
+        canvasContextKeys: canvasContext ? Object.keys(canvasContext) : [],
+        signedRequestKeys: signedRequest ? Object.keys(signedRequest) : [],
+        message: 'Canvas detected but no environment/parameters found',
       });
     }
   }, [loading, isCanvasApp, environment, signedRequest, canvasContext]);

@@ -322,6 +322,12 @@ export default function BridgingCalculator({ initialQuote = null }) {
         if (isPlaceholderA && !isPlaceholderB) return -1;
         if (!isPlaceholderA && isPlaceholderB) return 1;
         
+        // Sort by tier (controls dropdown option order)
+        const tierA = a.raw?.tier ?? Number.MAX_SAFE_INTEGER;
+        const tierB = b.raw?.tier ?? Number.MAX_SAFE_INTEGER;
+        if (tierA !== tierB) return tierA - tierB;
+        
+        // Fallback sort: alphabetical by option_label
         return (a.option_label || '').localeCompare(b.option_label || '');
       });
     });
