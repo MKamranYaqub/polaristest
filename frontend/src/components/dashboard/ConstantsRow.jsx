@@ -79,6 +79,7 @@ const ConstantsRow = () => {
     // Check if Salesforce Canvas SDK is available
     if (!window.Sfdc || !window.Sfdc.canvas) {
       console.warn('Salesforce Canvas SDK not available - this component may not be in a Salesforce Canvas context');
+      alert('rag3')
       return;
     }
 
@@ -86,6 +87,7 @@ const ConstantsRow = () => {
     window.Sfdc.canvas(function (error) {
       if (error) {
         console.error('Canvas error:', error);
+        alert('rag2')
         return;
       }
 
@@ -93,6 +95,7 @@ const ConstantsRow = () => {
       const context = window.Sfdc.canvas.peek();
       if (!context) {
         console.warn('Canvas context not available');
+        alert('rag1')
         return;
       }
 alert('rag1')
