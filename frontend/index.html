@@ -26,8 +26,9 @@
     // Initialize from server-side envelope parameters
     let params = {};
     try {
+      alert('new Raghu alert');
       params = JSON.parse('<%- params %>');
-      alert('raghu' + params);
+      alert('raghu1' + params);
     } catch(e) {
       console.warn('No params found in signed_request context');
       params = {};
@@ -36,7 +37,13 @@
     console.log("Initial Canvas Parameters:", params);
 
  
-
+    const isCanvasAvailable = !!(
+        typeof Sfdc !== 'undefined' &&
+        Sfdc.canvas &&
+        Sfdc.canvas.client
+      );
+    console.log("Is Salesforce Canvas SDK available?", isCanvasAvailable);
+    alert('raghu-canvas' + isCanvasAvailable);
     // Handle dynamic refresh (postMessage from VF Canvas parent)
     if (typeof Sfdc !== 'undefined' && Sfdc.canvas && Sfdc.canvas.client) {
       console.log('Canvas SDK available, subscribing to refresh event...');
