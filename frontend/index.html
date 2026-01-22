@@ -27,14 +27,14 @@
     let params = {};
     try {
       alert('new Raghu alert');
-      params = JSON.parse('<%- params %>');
-      alert('raghu1' + params);
+      //params = JSON.parse('<%- params %>');
+      alert('raghu1' + Sfdc.canvas.data.payload);
     } catch(e) {
       console.warn('No params found in signed_request context');
       params = {};
     }
 
-    console.log("Initial Canvas Parameters:", params);
+    //console.log("Initial Canvas Parameters:", params);
 
  
     const isCanvasAvailable = !!(
