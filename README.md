@@ -1,11 +1,21 @@
-# Project Polaris - Mortgage Calculator Platform
+# Project Polaris - Specialist Mortgage Calculator Platform
 
-A full-stack mortgage calculation platform for BTL (Buy-to-Let) and Bridging loans, built with React, Express, and Supabase.
+A full-stack specialist mortgage calculation platform for UK Buy-to-Let (BTL) and Bridging loans, built with React + Vite frontend, Express backend, and Supabase database.
+
+## 🌐 Live Deployment
+
+| Environment | URL |
+|-------------|-----|
+| **Frontend** | https://polaristest-theta.vercel.app |
+| **Backend API** | https://polaristest.onrender.com |
+| **Database** | Supabase PostgreSQL |
+
+---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18.x or higher
+- Node.js 20.x or higher
 - Supabase account ([create one here](https://supabase.com))
 
 ### Installation
@@ -23,18 +33,29 @@ A full-stack mortgage calculation platform for BTL (Buy-to-Let) and Bridging loa
 
 2. **Configure environment variables:**
    
-   Frontend (`.env`):
+   **Frontend** (`frontend/.env`):
    ```env
    VITE_SUPABASE_URL=your-project-url
    VITE_SUPABASE_ANON_KEY=your-anon-key
    VITE_API_URL=http://localhost:3001
    ```
    
-   Backend (`.env`):
+   **Backend** (`backend/.env`):
    ```env
    PORT=3001
    SUPABASE_URL=your-project-url
    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+   JWT_SECRET=your-jwt-secret-min-32-chars
+   FRONTEND_URL=http://localhost:3000
+   
+   # Email (for password reset & support)
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USER=your-email@gmail.com
+   SMTP_PASS=your-app-password
+   
+   # Salesforce Canvas Integration (optional)
+   CANVAS_CONSUMER_SECRET=your-salesforce-consumer-secret
    ```
 
 3. **Start development servers:**
@@ -57,45 +78,91 @@ A full-stack mortgage calculation platform for BTL (Buy-to-Let) and Bridging loa
 ## 📁 Project Structure
 
 ```
-/
-├── frontend/              # React frontend (Vite)
+polaristest/
+├── frontend/                    # React 18.2 + Vite 5.0
 │   ├── src/
-│   │   ├── components/    # React components
-│   │   ├── contexts/      # React context providers
-│   │   ├── hooks/         # Custom React hooks
-│   │   ├── utils/         # Utility functions & calculation engines
-│   │   ├── pages/         # Page components
-│   │   └── styles/        # SCSS stylesheets
-│   └── vitest.config.js   # Test configuration
-├── backend/               # Express backend
-│   ├── routes/            # API routes
-│   ├── middleware/        # Express middleware
-│   ├── utils/             # Utility functions
-│   ├── config/            # Configuration
-│   └── scripts/           # Database seed scripts
-├── database/              # 🗄️ Database files (organized)
-│   ├── schema/            # Initial table creation scripts
-│   ├── migrations/        # Sequential migrations (001-028)
-│   ├── utilities/         # Verification scripts
-│   └── seeds/             # CSV seed data files
-└── docs/                  # 📚 Documentation (organized)
-    ├── architecture/      # System design & calculations
-    ├── features/          # Feature documentation
-    ├── guides/            # How-to guides & tutorials
-    └── improvements/      # Improvement plans & reviews
+│   │   ├── components/
+│   │   │   ├── admin/           # Admin management components
+│   │   │   ├── calculators/     # BTL & Bridging calculators
+│   │   │   ├── dashboard/       # Dashboard widgets
+│   │   │   ├── layout/          # AppShell, navigation
+│   │   │   ├── modals/          # Modal dialogs
+│   │   │   ├── pdf/             # PDF generation (Quote & DIP)
+│   │   │   ├── salesforce/      # Salesforce Canvas components
+│   │   │   ├── shared/          # Reusable components
+│   │   │   ├── tables/          # Data tables
+│   │   │   └── ui/              # UI primitives
+│   │   ├── contexts/            # React Context providers
+│   │   │   ├── AuthContext.jsx
+│   │   │   ├── ThemeContext.jsx
+│   │   │   ├── ToastContext.jsx
+│   │   │   ├── SalesforceCanvasContext.jsx
+│   │   │   └── ...
+│   │   ├── hooks/               # Custom React hooks
+│   │   ├── pages/               # Route page components
+│   │   ├── utils/               # Calculation engines & utilities
+│   │   │   ├── btlCalculationEngine.js
+│   │   │   ├── bridgeFusionCalculationEngine.js
+│   │   │   └── rateFiltering.js
+│   │   └── styles/              # SCSS + CSS design tokens
+│   ├── public/
+│   │   └── canvas-all.js        # Salesforce Canvas SDK
+│   └── vite.config.js
+│
+├── backend/                     # Express 4.18 + Node.js 20+
+│   ├── routes/
+│   │   ├── admin.js             # Admin data endpoints
+│   │   ├── apiKeys.js           # API key management
+│   │   ├── auth.js              # Authentication (login, register, reset)
+│   │   ├── canvas.js            # Salesforce Canvas integration
+│   │   ├── dipPdf.js            # DIP PDF generation
+│   │   ├── export.js            # Word document export
+│   │   ├── postcodeLookup.js    # UK postcode lookup
+│   │   ├── quotePdf.js          # Quote PDF generation
+│   │   ├── quotes.js            # Quote CRUD operations
+│   │   ├── rates.js             # Rate table endpoints
+│   │   ├── reporting.js         # Power BI / Data team API
+│   │   └── support.js           # Support ticket system
+│   ├── middleware/
+│   │   ├── auth.js              # JWT authentication
+│   │   ├── rateLimiter.js       # Rate limiting
+│   │   └── validation.js        # Input validation
+│   ├── config/
+│   │   ├── supabase.js          # Supabase client
+│   │   └── validateEnv.js       # Environment validation
+│   ├── utils/
+│   │   ├── emailService.js      # Nodemailer for emails
+│   │   └── logger.js            # Winston logging
+│   └── server.js                # Express app entry point
+│
+├── database/                    # PostgreSQL via Supabase
+│   ├── schema/                  # Initial table schemas
+│   ├── migrations/              # 53+ sequential migrations (001-053)
+│   ├── seeds/                   # CSV seed data
+│   └── utilities/               # DB verification scripts
+│
+└── docs/                        # 📚 Documentation
+    ├── architecture/            # System design
+    ├── features/                # Feature docs
+    ├── guides/                  # How-to guides
+    ├── CSS_STYLE_GUIDE.md       # Styling guidelines
+    ├── DESIGN_TOKENS.md         # Token system
+    ├── SALESFORCE_CANVAS_INTEGRATION.md
+    └── ...
 ```
 
 ---
 
 ## ✨ Features
 
-### Calculators
+### 🧮 Calculators
 - **BTL Calculator** - Buy-to-Let mortgage calculations
   - Max Gross/Net Loan calculations
   - Interest Coverage Ratio (ICR) at 125% and 145%
   - LTV calculations with tier-based rates
   - Product range filtering (Core vs Specialist)
   - Fee calculations and APRC
+  - Multi-column rate comparison (0-2%, 2-3%, 3%+)
   
 - **Bridging Calculator** - Short-term bridging loans
   - First and second charge calculations
@@ -103,22 +170,69 @@ A full-stack mortgage calculation platform for BTL (Buy-to-Let) and Bridging loa
   - Multi-property support
   - Term-based rate calculations
 
-### User Management
-- Role-based access control (Admin, Manager, User, Underwriter)
-- User authentication (Supabase Auth)
+- **Fusion Products** - Hybrid BTL/Bridging products
+
+### 👥 User Management
+- Role-based access control (5 levels: Super Admin, Admin, Manager, User, Underwriter)
+- JWT-based authentication
+- Password reset via email
 - User profiles and settings
 
-### Quote Management
+### 📄 Quote Management
 - Save and retrieve quotes
-- Quote reference numbers
+- Unique quote reference numbers (MFSQa...)
 - DIP (Decision in Principle) issuance
-- Export quotes to Word documents
+- PDF export (Client Quote & DIP documents)
+- Word document export
 
-### Admin Features
+### ⚙️ Admin Features
 - Rate table management (BTL & Bridging)
 - Criteria management
-- Global settings configuration
+- Global settings configuration (App Constants)
 - Broker settings management
+- API key management for external integrations
+- Audit logging
+
+### 🔗 Integrations
+- **Salesforce Canvas** - Embed calculator in Salesforce
+- **Power BI** - Reporting API for data teams
+- **UK Postcode Lookup** - Address validation
+
+---
+
+## 🎨 Design System
+
+The platform uses a hybrid design system combining:
+- **Carbon Design System** - Primary component library
+- **Salesforce Lightning Design System (SLDS)** - Utility classes
+- **Custom Design Tokens** - Brand colors, spacing, typography
+
+### Key Styling Rules
+```scss
+// ✅ ALWAYS use design tokens
+.component {
+  background-color: var(--token-layer-surface);
+  color: var(--token-text-primary);
+  padding: var(--token-spacing-medium);
+}
+
+// ❌ NEVER hardcode values
+.bad {
+  background-color: #262626;  // NO
+  padding: 16px;              // NO
+}
+```
+
+### Dark Mode
+Full dark mode support with dual selectors:
+```css
+:root[data-carbon-theme="g100"],
+.dark-mode {
+  --token-layer-background: #161616;
+}
+```
+
+📚 **See:** [docs/CSS_STYLE_GUIDE.md](docs/CSS_STYLE_GUIDE.md) for complete guidelines
 
 ---
 
@@ -137,28 +251,52 @@ npm test
 npm run test:coverage
 ```
 
-**Current test coverage:** ~5% (improvement needed)  
-**Target coverage:** 80%+
+📚 **See:** [docs/guides/testing-guide.md](docs/guides/testing-guide.md) for detailed instructions
 
-📚 **See:** [Testing Guide](docs/guides/testing-guide.md) for detailed instructions
+---
+
+## 🔌 API Endpoints
+
+### Public Endpoints
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check |
+| GET | `/api/rates` | Fetch rate tables |
+
+### Protected Endpoints (JWT required)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/login` | User login |
+| POST | `/api/auth/register` | User registration |
+| GET | `/api/quotes` | List user quotes |
+| POST | `/api/quotes` | Save new quote |
+| GET | `/api/admin/*` | Admin endpoints |
+
+### Salesforce Canvas
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/canvas/signed-request` | Receive signed request from SF |
+| GET | `/api/canvas/context` | Decode canvas context token |
+
+### Reporting API (API Key required)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/reporting/quotes` | Quotes data for Power BI |
+| GET | `/api/reporting/rates` | Rates data for Power BI |
 
 ---
 
 ## 📚 Documentation
 
-All project documentation is now organized in the [`docs/`](docs/) directory:
+All project documentation is in the [`docs/`](docs/) directory:
 
-### 🎯 Start Here
-- **New to the project?** → [docs/improvements/project-structure-review.md](docs/improvements/project-structure-review.md)
-- **Want to write tests?** → [docs/guides/testing-guide.md](docs/guides/testing-guide.md)
-- **Need to refactor code?** → [docs/guides/refactoring-example.js](docs/guides/refactoring-example.js)
-
-### 📖 Browse Documentation
-- [Architecture](docs/architecture/) - System design, calculation engines, deployment
-- [Features](docs/features/) - Feature-specific documentation
-- [Guides](docs/guides/) - How-to guides and tutorials
-- [Improvements](docs/improvements/) - Project improvement plans
-- [Database](database/) - SQL schema, migrations, and database documentation
+| Document | Description |
+|----------|-------------|
+| [CSS_STYLE_GUIDE.md](docs/CSS_STYLE_GUIDE.md) | Styling guidelines & tokens |
+| [DESIGN_TOKENS.md](docs/DESIGN_TOKENS.md) | Token system reference |
+| [SALESFORCE_CANVAS_INTEGRATION.md](docs/SALESFORCE_CANVAS_INTEGRATION.md) | SF Canvas setup guide |
+| [REPORTING_API_SUMMARY.md](docs/REPORTING_API_SUMMARY.md) | Power BI integration |
+| [ADMIN_API_KEY_GUIDE.md](docs/ADMIN_API_KEY_GUIDE.md) | API key management |
 
 **Full index:** [docs/README.md](docs/README.md)
 
@@ -170,35 +308,35 @@ All project documentation is now organized in the [`docs/`](docs/) directory:
 
 **Frontend:**
 ```bash
-npm run dev           # Start dev server
+npm run dev           # Start dev server (port 3000)
 npm run build         # Production build
 npm run preview       # Preview production build
-npm test              # Run tests
-npm run test:watch    # Watch mode
+npm test              # Run Vitest tests
+npm run lint          # ESLint check
 ```
 
 **Backend:**
 ```bash
-npm run dev           # Start with auto-reload
+npm run dev           # Start with nodemon (port 3001)
 npm start             # Production start
 npm run seed:rates    # Seed rates data
-npm test              # Run tests
+npm test              # Run Vitest tests
 ```
 
 ### Tech Stack
 
-**Frontend:**
-- React 18.2
-- Vite 5.0
-- Carbon Design System
-- React Router 6
-- Vitest (testing)
-
-**Backend:**
-- Node.js 20+
-- Express 4
-- Supabase (Database & Auth)
-- Winston (logging)
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | React 18.2, Vite 5.0, React Router 6 |
+| **UI** | Carbon Design 1.96, SLDS utilities |
+| **State** | React Context API |
+| **Backend** | Node.js 20+, Express 4.18 |
+| **Database** | PostgreSQL (Supabase) |
+| **Auth** | JWT, bcrypt, Supabase Auth |
+| **PDF** | @react-pdf/renderer 4.3 |
+| **Email** | Nodemailer (Gmail SMTP) |
+| **Testing** | Vitest, @testing-library/react |
+| **Hosting** | Vercel (FE), Render (BE) |
 
 ---
 
@@ -206,9 +344,10 @@ npm test              # Run tests
 
 - Row Level Security (RLS) enabled in Supabase
 - Service role key never exposed to frontend
-- Rate limiting on API endpoints
+- Rate limiting on API endpoints (see [RATE_LIMITING.md](backend/RATE_LIMITING.md))
 - JWT-based authentication
 - Role-based access control
+- API key authentication for external integrations
 
 ⚠️ **Never commit `.env` files to git**
 
@@ -216,45 +355,45 @@ npm test              # Run tests
 
 ## 🚀 Deployment
 
-The application is configured for deployment on:
-- **Frontend:** Vercel (automatic deployments)
-- **Backend:** Render or similar Node.js host
+### Frontend (Vercel)
+- Automatic deployments from `main` branch
+- Environment variables set in Vercel dashboard:
+  - `VITE_API_URL`
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`
 
-See [docs/architecture/deployment.md](docs/architecture/deployment.md) for detailed deployment instructions.
-
----
-
-## 📊 Known Issues & Improvements
-
-### High Priority
-- [ ] Refactor large components (BTL_Calculator: 1,906 lines → target: <300 lines)
-- [ ] Increase test coverage from 5% to 80%+
-- [ ] Break down Constants.jsx (1,840 lines)
-
-### Medium Priority
-- [ ] Optimize bundle size with code splitting
-- [ ] Improve error handling
-- [ ] Add E2E tests
-
-See [docs/improvements/project-structure-review.md](docs/improvements/project-structure-review.md) for the complete improvement plan.
+### Backend (Render)
+- Automatic deployments from `main` branch
+- Environment variables set in Render dashboard:
+  - `SUPABASE_URL`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `JWT_SECRET`
+  - `FRONTEND_URL`
+  - `CANVAS_CONSUMER_SECRET` (for Salesforce)
+  - SMTP credentials (for email)
 
 ---
 
 ## 🤝 Contributing
 
 1. Create a feature branch: `git checkout -b feature/your-feature`
-2. Write tests for new code (see [Testing Guide](docs/guides/testing-guide.md))
-3. Follow the existing code structure
-4. Submit a pull request
+2. Follow the [CSS Style Guide](docs/CSS_STYLE_GUIDE.md)
+3. Add PropTypes to all components
+4. Handle loading/error states
+5. Write tests for new code
+6. Submit a pull request
 
 ---
 
 ## 📄 License
 
-[Add your license here]
+Proprietary - MFS UK
 
 ---
 
 ## 📞 Support
 
-For questions or issues, please refer to the documentation in the [`docs/`](docs/) directory or contact the development team.
+For questions or issues:
+- Check the [`docs/`](docs/) directory
+- Review [copilot-instructions.md](.github/copilot-instructions.md) for coding guidelines
+- Contact the development team
