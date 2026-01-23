@@ -11,6 +11,7 @@ const BRIDGING_SET_KEYS = ['Bridging_Var', 'Bridging_Fix', 'Fusion'];
 
 // GET /api/rates
 // Returns rows from rates_flat (BTL) or bridge_fusion_rates_full (Bridging/Fusion)
+// Supports filtering by status and date range for rate lifecycle management
 router.get('/', asyncHandler(async (req, res) => {
   const {
     // filters
@@ -24,6 +25,9 @@ router.get('/', asyncHandler(async (req, res) => {
     full_term,
     is_retention,
     is_tracker,
+    // Rate lifecycle filters
+    rate_status,
+    active_only, // Convenience filter: only return rates that are Active AND within date range
     // sorting / pagination
     sort = 'set_key',
     order = 'asc',
@@ -71,6 +75,23 @@ router.get('/', asyncHandler(async (req, res) => {
   applyBoolean('is_retention', is_retention);
   applyBoolean('is_tracker', is_tracker);
 
+  // Rate lifecycle filtering
+  if (rate_status) {
+    query = query.eq('rate_status', rate_status);
+  }
+
+  // Active only filter: returns rates that are Active AND currently within date range
+  // Logic: rate_status = 'Active' AND (start_date IS NULL OR start_date <= today) AND (end_date IS NULL OR end_date >= today)
+  if (active_only === 'true' || active_only === '1') {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    query = query
+      .eq('rate_status', 'Active')
+      .or(`start_date.is.null,start_date.lte.${today}`)
+      .or(`end_date.is.null,end_date.gte.${today}`);
+    
+    log.info('Active only filter applied', { today, active_only });
+  }
+
   // Sorting and pagination
   const ascending = String(order).toLowerCase() !== 'desc';
   query = query.order(String(sort || 'set_key'), { ascending });
@@ -106,7 +127,7 @@ router.patch('/:id', authenticateToken, requireAccessLevel(1), asyncHandler(asyn
   }
 
   // Validate field name (only allow specific fields to be updated)
-  const allowedFields = ['rate', 'min_loan', 'max_loan', 'product_fee', 'min_term', 'max_term'];
+  const allowedFields = ['rate', 'min_loan', 'max_loan', 'product_fee', 'min_term', 'max_term', 'rate_status', 'start_date', 'end_date'];
   if (!allowedFields.includes(field)) {
     throw ErrorTypes.validation(`Field '${field}' is not editable`);
   }
@@ -116,6 +137,23 @@ router.patch('/:id', authenticateToken, requireAccessLevel(1), asyncHandler(asyn
     const numValue = parseFloat(value);
     if (isNaN(numValue) || numValue < 0 || numValue > 100) {
       throw ErrorTypes.validation('Rate must be a number between 0 and 100');
+    }
+  }
+
+  // Validate rate_status if updating status
+  if (field === 'rate_status') {
+    if (!['Active', 'Inactive'].includes(value)) {
+      throw ErrorTypes.validation('Rate status must be either "Active" or "Inactive"');
+    }
+  }
+
+  // Validate date fields
+  if (field === 'start_date' || field === 'end_date') {
+    if (value !== null && value !== '') {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(value)) {
+        throw ErrorTypes.validation('Date must be in YYYY-MM-DD format');
+      }
     }
   }
 
@@ -174,6 +212,85 @@ router.patch('/:id', authenticateToken, requireAccessLevel(1), asyncHandler(asyn
     success: true, 
     rate: updatedRate,
     message: `${field} updated successfully`
+  });
+}));
+
+// POST /api/rates/bulk-status
+// Bulk update rate status (Admin only)
+// Used for activating/deactivating multiple rates at once
+router.post('/bulk-status', authenticateToken, requireAccessLevel(1), asyncHandler(async (req, res) => {
+  const { ids, status, tableName } = req.body;
+
+  // Validate required fields
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    throw ErrorTypes.validation('Missing or invalid ids array');
+  }
+  if (!status || !['Active', 'Inactive'].includes(status)) {
+    throw ErrorTypes.validation('Status must be either "Active" or "Inactive"');
+  }
+  if (!tableName) {
+    throw ErrorTypes.validation('Missing tableName');
+  }
+
+  // Validate table name
+  const allowedTables = ['bridge_fusion_rates_full', 'rates_flat'];
+  if (!allowedTables.includes(tableName)) {
+    throw ErrorTypes.validation('Invalid table name');
+  }
+
+  log.info('POST /api/rates/bulk-status - bulk updating rate status', {
+    ids,
+    status,
+    tableName,
+    userId: req.user.id,
+    userEmail: req.user.email
+  });
+
+  // Update all rates in the ids array
+  const { data: updatedRates, error: updateError } = await supabase
+    .from(tableName)
+    .update({ rate_status: status, updated_at: new Date().toISOString() })
+    .in('id', ids)
+    .select();
+
+  if (updateError) {
+    log.error('❌ Error bulk updating rate status', updateError);
+    throw ErrorTypes.database('Failed to bulk update rate status');
+  }
+
+  // Create audit log entries for each updated rate
+  const auditEntries = (updatedRates || []).map(rate => ({
+    table_name: tableName,
+    record_id: rate.id,
+    field_name: 'rate_status',
+    old_value: rate.rate_status === status ? status : (status === 'Active' ? 'Inactive' : 'Active'),
+    new_value: status,
+    set_key: rate.set_key,
+    product: rate.product,
+    property: rate.property,
+    min_ltv: rate.min_ltv,
+    max_ltv: rate.max_ltv,
+    user_id: req.user.id,
+    user_email: req.user.email,
+    user_name: req.user.name || req.user.email
+  }));
+
+  if (auditEntries.length > 0) {
+    const { error: auditError } = await supabase
+      .from('rate_audit_log')
+      .insert(auditEntries);
+
+    if (auditError) {
+      log.error('⚠️ Failed to create audit log entries for bulk status update', auditError);
+    } else {
+      log.info('✅ Audit log entries created for bulk status update', { count: auditEntries.length });
+    }
+  }
+
+  res.json({
+    success: true,
+    updatedCount: updatedRates?.length || 0,
+    message: `${updatedRates?.length || 0} rates updated to ${status}`
   });
 }));
 

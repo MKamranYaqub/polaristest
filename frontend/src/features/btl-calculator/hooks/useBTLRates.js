@@ -46,8 +46,10 @@ export function useBTLRates(criteriaSet = 'BTL') {
 
   /**
    * Fetch rates from rates_flat table via API
+   * @param {Object} inputs - Calculator inputs
+   * @param {boolean} activeOnly - If true (default), only fetch active rates in date range
    */
-  const fetchRates = useCallback(async (inputs) => {
+  const fetchRates = useCallback(async (inputs, activeOnly = true) => {
     try {
       const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
       
@@ -75,6 +77,11 @@ export function useBTLRates(criteriaSet = 'BTL') {
       // Add property filter if specified
       if (inputs?.productScope) {
         params.append('property', inputs.productScope);
+      }
+      
+      // Filter by active rates in date range (for calculator use)
+      if (activeOnly) {
+        params.append('active_only', 'true');
       }
       
       const response = await fetch(`${API_BASE}/api/rates?${params.toString()}`);

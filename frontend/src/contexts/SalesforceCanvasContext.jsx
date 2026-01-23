@@ -30,9 +30,21 @@ export const SalesforceCanvasProvider = ({ children }) => {
   const [client, setClient] = useState(null);
   const [debugLog, setDebugLog] = useState([]);
 
+  // Only log to console if we detect we're actually in Canvas or if VITE_CANVAS_DEBUG is set
+  const shouldLogToConsole = () => {
+    if (import.meta.env.VITE_CANVAS_DEBUG === 'true') return true;
+    // Check if we're likely in Canvas (has canvasToken or Sfdc object)
+    if (window.location.search.includes('canvasToken')) return true;
+    if (typeof window.Sfdc !== 'undefined' && window.Sfdc?.canvas?.client?.signedrequest?.()) return true;
+    return false;
+  };
+
   const addDebugLog = (message, data = null) => {
     const entry = { time: new Date().toISOString(), message, data };
-    console.warn('[Canvas]', message, data);
+    // Only log to console if in Canvas context or debug mode enabled
+    if (shouldLogToConsole()) {
+      console.warn('[Canvas]', message, data);
+    }
     setDebugLog(prev => [...prev, entry]);
   };
 

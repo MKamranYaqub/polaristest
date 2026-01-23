@@ -6,6 +6,116 @@
 import { parseNumber } from './numberFormatting';
 
 /**
+ * Filter rates by lifecycle status and date range
+ * Returns only rates that are Active AND currently within their valid date range
+ * 
+ * Logic (Option B):
+ * - rate_status must be 'Active'
+ * - start_date must be null OR <= today
+ * - end_date must be null OR >= today
+ * 
+ * @param {Array} rates - Array of rate objects
+ * @param {Date} [referenceDate] - Date to check against (defaults to today)
+ * @returns {Array} Filtered array of active, in-range rates
+ */
+export function filterActiveRates(rates, referenceDate = new Date()) {
+  if (!rates || !Array.isArray(rates)) return [];
+  
+  // Normalize reference date to YYYY-MM-DD string for comparison
+  const today = referenceDate.toISOString().split('T')[0];
+  
+  // Debug: log total rates and first rate's lifecycle fields
+  if (rates.length > 0) {
+    console.log('[filterActiveRates] Total rates:', rates.length, 'Sample rate lifecycle:', {
+      rate_status: rates[0].rate_status,
+      start_date: rates[0].start_date,
+      end_date: rates[0].end_date,
+      today
+    });
+  }
+  
+  const filtered = rates.filter(rate => {
+    // Check status - must be Active (check both possible field names)
+    const status = rate.rate_status ?? rate.status ?? 'Active'; // Use nullish coalescing - only default if null/undefined
+    if (status !== 'Active') return false;
+    
+    // Check start_date - must be null OR <= today
+    const startDate = rate.start_date;
+    if (startDate && startDate > today) return false;
+    
+    // Check end_date - must be null OR >= today
+    const endDate = rate.end_date;
+    if (endDate && endDate < today) return false;
+    
+    return true;
+  });
+  
+  console.log('[filterActiveRates] After filtering:', filtered.length, 'active rates');
+  return filtered;
+}
+
+/**
+ * Check if a single rate is currently active and within date range
+ * 
+ * @param {Object} rate - Rate object with rate_status, start_date, end_date
+ * @param {Date} [referenceDate] - Date to check against (defaults to today)
+ * @returns {boolean} True if rate is active and within date range
+ */
+export function isRateActive(rate, referenceDate = new Date()) {
+  if (!rate) return false;
+  
+  const today = referenceDate.toISOString().split('T')[0];
+  
+  // Check status
+  const status = rate.rate_status || rate.status || 'Active';
+  if (status !== 'Active') return false;
+  
+  // Check start_date
+  if (rate.start_date && rate.start_date > today) return false;
+  
+  // Check end_date
+  if (rate.end_date && rate.end_date < today) return false;
+  
+  return true;
+}
+
+/**
+ * Get rate lifecycle status for display
+ * Returns a descriptive status based on rate_status and dates
+ * 
+ * @param {Object} rate - Rate object
+ * @param {Date} [referenceDate] - Date to check against (defaults to today)
+ * @returns {Object} { status: string, color: string, label: string }
+ */
+export function getRateLifecycleStatus(rate, referenceDate = new Date()) {
+  if (!rate) return { status: 'unknown', color: 'gray', label: 'Unknown' };
+  
+  const today = referenceDate.toISOString().split('T')[0];
+  const status = rate.rate_status || rate.status || 'Active';
+  
+  if (status === 'Inactive') {
+    return { status: 'inactive', color: 'red', label: 'Inactive' };
+  }
+  
+  // Check if scheduled for future
+  if (rate.start_date && rate.start_date > today) {
+    return { status: 'scheduled', color: 'blue', label: `Starts ${rate.start_date}` };
+  }
+  
+  // Check if expired
+  if (rate.end_date && rate.end_date < today) {
+    return { status: 'expired', color: 'orange', label: `Expired ${rate.end_date}` };
+  }
+  
+  // Active and in range
+  if (rate.end_date) {
+    return { status: 'active', color: 'green', label: `Active until ${rate.end_date}` };
+  }
+  
+  return { status: 'active', color: 'green', label: 'Active' };
+}
+
+/**
  * Pick the best rate from a list based on a primary value (LTV or Loan Size)
  * Uses distance-based scoring to find the best matching rate range
  * 

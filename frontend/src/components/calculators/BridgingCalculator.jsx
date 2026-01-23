@@ -22,7 +22,7 @@ import { useResultsLabelAlias } from '../../hooks/useResultsLabelAlias';
 import { getQuote, upsertQuoteData, requestDipPdf, requestQuotePdf, saveUWChecklistState, loadUWChecklistState } from '../../utils/quotes';
 import { parseNumber, formatCurrencyInput } from '../../utils/calculator/numberFormatting';
 import { computeLoanLtv, computeLoanSize } from '../../utils/calculator/loanCalculations';
-import { pickBestRate, computeModeFromAnswers } from '../../utils/calculator/rateFiltering';
+import { pickBestRate, computeModeFromAnswers, filterActiveRates } from '../../utils/calculator/rateFiltering';
 import { LOCALSTORAGE_CONSTANTS_KEY, getMarketRates } from '../../config/constants';
 import { BridgeFusionCalculator } from '../../utils/bridgeFusionCalculationEngine';
 import UWRequirementsChecklist from '../shared/UWRequirementsChecklist';
@@ -732,10 +732,13 @@ export default function BridgingCalculator({ initialQuote = null }) {
         const { data, error } = await supabase.from('bridge_fusion_rates_full').select('*');
         if (error) throw error;
         if (!mounted) return;
-        setRates(data || []);
+        
+        // Filter to only active rates that are within date range (for calculator use)
+        const activeRates = filterActiveRates(data || []);
+        setRates(activeRates);
         // derive sub-product options (prefer `product` field in rates as the sub-product identifier)
         const discovered = new Set();
-        (data || []).forEach(r => {
+        (activeRates).forEach(r => {
           const canonical = (r.product || r.subproduct || r.sub_product || r.sub_product_type || r.property_type || r.property || '').toString().trim();
           if (canonical) discovered.add(canonical);
         });
@@ -744,7 +747,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
         // derive loan/LTV limits per sub-product from the rates dataset
         const limits = {};
         const normalizeKey = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
-        (data || []).forEach(r => {
+        (activeRates).forEach(r => {
           const name = (r.product || r.subproduct || r.sub_product || r.sub_product_type || r.property_type || r.property || '').toString().trim();
           if (!name) return;
           const key = normalizeKey(name);

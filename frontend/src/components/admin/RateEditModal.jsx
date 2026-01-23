@@ -38,7 +38,11 @@ function RateEditModal({ rate, onSave, onCancel }) {
       erc_4: formData.erc_4 === '' || formData.erc_4 === null ? null : parseFloat(formData.erc_4),
       erc_5: formData.erc_5 === '' || formData.erc_5 === null ? null : parseFloat(formData.erc_5),
       floor_rate: formData.floor_rate === '' || formData.floor_rate === null ? null : parseFloat(formData.floor_rate),
-      proc_fee: formData.proc_fee === '' || formData.proc_fee === null ? null : parseFloat(formData.proc_fee)
+      proc_fee: formData.proc_fee === '' || formData.proc_fee === null ? null : parseFloat(formData.proc_fee),
+      // Rate lifecycle fields
+      rate_status: formData.rate_status || 'Active',
+      start_date: formData.start_date || null,
+      end_date: formData.end_date || null
     });
   };
 
@@ -478,6 +482,58 @@ function RateEditModal({ rate, onSave, onCancel }) {
                     onChange={handleChange}
                     step="0.01"
                   />
+                </div>
+              </div>
+
+              {/* Rate Lifecycle Section */}
+              <div className="slds-form-element" style={{ gridColumn: '1 / -1', marginTop: '1rem', borderTop: '1px solid var(--token-border-subtle)', paddingTop: '1rem' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.5rem', color: 'var(--token-text-primary)' }}>Rate Lifecycle</h3>
+              </div>
+
+              <div className="slds-form-element">
+                <label className="slds-form-element__label">Rate Status:</label>
+                <div className="slds-form-element__control">
+                  <select
+                    className="slds-select"
+                    name="rate_status"
+                    value={formData.rate_status || 'Active'}
+                    onChange={handleChange}
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="slds-form-element">
+                <label className="slds-form-element__label">Start Date:</label>
+                <div className="slds-form-element__control">
+                  <input
+                    className="slds-input"
+                    type="date"
+                    name="start_date"
+                    value={formData.start_date || ''}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="slds-form-element__help" style={{ fontSize: '0.75rem', color: 'var(--token-text-secondary)' }}>
+                  Date from which this rate becomes usable
+                </div>
+              </div>
+
+              <div className="slds-form-element">
+                <label className="slds-form-element__label">End Date:</label>
+                <div className="slds-form-element__control">
+                  <input
+                    className="slds-input"
+                    type="date"
+                    name="end_date"
+                    value={formData.end_date || ''}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="slds-form-element__help" style={{ fontSize: '0.75rem', color: 'var(--token-text-secondary)' }}>
+                  Leave empty for no expiry
                 </div>
               </div>
         </div>

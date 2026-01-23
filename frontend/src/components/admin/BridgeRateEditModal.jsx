@@ -29,6 +29,10 @@ function BridgeRateEditModal({ rate, onSave, onCancel }) {
       max_defer_int: formData.max_defer_int === '' || formData.max_defer_int === null ? null : Number(formData.max_defer_int),
       erc_1: formData.erc_1 === '' || formData.erc_1 === null ? null : Number(formData.erc_1),
       erc_2: formData.erc_2 === '' || formData.erc_2 === null ? null : Number(formData.erc_2),
+      // Rate lifecycle fields
+      rate_status: formData.rate_status || 'Active',
+      start_date: formData.start_date || null,
+      end_date: formData.end_date || null,
     };
     onSave(out);
   };
@@ -176,6 +180,50 @@ function BridgeRateEditModal({ rate, onSave, onCancel }) {
                   <label className="slds-form-element__label">ERC 2 (%) - Fusion Only</label>
                   <input name="erc_2" value={formData.erc_2 ?? ''} onChange={handleChange} className="slds-input" type="number" step="0.01" placeholder="e.g., 1.5" />
                 </div>
+              </div>
+
+              {/* Rate Lifecycle Section */}
+              <div className="slds-section slds-is-open" style={{ marginTop: 'var(--token-spacing-large)' }}>
+                <h3 className="slds-section__title" style={{ marginBottom: 'var(--token-spacing-medium)' }}>
+                  <span className="slds-truncate" title="Rate Lifecycle">Rate Lifecycle</span>
+                </h3>
+                <div className="slds-form-element slds-grid slds-gutters">
+                  <div className="slds-col slds-size_1-of-3">
+                    <label className="slds-form-element__label">Status</label>
+                    <select 
+                      name="rate_status" 
+                      value={formData.rate_status ?? 'Active'} 
+                      onChange={handleChange} 
+                      className="slds-select"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+                  <div className="slds-col slds-size_1-of-3">
+                    <label className="slds-form-element__label">Start Date</label>
+                    <input 
+                      name="start_date" 
+                      value={formData.start_date ?? ''} 
+                      onChange={handleChange} 
+                      className="slds-input" 
+                      type="date" 
+                    />
+                  </div>
+                  <div className="slds-col slds-size_1-of-3">
+                    <label className="slds-form-element__label">End Date</label>
+                    <input 
+                      name="end_date" 
+                      value={formData.end_date ?? ''} 
+                      onChange={handleChange} 
+                      className="slds-input" 
+                      type="date" 
+                    />
+                  </div>
+                </div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--token-text-muted)', marginTop: 'var(--token-spacing-small)' }}>
+                  Rate will be usable when Status is Active AND current date is between Start and End dates (inclusive). Leave End Date empty for no expiry.
+                </p>
               </div>
 
             </form>

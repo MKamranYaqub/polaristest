@@ -4,6 +4,7 @@ import RateEditModal from './RateEditModal';
 // Bridge & Fusion rates tab removed - keep BTL rates only
 import NotificationModal from '../modals/NotificationModal';
 import WelcomeHeader from '../shared/WelcomeHeader';
+import { getRateLifecycleStatus } from '../../utils/calculator/rateFiltering';
 import '../../styles/slds.css';
 import '../../styles/admin-tables.css';
 
@@ -24,7 +25,8 @@ function RatesTable() {
     products: new Set(),
     productFees: new Set(),
     initialTerms: new Set(),
-    fullTerms: new Set()
+    fullTerms: new Set(),
+    rateStatuses: new Set(['Active', 'Inactive'])
   });
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [filters, setFilters] = useState({
@@ -36,11 +38,13 @@ function RatesTable() {
     product_fee: '',
     initial_term: '',
     full_term: '',
-    is_retention: ''
+    is_retention: '',
+    rate_status: 'Active' // Default to showing Active rates only
   });
   const [sortField, setSortField] = useState('set_key');
   const [sortDir, setSortDir] = useState('asc'); // 'asc' or 'desc'
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
   
   // Notification state
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
@@ -55,7 +59,7 @@ function RatesTable() {
       // First, fetch all data to populate filter options
       const { data: allData, error: allDataError } = await supabase
         .from('rates_flat')
-        .select('set_key, property, rate_type, tier, product, product_fee, initial_term, full_term');
+        .select('set_key, property, rate_type, tier, product, product_fee, initial_term, full_term, rate_status');
       
       if (allDataError) throw allDataError;
 
@@ -68,7 +72,8 @@ function RatesTable() {
         products: new Set(allData.map(r => r.product).filter(Boolean)),
         productFees: new Set(allData.map(r => r.product_fee).filter(Boolean)),
         initialTerms: new Set(allData.map(r => r.initial_term).filter(Boolean)),
-        fullTerms: new Set(allData.map(r => r.full_term).filter(Boolean))
+        fullTerms: new Set(allData.map(r => r.full_term).filter(Boolean)),
+        rateStatuses: new Set(['Active', 'Inactive'])
       });
 
       // Then fetch filtered data
@@ -81,6 +86,11 @@ function RatesTable() {
       // Apply filters
   if (filters.set_key) query = query.eq('set_key', filters.set_key);
       if (filters.property) query = query.eq('property', filters.property);
+
+      // Rate status filter (default shows Active)
+      if (filters.rate_status && filters.rate_status !== 'all') {
+        query = query.eq('rate_status', filters.rate_status);
+      }
 
       // Retention filter (accepts 'Yes' / 'No' / boolean-like values)
       if (filters.is_retention !== '' && filters.is_retention !== null && filters.is_retention !== undefined) {
@@ -136,6 +146,19 @@ function RatesTable() {
 
   const handleSave = async (updatedRate) => {
     try {
+      // Validate date range if both dates are provided
+      if (updatedRate.start_date && updatedRate.end_date) {
+        if (new Date(updatedRate.start_date) > new Date(updatedRate.end_date)) {
+          setNotification({
+            show: true,
+            type: 'error',
+            title: 'Validation Error',
+            message: 'Start date must be before end date'
+          });
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('rates_flat')
         .update({
@@ -167,6 +190,10 @@ function RatesTable() {
           is_retention: updatedRate.is_retention || false,
           initial_term: updatedRate.initial_term ?? null,
           full_term: updatedRate.full_term ?? null,
+          // Rate lifecycle fields
+          rate_status: updatedRate.rate_status || 'Active',
+          start_date: updatedRate.start_date || null,
+          end_date: updatedRate.end_date || null,
         })
         .eq('id', updatedRate.id);
 
@@ -174,8 +201,77 @@ function RatesTable() {
       
       setEditingRate(null);
       fetchRates(); // Refresh the table
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Success',
+        message: 'Rate updated successfully'
+      });
     } catch (err) {
       setError(err.message);
+    }
+  };
+
+  // Bulk status update handler
+  const handleBulkStatusUpdate = async (newStatus) => {
+    const selectedIds = Array.from(selectedRows);
+    if (selectedIds.length === 0) {
+      setNotification({
+        show: true,
+        type: 'warning',
+        title: 'Warning',
+        message: 'Please select at least one rate to update'
+      });
+      return;
+    }
+
+    const confirmMessage = `Are you sure you want to set ${selectedIds.length} rate(s) to ${newStatus}?`;
+    if (!window.confirm(confirmMessage)) return;
+
+    setBulkActionLoading(true);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const token = localStorage.getItem('auth_token');
+      
+      const response = await fetch(`${API_BASE}/api/rates/bulk-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ids: selectedIds,
+          status: newStatus,
+          tableName: 'rates_flat'
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update rates');
+      }
+
+      const result = await response.json();
+      
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Success',
+        message: result.message || `${selectedIds.length} rate(s) updated to ${newStatus}`
+      });
+      
+      setSelectedRows(new Set());
+      setSelectAll(false);
+      fetchRates();
+    } catch (err) {
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Error',
+        message: err.message || 'Failed to update rates'
+      });
+    } finally {
+      setBulkActionLoading(false);
     }
   };
 
@@ -469,12 +565,33 @@ function RatesTable() {
           return;
         }
 
-        // Remove any DB-managed fields (id, timestamps) before upsert
+        // Remove any DB-managed fields (id, timestamps) and invalid columns before insert
         const cleanedRecords = mappedRecords.map(r => {
           const rec = { ...r };
           if ('created_at' in rec) delete rec.created_at;
           if ('updated_at' in rec) delete rec.updated_at;
           if ('id' in rec) delete rec.id;
+          // Remove 'status' column - only 'rate_status' exists in DB
+          if ('status' in rec) delete rec.status;
+
+          // Convert date strings to PostgreSQL format (YYYY-MM-DD)
+          // Handle DD/MM/YYYY, MM/DD/YYYY, or empty values
+          const convertDate = (dateStr) => {
+            if (!dateStr || dateStr === '' || dateStr === undefined) return null;
+            const str = String(dateStr).trim();
+            if (!str) return null;
+            // Already in YYYY-MM-DD format
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+            // DD/MM/YYYY format (UK) - convert to YYYY-MM-DD
+            const ukMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (ukMatch) {
+              const [, day, month, year] = ukMatch;
+              return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            }
+            return null; // Invalid format
+          };
+          rec.start_date = convertDate(rec.start_date);
+          rec.end_date = convertDate(rec.end_date);
 
           // Infer initial_term if missing (2yr -> 24, 3yr -> 36), fallback to term/term_months
           if (rec.initial_term === null || rec.initial_term === undefined || rec.initial_term === '') {
@@ -498,12 +615,14 @@ function RatesTable() {
           return rec;
         });
 
-        // Upsert in chunks with onConflict to avoid duplicates
+        // Upsert in chunks (updates existing records if key matches, inserts new ones)
+        // Key columns match the idx_rates_flat_unique_version unique constraint
+        const onConflictCols = 'set_key,property,tier,product,product_fee,initial_term,start_date';
         for (let i = 0; i < cleanedRecords.length; i += chunkSize) {
           const chunk = cleanedRecords.slice(i, i + chunkSize);
           const { data, error } = await supabase
             .from('rates_flat')
-            .upsert(chunk, { onConflict: 'set_key,property,tier,product,term' });
+            .upsert(chunk, { onConflict: onConflictCols });
 
           if (error) {
             setError(error.message || JSON.stringify(error));
@@ -575,7 +694,8 @@ function RatesTable() {
       'product', 'product_fee', 'initial_term', 'full_term', 'rate', 'max_ltv', 'revert_index',
       'revert_margin', 'min_loan', 'max_loan', 'max_rolled_months',
       'max_defer_int', 'min_icr', 'is_tracker',
-      'max_top_slicing', 'admin_fee', 'erc_1', 'erc_2', 'erc_3', 'erc_4', 'erc_5', 'status', 'floor_rate', 'proc_fee'
+      'max_top_slicing', 'admin_fee', 'erc_1', 'erc_2', 'erc_3', 'erc_4', 'erc_5', 'status', 'floor_rate', 'proc_fee',
+      'rate_status', 'start_date', 'end_date'
     ];
     
     // Format the header row
@@ -631,12 +751,43 @@ function RatesTable() {
               Delete Selected ({selectedRows.size})
             </button>
           )}
+          {selectedRows.size > 0 && (
+            <>
+              <button 
+                className="slds-button slds-button_success" 
+                onClick={() => handleBulkStatusUpdate('Active')}
+                disabled={bulkActionLoading}
+              >
+                {bulkActionLoading ? 'Updating...' : `Activate (${selectedRows.size})`}
+              </button>
+              <button 
+                className="slds-button slds-button_neutral" 
+                onClick={() => handleBulkStatusUpdate('Inactive')}
+                disabled={bulkActionLoading}
+                style={{ backgroundColor: 'var(--token-layer-surface)', borderColor: 'var(--token-border-subtle)' }}
+              >
+                {bulkActionLoading ? 'Updating...' : `Deactivate (${selectedRows.size})`}
+              </button>
+            </>
+          )}
             <span className="total-count">Total: {rates.length}</span>
           </div>
         </div>
       </div>
 
       <div className="filters-section">
+        <div className="filter-field">
+          <label>Status</label>
+          <select
+            value={filters.rate_status}
+            onChange={(e) => handleFilterChange('rate_status', e.target.value)}
+          >
+            <option value="Active">Active Only</option>
+            <option value="Inactive">Inactive Only</option>
+            <option value="all">All Statuses</option>
+          </select>
+        </div>
+
         <div className="filter-field">
           <label>Set Key</label>
             <select
@@ -685,10 +836,10 @@ function RatesTable() {
             >
               {showAdvancedFilters ? 'Hide Filters' : 'More Filters'}
             </button>
-            {(filters.set_key || filters.property || filters.rate_type || filters.is_retention || filters.tier || filters.product || filters.product_fee || filters.initial_term) && (
+            {(filters.set_key || filters.property || filters.rate_type || filters.is_retention || filters.tier || filters.product || filters.product_fee || filters.initial_term || filters.rate_status !== 'Active') && (
               <button 
                 className="slds-button slds-button_text-destructive" 
-                onClick={() => setFilters({ set_key: '', property: '', rate_type: '', tier: '', product: '', product_fee: '', initial_term: '', full_term: '', is_retention: '' })}
+                onClick={() => setFilters({ set_key: '', property: '', rate_type: '', tier: '', product: '', product_fee: '', initial_term: '', full_term: '', is_retention: '', rate_status: 'Active' })}
               >
                 Clear All
               </button>
@@ -805,6 +956,9 @@ function RatesTable() {
               <th>Status</th>
               <th>Floor Rate</th>
               <th>Proc Fee</th>
+              <th onClick={() => changeSort('rate_status')} className={`sortable ${sortField === 'rate_status' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Rate Status</th>
+              <th onClick={() => changeSort('start_date')} className={`sortable ${sortField === 'start_date' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Start Date</th>
+              <th onClick={() => changeSort('end_date')} className={`sortable ${sortField === 'end_date' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>End Date</th>
               <th className="sticky-action">Actions</th>
             </tr>
           </thead>
@@ -847,6 +1001,34 @@ function RatesTable() {
                 <td>{rate.status ?? ''}</td>
                 <td>{rate.floor_rate ?? ''}</td>
                 <td>{rate.proc_fee ?? ''}</td>
+                <td>
+                  {(() => {
+                    const lifecycleStatus = getRateLifecycleStatus(rate);
+                    return (
+                      <span 
+                        className={`status-badge status-${lifecycleStatus.status}`}
+                        style={{
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: '500',
+                          backgroundColor: lifecycleStatus.color === 'green' ? 'var(--token-success-background, #defbe6)' :
+                                          lifecycleStatus.color === 'red' ? 'var(--token-error-background, #fff1f1)' :
+                                          lifecycleStatus.color === 'orange' ? 'var(--token-warning-background, #fff8e1)' :
+                                          lifecycleStatus.color === 'blue' ? 'var(--token-info-background, #edf5ff)' : 'var(--token-layer-surface)',
+                          color: lifecycleStatus.color === 'green' ? 'var(--token-success-text, #198038)' :
+                                lifecycleStatus.color === 'red' ? 'var(--token-error-text, #da1e28)' :
+                                lifecycleStatus.color === 'orange' ? 'var(--token-warning-text, #f57c00)' :
+                                lifecycleStatus.color === 'blue' ? 'var(--token-info-text, #0043ce)' : 'var(--token-text-secondary)'
+                        }}
+                      >
+                        {lifecycleStatus.label}
+                      </span>
+                    );
+                  })()}
+                </td>
+                <td>{rate.start_date ?? ''}</td>
+                <td>{rate.end_date ?? ''}</td>
                 <td className="sticky-action">
                   <div className="row-actions">
                     <button className="slds-button slds-button_neutral" onClick={() => handleEdit(rate)}>

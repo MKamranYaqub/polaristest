@@ -24,7 +24,7 @@ import { getQuote, upsertQuoteData, saveUWChecklistState, loadUWChecklistState }
 import { downloadDIPPDF } from '../../utils/generateDIPPDF';
 import { downloadQuotePDF } from '../../utils/generateQuotePDF';
 import { parseNumber, formatCurrency, formatPercent } from '../../utils/calculator/numberFormatting';
-import { computeTierFromAnswers } from '../../utils/calculator/rateFiltering';
+import { computeTierFromAnswers, filterActiveRates } from '../../utils/calculator/rateFiltering';
 import { computeBTLLoan } from '../../utils/btlCalculationEngine';
 import CollapsibleSection from '../calculator/CollapsibleSection';
 import UWRequirementsChecklist from '../shared/UWRequirementsChecklist';
@@ -572,6 +572,9 @@ export default function BTLcalculator({
       try {
         const { data, error } = await supabase.from('rates_flat').select('*');
         if (error) throw error;
+        
+        // Filter to only active rates that are within date range
+        const activeData = filterActiveRates(data || []);
   // Filter client-side to avoid DB column mismatch errors.
   // We'll build matched using an explicit loop so we can collect debug samples when nothing matches.
   const debugSamples = [];
@@ -580,8 +583,8 @@ export default function BTLcalculator({
   const swapYrYear = (s) => (s || '').toString().replace(/yr/g, 'year').replace(/year/g, 'yr');
   const swapFixFixed = (s) => (s || '').toString().replace(/fix/g, 'fixed').replace(/fixed/g, 'fix');
 
-  for (let i = 0; i < (data || []).length; i++) {
-    const r = data[i];
+  for (let i = 0; i < (activeData).length; i++) {
+    const r = activeData[i];
     // tolerant tier matching
     const rtRaw = r.tier;
     const rtNumRaw = Number(rtRaw);
