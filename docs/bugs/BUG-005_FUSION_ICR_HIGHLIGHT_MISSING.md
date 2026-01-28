@@ -58,7 +58,8 @@ Or using CSS classes:
 
 ## Status
 - **Severity**: Low (UI Enhancement)
-- **Status**: Open
+- **Status**: Fixed
+- **Fixed Date**: January 28, 2026
 - **Discovered**: 2026-01-26
 - **Product**: Fusion only (Bridge products don't have ICR)
 

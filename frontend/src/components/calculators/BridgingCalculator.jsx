@@ -1905,7 +1905,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
                               'Broker Comission (Proc Fee £)', 'Commitment Fee £', 'Deferred Interest %', 'Deferred Interest £',
                               'Direct Debit', 'ERC 1 £', 'ERC 2 £', 'Exit Fee', 'Full Int BBR £', 'Full Int Coupon £', 'Full Term',
                               'Gross Loan', 'ICR', 'Initial Term', 'LTV', 'Monthly Interest Cost',
-                              'NBP', 'NBP LTV', 'Net Loan', 'Net LTV', 'Pay Rate', 'Product Fee %', 'Product Fee £', 'Revert Rate', 'Revert Rate DD',
+                              'NPB', 'NPB LTV', 'Net Loan', 'Net LTV', 'Pay Rate', 'Product Fee %', 'Product Fee £', 'Revert Rate', 'Revert Rate DD',
                               'Rolled Months', 'Rolled Months Interest', 'Serviced Interest', 'Serviced Months', 'Title Insurance Cost', 'Total Interest'
                             ];
                             
@@ -1915,6 +1915,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
                             const values = {};
                             const originalProductFees = {};
+                            // Track ICR warnings per column (when ICR < min_icr threshold)
+                            const icrWarnings = {};
                             orderedRows.forEach(p => { values[p] = {}; });
 
                             const colBest = [bestFusion, bestVariable, bestFixed];
@@ -1962,14 +1964,14 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                 values['Net Loan'][col] = `£${Number(best.net_loan).toLocaleString('en-GB')}`;
                               }
 
-                              // NBP (Net Proceeds to Borrower)
-                              if (best.nbp && values['NBP']) {
-                                values['NBP'][col] = `£${Number(best.nbp).toLocaleString('en-GB')}`;
+                              // NPB (Net Proceeds to Borrower)
+                              if (best.nbp && values['NPB']) {
+                                values['NPB'][col] = `£${Number(best.nbp).toLocaleString('en-GB')}`;
                               }
 
-                              // NBP LTV
-                              if (best.nbpLTV != null && values['NBP LTV']) {
-                                values['NBP LTV'][col] = `${Number(best.nbpLTV).toFixed(2)}%`;
+                              // NPB LTV
+                              if (best.nbpLTV != null && values['NPB LTV']) {
+                                values['NPB LTV'][col] = `${Number(best.nbpLTV).toFixed(2)}%`;
                               }
 
                               // LTV
@@ -2025,9 +2027,15 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                 values['APRC'][col] = `${best.aprc}%`;
                               }
 
-                              // ICR
+                              // ICR - check if below min_icr threshold and set warning flag
                               if (best.icr && values['ICR']) {
                                 values['ICR'][col] = `${best.icr}%`;
+                                // Check if ICR is below the minimum threshold (from rate's min_icr, typically 110%)
+                                const icrValue = parseNumber(best.icr);
+                                const minIcr = parseNumber(best.min_icr);
+                                if (minIcr && icrValue < minIcr) {
+                                  icrWarnings[col] = true;
+                                }
                               }
 
                               // Admin Fee
@@ -2267,14 +2275,28 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                 );
                               } else {
                                 // Regular placeholder row - use getLabel for display
+                                // Special handling for ICR row to show warning styling when below threshold
+                                const isIcrRow = rowLabel === 'ICR';
                                 return (
                                   <tr key={rowLabel}>
                                     <td className="vertical-align-top font-weight-600">{getLabel(rowLabel)}</td>
-                                    {columnsHeaders.map((c) => (
-                                      <td key={c} className="vertical-align-top text-align-center">
-                                        {(values && values[rowLabel] && Object.prototype.hasOwnProperty.call(values[rowLabel], c)) ? values[rowLabel][c] : '—'}
-                                      </td>
-                                    ))}
+                                    {columnsHeaders.map((c) => {
+                                      const cellValue = (values && values[rowLabel] && Object.prototype.hasOwnProperty.call(values[rowLabel], c)) ? values[rowLabel][c] : '—';
+                                      // Apply red warning styling for ICR cells below threshold
+                                      const hasIcrWarning = isIcrRow && icrWarnings[c];
+                                      return (
+                                        <td 
+                                          key={c} 
+                                          className="vertical-align-top text-align-center"
+                                          style={hasIcrWarning ? { 
+                                            backgroundColor: 'var(--token-support-error, #da1e28)', 
+                                            color: 'var(--token-text-on-color, #ffffff)' 
+                                          } : undefined}
+                                        >
+                                          {cellValue}
+                                        </td>
+                                      );
+                                    })}
                                   </tr>
                                 );
                               }

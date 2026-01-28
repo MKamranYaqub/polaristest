@@ -2,7 +2,8 @@
 
 **Bug ID:** BUG-002  
 **Date Identified:** January 26, 2026  
-**Status:** Open  
+**Status:** Fixed  
+**Fixed Date:** January 28, 2026  
 **Severity:** Medium  
 **Affected Component:** Bridging Quote PDF Generation  
 **Related Bug:** BUG-001

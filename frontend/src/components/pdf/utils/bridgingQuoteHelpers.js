@@ -158,11 +158,21 @@ export const getResultsByProductType = (results, productType) => {
 };
 
 /**
- * Get the best (first) result for a product type
+ * Get the best result for a product type (highest LTV)
+ * Sorts by LTV descending and returns the highest, which matches the user's actual calculation
  */
 export const getBestResultForProductType = (results, productType) => {
   const filtered = getResultsByProductType(results, productType);
-  return filtered.length > 0 ? filtered[0] : null;
+  if (filtered.length === 0) return null;
+  
+  // Sort by LTV descending and return the highest (user's actual calculation)
+  const sorted = [...filtered].sort((a, b) => {
+    const ltvA = parseNumber(a.gross_ltv || a.ltv_percentage || a.ltv) || 0;
+    const ltvB = parseNumber(b.gross_ltv || b.ltv_percentage || b.ltv) || 0;
+    return ltvB - ltvA; // Descending order
+  });
+  
+  return sorted[0];
 };
 
 // ============================================================================
@@ -188,14 +198,25 @@ export const getLTV = (result) => {
 };
 
 export const getInterestRate = (result) => {
-  // Check multiple fields for rate information, prioritizing initial_rate (saved overridden rate)
-  const rate = parseNumber(result?.initial_rate) ||
-               parseNumber(result?.pay_rate) ||
-               parseNumber(result?.actual_rate) || 
-               parseNumber(result?.annual_rate) ||
-               parseNumber(result?.rate) ||
-               0;
-  return rate.toFixed(2);
+  // Determine product type to decide which rate to show
+  const productName = (result?.product_name || result?.product_kind || result?.product || '').toLowerCase();
+  const isFusion = productName.includes('fusion');
+  
+  if (isFusion) {
+    // Fusion: Show annual rate (margin + BBR combined = initial_rate)
+    const rate = parseNumber(result?.initial_rate) ||
+                 parseNumber(result?.pay_rate) ||
+                 parseNumber(result?.annual_rate) ||
+                 0;
+    return rate.toFixed(2);
+  } else {
+    // Bridge products: Show monthly rate (pay_rate = monthly margin/coupon)
+    const rate = parseNumber(result?.pay_rate) ||
+                 parseNumber(result?.margin_monthly) ||
+                 parseNumber(result?.rate_percent) ||
+                 0;
+    return rate.toFixed(2);
+  }
 };
 
 export const getMonthlyInterest = (result) => {

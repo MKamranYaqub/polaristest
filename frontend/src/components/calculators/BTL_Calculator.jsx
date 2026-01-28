@@ -1894,7 +1894,7 @@ export default function BTLcalculator({
                                       'APRC','Admin Fee','Broker Client Fee','Broker Commission (Proc Fee %)',
                                       'Broker Commission (Proc Fee £)','Deferred Interest %','Deferred Interest £',
                                       'Direct Debit','ERC','Exit Fee','Full Term','Gross Loan','ICR','Initial Term',
-                                      'LTV','Monthly Interest Cost','NBP','NBP LTV','Net Loan','Net LTV','Pay Rate','Product Fee %',
+                                      'LTV','Monthly Interest Cost','NPB','NPB LTV','Net Loan','Net LTV','Pay Rate','Product Fee %',
                                       'Product Fee £','Revert Rate','Revert Rate DD','Rolled Months','Rolled Months Interest',
                                       'Serviced Interest','Serviced Months','Title Insurance Cost','Total Cost to Borrower'
                                     ];
@@ -2104,14 +2104,14 @@ export default function BTLcalculator({
                                           values['Full Term'][colKey] = `${result.fullTerm} months`;
                                         }
 
-                                        // NBP
-                                        if (values['NBP']) {
-                                          values['NBP'][colKey] = formatCurrency(result.nbp, 0);
+                                        // NPB
+                                        if (values['NPB']) {
+                                          values['NPB'][colKey] = formatCurrency(result.nbp, 0);
                                         }
 
-                                        // NBP LTV
-                                        if (values['NBP LTV'] && result.nbpLTV != null) {
-                                          values['NBP LTV'][colKey] = `${result.nbpLTV.toFixed(2)}%`;
+                                        // NPB LTV
+                                        if (values['NPB LTV'] && result.nbpLTV != null) {
+                                          values['NPB LTV'][colKey] = `${result.nbpLTV.toFixed(2)}%`;
                                         }
 
                                         // Revert Rate

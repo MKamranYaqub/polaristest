@@ -218,7 +218,7 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
 
           {/* Interest Rate */}
           <View style={btlQuoteStyles.tableRow}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Interest Rate p.a.</Text>
+            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Interest Rate</Text>
             {displayProductTypes.map((productType, index) => {
               const result = getResultForColumn(productType);
               return (

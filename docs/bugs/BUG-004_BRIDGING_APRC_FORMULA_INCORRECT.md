@@ -116,7 +116,8 @@ APRC = 15.79% ✓
 
 ## Status
 - **Severity**: Medium
-- **Status**: Open - Investigation Complete
+- **Status**: Fixed
+- **Fixed Date**: January 28, 2026
 - **Discovered**: 2026-01-26
 - **Case Reference**: MFS001117
 - **Verified**: 2026-01-26 (formula confirmed against Excel spreadsheet)

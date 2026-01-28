@@ -118,8 +118,22 @@ export default function SaveQuoteButton({
           return sanitizedArray.length > 0 ? sanitizedArray : undefined;
         }
 
+        // Fields that should preserve null values (to clear database values when reverted)
+        const fieldsToPreserveNull = [
+          'rates_overrides',
+          'product_fee_overrides',
+          'rolled_months_per_column',
+          'deferred_interest_per_column'
+        ];
+
         if (input && typeof input === 'object') {
           return Object.entries(input).reduce((acc, [key, value]) => {
+            // Preserve null for specific fields that need to clear database values
+            if (value === null && fieldsToPreserveNull.includes(key)) {
+              acc[key] = null;
+              return acc;
+            }
+            
             const sanitized = Array.isArray(value) || (value && typeof value === 'object' && !(value instanceof Date))
               ? sanitizeObject(value)
               : sanitizeValue(value);

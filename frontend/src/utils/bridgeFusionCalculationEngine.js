@@ -561,9 +561,12 @@ export class BridgeFusionCalculator {
       : 0;
 
     // === NET PROCEEDS ===
+    // Net Loan = Gross Loan - Arrangement Fee - Rolled Interest - Deferred Interest
+    // Note: Proc Fee, Broker Fees, Admin Fee, and Title Insurance are separate charges
+    // and should NOT be deducted from Net Loan (they are not retained from the loan)
     const netLoanGBP = Math.max(
       0,
-      gross - arrangementFeeGBP - rolledInterestGBP - deferredGBP - procFeeGBP - brokerFeeGBP - brokerClientFeeGBP - adminFeeAmt - (titleInsuranceCost || 0)
+      gross - arrangementFeeGBP - rolledInterestGBP - deferredGBP
     );
 
     // === MONTHLY PAYMENT ===
@@ -579,13 +582,15 @@ export class BridgeFusionCalculator {
     const netLTV = pv > 0 ? (netLoanGBP / pv) * 100 : 0;
 
     // === APR/APRC CALCULATION ===
-    // APRC = Annual Percentage Rate of Charge
-    // Formula: ((Total Repayable / Net Proceeds) - 1) / (Term in years) * 100
-    const totalAmountRepayable = gross + totalInterest;
-    const aprcAnnual = netLoanGBP > 0 
-      ? ((totalAmountRepayable / netLoanGBP - 1) / (term / 12)) * 100
+    // APRC = (Additional Broker Fee + Arrangement Fee + Total Interest) / Net Loan / Term (months) * 12 * 100
+    // This represents the annual cost as a percentage of the net loan received
+    // Note: "Additional Broker Fee" in Excel (1% proc fee) = procFeeGBP in code
+    const totalCreditCost = procFeeGBP + arrangementFeeGBP + totalInterest;
+    const aprcAnnual = netLoanGBP > 0 && term > 0
+      ? (totalCreditCost / netLoanGBP / term * 12) * 100
       : 0;
     const aprcMonthly = aprcAnnual / 12;
+    const totalAmountRepayable = gross + totalInterest;
 
     // === ICR (Interest Coverage Ratio) - Fusion only ===
     // Formula: ((rent + topslice) * 24) / (((yearly_rate - deferred) * grossloan * 2) - rolled_interest)
