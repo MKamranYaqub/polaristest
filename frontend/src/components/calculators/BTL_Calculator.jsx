@@ -757,6 +757,7 @@ export default function BTLcalculator({
         isRetentionRow,
         passesRetentionAndLtv,
         max_ltv: r.max_ltv ?? r.maxltv ?? r.max_LTV ?? r.maxLTV ?? null,
+        rowMaxLtv, // parsed numeric value
       });
     }
 

@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Property Portfolio & Blended Rate Calculator - Business Proposal</title>
+    <style>
+        :root {
+            --primary-color: #0070d2;
+            --primary-dark: #005fb2;
+            --secondary-color: #1589ee;
+            --success-color: #04844b;
+            --warning-color: #ff9f00;
+            --error-color: #c23934;
+            --text-primary: #080707;
+            --text-secondary: #444444;
+            --background: #f4f6f9;
+            --surface: #ffffff;
+            --border: #dddbda;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 4px 6px var(--shadow);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .header .version-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 1rem;
+            border-radius: 20px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        /* Navigation */
+        .nav-container {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            overflow-x: auto;
+        }
+
+        .nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 1rem 1.25rem;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .nav a:hover, .nav a.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            background: rgba(0, 112, 210, 0.05);
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Sections */
+        .section {
+            background: var(--surface);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px var(--shadow);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .section-header:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-header h2 .icon {
+            font-size: 1.5rem;
+        }
+
+        .section-header .toggle-icon {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            transition: transform 0.3s;
+        }
+
+        .section.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            padding: 1.5rem;
+            display: block;
+        }
+
+        .section.collapsed .section-content {
+            display: none;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .card h3 {
+            color: var(--primary-color);
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1rem 0;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: linear-gradient(135deg, #f1f3f5 0%, #e9ecef 100%);
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+
+        tr:hover td {
+            background: rgba(0, 112, 210, 0.03);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-highlight {
+            background: rgba(0, 112, 210, 0.08) !important;
+            font-weight: 600;
+        }
+
+        /* Scenario Tabs */
+        .scenario-tabs {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .scenario-tab {
+            padding: 0.75rem 1.25rem;
+            border: 2px solid var(--border);
+            border-radius: 25px;
+            background: var(--surface);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .scenario-tab:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .scenario-tab.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .scenario-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .scenario-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Calculation Box */
+        .calc-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 1px solid #90caf9;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1rem 0;
+        }
+
+        .calc-box h4 {
+            color: #1565c0;
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .calc-box .formula {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .calc-result {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed #90caf9;
+        }
+
+        .calc-result-item {
+            text-align: center;
+        }
+
+        .calc-result-item label {
+            display: block;
+            font-size: 0.8rem;
+            color: #1565c0;
+            margin-bottom: 0.25rem;
+        }
+
+        .calc-result-item .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0d47a1;
+        }
+
+        /* UI Mockup */
+        .ui-mockup {
+            background: #1e1e1e;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 1.5rem 0;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        .ui-mockup-header {
+            background: #333;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ui-mockup-header .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .ui-mockup-header .dot.red { background: #ff5f56; }
+        .ui-mockup-header .dot.yellow { background: #ffbd2e; }
+        .ui-mockup-header .dot.green { background: #27ca40; }
+
+        .ui-mockup-content {
+            padding: 1.5rem;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+        }
+
+        .ui-mockup-content .header-row {
+            color: #64b5f6;
+            border-bottom: 1px solid #444;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .ui-mockup-content .data-row {
+            color: #a5d6a7;
+        }
+
+        .ui-mockup-content .total-row {
+            color: #fff59d;
+            border-top: 1px solid #444;
+            padding-top: 0.5rem;
+            margin-top: 0.5rem;
+            font-weight: bold;
+        }
+
+        .ui-mockup-content .warning-row {
+            color: #ffb74d;
+            margin-top: 1rem;
+        }
+
+        .ui-mockup-content .button-row {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .ui-mockup-content .mock-btn {
+            background: #4caf50;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .ui-mockup-content .mock-btn.secondary {
+            background: #2196f3;
+        }
+
+        /* Rate Table */
+        .rate-table th {
+            text-align: center;
+        }
+
+        .rate-table td {
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+
+        .rate-table .ltv-col {
+            text-align: left;
+            font-weight: 600;
+            background: #f8f9fa;
+        }
+
+        /* Questions Section */
+        .question-card {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border: 1px solid #ffcc80;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .question-card h4 {
+            color: #e65100;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .question-card p {
+            color: #bf360c;
+            font-size: 0.95rem;
+        }
+
+        .question-card .answer-box {
+            margin-top: 1rem;
+            background: white;
+            border: 1px dashed #ffcc80;
+            border-radius: 4px;
+            padding: 1rem;
+            min-height: 60px;
+            color: #999;
+            font-style: italic;
+        }
+
+        /* Phase Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--primary-color), var(--success-color));
+            border-radius: 3px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 2rem;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.65rem;
+            top: 0.25rem;
+            width: 16px;
+            height: 16px;
+            background: var(--primary-color);
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .timeline-item.mvp::before {
+            background: var(--success-color);
+            width: 20px;
+            height: 20px;
+            left: -1.75rem;
+        }
+
+        .timeline-item h4 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-item .effort {
+            display: inline-block;
+            background: var(--primary-color);
+            color: white;
+            padding: 0.2rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+
+        .timeline-item.mvp .effort {
+            background: var(--success-color);
+        }
+
+        .timeline-item ul {
+            margin-top: 0.5rem;
+            margin-left: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .timeline-item li {
+            margin-bottom: 0.25rem;
+        }
+
+        /* Approval Section */
+        .approval-table {
+            margin-top: 1.5rem;
+        }
+
+        .approval-table td {
+            padding: 1rem;
+        }
+
+        .approval-table .signature-line {
+            border-bottom: 1px solid #999;
+            min-width: 150px;
+            display: inline-block;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .nav a {
+                padding: 0.75rem 1rem;
+                font-size: 0.85rem;
+            }
+
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .scenario-tabs {
+                justify-content: center;
+            }
+
+            .calc-result {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .nav-container {
+                display: none;
+            }
+
+            .section {
+                break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+
+            .section.collapsed .section-content {
+                display: block;
+            }
+
+            .section-header .toggle-icon {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>Multi-Property Portfolio & Blended Rate Calculator</h1>
+        <p class="subtitle">Business Requirements Document</p>
+        <span class="version-badge">Version 1.0 | 27 January 2026 | Pending Approval</span>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav-container">
+        <div class="nav">
+            <a href="#summary" class="active">Executive Summary</a>
+            <a href="#objectives">Objectives</a>
+            <a href="#overview">Feature Overview</a>
+            <a href="#scenarios">Scenarios</a>
+            <a href="#rates">Rate Tables</a>
+            <a href="#ui">User Interface</a>
+            <a href="#fields">Data Fields</a>
+            <a href="#phases">Implementation</a>
+            <a href="#questions">Questions</a>
+            <a href="#approval">Approval</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Executive Summary -->
+        <section id="summary" class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2><span class="icon">📋</span> Executive Summary</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">
+                    This document outlines the proposed implementation of a <strong>Multi-Property Portfolio section</strong> within the Bridging Calculator. 
+                    The feature will enable brokers to input multiple properties in a portfolio deal and <strong>automatically calculate blended rates</strong> 
+                    based on property values, LTV tiers, charge types, and property classifications.
+                </p>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <h3>🎯 Primary Goal</h3>
+                        <p>Enable brokers to quickly and accurately calculate multi-property bridging loans with automated rate blending</p>
+                    </div>
+                    <div class="card">
+                        <h3>⚡ Key Benefit</h3>
+                        <p>Eliminate manual rate calculations for complex portfolio scenarios, reducing errors and turnaround time</p>
+                    </div>
+                    <div class="card">
+                        <h3>📊 Output</h3>
+                        <p>Blended Variable and Fixed rates that automatically flow into the calculator results</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Business Objectives -->
+        <section id="objectives" class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2><span class="icon">🎯</span> Business Objectives</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <div class="card-grid">
+                    <div class="card">
+                        <h3>📈 Streamline Portfolio Deals</h3>
+                        <p>Enable brokers to quickly calculate multi-property bridging loans without manual spreadsheet work</p>
+                    </div>
+                    <div class="card">
+                        <h3>🎯 Accurate Rate Blending</h3>
+                        <p>Automatically calculate weighted average rates across mixed portfolios based on property values</p>
+                    </div>
+                    <div class="card">
+                        <h3>✅ Regulatory Compliance</h3>
+                        <p>Ensure correct rate application based on property type, charge position, and LTV tier</p>
+                    </div>
+                    <div class="card">
+                        <h3>🛡️ Reduced Manual Errors</h3>
+                        <p>Eliminate calculation mistakes that can occur with complex multi-property scenarios</p>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Expected Benefits</h3>
+                <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
+                    <li>Faster quote turnaround for portfolio clients</li>
+                    <li>Consistent rate application across all deals</li>
+                    <li>Improved accuracy in multi-property scenarios</li>
+                    <li>Better visibility of per-property contributions to overall rate</li>
+                    <li>Clear audit trail of how blended rate was calculated</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Feature Overview -->
+        <section id="overview" class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2><span class="icon">🔍</span> Feature Overview</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <h3 style="margin-bottom: 1rem;">Proposed Functionality</h3>
+                <div class="card-grid">
+                    <div class="card">
+                        <h3>📝 Property Entry</h3>
+                        <p>Collapsible section for entering multiple property details when "Multi Property Loan?" is set to Yes</p>
+                    </div>
+                    <div class="card">
+                        <h3>🔢 Per-Property Calculations</h3>
+                        <p>Each property shows its own LTV, applicable rate (Variable & Fixed), and weight in portfolio</p>
+                    </div>
+                    <div class="card">
+                        <h3>⚖️ Blended Rate Display</h3>
+                        <p>Automatic calculation of weighted average rates based on property value contributions</p>
+                    </div>
+                    <div class="card">
+                        <h3>🔗 Calculator Integration</h3>
+                        <p>One-click push of blended rates to the main results table for loan calculations</p>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">How It Works</h3>
+                <div class="calc-box">
+                    <h4>Blended Rate Formula</h4>
+                    <div class="formula">
+                        Blended Rate = Σ (Property Value ÷ Total Portfolio Value) × Rate for that Property
+                    </div>
+                    <p style="margin-top: 0.75rem; font-size: 0.9rem;">
+                        Each property's contribution to the blended rate is proportional to its value in the portfolio. 
+                        Properties with higher values have more influence on the final rate.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scenarios -->
+        <section id="scenarios" class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2><span class="icon">📊</span> Detailed Scenarios</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <div class="scenario-tabs">
+                    <button class="scenario-tab active" onclick="showScenario(1)">Scenario 1: Simple</button>
+                    <button class="scenario-tab" onclick="showScenario(2)">Scenario 2: Different LTVs</button>
+                    <button class="scenario-tab" onclick="showScenario(3)">Scenario 3: Mixed Types</button>
+                    <button class="scenario-tab" onclick="showScenario(4)">Scenario 4: Mixed Charges</button>
+                    <button class="scenario-tab" onclick="showScenario(5)">Scenario 5: Complex</button>
+                </div>
+
+                <!-- Scenario 1 -->
+                <div id="scenario1" class="scenario-content active">
+                    <h3>Scenario 1: Single Property Type, Single Charge Type (Simple)</h3>
+                    <p style="color: var(--text-secondary); margin: 1rem 0;">All properties are the same type and charge, with the same LTV tier.</p>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                    <th>Gross Loan</th>
+                                    <th>LTV</th>
+                                    <th>Charge</th>
+                                    <th>Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>123 High Street</td>
+                                    <td>£500,000</td>
+                                    <td>£350,000</td>
+                                    <td>70%</td>
+                                    <td>1st</td>
+                                    <td>Residential</td>
+                                </tr>
+                                <tr>
+                                    <td>456 Oak Lane</td>
+                                    <td>£750,000</td>
+                                    <td>£525,000</td>
+                                    <td>70%</td>
+                                    <td>1st</td>
+                                    <td>Residential</td>
+                                </tr>
+                                <tr>
+                                    <td>789 Elm Road</td>
+                                    <td>£250,000</td>
+                                    <td>£175,000</td>
+                                    <td>70%</td>
+                                    <td>1st</td>
+                                    <td>Residential</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="calc-box">
+                        <h4>Calculation</h4>
+                        <p>All properties use the same rate (70% LTV tier for Residential 1st Charge), so no blending is needed.</p>
+                        <div class="calc-result">
+                            <div class="calc-result-item">
+                                <label>Blended Variable Rate</label>
+                                <span class="value">0.50%</span>
+                            </div>
+                            <div class="calc-result-item">
+                                <label>Blended Fixed Rate</label>
+                                <span class="value">0.85%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scenario 2 -->
+                <div id="scenario2" class="scenario-content">
+                    <h3>Scenario 2: Same Property Type, Different LTV Tiers</h3>
+                    <p style="color: var(--text-secondary); margin: 1rem 0;">Properties have different LTV levels, requiring weighted rate blending.</p>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                    <th>Gross Loan</th>
+                                    <th>LTV</th>
+                                    <th>Weight</th>
+                                    <th>Variable Rate</th>
+                                    <th>Fixed Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Property A</td>
+                                    <td>£1,000,000</td>
+                                    <td>£600,000</td>
+                                    <td>60%</td>
+                                    <td>50%</td>
+                                    <td>0.40%</td>
+                                    <td>0.75%</td>
+                                </tr>
+                                <tr>
+                                    <td>Property B</td>
+                                    <td>£600,000</td>
+                                    <td>£420,000</td>
+                                    <td>70%</td>
+                                    <td>30%</td>
+                                    <td>0.50%</td>
+                                    <td>0.85%</td>
+                                </tr>
+                                <tr>
+                                    <td>Property C</td>
+                                    <td>£400,000</td>
+                                    <td>£300,000</td>
+                                    <td>75%</td>
+                                    <td>20%</td>
+                                    <td>0.60%</td>
+                                    <td>0.95%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="calc-box">
+                        <h4>Blended Calculation</h4>
+                        <div class="formula">Variable: (50% × 0.40%) + (30% × 0.50%) + (20% × 0.60%) = <strong>0.47%</strong></div>
+                        <div class="formula">Fixed: (50% × 0.75%) + (30% × 0.85%) + (20% × 0.95%) = <strong>0.82%</strong></div>
+                        <div class="calc-result">
+                            <div class="calc-result-item">
+                                <label>Blended Variable Rate</label>
+                                <span class="value">0.47%</span>
+                            </div>
+                            <div class="calc-result-item">
+                                <label>Blended Fixed Rate</label>
+                                <span class="value">0.82%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scenario 3 -->
+                <div id="scenario3" class="scenario-content">
+                    <h3>Scenario 3: Mixed Property Types (Residential + Commercial)</h3>
+                    <p style="color: var(--text-secondary); margin: 1rem 0;">Portfolio contains both residential and commercial properties with different rate structures.</p>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                    <th>LTV</th>
+                                    <th>Charge</th>
+                                    <th>Type</th>
+                                    <th>Weight</th>
+                                    <th>Variable</th>
+                                    <th>Fixed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Office Building</td>
+                                    <td>£2,000,000</td>
+                                    <td>60%</td>
+                                    <td>1st</td>
+                                    <td>Commercial</td>
+                                    <td>57%</td>
+                                    <td>0.45%</td>
+                                    <td>0.80%</td>
+                                </tr>
+                                <tr>
+                                    <td>Residential Flat</td>
+                                    <td>£1,500,000</td>
+                                    <td>70%</td>
+                                    <td>1st</td>
+                                    <td>Residential</td>
+                                    <td>43%</td>
+                                    <td>0.50%</td>
+                                    <td>0.85%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="calc-box">
+                        <h4>Blended Calculation</h4>
+                        <div class="formula">Variable: (57% × 0.45%) + (43% × 0.50%) = <strong>0.47%</strong></div>
+                        <div class="formula">Fixed: (57% × 0.80%) + (43% × 0.85%) = <strong>0.82%</strong></div>
+                        <div class="calc-result">
+                            <div class="calc-result-item">
+                                <label>Blended Variable Rate</label>
+                                <span class="value">0.47%</span>
+                            </div>
+                            <div class="calc-result-item">
+                                <label>Blended Fixed Rate</label>
+                                <span class="value">0.82%</span>
+                            </div>
+                        </div>
+                        <p style="margin-top: 1rem; padding: 0.75rem; background: #fff3e0; border-radius: 4px; color: #e65100;">
+                            ⚠️ <strong>Mixed Portfolio:</strong> Residential (43%) + Commercial (57%)
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Scenario 4 -->
+                <div id="scenario4" class="scenario-content">
+                    <h3>Scenario 4: Mixed Charge Types (1st + 2nd Charge)</h3>
+                    <p style="color: var(--text-secondary); margin: 1rem 0;">Portfolio includes both first charge and second charge properties.</p>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                    <th>LTV</th>
+                                    <th>Charge</th>
+                                    <th>Type</th>
+                                    <th>Weight</th>
+                                    <th>Variable</th>
+                                    <th>Fixed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Main Property</td>
+                                    <td>£800,000</td>
+                                    <td>70%</td>
+                                    <td>1st</td>
+                                    <td>Residential</td>
+                                    <td>53%</td>
+                                    <td>0.50%</td>
+                                    <td>0.85%</td>
+                                </tr>
+                                <tr>
+                                    <td>Additional Security</td>
+                                    <td>£700,000</td>
+                                    <td>60%</td>
+                                    <td>2nd</td>
+                                    <td>Residential</td>
+                                    <td>47%</td>
+                                    <td>0.45%</td>
+                                    <td>0.80%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="calc-box">
+                        <h4>Blended Calculation</h4>
+                        <p style="margin-bottom: 0.75rem;"><strong>Key Rule:</strong> 2nd Charge properties use the dedicated 2nd Charge rate, regardless of property type.</p>
+                        <div class="formula">Variable: (53% × 0.50%) + (47% × 0.45%) = <strong>0.48%</strong></div>
+                        <div class="formula">Fixed: (53% × 0.85%) + (47% × 0.80%) = <strong>0.83%</strong></div>
+                        <div class="calc-result">
+                            <div class="calc-result-item">
+                                <label>Blended Variable Rate</label>
+                                <span class="value">0.48%</span>
+                            </div>
+                            <div class="calc-result-item">
+                                <label>Blended Fixed Rate</label>
+                                <span class="value">0.83%</span>
+                            </div>
+                        </div>
+                        <p style="margin-top: 1rem; padding: 0.75rem; background: #fff3e0; border-radius: 4px; color: #e65100;">
+                            ⚠️ <strong>Mixed Charges:</strong> 1st Charge (53%) + 2nd Charge (47%)
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Scenario 5 -->
+                <div id="scenario5" class="scenario-content">
+                    <h3>Scenario 5: Fully Mixed Portfolio (Complex)</h3>
+                    <p style="color: var(--text-secondary); margin: 1rem 0;">Complex portfolio with mixed property types AND mixed charge types.</p>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                    <th>Gross Loan</th>
+                                    <th>LTV</th>
+                                    <th>Charge</th>
+                                    <th>Type</th>
+                                    <th>Weight</th>
+                                    <th>Variable</th>
+                                    <th>Fixed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Residential House</td>
+                                    <td>£600,000</td>
+                                    <td>£450,000</td>
+                                    <td>75%</td>
+                                    <td>1st</td>
+                                    <td>Residential</td>
+                                    <td>30%</td>
+                                    <td>0.60%</td>
+                                    <td>0.95%</td>
+                                </tr>
+                                <tr>
+                                    <td>Commercial Unit</td>
+                                    <td>£900,000</td>
+                                    <td>£540,000</td>
+                                    <td>60%</td>
+                                    <td>1st</td>
+                                    <td>Commercial</td>
+                                    <td>45%</td>
+                                    <td>0.45%</td>
+                                    <td>0.80%</td>
+                                </tr>
+                                <tr>
+                                    <td>Residential Flat</td>
+                                    <td>£500,000</td>
+                                    <td>£300,000</td>
+                                    <td>60%</td>
+                                    <td>2nd</td>
+                                    <td>Residential</td>
+                                    <td>25%</td>
+                                    <td>0.45%</td>
+                                    <td>0.80%</td>
+                                </tr>
+                                <tr class="table-highlight">
+                                    <td><strong>TOTAL</strong></td>
+                                    <td><strong>£2,000,000</strong></td>
+                                    <td><strong>£1,290,000</strong></td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>100%</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="calc-box">
+                        <h4>Blended Calculation</h4>
+                        <div class="formula">Variable: (30% × 0.60%) + (45% × 0.45%) + (25% × 0.45%) = <strong>0.49%</strong></div>
+                        <div class="formula">Fixed: (30% × 0.95%) + (45% × 0.80%) + (25% × 0.80%) = <strong>0.85%</strong></div>
+                        <div class="calc-result">
+                            <div class="calc-result-item">
+                                <label>Blended Variable Rate</label>
+                                <span class="value">0.49%</span>
+                            </div>
+                            <div class="calc-result-item">
+                                <label>Blended Fixed Rate</label>
+                                <span class="value">0.85%</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <p style="padding: 0.5rem 0.75rem; background: #fff3e0; border-radius: 4px; color: #e65100; margin-bottom: 0.5rem;">
+                                ⚠️ <strong>Mixed Property Types:</strong> Residential (55%) + Commercial (45%)
+                            </p>
+                            <p style="padding: 0.5rem 0.75rem; background: #fff3e0; border-radius: 4px; color: #e65100;">
+                                ⚠️ <strong>Mixed Charge Types:</strong> 1st Charge (75%) + 2nd Charge (25%)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Rate Tables -->
+        <section id="rates" class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2><span class="icon">💰</span> Rate Table Reference</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <h3 style="margin-bottom: 1rem;">Variable Bridging Rates (Monthly)</h3>
+                <div class="table-container">
+                    <table class="rate-table">
+                        <thead>
+                            <tr>
+                                <th class="ltv-col">LTV Tier</th>
+                                <th>Resi Single</th>
+                                <th>Resi Large</th>
+                                <th>Resi Portfolio</th>
+                                <th>Dev Exit</th>
+                                <th>Commercial</th>
+                                <th>Commercial Large</th>
+                                <th>2nd Charge</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="ltv-col">≤60%</td>
+                                <td>0.40%</td>
+                                <td>0.50%</td>
+                                <td>0.45%</td>
+                                <td>0.45%</td>
+                                <td>0.45%</td>
+                                <td>0.50%</td>
+                                <td>0.45%</td>
+                            </tr>
+                            <tr>
+                                <td class="ltv-col">≤70%</td>
+                                <td>0.50%</td>
+                                <td>0.60%</td>
+                                <td>0.55%</td>
+                                <td>0.55%</td>
+                                <td>0.55%</td>
+                                <td>0.60%</td>
+                                <td>0.55%</td>
+                            </tr>
+                            <tr>
+                                <td class="ltv-col">≤75%</td>
+                                <td>0.60%</td>
+                                <td>0.70%</td>
+                                <td>0.65%</td>
+                                <td>0.65%</td>
+                                <td>0.65%</td>
+                                <td>0.70%</td>
+                                <td>Override</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin: 2rem 0 1rem;">Fixed Bridging Rates (Monthly)</h3>
+                <div class="table-container">
+                    <table class="rate-table">
+                        <thead>
+                            <tr>
+                                <th class="ltv-col">LTV Tier</th>
+                                <th>Resi Single</th>
+                                <th>Resi Large</th>
+                                <th>Resi Portfolio</th>
+                                <th>Dev Exit</th>
+                                <th>Commercial</th>
+                                <th>Commercial Large</th>
+                                <th>2nd Charge</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="ltv-col">≤60%</td>
+                                <td>0.75%</td>
+                                <td>0.85%</td>
+                                <td>0.80%</td>
+                                <td>0.80%</td>
+                                <td>0.80%</td>
+                                <td>0.85%</td>
+                                <td>0.80%</td>
+                            </tr>
+                            <tr>
+                                <td class="ltv-col">≤70%</td>
+                                <td>0.85%</td>
+                                <td>0.95%</td>
+                                <td>0.90%</td>
+                                <td>0.90%</td>
+                                <td>0.90%</td>
+                                <td>0.95%</td>
+                                <td>0.90%</td>
+                            </tr>
+                            <tr>
+                                <td class="ltv-col">≤75%</td>
+                                <td>0.95%</td>
+                                <td>1.05%</td>
+                                <td>1.00%</td>
+                                <td>1.00%</td>
+                                <td>1.00%</td>
+                                <td>1.05%</td>
+                                <td>Override</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin: 2rem 0 1rem;">Maximum LTV by Type</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Property Type</th>
+                                <th>Max LTV (1st Charge)</th>
+                                <th>Max LTV (2nd Charge)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Residential</td>
+                                <td>75%</td>
+                                <td>70%</td>
+                            </tr>
+                            <tr>
+                                <td>Commercial</td>
+                                <td>70%</td>
+                                <td>65%</td>
+                            </tr>
+                            <tr>
+                                <td>Semi-Commercial</td>
+                                <td>70%</td>
+                                <td>65%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- User Interface -->
+        <section id="ui" class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2><span class="icon">🖥️</span> User Interface Design</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <h3 style="margin-bottom: 1rem;">Multi-Property Table (Expanded View)</h3>
+                
+                <div class="ui-mockup">
+                    <div class="ui-mockup-header">
+                        <span class="dot red"></span>
+                        <span class="dot yellow"></span>
+                        <span class="dot green"></span>
+                        <span style="margin-left: 1rem; color: #999; font-size: 0.8rem;">Bridging Calculator - Multi-Property Details</span>
+                    </div>
+                    <div class="ui-mockup-content">
+                        <div class="header-row">
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│ MULTI-PROPERTY DETAILS                                              [▼ Collapse]    │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+                        </div>
+                        <div class="header-row">
+│ # │ Address        │ Type        │ Value       │ Charge │ LTV   │ Var   │ Fixed  │
+├───┼────────────────┼─────────────┼─────────────┼────────┼───────┼───────┼────────┤
+                        </div>
+                        <div class="data-row">
+│ 1 │ 123 High St    │ Residential │ £500,000    │ 1st    │ 70%   │ 0.50% │ 0.85%  │
+│ 2 │ 456 Oak Lane   │ Commercial  │ £900,000    │ 1st    │ 60%   │ 0.45% │ 0.80%  │
+│ 3 │ 789 Elm Road   │ Residential │ £600,000    │ 2nd    │ 60%   │ 0.45% │ 0.80%  │
+                        </div>
+                        <div class="total-row">
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│ TOTALS                                                                               │
+│   Total Property Value:  £2,000,000                                                 │
+│   Total Gross Loan:      £1,310,000                                                 │
+│   Blended LTV:           65.5%                                                      │
+│   Blended Variable Rate: 0.47%                                                      │
+│   Blended Fixed Rate:    0.82%                                                      │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+                        </div>
+                        <div class="warning-row">
+  ⚠️ Mixed Portfolio: Residential (55%) + Commercial (45%)
+  ⚠️ Mixed Charges: 1st Charge (70%) + 2nd Charge (30%)
+                        </div>
+                        <div class="button-row">
+                            <span class="mock-btn">+ Add Property</span>
+                            <span class="mock-btn secondary">Use Total Values</span>
+                            <span class="mock-btn secondary">Use Blended Variable</span>
+                            <span class="mock-btn secondary">Use Blended Fixed</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 style="margin: 2rem 0 1rem;">Button Actions</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Button</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>+ Add Property</strong></td>
+                                <td>Add a new row to the property table for entering another property</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Use Total Values</strong></td>
+                                <td>Push total Property Value, Gross Loan, and First Charge Amount to the Loan Details section</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Use Blended Variable</strong></td>
+                                <td>Apply the calculated blended variable rate to the Variable Bridge column in Results</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Use Blended Fixed</strong></td>
+                                <td>Apply the calculated blended fixed rate to the Fixed Bridge column in Results</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Fields -->
+        <section id="fields" class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2><span class="icon">📝</span> Data Fields</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <h3 style="margin-bottom: 1rem;">Per-Property Fields (User Input)</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Property Address</strong></td>
+                                <td>Text</td>
+                                <td>Full property address</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Property Type</strong></td>
+                                <td>Dropdown</td>
+                                <td>Residential / Commercial / Semi-Commercial</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Property Value</strong></td>
+                                <td>Currency</td>
+                                <td>Market value of property</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Charge Type</strong></td>
+                                <td>Dropdown</td>
+                                <td>First Charge / Second Charge</td>
+                            </tr>
+                            <tr>
+                                <td><strong>First Charge Amount</strong></td>
+                                <td>Currency</td>
+                                <td>Only for 2nd charge — existing 1st charge balance</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin: 2rem 0 1rem;">Per-Property Fields (Auto-Calculated)</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Calculation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Gross Loan</strong></td>
+                                <td>Based on max LTV for property type and charge type</td>
+                            </tr>
+                            <tr>
+                                <td><strong>LTV %</strong></td>
+                                <td>Gross Loan ÷ Property Value</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Weight %</strong></td>
+                                <td>Property Value ÷ Total Portfolio Value</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Variable Rate</strong></td>
+                                <td>Lookup from rate table based on LTV tier and property/charge type</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Fixed Rate</strong></td>
+                                <td>Lookup from rate table based on LTV tier and property/charge type</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Variable Contribution</strong></td>
+                                <td>Weight × Variable Rate</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Fixed Contribution</strong></td>
+                                <td>Weight × Fixed Rate</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin: 2rem 0 1rem;">Optional Extended Fields (Future Phase)</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Type</th>
+                                <th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Postcode</td>
+                                <td>Text</td>
+                                <td>For postcode lookup integration</td>
+                            </tr>
+                            <tr>
+                                <td>Title Number</td>
+                                <td>Text</td>
+                                <td>Land Registry reference</td>
+                            </tr>
+                            <tr>
+                                <td>Proprietor</td>
+                                <td>Text</td>
+                                <td>Property owner name</td>
+                            </tr>
+                            <tr>
+                                <td>Purchase Date</td>
+                                <td>Date</td>
+                                <td>When property was acquired</td>
+                            </tr>
+                            <tr>
+                                <td>Purchase Price</td>
+                                <td>Currency</td>
+                                <td>Original purchase price</td>
+                            </tr>
+                            <tr>
+                                <td>Current Lender</td>
+                                <td>Text</td>
+                                <td>Existing lender name</td>
+                            </tr>
+                            <tr>
+                                <td>To Be Discharged</td>
+                                <td>Yes/No</td>
+                                <td>Auto-calculated for 1st charges</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin: 2rem 0 1rem;">Integration with Calculator</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Multi-Property Field</th>
+                                <th>→ Pushes To</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Total Property Value</td>
+                                <td>Property Value in Loan Details</td>
+                            </tr>
+                            <tr>
+                                <td>Total Gross Loan</td>
+                                <td>Gross Loan in Loan Details</td>
+                            </tr>
+                            <tr>
+                                <td>Total 2nd Charge Outstanding</td>
+                                <td>First Charge Value in Loan Details</td>
+                            </tr>
+                            <tr>
+                                <td>Blended Variable Rate</td>
+                                <td>Rate Override for Variable Bridge column in Results</td>
+                            </tr>
+                            <tr>
+                                <td>Blended Fixed Rate</td>
+                                <td>Rate Override for Fixed Bridge column in Results</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Edge Cases -->
+        <section id="edge" class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2><span class="icon">⚠️</span> Edge Cases & Validation</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <h3 style="margin-bottom: 1rem;">Validation Rules</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rule</th>
+                                <th>Error Message</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Property Value ≤ 0</td>
+                                <td>"Property value must be greater than zero"</td>
+                            </tr>
+                            <tr>
+                                <td>LTV exceeds maximum for type</td>
+                                <td>"LTV of X% exceeds maximum Y% for [Type]"</td>
+                            </tr>
+                            <tr>
+                                <td>No properties entered</td>
+                                <td>"At least one property is required"</td>
+                            </tr>
+                            <tr>
+                                <td>Negative First Charge Amount</td>
+                                <td>"First charge amount cannot be negative"</td>
+                            </tr>
+                            <tr>
+                                <td>1st charge with First Charge Amount</td>
+                                <td>"First charge properties should not have existing charge"</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin: 2rem 0 1rem;">Edge Case Handling</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Case</th>
+                                <th>Handling</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Single property</td>
+                                <td>Calculate as normal, no blending needed — rate equals property rate</td>
+                            </tr>
+                            <tr>
+                                <td>All same LTV tier</td>
+                                <td>Blended rate equals tier rate (no variation)</td>
+                            </tr>
+                            <tr>
+                                <td>2nd charge at 75% LTV</td>
+                                <td>Show warning — may require rate override</td>
+                            </tr>
+                            <tr>
+                                <td>Property Value = 0</td>
+                                <td>Exclude from weight calculation</td>
+                            </tr>
+                            <tr>
+                                <td>Duplicate properties</td>
+                                <td>Allow — user may have multiple units at same address</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Implementation Phases -->
+        <section id="phases" class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2><span class="icon">📅</span> Implementation Phases</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <div class="timeline">
+                    <div class="timeline-item mvp">
+                        <h4>Phase 1: Core Functionality (MVP) <span class="effort">8-10 hours</span></h4>
+                        <ul>
+                            <li>Multi-Property section visible when "Multi Property Loan?" = Yes</li>
+                            <li>Add LTV and Rate columns to property table</li>
+                            <li>Implement blended rate calculation for Variable and Fixed</li>
+                            <li>Add "Use Blended Rate" buttons to push rates to Results</li>
+                            <li>Basic validation</li>
+                        </ul>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h4>Phase 2: Extended Fields <span class="effort">4-5 hours</span></h4>
+                        <ul>
+                            <li>Add Postcode, Title Number, Proprietor fields</li>
+                            <li>Split Property Value into Client Value and Actual Value</li>
+                            <li>Add Purchase Date and Purchase Price</li>
+                            <li>Add Current Lender field</li>
+                        </ul>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h4>Phase 3: Database & Persistence <span class="effort">3-4 hours</span></h4>
+                        <ul>
+                            <li>Update database schema for new fields</li>
+                            <li>Save/load multi-property data with quotes</li>
+                            <li>Migration script for existing quotes</li>
+                        </ul>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h4>Phase 4: PDF Integration <span class="effort">4-5 hours</span></h4>
+                        <ul>
+                            <li>Update Quote PDF to show property list</li>
+                            <li>Update DIP PDF with full property details</li>
+                            <li>Per-property rate breakdown in documents</li>
+                        </ul>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h4>Phase 5: Advanced Features <span class="effort">6-8 hours</span></h4>
+                        <ul>
+                            <li>Postcode lookup integration</li>
+                            <li>Large loan auto-detection</li>
+                            <li>Rate override warnings</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Questions for Business -->
+        <section id="questions" class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2><span class="icon">❓</span> Questions for Business</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <div class="question-card">
+                    <h4>❓ Question 1: Rate Override for 75% LTV 2nd Charge</h4>
+                    <p>The rate table shows "Use Rate Override" for 2nd charge properties at 75% LTV. What rate should be used as the default, or should the user be required to manually enter a rate?</p>
+                    <div class="answer-box">Business response pending...</div>
+                </div>
+
+                <div class="question-card">
+                    <h4>❓ Question 2: Large Loan Thresholds</h4>
+                    <p>Should the system automatically detect large loans (e.g., Residential > £4M, Commercial > £3M) and switch to the appropriate rate column, or should this be a manual selection by the broker?</p>
+                    <div class="answer-box">Business response pending...</div>
+                </div>
+
+                <div class="question-card">
+                    <h4>❓ Question 3: Fusion Product</h4>
+                    <p>Should blended rates also be calculated for the Fusion column in results, or should this only apply to Variable Bridge and Fixed Bridge?</p>
+                    <div class="answer-box">Business response pending...</div>
+                </div>
+
+                <div class="question-card">
+                    <h4>❓ Question 4: Property Count Limit</h4>
+                    <p>Is there a maximum number of properties that can be included in a single portfolio deal? If so, what is the limit?</p>
+                    <div class="answer-box">Business response pending...</div>
+                </div>
+
+                <div class="question-card">
+                    <h4>❓ Question 5: Historical Rates</h4>
+                    <p>If a quote is loaded from a past date, should we use historical rates from that date, or recalculate using current rates?</p>
+                    <div class="answer-box">Business response pending...</div>
+                </div>
+
+                <div class="question-card">
+                    <h4>❓ Question 6: Gross Loan Pre-Calculation</h4>
+                    <p>Should the Gross Loan be pre-calculated automatically for each property based on Property Value and max LTV, with an option for the broker to edit/override if needed?</p>
+                    <div class="answer-box">Business response pending...</div>
+                </div>
+
+                <div class="question-card">
+                    <h4>❓ Question 7: Sub-Product Rate Selection</h4>
+                    <p>How should we determine which rate to use when different properties fall into different sub-product ranges (e.g., one property qualifies for "Resi Single" and another for "Resi Large Loan")? Should each property use its own applicable rate, or should all properties use the same sub-product rate?</p>
+                    <div class="answer-box">Business response pending...</div>
+                </div>
+
+                <div class="question-card">
+                    <h4>❓ Question 8: Mixed Property Types in Calculator</h4>
+                    <p>When there are multiple property types (e.g., 2 Residential + 1 Commercial), what should be displayed as the "Property Type" in the main calculator section? Options could include: (a) "Mixed", (b) the dominant type by value, (c) leave blank, or (d) show a comma-separated list.</p>
+                    <div class="answer-box">Business response pending...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Approval Section -->
+        <section id="approval" class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2><span class="icon">✅</span> Approval Sign-Off</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <p style="margin-bottom: 1.5rem;">Please review this document and provide your approval to proceed with implementation.</p>
+                
+                <div class="table-container approval-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Role</th>
+                                <th>Name</th>
+                                <th>Signature</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Product Owner</td>
+                                <td><span class="signature-line"></span></td>
+                                <td><span class="signature-line"></span></td>
+                                <td><span class="signature-line"></span></td>
+                            </tr>
+                            <tr>
+                                <td>Business Analyst</td>
+                                <td><span class="signature-line"></span></td>
+                                <td><span class="signature-line"></span></td>
+                                <td><span class="signature-line"></span></td>
+                            </tr>
+                            <tr>
+                                <td>Compliance</td>
+                                <td><span class="signature-line"></span></td>
+                                <td><span class="signature-line"></span></td>
+                                <td><span class="signature-line"></span></td>
+                            </tr>
+                            <tr>
+                                <td>Development Lead</td>
+                                <td><span class="signature-line"></span></td>
+                                <td><span class="signature-line"></span></td>
+                                <td><span class="signature-line"></span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Multi-Property Portfolio & Blended Rate Calculator — Business Requirements Document</p>
+        <p>Version 1.0 | 27 January 2026 | © Polaris Specialist Mortgage Platform</p>
+    </footer>
+
+    <script>
+        // Toggle section collapse
+        function toggleSection(header) {
+            const section = header.parentElement;
+            section.classList.toggle('collapsed');
+        }
+
+        // Show specific scenario
+        function showScenario(num) {
+            // Update tabs
+            document.querySelectorAll('.scenario-tab').forEach((tab, idx) => {
+                tab.classList.toggle('active', idx === num - 1);
+            });
+
+            // Update content
+            document.querySelectorAll('.scenario-content').forEach((content, idx) => {
+                content.classList.toggle('active', idx === num - 1);
+            });
+        }
+
+        // Smooth scroll for navigation
+        document.querySelectorAll('.nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const target = document.getElementById(targetId);
+                
+                if (target) {
+                    const headerOffset = 70;
+                    const elementPosition = target.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+
+                // Update active nav
+                document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Update active nav on scroll
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('section[id]');
+            const scrollPos = window.pageYOffset + 100;
+
+            sections.forEach(section => {
+                const top = section.offsetTop;
+                const height = section.offsetHeight;
+                const id = section.getAttribute('id');
+
+                if (scrollPos >= top && scrollPos < top + height) {
+                    document.querySelectorAll('.nav a').forEach(a => {
+                        a.classList.remove('active');
+                        if (a.getAttribute('href') === '#' + id) {
+                            a.classList.add('active');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
