@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAppSettings } from '../../contexts/AppSettingsContext';
 import NotificationModal from '../modals/NotificationModal';
 import {
   PRODUCT_TYPES_LIST as DEFAULT_PRODUCT_TYPES_LIST,
@@ -46,6 +47,7 @@ export default function Constants() {
   const [fundingLinesBridge, setFundingLinesBridge] = useState([]);
   const [message, setMessage] = useState('');
   const { supabase } = useSupabase();
+  const { refreshSettings } = useAppSettings();
   const [saving, setSaving] = useState(false);
   // per-field editing state and temporary values
   const [editingFields, setEditingFields] = useState({});
@@ -465,6 +467,11 @@ export default function Constants() {
           title: 'Success', 
           message: 'Constants saved successfully!' 
         });
+        
+        // Refresh the AppSettingsContext so all components get updated data
+        if (refreshSettings) {
+          refreshSettings();
+        }
         
         // Dispatch event so other components update immediately
         window.dispatchEvent(new StorageEvent('storage', {

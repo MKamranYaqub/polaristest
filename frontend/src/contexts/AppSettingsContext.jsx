@@ -3,6 +3,14 @@ import PropTypes from 'prop-types';
 import { useSupabase } from './SupabaseContext';
 import {
   MARKET_RATES as DEFAULT_MARKET_RATES,
+  PRODUCT_TYPES_LIST as DEFAULT_PRODUCT_TYPES_LIST,
+  FEE_COLUMNS as DEFAULT_FEE_COLUMNS,
+  FLAT_ABOVE_COMMERCIAL_RULE as DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE,
+  BROKER_ROUTES as DEFAULT_BROKER_ROUTES,
+  BROKER_COMMISSION_DEFAULTS as DEFAULT_BROKER_COMMISSION_DEFAULTS,
+  BROKER_COMMISSION_TOLERANCE as DEFAULT_BROKER_COMMISSION_TOLERANCE,
+  FUNDING_LINES_BTL as DEFAULT_FUNDING_LINES_BTL,
+  FUNDING_LINES_BRIDGE as DEFAULT_FUNDING_LINES_BRIDGE,
   LOCALSTORAGE_CONSTANTS_KEY,
 } from '../config/constants';
 
@@ -60,21 +68,45 @@ export function AppSettingsProvider({ children }) {
   
   // Initialize from localStorage synchronously (if available) before async Supabase fetch
   // This provides immediate values for components that render before Supabase responds
-  const initialRates = (() => {
+  const initialState = (() => {
     const localOverrides = readLocalStorage(LOCALSTORAGE_CONSTANTS_KEY);
-    if (localOverrides?.marketRates) {
-      return localOverrides.marketRates;
-    }
-    return DEFAULT_MARKET_RATES;
+    return {
+      marketRates: localOverrides?.marketRates || DEFAULT_MARKET_RATES,
+      productLists: localOverrides?.productLists || DEFAULT_PRODUCT_TYPES_LIST,
+      feeColumns: localOverrides?.feeColumns || DEFAULT_FEE_COLUMNS,
+      flatAboveCommercialRule: localOverrides?.flatAboveCommercialRule || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE,
+      brokerRoutes: localOverrides?.brokerRoutes || DEFAULT_BROKER_ROUTES,
+      brokerCommissionDefaults: localOverrides?.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS,
+      brokerCommissionTolerance: localOverrides?.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE,
+      fundingLinesBTL: localOverrides?.fundingLinesBTL || DEFAULT_FUNDING_LINES_BTL,
+      fundingLinesBridge: localOverrides?.fundingLinesBridge || DEFAULT_FUNDING_LINES_BRIDGE,
+      // Results configuration (visibility, row order, label aliases)
+      resultsVisibility: localOverrides?.resultsVisibility || {},
+      resultsRowOrder: localOverrides?.resultsRowOrder || {},
+      resultsLabelAliases: localOverrides?.resultsLabelAliases || {},
+      headerColors: localOverrides?.headerColors || {},
+    };
   })();
   
-  const [marketRates, setMarketRates] = useState(initialRates);
+  const [marketRates, setMarketRates] = useState(initialState.marketRates);
+  const [productLists, setProductLists] = useState(initialState.productLists);
+  const [feeColumns, setFeeColumns] = useState(initialState.feeColumns);
+  const [flatAboveCommercialRule, setFlatAboveCommercialRule] = useState(initialState.flatAboveCommercialRule);
+  const [brokerRoutes, setBrokerRoutes] = useState(initialState.brokerRoutes);
+  const [brokerCommissionDefaults, setBrokerCommissionDefaults] = useState(initialState.brokerCommissionDefaults);
+  const [brokerCommissionTolerance, setBrokerCommissionTolerance] = useState(initialState.brokerCommissionTolerance);
+  const [fundingLinesBTL, setFundingLinesBTL] = useState(initialState.fundingLinesBTL);
+  const [fundingLinesBridge, setFundingLinesBridge] = useState(initialState.fundingLinesBridge);
+  const [resultsVisibility, setResultsVisibility] = useState(initialState.resultsVisibility);
+  const [resultsRowOrder, setResultsRowOrder] = useState(initialState.resultsRowOrder);
+  const [resultsLabelAliases, setResultsLabelAliases] = useState(initialState.resultsLabelAliases);
+  const [headerColors, setHeaderColors] = useState(initialState.headerColors);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isIframe] = useState(isInIframe);
   const [initialized, setInitialized] = useState(false);
 
-  // Load settings from Supabase
+  // Load ALL settings from Supabase (app_settings + results_configuration)
   const loadFromSupabase = useCallback(async () => {
     if (!supabase) {
       console.warn('Supabase client not available');
@@ -82,27 +114,112 @@ export function AppSettingsProvider({ children }) {
     }
 
     try {
-      const { data, error: fetchError } = await supabase
+      // Load from app_settings table (Constants page data)
+      const { data: appSettingsData, error: appSettingsError } = await supabase
         .from('app_settings')
         .select('key, value')
-        .in('key', ['market_rates']);
+        .in('key', [
+          'market_rates',
+          'product_lists',
+          'fee_columns',
+          'flat_above_commercial_rule',
+          'broker_routes',
+          'broker_commission_defaults',
+          'broker_commission_tolerance',
+          'funding_lines_btl',
+          'funding_lines_bridge',
+        ]);
 
-      if (fetchError) {
-        console.error('Error fetching app_settings:', fetchError);
-        return null;
+      if (appSettingsError) {
+        console.error('Error fetching app_settings:', appSettingsError);
       }
 
-      if (data && data.length > 0) {
-        const settings = {};
-        data.forEach(row => {
-          if (row.key === 'market_rates' && row.value) {
-            settings.marketRates = row.value;
+      // Load from results_configuration table (GlobalSettings page data)
+      const { data: resultsConfigData, error: resultsConfigError } = await supabase
+        .from('results_configuration')
+        .select('key, calculator_type, config')
+        .in('key', ['visibility', 'row_order', 'label_aliases', 'header_colors']);
+
+      if (resultsConfigError && resultsConfigError.code !== 'PGRST116') {
+        console.error('Error fetching results_configuration:', resultsConfigError);
+      }
+
+      const settings = {
+        marketRates: DEFAULT_MARKET_RATES,
+        productLists: DEFAULT_PRODUCT_TYPES_LIST,
+        feeColumns: DEFAULT_FEE_COLUMNS,
+        flatAboveCommercialRule: DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE,
+        brokerRoutes: DEFAULT_BROKER_ROUTES,
+        brokerCommissionDefaults: DEFAULT_BROKER_COMMISSION_DEFAULTS,
+        brokerCommissionTolerance: DEFAULT_BROKER_COMMISSION_TOLERANCE,
+        fundingLinesBTL: DEFAULT_FUNDING_LINES_BTL,
+        fundingLinesBridge: DEFAULT_FUNDING_LINES_BRIDGE,
+        resultsVisibility: {},
+        resultsRowOrder: {},
+        resultsLabelAliases: {},
+        headerColors: {},
+      };
+
+      // Process app_settings data
+      if (appSettingsData && appSettingsData.length > 0) {
+        appSettingsData.forEach(row => {
+          if (!row.value) return;
+          switch (row.key) {
+            case 'market_rates':
+              settings.marketRates = row.value;
+              break;
+            case 'product_lists':
+              settings.productLists = row.value;
+              break;
+            case 'fee_columns':
+              settings.feeColumns = row.value;
+              break;
+            case 'flat_above_commercial_rule':
+              settings.flatAboveCommercialRule = row.value;
+              break;
+            case 'broker_routes':
+              settings.brokerRoutes = row.value;
+              break;
+            case 'broker_commission_defaults':
+              settings.brokerCommissionDefaults = row.value;
+              break;
+            case 'broker_commission_tolerance':
+              settings.brokerCommissionTolerance = row.value;
+              break;
+            case 'funding_lines_btl':
+              settings.fundingLinesBTL = row.value;
+              break;
+            case 'funding_lines_bridge':
+              settings.fundingLinesBridge = row.value;
+              break;
           }
         });
-        return settings;
       }
 
-      return null;
+      // Process results_configuration data
+      if (resultsConfigData && resultsConfigData.length > 0) {
+        resultsConfigData.forEach(row => {
+          const config = typeof row.config === 'string' ? JSON.parse(row.config) : row.config;
+          const calcType = row.calculator_type;
+          
+          switch (row.key) {
+            case 'visibility':
+              settings.resultsVisibility[calcType] = config;
+              break;
+            case 'row_order':
+              settings.resultsRowOrder[calcType] = config;
+              break;
+            case 'label_aliases':
+              settings.resultsLabelAliases[calcType] = config;
+              break;
+            case 'header_colors':
+              settings.headerColors[calcType] = config;
+              break;
+          }
+        });
+      }
+
+      return settings;
     } catch (err) {
       console.error('Failed to load app settings from Supabase:', err);
       return null;
@@ -122,29 +239,43 @@ export function AppSettingsProvider({ children }) {
 
       if (!mounted) return;
 
-      if (supabaseSettings?.marketRates) {
-        // Got settings from Supabase
+      if (supabaseSettings) {
+        // Got settings from Supabase - update all state
         setMarketRates(supabaseSettings.marketRates);
+        setProductLists(supabaseSettings.productLists);
+        setFeeColumns(supabaseSettings.feeColumns);
+        setFlatAboveCommercialRule(supabaseSettings.flatAboveCommercialRule);
+        setBrokerRoutes(supabaseSettings.brokerRoutes);
+        setBrokerCommissionDefaults(supabaseSettings.brokerCommissionDefaults);
+        setBrokerCommissionTolerance(supabaseSettings.brokerCommissionTolerance);
+        setFundingLinesBTL(supabaseSettings.fundingLinesBTL);
+        setFundingLinesBridge(supabaseSettings.fundingLinesBridge);
+        setResultsVisibility(supabaseSettings.resultsVisibility);
+        setResultsRowOrder(supabaseSettings.resultsRowOrder);
+        setResultsLabelAliases(supabaseSettings.resultsLabelAliases);
+        setHeaderColors(supabaseSettings.headerColors);
         
-        // Update localStorage cache for components that still use getMarketRates()
-        const currentOverrides = readLocalStorage(LOCALSTORAGE_CONSTANTS_KEY) || {};
+        // Update localStorage cache for components that still read from localStorage
         writeLocalStorage(LOCALSTORAGE_CONSTANTS_KEY, {
-          ...currentOverrides,
           marketRates: supabaseSettings.marketRates,
+          productLists: supabaseSettings.productLists,
+          feeColumns: supabaseSettings.feeColumns,
+          flatAboveCommercialRule: supabaseSettings.flatAboveCommercialRule,
+          brokerRoutes: supabaseSettings.brokerRoutes,
+          brokerCommissionDefaults: supabaseSettings.brokerCommissionDefaults,
+          brokerCommissionTolerance: supabaseSettings.brokerCommissionTolerance,
+          fundingLinesBTL: supabaseSettings.fundingLinesBTL,
+          fundingLinesBridge: supabaseSettings.fundingLinesBridge,
+          resultsVisibility: supabaseSettings.resultsVisibility,
+          resultsRowOrder: supabaseSettings.resultsRowOrder,
+          resultsLabelAliases: supabaseSettings.resultsLabelAliases,
+          headerColors: supabaseSettings.headerColors,
         });
         
-        // Settings loaded from Supabase successfully
+        console.log('AppSettingsContext: Loaded settings from database');
       } else {
-        // Fallback to localStorage (already loaded in initialRates, but update state if different)
-        const localOverrides = readLocalStorage(LOCALSTORAGE_CONSTANTS_KEY);
-        if (localOverrides?.marketRates) {
-          setMarketRates(localOverrides.marketRates);
-          // Settings loaded from localStorage fallback
-        } else {
-          // Use defaults
-          // Using hardcoded defaults (Supabase and localStorage unavailable)
-          setMarketRates(DEFAULT_MARKET_RATES);
-        }
+        // Fallback to localStorage (already loaded in initialState)
+        console.log('AppSettingsContext: Using localStorage fallback');
       }
 
       setLoading(false);
@@ -162,21 +293,58 @@ export function AppSettingsProvider({ children }) {
   const refreshSettings = useCallback(async () => {
     setLoading(true);
     const supabaseSettings = await loadFromSupabase();
-    if (supabaseSettings?.marketRates) {
+    if (supabaseSettings) {
       setMarketRates(supabaseSettings.marketRates);
+      setProductLists(supabaseSettings.productLists);
+      setFeeColumns(supabaseSettings.feeColumns);
+      setFlatAboveCommercialRule(supabaseSettings.flatAboveCommercialRule);
+      setBrokerRoutes(supabaseSettings.brokerRoutes);
+      setBrokerCommissionDefaults(supabaseSettings.brokerCommissionDefaults);
+      setBrokerCommissionTolerance(supabaseSettings.brokerCommissionTolerance);
+      setFundingLinesBTL(supabaseSettings.fundingLinesBTL);
+      setFundingLinesBridge(supabaseSettings.fundingLinesBridge);
+      setResultsVisibility(supabaseSettings.resultsVisibility);
+      setResultsRowOrder(supabaseSettings.resultsRowOrder);
+      setResultsLabelAliases(supabaseSettings.resultsLabelAliases);
+      setHeaderColors(supabaseSettings.headerColors);
       
       // Update localStorage cache
-      const currentOverrides = readLocalStorage(LOCALSTORAGE_CONSTANTS_KEY) || {};
       writeLocalStorage(LOCALSTORAGE_CONSTANTS_KEY, {
-        ...currentOverrides,
         marketRates: supabaseSettings.marketRates,
+        productLists: supabaseSettings.productLists,
+        feeColumns: supabaseSettings.feeColumns,
+        flatAboveCommercialRule: supabaseSettings.flatAboveCommercialRule,
+        brokerRoutes: supabaseSettings.brokerRoutes,
+        brokerCommissionDefaults: supabaseSettings.brokerCommissionDefaults,
+        brokerCommissionTolerance: supabaseSettings.brokerCommissionTolerance,
+        fundingLinesBTL: supabaseSettings.fundingLinesBTL,
+        fundingLinesBridge: supabaseSettings.fundingLinesBridge,
+        resultsVisibility: supabaseSettings.resultsVisibility,
+        resultsRowOrder: supabaseSettings.resultsRowOrder,
+        resultsLabelAliases: supabaseSettings.resultsLabelAliases,
+        headerColors: supabaseSettings.headerColors,
       });
     }
     setLoading(false);
   }, [loadFromSupabase]);
 
   const value = {
+    // Constants page settings
     marketRates,
+    productLists,
+    feeColumns,
+    flatAboveCommercialRule,
+    brokerRoutes,
+    brokerCommissionDefaults,
+    brokerCommissionTolerance,
+    fundingLinesBTL,
+    fundingLinesBridge,
+    // GlobalSettings page settings
+    resultsVisibility,
+    resultsRowOrder,
+    resultsLabelAliases,
+    headerColors,
+    // Meta
     loading,
     error,
     isIframe,

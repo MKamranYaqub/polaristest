@@ -18,6 +18,7 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { SalesforceCanvasProvider } from './contexts/SalesforceCanvasContext';
+import { AppSettingsProvider } from './contexts/AppSettingsContext';
 import AdminPage from './pages/AdminPage';
 import UsersPage from './pages/UsersPage';
 import SettingsPage from './pages/SettingsPage';
@@ -328,11 +329,13 @@ function App() {
       <ToastProvider>
         <SalesforceCanvasProvider>
           <AuthProvider>
-            <ThemeProvider>
-              <AccessibilityProvider>
-                <AppContent />
-              </AccessibilityProvider>
-            </ThemeProvider>
+            <AppSettingsProvider>
+              <ThemeProvider>
+                <AccessibilityProvider>
+                  <AppContent />
+                </AccessibilityProvider>
+              </ThemeProvider>
+            </AppSettingsProvider>
           </AuthProvider>
         </SalesforceCanvasProvider>
       </ToastProvider>

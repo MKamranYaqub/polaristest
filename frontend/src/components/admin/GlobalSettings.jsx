@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAppSettings } from '../../contexts/AppSettingsContext';
 import NotificationModal from '../modals/NotificationModal';
 import WelcomeHeader from '../shared/WelcomeHeader';
 import { LOCALSTORAGE_CONSTANTS_KEY } from '../../config/constants';
@@ -187,6 +188,7 @@ const applyHeaderColorsToCss = (allColors) => {
  */
 export default function GlobalSettings() {
   const { supabase } = useSupabase();
+  const { refreshSettings } = useAppSettings();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
@@ -709,6 +711,11 @@ export default function GlobalSettings() {
         title: 'Success',
         message: 'Results table settings saved successfully!'
       });
+
+      // Refresh the AppSettingsContext so all components get updated data
+      if (refreshSettings) {
+        refreshSettings();
+      }
 
       // Save to localStorage for immediate effect
       const visibilitySettings = { btl: btlVisibleRows, bridge: bridgeVisibleRows, core: coreVisibleRows };
