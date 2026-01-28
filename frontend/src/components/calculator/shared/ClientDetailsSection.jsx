@@ -78,17 +78,17 @@ export default function ClientDetailsSection({
           <div className="slds-button-group_toggle" role="group">
             <button 
               type="button" 
-              className={`slds-button ${clientType === 'Direct' ? 'slds-is-selected' : ''}`} 
-              onClick={() => setClientType('Direct')}
-            >
-              Direct Client
-            </button>
-            <button 
-              type="button" 
               className={`slds-button ${clientType === 'Broker' ? 'slds-is-selected' : ''}`} 
               onClick={() => setClientType('Broker')}
             >
               Broker
+            </button>
+            <button 
+              type="button" 
+              className={`slds-button ${clientType === 'Direct' ? 'slds-is-selected' : ''}`} 
+              onClick={() => setClientType('Direct')}
+            >
+              Direct Client
             </button>
           </div>
         </div>

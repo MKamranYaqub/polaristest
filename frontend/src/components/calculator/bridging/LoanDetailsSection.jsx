@@ -173,7 +173,7 @@ const LoanDetailsSection = ({
               className="slds-input" 
               value={propertyValue} 
               onChange={(e) => onPropertyValueChange(formatCurrencyInput(e.target.value))} 
-              placeholder="£" 
+              placeholder="e.g £1,200,000" 
               disabled={isReadOnly} 
             />
           </div>
@@ -186,7 +186,7 @@ const LoanDetailsSection = ({
               className="slds-input" 
               value={monthlyRent} 
               onChange={(e) => onMonthlyRentChange(formatCurrencyInput(e.target.value))} 
-              placeholder="£" 
+              placeholder="e.g £3,000" 
               disabled={isReadOnly} 
             />
           </div>
@@ -205,7 +205,7 @@ const LoanDetailsSection = ({
               className="slds-input" 
               value={topSlicing} 
               onChange={(e) => onTopSlicingChange(formatCurrencyInput(e.target.value))} 
-              placeholder="£" 
+              placeholder="e.g £600" 
               disabled={isReadOnly} 
             />
           </div>
@@ -221,7 +221,7 @@ const LoanDetailsSection = ({
                 className="slds-input" 
                 value={grossLoan} 
                 onChange={(e) => onGrossLoanChange(formatCurrencyInput(e.target.value))} 
-                placeholder="£" 
+                placeholder="e.g £425,000" 
                 disabled={isReadOnly} 
               />
             </div>
@@ -236,7 +236,7 @@ const LoanDetailsSection = ({
                 className="slds-input" 
                 value={specificNetLoan} 
                 onChange={(e) => onSpecificNetLoanChange(formatCurrencyInput(e.target.value))} 
-                placeholder="£" 
+                placeholder="e.g £425,000" 
                 disabled={isReadOnly} 
               />
             </div>
@@ -282,7 +282,7 @@ const LoanDetailsSection = ({
               className="slds-input" 
               value={commitmentFee} 
               onChange={(e) => onCommitmentFeeChange(formatCurrencyInput(e.target.value))} 
-              placeholder="£" 
+              placeholder="e.g £1,000" 
               disabled={isReadOnly} 
             />
           </div>
@@ -297,7 +297,7 @@ const LoanDetailsSection = ({
               className="slds-input" 
               value={exitFeePercent} 
               onChange={(e) => onExitFeePercentChange(e.target.value)} 
-              placeholder="%" 
+              placeholder="e.g 0.5%" 
               disabled={isReadOnly} 
             />
           </div>

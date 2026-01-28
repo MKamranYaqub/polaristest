@@ -95,7 +95,7 @@ const BTLLoanDetailsSection = ({
                 className="slds-input" 
                 value={specificNetLoan} 
                 onChange={(e) => onSpecificNetLoanChange(formatCurrencyInput(e.target.value))} 
-                placeholder="£425,000"
+                placeholder="e.g £425,000"
                 disabled={isReadOnly}
               />
               <div className="helper-text">Maximum GLA £9,000,000</div>
@@ -139,7 +139,7 @@ const BTLLoanDetailsSection = ({
                 className="slds-input" 
                 value={specificGrossLoan} 
                 onChange={(e) => onSpecificGrossLoanChange(formatCurrencyInput(e.target.value))} 
-                placeholder="£550,000"
+                placeholder="e.g £425,000"
                 disabled={isReadOnly}
               />
               <div className="helper-text">Enter desired gross loan amount</div>
@@ -177,7 +177,7 @@ const BTLLoanDetailsSection = ({
               className="slds-input" 
               value={propertyValue} 
               onChange={(e) => onPropertyValueChange(formatCurrencyInput(e.target.value))} 
-              placeholder="£1,200,000"
+              placeholder="e.g £1,200,000"
               disabled={isReadOnly}
             />
             <div className="helper-text">Subject to valuation</div>
@@ -193,7 +193,7 @@ const BTLLoanDetailsSection = ({
               className="slds-input" 
               value={monthlyRent} 
               onChange={(e) => onMonthlyRentChange(formatCurrencyInput(e.target.value))} 
-              placeholder="£3,000"
+              placeholder="e.g £3,000"
               disabled={isReadOnly}
             />
           </div>

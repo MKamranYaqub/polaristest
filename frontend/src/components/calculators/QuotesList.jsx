@@ -18,6 +18,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
   const rowsPerPage = 10;
 
   // Filter states
+  const [filterProductScope, setFilterProductScope] = useState('');
   const [filterName, setFilterName] = useState('');
   const [filterRef, setFilterRef] = useState('');
   const [filterType, setFilterType] = useState('');
@@ -229,6 +230,11 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
       }
     }
     
+    // Product Scope filter
+    if (filterProductScope && q.product_scope !== filterProductScope) {
+      return false;
+    }
+    
     // Ref # filter
     if (filterRef) {
       const ref = (q.reference_number || '').toString().toLowerCase();
@@ -318,7 +324,7 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterRef, filterName, filterType, filterBorrowerType, filterCreatedFrom, filterCreatedTo, filterUpdatedFrom, filterUpdatedTo, showMyQuotesOnly]);
+  }, [filterProductScope, filterRef, filterName, filterType, filterBorrowerType, filterCreatedFrom, filterCreatedTo, filterUpdatedFrom, filterUpdatedTo, showMyQuotesOnly]);
 
   return (
     <div className="admin-table-container">
@@ -358,6 +364,16 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
           <>
             <div className="filters-section">
               {/* Primary filters row */}
+              <div className="filter-field">
+                <label>Product Scope</label>
+                <select value={filterProductScope} onChange={(e) => setFilterProductScope(e.target.value)}>
+                  <option value="">All Scopes</option>
+                  <option value="Residential">Residential</option>
+                  <option value="Commercial">Commercial</option>
+                  <option value="Semi-Commercial">Semi-Commercial</option>
+                  </select>
+              </div>
+
               <div className="filter-field" style={{ minWidth: '140px' }}>
                 <label>REF #</label>
                 <input 
@@ -413,10 +429,11 @@ export default function QuotesList({ calculatorType = null, onLoad = null }) {
                   >
                     {showAdvancedFilters ? 'Hide Filters' : 'More Filters'}
                   </button>
-                  {(filterName || filterRef || filterType || filterBorrowerType || filterCreatedFrom || filterCreatedTo || filterUpdatedFrom || filterUpdatedTo || showMyQuotesOnly) && (
+                  {(filterProductScope || filterName || filterRef || filterType || filterBorrowerType || filterCreatedFrom || filterCreatedTo || filterUpdatedFrom || filterUpdatedTo || showMyQuotesOnly) && (
                     <button 
                       className="slds-button slds-button_text-destructive" 
                       onClick={() => {
+                        setFilterProductScope('');
                         setFilterName('');
                         setFilterRef('');
                         setFilterType('');

@@ -15,7 +15,7 @@ import {
  * @returns {Object} Broker settings state and handlers
  */
 export default function useBrokerSettings(initialQuote = null, calculatorType = 'btl') {
-  const [clientType, setClientType] = useState('Direct');
+  const [clientType, setClientType] = useState('Broker');
   const [clientFirstName, setClientFirstName] = useState('');
   const [clientLastName, setClientLastName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
