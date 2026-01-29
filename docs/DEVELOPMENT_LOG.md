@@ -30,8 +30,9 @@ This document tracks all new features added and bugs fixed during development se
 | 11 | Title Insurance Eligibility Logic | Added logic to show "Not eligible" for Title Insurance when gross loan > £3 million (matches business rule). Shows cost if eligible, "N/A" if no cost, "Not eligible" if over £3M | `BridgingQuotePDF.jsx` | ✅ Complete |
 | 12 | ERC Label Rename | Changed "ERC 1 £" and "ERC 2 £" to "Early Repayment Charge Yr1" and "Early Repayment Charge Yr2" in Bridging calculator row labels for clarity | `GlobalSettings.jsx`, `BridgingCalculator.jsx` | ✅ Complete |
 | 13 | BTL Product Scope Custom Sort | Implemented custom sort order for BTL calculator product scope dropdown: "Residential - BTL" first, then "Commercial", then "Semi-Commercial", then others alphabetically. Default value now set to "Residential - BTL" instead of unsorted first item | `BTL_Calculator.jsx` | ✅ Complete |
-| 14 | Separate Core Range Proc Fee | Added separate proc fee configuration for BTL Core range. Each broker route now has 3 proc fees: BTL Specialist, BTL Core, and Bridge. When user selects Core range in BTL calculator, the Core proc fee is used instead of BTL Specialist. Admin UI updated to show all 3 fee inputs per route. | `constants.js`, `Constants.jsx`, `useBrokerSettings.js`, `BTL_Calculator.jsx` | ✅ Complete |
-| 15 | Proc Fee Label Standardization | Renamed all "Broker Commission" UI labels to "Proc Fee" throughout the application. BTL calculator now shows separate "Proc Fee Specialist (%)" and "Proc Fee Core (%)" fields for brokers. PDF documents and admin settings updated with new terminology. | `BridgingCalculator.jsx`, `ClientDetailsSection.jsx`, `BTL_Calculator.jsx`, `BTLQuotePDF.jsx`, `BTLDIPPDF.jsx`, `BridgingDIPPDF.jsx`, `DIPPDF.jsx`, `GlobalSettings.jsx`, `Constants.jsx`, `useBrokerSettings.js` | ✅ Complete |
+| 14 | Separate Core Range Proc Fee | Added separate proc fee configuration for BTL Core range. Each broker route now has 3 proc fees: BTL Specialist, BTL Core, and Bridge. When user selects Core range in BTL calculator, the Core proc fee is used instead of BTL Specialist. Admin UI updated to show all 3 fee inputs per route. | `constants.js`, `Constants.jsx`, `useBrokerSettings.js`, `BTL_Calculator.jsx`, `ClientDetailsSection.jsx` | ✅ Complete |
+| 15 | Proc Fee Label Standardization | Renamed all "Broker Commission" UI labels to "Proc Fee" throughout the application. BTL calculator now shows separate "Proc Fee Specialist (%)" and "Proc Fee Core (%)" fields for brokers. PDF documents, admin settings, and results table labels updated with new terminology. Removed info helper text from Client Details section. | `BridgingCalculator.jsx`, `ClientDetailsSection.jsx`, `BTL_Calculator.jsx`, `BTLQuotePDF.jsx`, `BTLDIPPDF.jsx`, `BridgingDIPPDF.jsx`, `DIPPDF.jsx`, `GlobalSettings.jsx`, `Constants.jsx`, `useBrokerSettings.js` | ✅ Complete |
+| 16 | Core Proc Fee Detection Fix | Fixed proc fee percentage detection to use flexible matching (includes 'core') instead of exact string match. Now correctly applies Core proc fee even when product_range field contains variations like "Core Range" or "CORE". Ensures consistency between UI filtering and calculation logic. | `BTL_Calculator.jsx` | ✅ Complete |
 
 ---
 
@@ -43,6 +44,12 @@ This document tracks all new features added and bugs fixed during development se
 |---|-----|------------|----------|----------------|--------|
 | 1 | Settings changes not visible to other users | Calculators only read from localStorage (browser-specific), never fetched from database on load | Extended `AppSettingsContext` to load from Supabase on mount and update localStorage, ensuring all users get fresh data | `AppSettingsContext.jsx`, `App.jsx` | ✅ Fixed |
 | 2 | Admin settings pages not refreshing context | After saving, the context wasn't updated with new values until page refresh | Added `refreshSettings()` call after successful save in both admin pages | `GlobalSettings.jsx`, `Constants.jsx` | ✅ Fixed |
+
+### Session: January 29, 2026
+
+| # | Bug | Root Cause | Solution | Files Modified | Status |
+|---|-----|------------|----------|----------------|--------|
+| 3 | Core range showing Specialist proc fee % | Proc fee detection used exact match `=== 'core'` which failed when database had variations like "Core Range". UI filtering used includes() but calculation used strict equality. | Updated both calculation loops to use flexible matching: checks if product_range equals 'core' OR includes 'core', with fallback to rate_type field. Now consistent with UI filtering logic. | `BTL_Calculator.jsx` | ✅ Fixed |
 
 ---
 
