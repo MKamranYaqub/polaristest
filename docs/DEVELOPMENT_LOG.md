@@ -2,7 +2,7 @@
 
 This document tracks all new features added and bugs fixed during development sessions.
 
-**Last Updated**: January 28, 2026
+**Last Updated**: January 29, 2026
 
 ---
 
@@ -17,6 +17,13 @@ This document tracks all new features added and bugs fixed during development se
 | 3 | Product Scope Filter on Quotes Page | Added new "Product Scope" dropdown filter as the first filter on the QuotesList page. Filters by: Residential, Commercial, Semi-Commercial, Core | `QuotesList.jsx` | ✅ Complete |
 | 4 | Swap Broker/Direct Client Button Order | Moved "Broker" button to appear first (left) and "Direct Client" second (right) in the Client Details toggle | `ClientDetailsSection.jsx` | ✅ Complete |
 | 5 | Set Broker as Default Client Type | Changed the default selection from "Direct Client" to "Broker" when opening a new calculator | `useBrokerSettings.js` | ✅ Complete |
+
+### Session: January 29, 2026
+
+| # | Feature | Description | Files Modified | Status |
+|---|---------|-------------|----------------|--------|
+| 6 | Title Insurance Toggle for Quote PDF | Added optional "Include Title Insurance in Quote?" toggle to Issue Quote modal. When Yes, shows Title Insurance row in the Quote PDF; when No, hides it completely. Works for both BTL and Bridging quotes. | `IssueQuoteModal.jsx`, `BTLQuotePDF.jsx`, `BridgingQuotePDF.jsx`, `btlQuoteHelpers.js`, Migration 057 | ✅ Complete |
+| 7 | Enhanced Bridging Quote PDF Layout | Restructured Bridging Quote PDF to match Excel format: 1) Added Product Name row, 2) Initial Rate now shows BBR suffix with (pa)/(pm) indicator, 3) Pay Rate row (only visible when Fusion selected), 4) Gross/Net Loan show LTV %, 5) Rolled Months Interest with months, 6) Monthly Payment with "from month X", 7) Deferred Interest (Fusion only), 8) ERC/Exit Fee, 9) Proc Fee, 10) Broker Client Fee | `BridgingQuotePDF.jsx`, `bridgingQuoteHelpers.js` | ✅ Complete |
 
 ---
 

@@ -216,59 +216,33 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
             ))}
           </View>
 
-          {/* Interest Rate */}
+          {/* Initial Rate - with BBR suffix and (pa)/(pm) indicator */}
           <View style={btlQuoteStyles.tableRow}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Interest Rate</Text>
+            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Initial Rate</Text>
             {displayProductTypes.map((productType, index) => {
               const result = getResultForColumn(productType);
               return (
                 <Text key={index} style={[btlQuoteStyles.tableCellValueHighlight, { width: valueWidth }]}>
-                  {result ? `${h.getInterestRate(result)}%` : 'N/A'}
+                  {result ? h.getInitialRateFormatted(result) : 'N/A'}
                 </Text>
               );
             })}
           </View>
 
-          {/* Term */}
-          <View style={btlQuoteStyles.tableRowAlt}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Term</Text>
-            {displayProductTypes.map((productType, index) => {
-              const result = getResultForColumn(productType);
-              const term = result ? h.getTerm(result) : 0;
-              return (
-                <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {term} {term === 1 ? 'month' : 'months'}
-                </Text>
-              );
-            })}
-          </View>
-
-          {/* Minimum Term */}
-          <View style={btlQuoteStyles.tableRow}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Minimum Term</Text>
-            {displayProductTypes.map((productType, index) => {
-              const result = getResultForColumn(productType);
-              const minTerm = result ? h.getMinimumTerm(result) : 0;
-              return (
-                <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {minTerm > 0 ? `${minTerm} ${minTerm === 1 ? 'month' : 'months'}` : 'No minimum'}
-                </Text>
-              );
-            })}
-          </View>
-
-          {/* Monthly Interest */}
-          <View style={btlQuoteStyles.tableRowAlt}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Monthly Interest</Text>
-            {displayProductTypes.map((productType, index) => {
-              const result = getResultForColumn(productType);
-              return (
-                <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {result ? h.formatCurrencyWithPence(h.getMonthlyInterest(result)) : 'N/A'}
-                </Text>
-              );
-            })}
-          </View>
+          {/* Pay Rate - Only visible if Fusion is in the quote */}
+          {displayProductTypes.includes('Fusion') && (
+            <View style={btlQuoteStyles.tableRow}>
+              <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Pay Rate</Text>
+              {displayProductTypes.map((productType, index) => {
+                const result = getResultForColumn(productType);
+                return (
+                  <Text key={index} style={[btlQuoteStyles.tableCellValueHighlight, { width: valueWidth }]}>
+                    {result ? h.getPayRateFormatted(result) : 'N/A'}
+                  </Text>
+                );
+              })}
+            </View>
+          )}
 
           {/* Section: Loan Details */}
           <View style={btlQuoteStyles.tableRowSectionHeader}>
@@ -278,158 +252,170 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
             ))}
           </View>
 
-          {/* Gross Loan */}
+          {/* Gross Loan with LTV */}
           <View style={btlQuoteStyles.tableRow}>
             <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Gross Loan</Text>
             {displayProductTypes.map((productType, index) => {
               const result = getResultForColumn(productType);
               return (
                 <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {result ? h.formatCurrency(h.getGrossLoan(result)) : 'N/A'}
+                  {result ? h.getGrossLoanWithLTV(result) : 'N/A'}
                 </Text>
               );
             })}
           </View>
 
-          {/* Net Loan */}
+          {/* Net Loan with LTV */}
           <View style={btlQuoteStyles.tableRowAlt}>
             <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Net Loan</Text>
             {displayProductTypes.map((productType, index) => {
               const result = getResultForColumn(productType);
               return (
                 <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {result ? h.formatCurrency(h.getNetLoan(result)) : 'N/A'}
+                  {result ? h.getNetLoanWithLTV(result) : 'N/A'}
                 </Text>
               );
             })}
           </View>
 
-          {/* LTV */}
+          {/* Arrangement Fee with % */}
           <View style={btlQuoteStyles.tableRow}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>LTV</Text>
+            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Arrangement Fee</Text>
             {displayProductTypes.map((productType, index) => {
               const result = getResultForColumn(productType);
+              const amount = result ? h.getProductFeeAmount(result) : 0;
+              const percent = result ? h.getProductFeePercent(result) : 0;
               return (
                 <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {result ? `${h.getLTV(result)}%` : 'N/A'}
+                  {result ? `${h.formatCurrency(amount)} (${percent}%)` : 'N/A'}
                 </Text>
               );
             })}
           </View>
 
-          {/* Section: Fees */}
-          <View style={btlQuoteStyles.tableRowSectionHeader}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { fontWeight: 'bold', width: labelWidth }]}>Fees</Text>
-            {displayProductTypes.map((_, index) => (
-              <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}></Text>
-            ))}
-          </View>
-
-          {/* Product Fee % */}
-          <View style={btlQuoteStyles.tableRow}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Product Fee %</Text>
-            {displayProductTypes.map((productType, index) => {
-              const result = getResultForColumn(productType);
-              return (
-                <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {result ? `${h.getProductFeePercent(result)}%` : 'N/A'}
-                </Text>
-              );
-            })}
-          </View>
-
-          {/* Product Fee Amount */}
+          {/* Total Loan Term */}
           <View style={btlQuoteStyles.tableRowAlt}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Product Fee Amount</Text>
+            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Total Loan Term</Text>
             {displayProductTypes.map((productType, index) => {
               const result = getResultForColumn(productType);
+              const term = result ? h.getTerm(result) : 0;
               return (
                 <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {result ? h.formatCurrency(h.getProductFeeAmount(result)) : 'N/A'}
+                  {term} {term === 1 ? 'Month' : 'Months'}
                 </Text>
               );
             })}
           </View>
 
-          {/* Admin Fee */}
+          {/* Rolled Months Interest */}
           <View style={btlQuoteStyles.tableRow}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Admin Fee</Text>
+            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Rolled Months Interest</Text>
             {displayProductTypes.map((productType, index) => {
               const result = getResultForColumn(productType);
               return (
                 <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {result ? h.formatCurrency(h.getAdminFee(result)) : 'N/A'}
+                  {result ? h.getRolledInterestFormatted(result) : 'N/A'}
                 </Text>
               );
             })}
           </View>
 
-          {/* Exit Fee */}
+          {/* Monthly Payment */}
           <View style={btlQuoteStyles.tableRowAlt}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Exit Fee</Text>
+            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Monthly Payment</Text>
             {displayProductTypes.map((productType, index) => {
               const result = getResultForColumn(productType);
-              const exitFee = result ? h.getExitFee(result) : 0;
               return (
                 <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {exitFee > 0 ? h.formatCurrency(exitFee) : '£0'}
+                  {result ? h.getMonthlyPaymentFormatted(result) : 'N/A'}
                 </Text>
               );
             })}
           </View>
 
-          {/* Section: Interest Handling */}
-          <View style={btlQuoteStyles.tableRowSectionHeader}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { fontWeight: 'bold', width: labelWidth }]}>Interest Handling</Text>
-            {displayProductTypes.map((_, index) => (
-              <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}></Text>
-            ))}
-          </View>
+          {/* Deferred Interest - Only visible if Fusion is in the quote */}
+          {displayProductTypes.includes('Fusion') && (
+            <View style={btlQuoteStyles.tableRow}>
+              <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Deferred Interest</Text>
+              {displayProductTypes.map((productType, index) => {
+                const result = getResultForColumn(productType);
+                return (
+                  <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
+                    {result ? h.getDeferredInterestFormatted(result) : 'N/A'}
+                  </Text>
+                );
+              })}
+            </View>
+          )}
 
-          {/* Rolled Months */}
-          <View style={btlQuoteStyles.tableRow}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Rolled Months</Text>
+          {/* Min Interest Period */}
+          <View style={displayProductTypes.includes('Fusion') ? btlQuoteStyles.tableRowAlt : btlQuoteStyles.tableRow}>
+            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Min Interest Period</Text>
             {displayProductTypes.map((productType, index) => {
               const result = getResultForColumn(productType);
-              const rolledMonths = result ? h.getRolledMonths(result) : 0;
               return (
                 <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {rolledMonths > 0 ? `${rolledMonths} ${rolledMonths === 1 ? 'month' : 'months'}` : 'None'}
+                  {result ? h.getMinInterestPeriod(result) : 'N/A'}
                 </Text>
               );
             })}
           </View>
 
-          {/* Rolled Interest Amount */}
-          <View style={btlQuoteStyles.tableRowAlt}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Rolled Interest Amount</Text>
+          {/* ERC/Exit Fee */}
+          <View style={displayProductTypes.includes('Fusion') ? btlQuoteStyles.tableRow : btlQuoteStyles.tableRowAlt}>
+            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>ERC/Exit Fee</Text>
             {displayProductTypes.map((productType, index) => {
               const result = getResultForColumn(productType);
-              const rolledInterest = result ? h.getRolledInterest(result) : 0;
               return (
                 <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {rolledInterest > 0 ? h.formatCurrency(rolledInterest) : '£0'}
+                  {result ? h.getERCExitFeeFormatted(result) : 'N/A'}
                 </Text>
               );
             })}
           </View>
 
-          {/* Title Insurance */}
-          <View style={btlQuoteStyles.tableRow}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Title Insurance</Text>
+          {/* Proc Fee */}
+          <View style={displayProductTypes.includes('Fusion') ? btlQuoteStyles.tableRowAlt : btlQuoteStyles.tableRow}>
+            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Proc Fee</Text>
             {displayProductTypes.map((productType, index) => {
               const result = getResultForColumn(productType);
-              const titleInsurance = result ? h.getTitleInsuranceCost(result) : 0;
               return (
                 <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {titleInsurance > 0 ? h.formatCurrencyWithPence(titleInsurance) : 'Not required'}
+                  {result ? h.getProcFeeFormatted(result) : 'N/A'}
                 </Text>
               );
             })}
           </View>
+
+          {/* Broker Client Fee */}
+          <View style={displayProductTypes.includes('Fusion') ? btlQuoteStyles.tableRow : btlQuoteStyles.tableRowAlt}>
+            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Broker Client Fee</Text>
+            {displayProductTypes.map((productType, index) => {
+              const result = getResultForColumn(productType);
+              return (
+                <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
+                  {result ? h.getBrokerClientFeeFormatted(result) : 'N/A'}
+                </Text>
+              );
+            })}
+          </View>
+
+          {/* Title Insurance - Only shown if quote_include_title_insurance is true */}
+          {quote.quote_include_title_insurance && (
+            <View style={btlQuoteStyles.tableRowAlt}>
+              <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Title Insurance</Text>
+              {displayProductTypes.map((productType, index) => {
+                const result = getResultForColumn(productType);
+                const titleInsurance = result ? h.getTitleInsuranceCost(result) : 0;
+                return (
+                  <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
+                    {titleInsurance > 0 ? h.formatCurrencyWithPence(titleInsurance) : 'Not required'}
+                  </Text>
+                );
+              })}
+            </View>
+          )}
         </View>
-
-        {/* Two Column Layout: Terms and Client Details */}
         <View style={{ flexDirection: 'row', marginTop: 12, gap: 15 }}>
           {/* Left Column: Terms Section */}
           <View style={{ flex: 1 }}>

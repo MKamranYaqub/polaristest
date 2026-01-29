@@ -305,6 +305,234 @@ export const getMinimumTerm = (result) => {
 };
 
 // ============================================================================
+// NEW RATE/INTEREST HELPERS FOR PDF
+// ============================================================================
+
+/**
+ * Get the product name from result
+ */
+export const getProductName = (result) => {
+  return result?.product_name || result?.product || result?.rate_name || 'N/A';
+};
+
+/**
+ * Get Initial Rate with BBR suffix and (pa)/(pm) indicator
+ * Fusion: "4.79% + BBR (pa)" - uses fullRateText from calculator (margin only, not margin+BBR)
+ * Variable Bridge: "0.65% + BBR (pm)"
+ * Fixed Bridge: "1.00% (pm)"
+ */
+export const getInitialRateFormatted = (result) => {
+  const productName = (result?.product_name || result?.product_kind || result?.product || '').toLowerCase();
+  const isFusionProduct = productName.includes('fusion');
+  const isVariable = productName.includes('variable');
+  
+  // Use fullRateText if available (already properly formatted from calculator)
+  if (result?.full_rate_text || result?.fullRateText) {
+    const rateText = result.full_rate_text || result.fullRateText;
+    // Add (pa) or (pm) suffix
+    if (isFusionProduct) {
+      return `${rateText} (pa)`;
+    } else {
+      return `${rateText} (pm)`;
+    }
+  }
+  
+  // Fallback: calculate from individual fields
+  if (isFusionProduct) {
+    // Fusion: Show margin (coupon) rate + BBR (pa) - NOT the combined rate
+    // marginMonthly * 12 gives annual margin, or use margin_monthly directly if stored as annual
+    const marginMonthly = parseNumber(result?.margin_monthly) || parseNumber(result?.marginMonthly) || 0;
+    // If marginMonthly is stored as monthly percentage, convert to annual
+    // Otherwise use fullCouponRateMonthly * 12 for annual
+    const annualMargin = marginMonthly > 1 ? marginMonthly : marginMonthly * 12;
+    return `${annualMargin.toFixed(2)}% + BBR (pa)`;
+  } else if (isVariable) {
+    // Variable Bridge: Show monthly coupon + BBR (pm)
+    const rate = parseNumber(result?.full_coupon_rate_monthly) ||
+                 parseNumber(result?.fullCouponRateMonthly) ||
+                 parseNumber(result?.margin_monthly) ||
+                 parseNumber(result?.marginMonthly) ||
+                 0;
+    return `${rate.toFixed(2)}% + BBR (pm)`;
+  } else {
+    // Fixed Bridge: Show monthly rate (pm) - no BBR
+    const rate = parseNumber(result?.full_coupon_rate_monthly) ||
+                 parseNumber(result?.fullCouponRateMonthly) ||
+                 parseNumber(result?.margin_monthly) ||
+                 parseNumber(result?.marginMonthly) ||
+                 0;
+    return `${rate.toFixed(2)}% (pm)`;
+  }
+};
+
+/**
+ * Get Pay Rate with BBR suffix and (pa)/(pm) indicator
+ * Fusion: "2.79% + BBR (pa)" (margin - deferred rate)
+ * Variable Bridge: "0.65% + BBR (pm)" (same as initial)
+ * Fixed Bridge: "1.00% (pm)" (same as initial)
+ */
+export const getPayRateFormatted = (result) => {
+  const productName = (result?.product_name || result?.product_kind || result?.product || '').toLowerCase();
+  const isFusionProduct = productName.includes('fusion');
+  const isVariable = productName.includes('variable');
+  
+  if (isFusionProduct) {
+    // Fusion: Show pay rate (margin - deferred) + BBR (pa)
+    const payRate = parseNumber(result?.pay_rate_monthly) || // This is actually annual for fusion
+                    parseNumber(result?.payRateMonthly) ||
+                    parseNumber(result?.pay_rate) ||
+                    0;
+    return `${payRate.toFixed(2)}% + BBR (pa)`;
+  } else if (isVariable) {
+    // Variable Bridge: Same as initial rate
+    const rate = parseNumber(result?.pay_rate) ||
+                 parseNumber(result?.margin_monthly) ||
+                 parseNumber(result?.fullCouponRateMonthly) ||
+                 0;
+    return `${rate.toFixed(2)}% + BBR (pm)`;
+  } else {
+    // Fixed Bridge: Same as initial rate
+    const rate = parseNumber(result?.pay_rate) ||
+                 parseNumber(result?.margin_monthly) ||
+                 parseNumber(result?.fullCouponRateMonthly) ||
+                 0;
+    return `${rate.toFixed(2)}% (pm)`;
+  }
+};
+
+/**
+ * Get Gross Loan formatted with LTV: "£750,000 @ 75% LTV"
+ */
+export const getGrossLoanWithLTV = (result) => {
+  const gross = parseNumber(result?.gross_loan) || parseNumber(result?.gross) || 0;
+  const ltv = parseNumber(result?.gross_ltv) || parseNumber(result?.grossLTV) || parseNumber(result?.ltv) || 0;
+  return `${formatCurrency(gross)} @ ${ltv.toFixed(0)}% LTV`;
+};
+
+/**
+ * Get Net Loan formatted with LTV: "£680,475 @ 68% LTV"
+ */
+export const getNetLoanWithLTV = (result) => {
+  const net = parseNumber(result?.net_loan) || parseNumber(result?.netLoanGBP) || 0;
+  const netLtv = parseNumber(result?.net_ltv) || parseNumber(result?.netLTV) || 0;
+  return `${formatCurrency(net)} @ ${netLtv.toFixed(0)}% LTV`;
+};
+
+/**
+ * Get Rolled Months Interest formatted: "£24,525 (6 months)"
+ */
+export const getRolledInterestFormatted = (result) => {
+  const rolledInterest = parseNumber(result?.rolled_months_interest) || 
+                         parseNumber(result?.rolledInterestGBP) || 
+                         parseNumber(result?.rolled_interest) || 
+                         0;
+  const rolledMonths = parseNumber(result?.rolled_months) || 
+                       parseNumber(result?.rolledMonths) || 
+                       0;
+  if (rolledMonths === 0) return '£0 (0 months)';
+  return `${formatCurrency(rolledInterest)} (${rolledMonths} ${rolledMonths === 1 ? 'month' : 'months'})`;
+};
+
+/**
+ * Get Monthly Payment formatted: "£4,088 from month 7"
+ */
+export const getMonthlyPaymentFormatted = (result) => {
+  const payment = parseNumber(result?.monthly_payment) || 
+                  parseNumber(result?.monthlyPaymentGBP) || 
+                  parseNumber(result?.monthly_interest_cost) ||
+                  0;
+  const rolledMonths = parseNumber(result?.rolled_months) || 
+                       parseNumber(result?.rolledMonths) || 
+                       0;
+  const startMonth = rolledMonths + 1;
+  return `${formatCurrencyWithPence(payment)} from month ${startMonth}`;
+};
+
+/**
+ * Get Deferred Interest formatted: "£30,000 (2.00%)" for Fusion, "N/A" for Bridge
+ */
+export const getDeferredInterestFormatted = (result) => {
+  const productName = (result?.product_name || result?.product_kind || result?.product || '').toLowerCase();
+  const isFusionProduct = productName.includes('fusion');
+  
+  if (!isFusionProduct) {
+    return 'N/A';
+  }
+  
+  const deferredAmount = parseNumber(result?.deferred_gbp) || 
+                         parseNumber(result?.deferredGBP) || 
+                         parseNumber(result?.deferred_interest) ||
+                         0;
+  const deferredRate = parseNumber(result?.deferred_interest_rate) || 
+                       parseNumber(result?.deferredInterestRate) ||
+                       0;
+  
+  if (deferredAmount === 0 && deferredRate === 0) return '£0 (0.00%)';
+  return `${formatCurrency(deferredAmount)} (${deferredRate.toFixed(2)}%)`;
+};
+
+/**
+ * Get Min Interest Period formatted
+ * Fusion: "6 Months" (from rate record)
+ * Bridge: "3 Months"
+ */
+export const getMinInterestPeriod = (result) => {
+  const minPeriod = parseNumber(result?.min_interest_period) || 
+                    parseNumber(result?.minimum_term) ||
+                    parseNumber(result?.minInterestPeriod) ||
+                    3;
+  return `${minPeriod} ${minPeriod === 1 ? 'Month' : 'Months'}`;
+};
+
+/**
+ * Get ERC/Exit Fee formatted
+ * Fusion: Complex text with ERC percentages
+ * Bridge: Exit fee percentage
+ */
+export const getERCExitFeeFormatted = (result) => {
+  const productName = (result?.product_name || result?.product_kind || result?.product || '').toLowerCase();
+  const isFusionProduct = productName.includes('fusion');
+  
+  if (isFusionProduct) {
+    // Fusion: Show ERC text from rate record
+    const erc1 = parseNumber(result?.erc_1) || parseNumber(result?.erc1Percent) || 3;
+    const erc2 = parseNumber(result?.erc_2) || parseNumber(result?.erc2Percent) || 1.5;
+    const rolledMonths = parseNumber(result?.rolled_months) || parseNumber(result?.rolledMonths) || 6;
+    const repaymentStartMonth = rolledMonths + 1;
+    
+    // Format: "3% in Yr1, 1.5% in Yr2 (25% capital repayment allowed from month X, no ERC after 21 months)"
+    return `${erc1}% in Yr1, ${erc2}% in Yr2`;
+  } else {
+    // Bridge: Show exit fee percentage
+    const exitFeePercent = parseNumber(result?.exit_fee_percent) || 
+                           parseNumber(result?.exitFeePercent) ||
+                           1;
+    return `${exitFeePercent.toFixed(2)}%`;
+  }
+};
+
+/**
+ * Get Proc Fee (Broker Commission) formatted
+ */
+export const getProcFeeFormatted = (result) => {
+  const procFee = parseNumber(result?.proc_fee) || 
+                  parseNumber(result?.procFeeGBP) || 
+                  parseNumber(result?.broker_fee) ||
+                  0;
+  return formatCurrency(procFee);
+};
+
+/**
+ * Get Broker Client Fee formatted
+ */
+export const getBrokerClientFeeFormatted = (result) => {
+  const fee = parseNumber(result?.broker_client_fee) || 
+              parseNumber(result?.brokerClientFee) ||
+              0;
+  return formatCurrency(fee);
+};
+
+// ============================================================================
 // CONDITIONAL CHECKS
 // ============================================================================
 

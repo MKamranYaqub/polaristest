@@ -656,9 +656,10 @@ export class BridgeFusionCalculator {
       bbrMonthly: bbrMonthly * 100, // BBR monthly percentage
       
       // fullRateText: Show annual margin for Fusion, monthly coupon for Bridge
+      // Use Math.round to avoid floating point precision issues (e.g., 4.79 becoming 4.80)
       fullRateText: productKind === 'fusion'
-        ? `${(marginAnnual * 100).toFixed(2)}% + BBR` // Fusion: annual margin
-        : `${(couponMonthly * 100).toFixed(2)}%${productKind === 'bridge-var' ? ' + BBR' : ''}`, // Bridge: monthly
+        ? `${(Math.round(marginAnnual * 10000) / 100).toFixed(2)}% + BBR` // Fusion: annual margin
+        : `${(Math.round(couponMonthly * 10000) / 100).toFixed(2)}%${productKind === 'bridge-var' ? ' + BBR' : ''}`, // Bridge: monthly
 
       // Fees
       arrangementFeeGBP,

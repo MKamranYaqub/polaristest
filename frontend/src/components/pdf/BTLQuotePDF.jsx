@@ -400,6 +400,21 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
             })}
           </View>
 
+          {/* Title Insurance - Only shown if quote_include_title_insurance is true */}
+          {quote.quote_include_title_insurance && (
+            <View style={btlQuoteStyles.tableRowAlt}>
+              <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Title Insurance</Text>
+              {feeRanges.map((feeRange, index) => {
+                const result = h.getResultForFeeRange(results, feeRange);
+                return (
+                  <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
+                    {h.getTitleInsuranceFormatted(result)}
+                  </Text>
+                );
+              })}
+            </View>
+          )}
+
           {/* Total costs */}
           <View style={btlQuoteStyles.tableRowAlt}>
             <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Total costs</Text>

@@ -340,6 +340,17 @@ export const getBrokerClientFee = (result, brokerSettings) => {
   return formatCurrency(clientFee);
 };
 
+// Title Insurance
+export const getTitleInsuranceCost = (result) => {
+  if (!result) return 0;
+  return parseNumber(result.title_insurance_cost);
+};
+
+export const getTitleInsuranceFormatted = (result) => {
+  const cost = getTitleInsuranceCost(result);
+  return cost > 0 ? formatCurrencyWithPence(cost) : 'Not required';
+};
+
 // ============================================================================
 // CLIENT/BROKER DETAILS
 // ============================================================================

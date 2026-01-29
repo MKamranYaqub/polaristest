@@ -25,6 +25,7 @@ export default function IssueQuoteModal({
   const [borrowerName, setBorrowerName] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [productRange, setProductRange] = useState('specialist'); // Core/Specialist selector for which quote to issue
+  const [includeTitleInsurance, setIncludeTitleInsurance] = useState(false); // Title Insurance toggle
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
   const uiPrefs = useUiPreferences();
@@ -67,12 +68,16 @@ export default function IssueQuoteModal({
         } else {
           setProductRange('specialist');
         }
+
+        // Load Title Insurance preference
+        setIncludeTitleInsurance(existingQuoteData.quote_include_title_insurance || false);
       } else {
         // Reset to defaults for new quote
           setSelectedFeeRanges([]);
           setBorrowerName('');
           setAdditionalNotes('');
           setProductRange('specialist');
+          setIncludeTitleInsurance(false);
       }
     }
   }, [isOpen, existingQuoteData]);
@@ -177,6 +182,7 @@ export default function IssueQuoteModal({
         quote_borrower_name: borrowerName.trim(),
         quote_additional_notes: additionalNotes.trim(),
         quote_product_range: productRange,
+        quote_include_title_insurance: includeTitleInsurance,
         quote_issued_at: new Date().toISOString(),
         quote_status: 'Issued',
       };
@@ -280,6 +286,25 @@ export default function IssueQuoteModal({
           )}
         </div>
       )}
+      
+      {/* Title Insurance Toggle */}
+      <div className="slds-form-element margin-bottom-15">
+        <label className="slds-form-element__label">
+          Include Title Insurance in Quote?
+          <HelpIcon content="Select 'Yes' to include Title Insurance details and cost in the PDF quote. The Title Insurance premium is calculated based on the gross loan amount. Select 'No' to exclude this section from the Quote PDF." />
+        </label>
+        <div className="slds-form-element__control">
+          <select
+            className="slds-select"
+            value={includeTitleInsurance ? 'Yes' : 'No'}
+            onChange={(e) => setIncludeTitleInsurance(e.target.value === 'Yes')}
+          >
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+      </div>
+
       {/* Borrower Name */}
       <div className="slds-form-element margin-bottom-15">
         <label className="slds-form-element__label">
