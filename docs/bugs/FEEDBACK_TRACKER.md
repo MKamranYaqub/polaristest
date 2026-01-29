@@ -65,6 +65,7 @@
 | BUG-007 | Product Scope in Bridging pulling BTL scopes instead of Bridging scopes | ✅ Complete | Added `criteria_set` filtering in both calculators |
 | BUG-008 | Proc Fee not capping based on commission tolerance - user could enter any value | ✅ Complete | Added tolerance clamping to `useBrokerSettings.js` handlers |
 | BUG-009 | Proc Fee & Additional Fee inputs blocked free typing due to aggressive clamping | ✅ Complete | Changed handlers to only cap at min/max boundaries, allow free input within range |
+| BUG-010 | Admin Dashboard stats were hardcoded, not dynamically fetched | ✅ Complete | Added API calls to fetch real counts for users, rates, quotes, support requests |
 
 ### Fix Details - BUG-007
 
@@ -114,8 +115,8 @@
 
 ## Completion Summary
 
-- **Total Items**: 25
-- **Completed**: 4
+- **Total Items**: 26
+- **Completed**: 5
 - **In Progress**: 0
 - **Open**: 21
 - **Planned Features**: 3
@@ -126,6 +127,7 @@
 
 | Date | Item | Change | By |
 |------|------|--------|-----|
+| 2026-01-29 | BUG-010 | Fixed Admin Dashboard stats to be dynamically fetched from API | AI Agent |
 | 2026-01-29 | BUG-009 | Fixed Proc Fee & Additional Fee inputs not allowing free typing | AI Agent |
 | 2026-01-29 | BUG-008 | Fixed Proc Fee not capping based on commission tolerance | AI Agent |
 | 2026-01-29 | BUG-006 | Fixed NPB LTV not saving in Bridging calculator | AI Agent |
