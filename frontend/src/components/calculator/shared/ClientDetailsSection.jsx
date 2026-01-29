@@ -6,7 +6,7 @@ import '../../../styles/Calculator.scss';
 /**
  * Client Details Section Component
  * Handles client information form for both Direct and Broker types
- * Includes broker-specific fields like commission, route, and additional fees
+ * Includes broker-specific fields like proc fees, route, and additional fees
  * Designed to work with useBrokerSettings hook
  * 
  * @param {Object} props - Component props
@@ -24,10 +24,12 @@ import '../../../styles/Calculator.scss';
  * @param {Function} props.setBrokerCompanyName - Company name setter
  * @param {string} props.brokerRoute - Selected broker route
  * @param {Function} props.setBrokerRoute - Broker route setter
- * @param {number} props.brokerCommissionPercent - Broker commission percentage
- * @param {Function} props.handleBrokerCommissionChange - Commission change handler
+ * @param {number} props.procFeeSpecialistPercent - Proc fee percentage for BTL Specialist (or general proc fee for Bridge)
+ * @param {Function} props.handleProcFeeSpecialistChange - Specialist proc fee change handler
+ * @param {number} props.procFeeCorePercent - Proc fee percentage for BTL Core (BTL only)
+ * @param {Function} props.handleProcFeeCoreChange - Core proc fee change handler (BTL only)
  * @param {Function} props.getBrokerRoutesAndDefaults - Function to get broker config from localStorage
- * @param {string} props.calculatorType - 'btl' or 'bridge' to determine which proc fee to use
+ * @param {string} props.calculatorType - 'btl', 'core', or 'bridge' to determine which proc fee to use
  * @param {boolean} props.addFeesToggle - Whether additional fees are enabled
  * @param {Function} props.setAddFeesToggle - Additional fees toggle setter
  * @param {string} props.feeCalculationType - 'pound' or 'percentage'
@@ -37,6 +39,7 @@ import '../../../styles/Calculator.scss';
  * @param {boolean} props.expanded - Whether section is expanded
  * @param {Function} props.onToggle - Toggle handler
  * @param {boolean} props.isReadOnly - Whether form fields are read-only
+ * @param {boolean} props.isBTLCalculator - Whether this is a BTL calculator (shows separate Specialist/Core fields)
  */
 export default function ClientDetailsSection({
   clientType,
@@ -53,8 +56,14 @@ export default function ClientDetailsSection({
   setBrokerCompanyName,
   brokerRoute,
   setBrokerRoute,
+  // Legacy prop names for backwards compatibility
   brokerCommissionPercent,
   handleBrokerCommissionChange,
+  // New prop names for clarity
+  procFeeSpecialistPercent,
+  handleProcFeeSpecialistChange,
+  procFeeCorePercent,
+  handleProcFeeCoreChange,
   getBrokerRoutesAndDefaults,
   calculatorType = 'btl',
   addFeesToggle,
@@ -65,8 +74,13 @@ export default function ClientDetailsSection({
   setAdditionalFeeAmount,
   expanded = true,
   onToggle,
-  isReadOnly = false
+  isReadOnly = false,
+  isBTLCalculator = false
 }) {
+  // Use new prop names if provided, fall back to legacy names for backwards compatibility
+  const specialistPercent = procFeeSpecialistPercent ?? brokerCommissionPercent;
+  const handleSpecialistChange = handleProcFeeSpecialistChange ?? handleBrokerCommissionChange;
+  
   return (
     <CollapsibleSection 
       title="Client details" 
@@ -125,42 +139,59 @@ export default function ClientDetailsSection({
             </div>
           </div>
         )}
-        {clientType === 'Broker' && (
+        
+        {/* BTL Calculator: Show separate Specialist and Core proc fee fields */}
+        {clientType === 'Broker' && isBTLCalculator && (
           <div className="slds-form-element">
             <label className="slds-form-element__label">
-              <span className="slds-required">* </span>Broker Commision (%){' '}
-              </label>
+              <span className="slds-required">* </span>Proc Fee Specialist (%){' '}
+            </label>
             <div className="slds-form-element__control">
               <input 
                 className="slds-input" 
                 type="number" 
                 step="0.1"
-                value={brokerCommissionPercent} 
-                onChange={handleBrokerCommissionChange}
+                value={specialistPercent} 
+                onChange={handleSpecialistChange}
                 disabled={isReadOnly}
-                title={(() => {
-                  const { defaults, tolerance } = getBrokerRoutesAndDefaults();
-                  const routeDefaults = defaults[brokerRoute];
-                  const defaultVal = typeof routeDefaults === 'object' ? routeDefaults[calculatorType] : (routeDefaults ?? 0.9);
-                  const min = (defaultVal - tolerance).toFixed(1);
-                  const max = (defaultVal + tolerance).toFixed(1);
-                  return `Allowed range: ${min}% to ${max}%`;
-                })()}
               />
             </div>
           </div>
         )}
-        {clientType === 'Broker' && (
-          <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-            <span style={{ fontSize: 'var(--token-font-size-sm)', color: 'var(--token-info)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: 'var(--token-font-size-md)' }}>ⓘ</span>
-              Adjustable within ±{getBrokerRoutesAndDefaults().tolerance}% of default ({(() => {
-                const { defaults } = getBrokerRoutesAndDefaults();
-                const routeDefaults = defaults[brokerRoute];
-                const defaultVal = typeof routeDefaults === 'object' ? routeDefaults[calculatorType] : (routeDefaults ?? 0.9);
-                return defaultVal;
-              })()}%)
-            </span>
+        {clientType === 'Broker' && isBTLCalculator && (
+          <div className="slds-form-element">
+            <label className="slds-form-element__label">
+              <span className="slds-required">* </span>Proc Fee Core (%){' '}
+            </label>
+            <div className="slds-form-element__control">
+              <input 
+                className="slds-input" 
+                type="number" 
+                step="0.1"
+                value={procFeeCorePercent ?? ''} 
+                onChange={handleProcFeeCoreChange}
+                disabled={isReadOnly}
+              />
+            </div>
+          </div>
+        )}
+        
+        {/* Bridge Calculator: Show single proc fee field */}
+        {clientType === 'Broker' && !isBTLCalculator && (
+          <div className="slds-form-element">
+            <label className="slds-form-element__label">
+              <span className="slds-required">* </span>Proc Fee (%){' '}
+            </label>
+            <div className="slds-form-element__control">
+              <input 
+                className="slds-input" 
+                type="number" 
+                step="0.1"
+                value={specialistPercent} 
+                onChange={handleSpecialistChange}
+                disabled={isReadOnly}
+              />
+            </div>
           </div>
         )}
       </div>

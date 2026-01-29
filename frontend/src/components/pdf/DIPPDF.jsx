@@ -158,7 +158,7 @@ const DIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
               <PDFRow label="Route" value={brokerSettings.brokerRoute} />
             )}
             {brokerSettings.brokerCommissionPercent && (
-              <PDFRow label="Commission" value={`${brokerSettings.brokerCommissionPercent}%`} />
+              <PDFRow label="Proc Fee" value={`${brokerSettings.brokerCommissionPercent}%`} />
             )}
           </PDFSection>
         )}

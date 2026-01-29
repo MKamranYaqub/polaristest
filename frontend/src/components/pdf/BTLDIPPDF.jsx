@@ -280,10 +280,10 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           </View>
         )}
 
-        {/* Broker's Commission - CONDITIONAL: Only show if broker */}
+        {/* Proc Fee - CONDITIONAL: Only show if broker */}
         {hasBrokerFees && brokerCommission > 0 && (
           <View style={btlDipStyles.summaryRow}>
-            <Text style={btlDipStyles.summaryLabel}>Broker's Commission:</Text>
+            <Text style={btlDipStyles.summaryLabel}>Proc Fee:</Text>
             <Text style={btlDipStyles.summaryValue}>
               {h.formatCurrency(brokerCommission)} (to be deducted from the Product Fee)
             </Text>

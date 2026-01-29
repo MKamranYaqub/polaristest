@@ -341,10 +341,10 @@ const BridgingDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           </View>
         )}
 
-        {/* Broker's Commission - CONDITIONAL */}
+        {/* Proc Fee - CONDITIONAL */}
         {hasBrokerFees && brokerCommission > 0 && (
           <View style={btlDipStyles.summaryRow}>
-            <Text style={btlDipStyles.summaryLabel}>Broker's Commission:</Text>
+            <Text style={btlDipStyles.summaryLabel}>Proc Fee:</Text>
             <Text style={btlDipStyles.summaryValue}>
               {h.formatCurrency(brokerCommission)} (to be deducted from the Arrangement Fee)
             </Text>

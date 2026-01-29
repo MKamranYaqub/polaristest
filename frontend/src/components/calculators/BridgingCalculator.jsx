@@ -1901,9 +1901,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
                           (() => {
                             const columnsHeaders = [ 'Fusion', 'Variable Bridge', 'Fixed Bridge' ];
                             const allPlaceholders = [
-                              'APRC', 'Admin Fee', 'Broker Client Fee', 'Broker Comission (Proc Fee %)',
-                              'Broker Comission (Proc Fee £)', 'Commitment Fee £', 'Deferred Interest %', 'Deferred Interest £',
-                              'Direct Debit', 'ERC 1 £', 'ERC 2 £', 'Exit Fee', 'Full Int BBR £', 'Full Int Coupon £', 'Full Term',
+                              'APRC', 'Admin Fee', 'Broker Client Fee', 'Proc Fee (%)',
+                              'Proc Fee (£)', 'Commitment Fee £', 'Deferred Interest %', 'Deferred Interest £',
+                              'Direct Debit', 'Early Repayment Charge Yr1', 'Early Repayment Charge Yr2', 'Exit Fee', 'Full Int BBR £', 'Full Int Coupon £', 'Full Term',
                               'Gross Loan', 'ICR', 'Initial Term', 'LTV', 'Monthly Interest Cost',
                               'NPB', 'NPB LTV', 'Net Loan', 'Net LTV', 'Pay Rate', 'Product Fee %', 'Product Fee £', 'Revert Rate', 'Revert Rate DD',
                               'Rolled Months', 'Rolled Months Interest', 'Serviced Interest', 'Serviced Months', 'Title Insurance Cost', 'Total Interest'
@@ -2043,14 +2043,14 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                 values['Admin Fee'][col] = `£${Number(best.admin_fee).toLocaleString('en-GB')}`;
                               }
 
-                              // Broker Commission (Proc Fee %)
-                              if (best.broker_commission_proc_fee_percent && values['Broker Comission (Proc Fee %)']) {
-                                values['Broker Comission (Proc Fee %)'][col] = `${best.broker_commission_proc_fee_percent}%`;
+                              // Proc Fee (%)
+                              if (best.broker_commission_proc_fee_percent && values['Proc Fee (%)']) {
+                                values['Proc Fee (%)'][col] = `${best.broker_commission_proc_fee_percent}%`;
                               }
 
-                              // Broker Commission (Proc Fee £)
-                              if (best.broker_commission_proc_fee_pounds && values['Broker Comission (Proc Fee £)']) {
-                                values['Broker Comission (Proc Fee £)'][col] = `£${Number(best.broker_commission_proc_fee_pounds).toLocaleString('en-GB')}`;
+                              // Proc Fee (£)
+                              if (best.broker_commission_proc_fee_pounds && values['Proc Fee (£)']) {
+                                values['Proc Fee (£)'][col] = `£${Number(best.broker_commission_proc_fee_pounds).toLocaleString('en-GB')}`;
                               }
 
                               // Rolled Months
@@ -2123,14 +2123,14 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                 values['Serviced Months'][col] = `${best.serviced_months} months`;
                               }
 
-                              // ERC 1 £ (Fusion only)
-                              if (col === 'Fusion' && best.erc_1_pounds !== undefined && values['ERC 1 £']) {
-                                values['ERC 1 £'][col] = `£${Number(best.erc_1_pounds).toLocaleString('en-GB')}`;
+                              // Early Repayment Charge Yr1 (Fusion only)
+                              if (col === 'Fusion' && best.erc_1_pounds !== undefined && values['Early Repayment Charge Yr1']) {
+                                values['Early Repayment Charge Yr1'][col] = `£${Number(best.erc_1_pounds).toLocaleString('en-GB')}`;
                               }
 
-                              // ERC 2 £ (Fusion only)
-                              if (col === 'Fusion' && best.erc_2_pounds !== undefined && values['ERC 2 £']) {
-                                values['ERC 2 £'][col] = `£${Number(best.erc_2_pounds).toLocaleString('en-GB')}`;
+                              // Early Repayment Charge Yr2 (Fusion only)
+                              if (col === 'Fusion' && best.erc_2_pounds !== undefined && values['Early Repayment Charge Yr2']) {
+                                values['Early Repayment Charge Yr2'][col] = `£${Number(best.erc_2_pounds).toLocaleString('en-GB')}`;
                               }
 
                               // Broker Client Fee (if available)

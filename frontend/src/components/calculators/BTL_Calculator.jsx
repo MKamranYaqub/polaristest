@@ -91,12 +91,16 @@ export default function BTLcalculator({
   // In public mode, users can edit but product scope is locked
   const isReadOnly = !publicMode && !canEditCalculators();
   
-  // Use custom hook for broker settings - pass 'btl' as calculator type
-  const brokerSettings = useBrokerSettings(effectiveInitialQuote, 'btl');
-  
   // Range toggle state (Core or Specialist) - moved before hooks that depend on it
   // In public mode, use fixedRange if provided
   const [selectedRange, setSelectedRange] = useState(fixedRange || 'specialist');
+  
+  // Determine calculator type based on selected range for proc fee selection
+  // 'btl' = BTL Specialist, 'core' = BTL Core range
+  const calculatorTypeForProcFee = selectedRange === 'core' ? 'core' : 'btl';
+  
+  // Use custom hook for broker settings - pass dynamic calculator type based on range
+  const brokerSettings = useBrokerSettings(effectiveInitialQuote, calculatorTypeForProcFee);
   
   // Use custom hook for results table visibility - dynamically switch based on selected range
   const calculatorTypeForSettings = selectedRange === 'core' ? 'core' : 'btl';
@@ -272,7 +276,16 @@ export default function BTLcalculator({
     if (effectiveInitialQuote) return;
     
     if (!productScope) {
-      const available = Array.from(new Set(allCriteria.map((r) => r.product_scope).filter(Boolean)));
+      const available = Array.from(new Set(allCriteria.map((r) => r.product_scope).filter(Boolean))).sort((a, b) => {
+        const order = ['Residential - BTL', 'Commercial', 'Semi-Commercial'];
+        const indexA = order.indexOf(a);
+        const indexB = order.indexOf(b);
+        
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.localeCompare(b);
+      });
       if (available.length > 0) {
         setProductScope(available[0]);
       }
@@ -859,7 +872,12 @@ export default function BTLcalculator({
     const results = [];
 
     relevantRates.forEach(rate => {
-      const derivedProcFeePct = brokerSettings.clientType === 'Broker' ? Number(brokerSettings.brokerCommissionPercent) || 0 : 0;
+      // Use the appropriate proc fee based on the rate's product_range (Core vs Specialist)
+      const rangeField = (rate.product_range || rate.rate_type || '').toLowerCase();
+      const isRateCore = rangeField === 'core' || rangeField.includes('core');
+      const derivedProcFeePct = brokerSettings.clientType === 'Broker' 
+        ? Number(isRateCore ? brokerSettings.procFeeCorePercent : brokerSettings.procFeeSpecialistPercent) || 0 
+        : 0;
       
       const additionalFeeRaw = Number(brokerSettings.additionalFeeAmount);
       const derivedBrokerFeePct = (brokerSettings.addFeesToggle && brokerSettings.feeCalculationType === 'percentage' && Number.isFinite(additionalFeeRaw))
@@ -1069,7 +1087,17 @@ export default function BTLcalculator({
   );
 
   // Build unique product_scope values for top control; criteria_set is fixed to BTL
-  const productScopes = Array.from(new Set(allCriteria.map((r) => r.product_scope).filter(Boolean)));
+  // Custom sort order: Residential - BTL first, then Commercial, then Semi-Commercial, then alphabetically
+  const productScopes = Array.from(new Set(allCriteria.map((r) => r.product_scope).filter(Boolean))).sort((a, b) => {
+    const order = ['Residential - BTL', 'Commercial', 'Semi-Commercial'];
+    const indexA = order.indexOf(a);
+    const indexB = order.indexOf(b);
+    
+    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+    if (indexA !== -1) return -1;
+    if (indexB !== -1) return 1;
+    return a.localeCompare(b);
+  });
 
   // DIP Modal Handlers
   const handleOpenDipModal = async () => {
@@ -1265,7 +1293,8 @@ export default function BTLcalculator({
     brokerSettings.setBrokerCompanyName('');
     brokerSettings.setBrokerRoute(BROKER_ROUTES.DIRECT_BROKER);
     const defaultCommission = BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER];
-    brokerSettings.setBrokerCommissionPercent(typeof defaultCommission === 'object' ? defaultCommission.btl : defaultCommission);
+    brokerSettings.setProcFeeSpecialistPercent(typeof defaultCommission === 'object' ? defaultCommission.btl : defaultCommission);
+    brokerSettings.setProcFeeCorePercent(typeof defaultCommission === 'object' ? (defaultCommission.core ?? defaultCommission.btl) : defaultCommission);
     brokerSettings.setAddFeesToggle(false);
     brokerSettings.setFeeCalculationType('pound');
     brokerSettings.setAdditionalFeeAmount('');
@@ -1338,7 +1367,8 @@ export default function BTLcalculator({
     brokerSettings.setBrokerCompanyName('');
     brokerSettings.setBrokerRoute(BROKER_ROUTES.DIRECT_BROKER);
     const defaultCommission = BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER];
-    brokerSettings.setBrokerCommissionPercent(typeof defaultCommission === 'object' ? defaultCommission.btl : defaultCommission);
+    brokerSettings.setProcFeeSpecialistPercent(typeof defaultCommission === 'object' ? defaultCommission.btl : defaultCommission);
+    brokerSettings.setProcFeeCorePercent(typeof defaultCommission === 'object' ? (defaultCommission.core ?? defaultCommission.btl) : defaultCommission);
     brokerSettings.setAddFeesToggle(false);
     brokerSettings.setFeeCalculationType('pound');
     brokerSettings.setAdditionalFeeAmount('');
@@ -1646,6 +1676,7 @@ export default function BTLcalculator({
         expanded={clientDetailsExpanded}
         onToggle={handleClientDetailsToggle}
         isReadOnly={isReadOnly}
+        isBTLCalculator={true}
       />
 
       {tipOpen && (
@@ -1891,8 +1922,8 @@ export default function BTLcalculator({
                                   (() => {
                                     const columnsHeaders = feeBuckets.map((fb) => (fb === 'none' ? 'Fee: —' : `Fee: ${fb}%`));
                                     const allPlaceholders = [
-                                      'APRC','Admin Fee','Broker Client Fee','Broker Commission (Proc Fee %)',
-                                      'Broker Commission (Proc Fee £)','Deferred Interest %','Deferred Interest £',
+                                      'APRC','Admin Fee','Broker Client Fee','Proc Fee (%)',
+                                      'Proc Fee (£)','Deferred Interest %','Deferred Interest £',
                                       'Direct Debit','ERC','Exit Fee','Full Term','Gross Loan','ICR','Initial Term',
                                       'LTV','Monthly Interest Cost','NPB','NPB LTV','Net Loan','Net LTV','Pay Rate','Product Fee %',
                                       'Product Fee £','Revert Rate','Revert Rate DD','Rolled Months','Rolled Months Interest',
@@ -1930,8 +1961,11 @@ export default function BTLcalculator({
                                       // Run calculation engine for this column
                                       // Derive broker-related fees from client details
                                       const isBrokerClient = brokerSettings.clientType === 'Broker';
+                                      // Use appropriate proc fee based on rate's product_range (Core vs Specialist)
+                                      const bestRangeField = (best?.product_range || best?.rate_type || '').toLowerCase();
+                                      const isThisRateCore = bestRangeField === 'core' || bestRangeField.includes('core');
                                       const derivedProcFeePct = isBrokerClient
-                                        ? Number(brokerSettings.brokerCommissionPercent) || 0
+                                        ? Number(isThisRateCore ? brokerSettings.procFeeCorePercent : brokerSettings.procFeeSpecialistPercent) || 0
                                         : 0;
                                       const additionalFeeRaw = parseNumber(brokerSettings.additionalFeeAmount);
                                       const useAdditional = !!brokerSettings.addFeesToggle && Number.isFinite(additionalFeeRaw) && additionalFeeRaw > 0;
@@ -1965,7 +1999,7 @@ export default function BTLcalculator({
                                         manualRolled,
                                         manualDeferred,
                                         brokerRoute: brokerSettings.brokerRoute,
-                                        // Use Broker commission (%) as Proc Fee when client type is Broker
+                                        // Use Proc Fee (%) when client type is Broker
                                         procFeePct: derivedProcFeePct,
                                         // Map Additional fees toggle+amount into Broker Client Fee (either % of gross or £ flat)
                                         brokerFeePct: derivedBrokerFeePct,
@@ -2059,14 +2093,14 @@ export default function BTLcalculator({
                                           values['Deferred Interest £'][colKey] = formatCurrency(result.deferredInterestAmount, 2);
                                         }
 
-                                        // Broker Commission (Proc Fee %)
-                                        if (values['Broker Commission (Proc Fee %)']) {
-                                          values['Broker Commission (Proc Fee %)'][colKey] = `${result.procFeePct}%`;
+                                        // Proc Fee (%)
+                                        if (values['Proc Fee (%)']) {
+                                          values['Proc Fee (%)'][colKey] = `${result.procFeePct}%`;
                                         }
 
-                                        // Broker Commission (Proc Fee £)
-                                        if (values['Broker Commission (Proc Fee £)']) {
-                                          values['Broker Commission (Proc Fee £)'][colKey] = formatCurrency(result.procFeeValue, 0);
+                                        // Proc Fee (£)
+                                        if (values['Proc Fee (£)']) {
+                                          values['Proc Fee (£)'][colKey] = formatCurrency(result.procFeeValue, 0);
                                         }
 
                                         // Broker Client Fee

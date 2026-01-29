@@ -158,6 +158,7 @@ export default function Constants() {
         const val = overrides.brokerCommissionDefaults?.[k] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[k];
         if (typeof val === 'object' && val !== null) {
           tv[`brokerCommission:${k}:btl`] = String(val.btl ?? 0.9);
+          tv[`brokerCommission:${k}:core`] = String(val.core ?? 0.5);
           tv[`brokerCommission:${k}:bridge`] = String(val.bridge ?? 0.9);
         } else {
           tv[`brokerCommission:${k}`] = String(val);
@@ -198,6 +199,7 @@ export default function Constants() {
           const val = newVal.brokerCommissionDefaults?.[k] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[k];
           if (typeof val === 'object' && val !== null) {
             tv2[`brokerCommission:${k}:btl`] = String(val.btl ?? 0.9);
+            tv2[`brokerCommission:${k}:core`] = String(val.core ?? 0.5);
             tv2[`brokerCommission:${k}:bridge`] = String(val.bridge ?? 0.9);
           } else {
             tv2[`brokerCommission:${k}`] = String(val);
@@ -881,15 +883,15 @@ export default function Constants() {
     const num = parseFloat(value);
     if (isNaN(num)) return;
     
-    // Handle separate BTL and Bridge proc fees
+    // Handle separate BTL, Core, and Bridge proc fees
     let updated;
     if (calcType) {
-      // Update specific calculator type (btl or bridge)
-      const currentVal = brokerCommissionDefaults[key] || { btl: 0.9, bridge: 0.9 };
+      // Update specific calculator type (btl, core, or bridge)
+      const currentVal = brokerCommissionDefaults[key] || { btl: 0.9, core: 0.5, bridge: 0.9 };
       // Ensure we preserve the structure and only update the specific calculator type
       const newVal = typeof currentVal === 'object' && currentVal !== null
         ? { ...currentVal, [calcType]: num }
-        : { btl: calcType === 'btl' ? num : 0.9, bridge: calcType === 'bridge' ? num : 0.9 };
+        : { btl: calcType === 'btl' ? num : 0.9, core: calcType === 'core' ? num : 0.5, bridge: calcType === 'bridge' ? num : 0.9 };
       updated = { 
         ...(brokerCommissionDefaults || {}), 
         [key]: newVal
@@ -938,7 +940,7 @@ export default function Constants() {
           show: true, 
           type: 'success', 
           title: 'Success', 
-          message: 'Broker commission saved successfully!' 
+          message: 'Proc Fee defaults saved successfully!' 
         });
         
         window.dispatchEvent(new StorageEvent('storage', {
@@ -1119,9 +1121,9 @@ export default function Constants() {
     const newRoutes = { ...brokerRoutes, [formattedKey]: newRouteDisplayName.trim() };
     setBrokerRoutes(newRoutes);
     
-    // Add to commission defaults with separate BTL and Bridge fees
+    // Add to commission defaults with separate BTL, Core, and Bridge fees
     const commission = parseFloat(newRouteCommission) || 0.9;
-    const newDefaults = { ...brokerCommissionDefaults, [newRouteDisplayName.trim()]: { btl: commission, bridge: commission } };
+    const newDefaults = { ...brokerCommissionDefaults, [newRouteDisplayName.trim()]: { btl: commission, core: 0.5, bridge: commission } };
     setBrokerCommissionDefaults(newDefaults);
     
     // Save to localStorage
@@ -1610,25 +1612,27 @@ export default function Constants() {
 
             <div className="slds-m-bottom_medium">
               <br/>
-              <h5>Broker Commission Defaults (%) - Proc Fees</h5>
-              <p className="helper-text">Each broker route has separate proc fee percentages for BTL and Bridge calculators.</p>
+              <h5>Proc Fee Defaults (%)</h5>
+              <p className="helper-text">Each broker route has separate proc fee percentages for BTL (Specialist), BTL Core, and Bridge calculators.</p>
               <div className="slds-grid slds-wrap slds-gutters_small flex-gap-1">
                 {Object.keys(brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS).map(route => {
                   const routeValue = brokerCommissionDefaults[route] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[route];
                   const hasSeparateFees = typeof routeValue === 'object' && routeValue !== null;
                   const btlValue = hasSeparateFees ? routeValue.btl : routeValue;
+                  const coreValue = hasSeparateFees ? routeValue.core : 0.5;
                   const bridgeValue = hasSeparateFees ? routeValue.bridge : routeValue;
                   
                   const btlKey = `brokerCommission:${route}:btl`;
+                  const coreKey = `brokerCommission:${route}:core`;
                   const bridgeKey = `brokerCommission:${route}:bridge`;
                   
                   return (
                     <div key={route} className="slds-col min-width-260" style={{ marginBottom: '1rem' }}>
                       <label className="slds-form-element__label" style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>{route}</label>
                       
-                      {/* BTL Proc Fee */}
+                      {/* BTL Specialist Proc Fee */}
                       <div style={{ marginBottom: '0.5rem' }}>
-                        <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>BTL Proc Fee</label>
+                        <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>BTL Specialist Proc Fee</label>
                         <div className="slds-form-element__control slds-grid align-items-center flex-gap-05">
                           <input
                             className={`slds-input ${!editingFields[btlKey] ? 'constants-disabled' : ''}`}
@@ -1647,6 +1651,32 @@ export default function Constants() {
                             <>
                               <button className="slds-button slds-button_brand" onClick={() => saveEdit(btlKey)}>Save</button>
                               <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(btlKey, true)}>Cancel</button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* BTL Core Proc Fee */}
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>BTL Core Proc Fee</label>
+                        <div className="slds-form-element__control slds-grid align-items-center flex-gap-05">
+                          <input
+                            className={`slds-input ${!editingFields[coreKey] ? 'constants-disabled' : ''}`}
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="100"
+                            value={editingFields[coreKey] ? (tempValues[coreKey] ?? '') : (coreValue ?? 0.5)}
+                            onChange={(e) => setTempValues(prev => ({ ...prev, [coreKey]: e.target.value }))}
+                            disabled={!editingFields[coreKey]}
+                          />
+                          <div className="percent-unit">%</div>
+                          {!editingFields[coreKey] ? (
+                            <button className="slds-button slds-button_neutral" onClick={() => startEdit(coreKey, String(coreValue ?? 0.5))}>Edit</button>
+                          ) : (
+                            <>
+                              <button className="slds-button slds-button_brand" onClick={() => saveEdit(coreKey)}>Save</button>
+                              <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(coreKey, true)}>Cancel</button>
                             </>
                           )}
                         </div>
