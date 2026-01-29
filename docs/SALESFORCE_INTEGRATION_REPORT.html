@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polaris - Salesforce Integration Report</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0066FF;
+            --primary-dark: #0052CC;
+            --secondary: #6366F1;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --border-radius: 12px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            min-height: 100vh;
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 60px 40px;
+            border-radius: var(--border-radius);
+            margin-bottom: 40px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255,255,255,0.1);
+            transform: rotate(15deg);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 24px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            background: rgba(255,255,255,0.15);
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+
+        .meta-item svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Executive Summary */
+        .summary-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid var(--primary);
+        }
+
+        .summary-card h2 {
+            font-size: 1.5rem;
+            color: var(--gray-900);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .summary-card h2 svg {
+            color: var(--primary);
+        }
+
+        .findings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .finding-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: var(--gray-50);
+            border-radius: 8px;
+        }
+
+        .finding-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .finding-icon.warning { background: #FEF3C7; color: var(--warning); }
+        .finding-icon.danger { background: #FEE2E2; color: var(--danger); }
+        .finding-icon.info { background: #DBEAFE; color: var(--primary); }
+
+        /* Section Cards */
+        .section {
+            background: white;
+            border-radius: var(--border-radius);
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .section-header h3 {
+            font-size: 1.25rem;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-header h3 code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--gray-100);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-primary { background: #DBEAFE; color: var(--primary); }
+        .badge-success { background: #D1FAE5; color: var(--success); }
+
+        .section-content {
+            padding: 24px 32px;
+        }
+
+        .section-description {
+            color: var(--gray-600);
+            margin-bottom: 24px;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        thead {
+            background: var(--gray-50);
+        }
+
+        th {
+            text-align: left;
+            padding: 14px 16px;
+            font-weight: 600;
+            color: var(--gray-700);
+            border-bottom: 2px solid var(--gray-200);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--gray-100);
+            vertical-align: top;
+        }
+
+        tr:hover {
+            background: var(--gray-50);
+        }
+
+        td code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--gray-100);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--gray-700);
+        }
+
+        .status-duplicate {
+            color: var(--warning);
+            font-weight: 600;
+        }
+
+        .status-remove {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        .status-keep {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        /* Mapping Tree */
+        .mapping-container {
+            background: var(--gray-900);
+            border-radius: 8px;
+            padding: 24px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.8;
+            overflow-x: auto;
+            color: #E5E7EB;
+        }
+
+        .mapping-container .tree-root {
+            color: #60A5FA;
+            font-weight: 600;
+        }
+
+        .mapping-container .tree-branch {
+            color: var(--gray-400);
+        }
+
+        .mapping-container .tree-key {
+            color: #34D399;
+        }
+
+        .mapping-container .tree-value {
+            color: #FBBF24;
+        }
+
+        .mapping-container .tree-comment {
+            color: #9CA3AF;
+            font-style: italic;
+        }
+
+        .mapping-container .tree-category {
+            color: #F472B6;
+            font-weight: 600;
+        }
+
+        /* Subsection Headers */
+        .subsection-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .subsection-header h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .subsection-header .icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .subsection-header .icon.warning { color: var(--warning); }
+        .subsection-header .icon.danger { color: var(--danger); }
+        .subsection-header .icon.success { color: var(--success); }
+
+        /* Collapsible Details */
+        details {
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            margin-top: 24px;
+        }
+
+        details summary {
+            padding: 16px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray-700);
+            background: var(--gray-50);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        details summary:hover {
+            background: var(--gray-100);
+        }
+
+        details[open] summary {
+            border-radius: 8px 8px 0 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        details .details-content {
+            padding: 20px;
+        }
+
+        /* Category Pills */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--gray-50);
+            border-radius: 8px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .category-item .label {
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .category-item .value {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .priority-high { background: #FEE2E2; color: var(--danger); }
+        .priority-medium { background: #FEF3C7; color: var(--warning); }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+
+        .footer strong {
+            color: var(--gray-700);
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                padding: 0;
+            }
+            .section {
+                break-inside: avoid;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 40px 24px;
+            }
+            .header h1 {
+                font-size: 1.75rem;
+            }
+            .section-header, .section-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Polaris - Salesforce Integration Report</h1>
+            <p class="subtitle">Database Tables & API Mapping for Salesforce Integration</p>
+            <div class="header-meta">
+                <div class="meta-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    January 29, 2026
+                </div>
+                <div class="meta-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Analysis Complete
+                </div>
+                <div class="meta-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3z" />
+                    </svg>
+                    5 Tables Analyzed
+                </div>
+            </div>
+        </header>
+
+        <!-- Executive Summary -->
+        <div class="summary-card">
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Executive Summary
+            </h2>
+            <div class="findings-grid">
+                <div class="finding-item">
+                    <div class="finding-icon warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <strong>Duplicate Fields</strong>
+                        <p style="font-size: 0.875rem; color: var(--gray-600);">Same data stored in different columns - consolidation recommended</p>
+                    </div>
+                </div>
+                <div class="finding-item">
+                    <div class="finding-icon danger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </div>
+                    <div>
+                        <strong>Unused Fields</strong>
+                        <p style="font-size: 0.875rem; color: var(--gray-600);">Never populated columns - candidates for removal</p>
+                    </div>
+                </div>
+                <div class="finding-item">
+                    <div class="finding-icon info">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <strong>Inconsistent Naming</strong>
+                        <p style="font-size: 0.875rem; color: var(--gray-600);">Similar fields with different names across tables</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table 1: quotes -->
+        <div class="section">
+            <div class="section-header">
+                <h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <code>quotes</code> BTL Quotes Master Table
+                </h3>
+                <span class="badge badge-primary">58 Rows</span>
+            </div>
+            <div class="section-content">
+                <p class="section-description">Stores Buy-to-Let mortgage quote configurations</p>
+
+                <div class="category-grid">
+                    <div class="category-item">
+                        <span class="label">Quote Identity</span>
+                        <span class="value priority-high">HIGH</span>
+                    </div>
+                    <div class="category-item">
+                        <span class="label">Client Details</span>
+                        <span class="value priority-high">HIGH</span>
+                    </div>
+                    <div class="category-item">
+                        <span class="label">Property Details</span>
+                        <span class="value priority-high">HIGH</span>
+                    </div>
+                    <div class="category-item">
+                        <span class="label">Calculation Inputs</span>
+                        <span class="value priority-medium">MEDIUM</span>
+                    </div>
+                    <div class="category-item">
+                        <span class="label">Status/Workflow</span>
+                        <span class="value priority-high">HIGH</span>
+                    </div>
+                    <div class="category-item">
+                        <span class="label">Broker Details</span>
+                        <span class="value priority-medium">MEDIUM</span>
+                    </div>
+                </div>
+
+                <div class="subsection-header">
+                    <svg class="icon warning" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <h4>Duplicate Fields (Consolidation Required)</h4>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Field A</th>
+                                <th>Field B</th>
+                                <th>Usage A</th>
+                                <th>Usage B</th>
+                                <th>Recommendation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>borrower_name</code></td>
+                                <td><code>quote_borrower_name</code></td>
+                                <td>49/58 (84%)</td>
+                                <td>42/58 (72%)</td>
+                                <td class="status-duplicate">Merge to borrower_name</td>
+                            </tr>
+                            <tr>
+                                <td><code>notes</code></td>
+                                <td><code>quote_additional_notes</code></td>
+                                <td>4/58 (7%)</td>
+                                <td>42/58 (72%)</td>
+                                <td class="status-duplicate">Merge to notes</td>
+                            </tr>
+                            <tr>
+                                <td><code>product_range</code></td>
+                                <td><code>quote_product_range</code></td>
+                                <td>21/58 (36%)</td>
+                                <td>25/58 (43%)</td>
+                                <td class="status-keep">Keep both - different purposes</td>
+                            </tr>
+                            <tr>
+                                <td><code>selected_range</code></td>
+                                <td><code>product_range</code></td>
+                                <td>58/58 (100%)</td>
+                                <td>21/58 (36%)</td>
+                                <td class="status-duplicate">Merge to selected_range</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="subsection-header">
+                    <svg class="icon success" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h4>Recommended Salesforce Mapping</h4>
+                </div>
+                <div class="mapping-container">
+                    <span class="tree-root">quotes → SF Quote Object</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">id</span> → <span class="tree-value">Quote.ExternalId__c</span> <span class="tree-comment">(UUID)</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">reference_number</span> → <span class="tree-value">Quote.Name</span> <span class="tree-comment">(MFS-XXXXX)</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">created_at</span> → <span class="tree-value">Quote.CreatedDate</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">updated_at</span> → <span class="tree-value">Quote.LastModifiedDate</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">CLIENT DETAILS (→ Contact)</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">client_first_name</span> → <span class="tree-value">Contact.FirstName</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">client_last_name</span> → <span class="tree-value">Contact.LastName</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">client_email</span> → <span class="tree-value">Contact.Email</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">client_contact_number</span> → <span class="tree-value">Contact.Phone</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">client_type</span> → <span class="tree-value">Contact.Type__c</span> <span class="tree-comment">(Individual/Ltd Company)</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">company_name</span> → <span class="tree-value">Account.Name</span> <span class="tree-comment">(if Ltd)</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">PROPERTY (→ Custom Object: Property__c)</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">property_value</span> → <span class="tree-value">Property__c.Value__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">monthly_rent</span> → <span class="tree-value">Property__c.MonthlyRent__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">top_slicing</span> → <span class="tree-value">Property__c.TopSlicing__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">security_properties</span> → <span class="tree-value">Property__c.Details__c</span> <span class="tree-comment">(JSON)</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">LOAN CONFIGURATION</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">calculator_type</span> → <span class="tree-value">Quote.Calculator_Type__c</span> <span class="tree-comment">(BTL/BRIDGING)</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">loan_calculation_requested</span> → <span class="tree-value">Quote.Loan_Calc_Type__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">product_type</span> → <span class="tree-value">Quote.Product_Type__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">product_scope</span> → <span class="tree-value">Quote.Product_Scope__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">retention_choice</span> → <span class="tree-value">Quote.Retention_Choice__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">retention_ltv</span> → <span class="tree-value">Quote.Retention_LTV__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">tier</span> → <span class="tree-value">Quote.Tier__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">target_ltv</span> → <span class="tree-value">Quote.Target_LTV__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">title_insurance</span> → <span class="tree-value">Quote.Title_Insurance__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">FEES</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">add_fees_toggle</span> → <span class="tree-value">Quote.Add_Fees__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">fee_calculation_type</span> → <span class="tree-value">Quote.Fee_Calc_Type__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">fee_type_selection</span> → <span class="tree-value">Quote.Fee_Type__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">additional_fee_amount</span> → <span class="tree-value">Quote.Additional_Fee__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">WORKFLOW STATUS</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">status</span> → <span class="tree-value">Quote.Status</span> <span class="tree-comment">(Picklist)</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">quote_status</span> → <span class="tree-value">Quote.Quote_Issued_Status__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">quote_issued_at</span> → <span class="tree-value">Quote.Quote_Issued_Date__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">dip_status</span> → <span class="tree-value">Quote.DIP_Status__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">dip_issued_at</span> → <span class="tree-value">Quote.DIP_Issued_Date__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">dip_date</span> → <span class="tree-value">Quote.DIP_Date__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">dip_expiry_date</span> → <span class="tree-value">Quote.DIP_Expiry__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">BROKER (→ Partner Account)</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">broker_company_name</span> → <span class="tree-value">Account.Name</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">broker_route</span> → <span class="tree-value">Account.Route__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">broker_commission_percent</span> → <span class="tree-value">Quote.Broker_Commission__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">funding_line</span> → <span class="tree-value">Quote.Funding_Line__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">└──</span> <span class="tree-category">AUDIT</span><br>
+                    <span class="tree-branch">    ├──</span> <span class="tree-key">user_id</span> → <span class="tree-value">Quote.OwnerId</span> <span class="tree-comment">(via lookup)</span><br>
+                    <span class="tree-branch">    ├──</span> <span class="tree-key">created_by</span> → <span class="tree-value">Quote.Created_By_Name__c</span><br>
+                    <span class="tree-branch">    ├──</span> <span class="tree-key">created_by_id</span> → <span class="tree-value">Quote.Created_By_Id__c</span><br>
+                    <span class="tree-branch">    ├──</span> <span class="tree-key">updated_by</span> → <span class="tree-value">Quote.Last_Modified_By_Name__c</span><br>
+                    <span class="tree-branch">    └──</span> <span class="tree-key">updated_by_id</span> → <span class="tree-value">Quote.Last_Modified_By_Id__c</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table 2: quote_results -->
+        <div class="section">
+            <div class="section-header">
+                <h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <code>quote_results</code> BTL Calculation Results
+                </h3>
+                <span class="badge badge-primary">340 Rows</span>
+            </div>
+            <div class="section-content">
+                <p class="section-description">Stores calculation results per fee column (0-2%, 2-3%, 3%+)</p>
+
+                <div class="subsection-header">
+                    <svg class="icon danger" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <h4>Unused Fields</h4>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Populated</th>
+                                <th>Recommendation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>erc_4</code></td>
+                                <td>0/340 (0%)</td>
+                                <td class="status-remove">REMOVE - Never used</td>
+                            </tr>
+                            <tr>
+                                <td><code>erc_5</code></td>
+                                <td>0/340 (0%)</td>
+                                <td class="status-remove">REMOVE - Never used</td>
+                            </tr>
+                            <tr>
+                                <td><code>erc_3</code></td>
+                                <td>17/340 (5%)</td>
+                                <td class="status-keep">Keep - rarely used but valid</td>
+                            </tr>
+                            <tr>
+                                <td><code>nbp_ltv</code></td>
+                                <td>126/340 (37%)</td>
+                                <td class="status-keep">Keep - specific scenarios</td>
+                            </tr>
+                            <tr>
+                                <td><code>floor_rate</code></td>
+                                <td>96/340 (28%)</td>
+                                <td class="status-keep">Keep - tracker products only</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="subsection-header">
+                    <svg class="icon success" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h4>Recommended Salesforce Mapping</h4>
+                </div>
+                <div class="mapping-container">
+                    <span class="tree-root">quote_results → SF Quote Line Item</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">id</span> → <span class="tree-value">QuoteLineItem.ExternalId__c</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">quote_id</span> → <span class="tree-value">QuoteLineItem.QuoteId</span> <span class="tree-comment">(Lookup)</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">fee_column</span> → <span class="tree-value">QuoteLineItem.Fee_Column__c</span> <span class="tree-comment">(0-2%, 2-3%, 3%+)</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">stage</span> → <span class="tree-value">QuoteLineItem.Stage__c</span> <span class="tree-comment">(QUOTE/DIP)</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">LOAN AMOUNTS</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">gross_loan</span> → <span class="tree-value">QuoteLineItem.Gross_Loan__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">net_loan</span> → <span class="tree-value">QuoteLineItem.Net_Loan__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">property_value</span> → <span class="tree-value">QuoteLineItem.Property_Value__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">ltv_percentage</span> → <span class="tree-value">QuoteLineItem.LTV__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">net_ltv</span> → <span class="tree-value">QuoteLineItem.Net_LTV__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">nbp_ltv</span> → <span class="tree-value">QuoteLineItem.NBP_LTV__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">RATES</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">initial_rate</span> → <span class="tree-value">QuoteLineItem.Initial_Rate__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">pay_rate</span> → <span class="tree-value">QuoteLineItem.Pay_Rate__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">revert_rate</span> → <span class="tree-value">QuoteLineItem.Revert_Rate__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">full_rate</span> → <span class="tree-value">QuoteLineItem.Full_Rate__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">aprc</span> → <span class="tree-value">QuoteLineItem.APRC__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">floor_rate</span> → <span class="tree-value">QuoteLineItem.Floor_Rate__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">FEES</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">product_fee_percent</span> → <span class="tree-value">QuoteLineItem.Product_Fee_Pct__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">product_fee_pounds</span> → <span class="tree-value">QuoteLineItem.Product_Fee_GBP__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">admin_fee</span> → <span class="tree-value">QuoteLineItem.Admin_Fee__c</span> <span class="tree-comment">(PRIMARY)</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">broker_commission_proc_fee_percent</span> → <span class="tree-value">QuoteLineItem.Broker_Proc_Fee_Pct__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">broker_commission_proc_fee_pounds</span> → <span class="tree-value">QuoteLineItem.Broker_Proc_Fee_GBP__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">commitment_fee_pounds</span> → <span class="tree-value">QuoteLineItem.Commitment_Fee__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">exit_fee</span> → <span class="tree-value">QuoteLineItem.Exit_Fee__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">proc_fee</span> → <span class="tree-value">QuoteLineItem.Proc_Fee__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">INTEREST CALCULATIONS</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">icr</span> → <span class="tree-value">QuoteLineItem.ICR__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">monthly_interest_cost</span> → <span class="tree-value">QuoteLineItem.Monthly_Interest__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">rolled_months</span> → <span class="tree-value">QuoteLineItem.Rolled_Months__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">rolled_months_interest</span> → <span class="tree-value">QuoteLineItem.Rolled_Interest__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">deferred_interest_percent</span> → <span class="tree-value">QuoteLineItem.Deferred_Int_Pct__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">deferred_interest_pounds</span> → <span class="tree-value">QuoteLineItem.Deferred_Int_GBP__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">serviced_interest</span> → <span class="tree-value">QuoteLineItem.Serviced_Interest__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">TERMS</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">initial_term</span> → <span class="tree-value">QuoteLineItem.Initial_Term__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">full_term</span> → <span class="tree-value">QuoteLineItem.Full_Term__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">total_loan_term</span> → <span class="tree-value">QuoteLineItem.Total_Term__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">serviced_months</span> → <span class="tree-value">QuoteLineItem.Serviced_Months__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">ERC (Early Repayment Charges)</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">erc</span> → <span class="tree-value">QuoteLineItem.ERC_Text__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">erc_1</span> → <span class="tree-value">QuoteLineItem.ERC_Year1__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">erc_2</span> → <span class="tree-value">QuoteLineItem.ERC_Year2__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">erc_3</span> → <span class="tree-value">QuoteLineItem.ERC_Year3__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">└──</span> <span class="tree-category">METADATA</span><br>
+                    <span class="tree-branch">    ├──</span> <span class="tree-key">product_name</span> → <span class="tree-value">QuoteLineItem.Product_Name__c</span><br>
+                    <span class="tree-branch">    ├──</span> <span class="tree-key">product_range</span> → <span class="tree-value">QuoteLineItem.Product_Range__c</span><br>
+                    <span class="tree-branch">    ├──</span> <span class="tree-key">rate_id</span> → <span class="tree-value">QuoteLineItem.Rate_Id__c</span><br>
+                    <span class="tree-branch">    └──</span> <span class="tree-key">created_at</span> → <span class="tree-value">QuoteLineItem.CreatedDate</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table 3: bridge_quotes -->
+        <div class="section">
+            <div class="section-header">
+                <h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <code>bridge_quotes</code> Bridging/Fusion Quotes Master
+                </h3>
+                <span class="badge badge-primary">44 Rows</span>
+            </div>
+            <div class="section-content">
+                <p class="section-description">Stores Bridging and Fusion mortgage quote configurations</p>
+
+                <div class="subsection-header">
+                    <svg class="icon warning" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <h4>Duplicate Fields (Same as BTL)</h4>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Field A</th>
+                                <th>Field B</th>
+                                <th>Usage A</th>
+                                <th>Usage B</th>
+                                <th>Recommendation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>borrower_name</code></td>
+                                <td><code>quote_borrower_name</code></td>
+                                <td>35/44 (80%)</td>
+                                <td>23/44 (52%)</td>
+                                <td class="status-duplicate">Merge to borrower_name</td>
+                            </tr>
+                            <tr>
+                                <td><code>notes</code></td>
+                                <td><code>quote_additional_notes</code></td>
+                                <td>3/44 (7%)</td>
+                                <td>23/44 (52%)</td>
+                                <td class="status-duplicate">Merge to notes</td>
+                            </tr>
+                            <tr>
+                                <td><code>product_range</code></td>
+                                <td><code>quote_product_range</code></td>
+                                <td>11/44 (25%)</td>
+                                <td>15/44 (34%)</td>
+                                <td class="status-keep">Keep both - different purposes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="subsection-header">
+                    <svg class="icon success" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h4>Complete Salesforce Mapping (Bridging-Specific + Base)</h4>
+                </div>
+                <div class="mapping-container">
+                    <span class="tree-root">bridge_quotes → SF Quote Object (Type = Bridging)</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">id</span> → <span class="tree-value">Quote.ExternalId__c</span> <span class="tree-comment">(UUID)</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">reference_number</span> → <span class="tree-value">Quote.Name</span> <span class="tree-comment">(MFS-XXXXX)</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">created_at</span> → <span class="tree-value">Quote.CreatedDate</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">updated_at</span> → <span class="tree-value">Quote.LastModifiedDate</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">BRIDGING-SPECIFIC FIELDS</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">bridging_loan_term</span> → <span class="tree-value">Quote.Bridging_Term__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">charge_type</span> → <span class="tree-value">Quote.Charge_Type__c</span> <span class="tree-comment">(1st/2nd)</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">sub_product</span> → <span class="tree-value">Quote.Sub_Product__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">first_charge_value</span> → <span class="tree-value">Quote.First_Charge_Value__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">commitment_fee</span> → <span class="tree-value">Quote.Commitment_Fee__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">exit_fee_percent</span> → <span class="tree-value">Quote.Exit_Fee_Pct__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">gdv</span> → <span class="tree-value">Quote.GDV__c</span> <span class="tree-comment">(Gross Development Value)</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">loan_purpose</span> → <span class="tree-value">Quote.Loan_Purpose__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">property_condition</span> → <span class="tree-value">Quote.Property_Condition__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">exit_strategy</span> → <span class="tree-value">Quote.Exit_Strategy__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">CLIENT DETAILS (→ Contact)</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">client_first_name</span> → <span class="tree-value">Contact.FirstName</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">client_last_name</span> → <span class="tree-value">Contact.LastName</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">client_email</span> → <span class="tree-value">Contact.Email</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">client_contact_number</span> → <span class="tree-value">Contact.Phone</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">client_type</span> → <span class="tree-value">Contact.Type__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">company_name</span> → <span class="tree-value">Account.Name</span> <span class="tree-comment">(if Ltd)</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">PROPERTY (→ Custom Object: Property__c)</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">property_value</span> → <span class="tree-value">Property__c.Value__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">monthly_rent</span> → <span class="tree-value">Property__c.MonthlyRent__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">security_properties</span> → <span class="tree-value">Property__c.Details__c</span> <span class="tree-comment">(JSON)</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">WORKFLOW STATUS</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">status</span> → <span class="tree-value">Quote.Status</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">quote_status</span> → <span class="tree-value">Quote.Quote_Issued_Status__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">quote_issued_at</span> → <span class="tree-value">Quote.Quote_Issued_Date__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">dip_status</span> → <span class="tree-value">Quote.DIP_Status__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">dip_issued_at</span> → <span class="tree-value">Quote.DIP_Issued_Date__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">dip_date</span> → <span class="tree-value">Quote.DIP_Date__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">dip_expiry_date</span> → <span class="tree-value">Quote.DIP_Expiry__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">BROKER (→ Partner Account)</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">broker_company_name</span> → <span class="tree-value">Account.Name</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">broker_route</span> → <span class="tree-value">Account.Route__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">broker_commission_percent</span> → <span class="tree-value">Quote.Broker_Commission__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">funding_line</span> → <span class="tree-value">Quote.Funding_Line__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">└──</span> <span class="tree-category">AUDIT</span><br>
+                    <span class="tree-branch">    ├──</span> <span class="tree-key">user_id</span> → <span class="tree-value">Quote.OwnerId</span><br>
+                    <span class="tree-branch">    ├──</span> <span class="tree-key">created_by</span> → <span class="tree-value">Quote.Created_By_Name__c</span><br>
+                    <span class="tree-branch">    ├──</span> <span class="tree-key">created_by_id</span> → <span class="tree-value">Quote.Created_By_Id__c</span><br>
+                    <span class="tree-branch">    ├──</span> <span class="tree-key">updated_by</span> → <span class="tree-value">Quote.Last_Modified_By_Name__c</span><br>
+                    <span class="tree-branch">    └──</span> <span class="tree-key">updated_by_id</span> → <span class="tree-value">Quote.Last_Modified_By_Id__c</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table 4: bridge_quote_results -->
+        <div class="section">
+            <div class="section-header">
+                <h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <code>bridge_quote_results</code> Bridging Calculation Results
+                </h3>
+                <span class="badge badge-primary">213 Rows</span>
+            </div>
+            <div class="section-content">
+                <p class="section-description">Stores bridging/fusion calculation results</p>
+
+                <div class="subsection-header">
+                    <svg class="icon danger" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <h4>Never Used Fields</h4>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Populated</th>
+                                <th>Recommendation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>nbp_ltv</code></td>
+                                <td>0/213 (0%)</td>
+                                <td class="status-remove">REMOVE - Never used in bridging</td>
+                            </tr>
+                            <tr>
+                                <td><code>full_rate_monthly</code></td>
+                                <td>0/213 (0%)</td>
+                                <td class="status-remove">REMOVE - Use margin_monthly instead</td>
+                            </tr>
+                            <tr>
+                                <td><code>full_annual_rate</code></td>
+                                <td>0/213 (0%)</td>
+                                <td class="status-remove">REMOVE - Never populated</td>
+                            </tr>
+                            <tr>
+                                <td><code>full_coupon_rate_monthly</code></td>
+                                <td>0/213 (0%)</td>
+                                <td class="status-remove">REMOVE - Never populated</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="subsection-header">
+                    <svg class="icon success" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h4>Complete Salesforce Mapping (Bridging Results)</h4>
+                </div>
+                <div class="mapping-container">
+                    <span class="tree-root">bridge_quote_results → SF Quote Line Item (Type = Bridging)</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">id</span> → <span class="tree-value">QuoteLineItem.ExternalId__c</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">quote_id</span> → <span class="tree-value">QuoteLineItem.QuoteId</span> <span class="tree-comment">(Lookup)</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">fee_column</span> → <span class="tree-value">QuoteLineItem.Fee_Column__c</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">stage</span> → <span class="tree-value">QuoteLineItem.Stage__c</span> <span class="tree-comment">(QUOTE/DIP)</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">BRIDGING-SPECIFIC FIELDS</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">term_months</span> → <span class="tree-value">QuoteLineItem.Term_Months__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">tier_name</span> → <span class="tree-value">QuoteLineItem.Tier_Name__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">product_kind</span> → <span class="tree-value">QuoteLineItem.Product_Kind__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">ltv_bucket</span> → <span class="tree-value">QuoteLineItem.LTV_Bucket__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">charge_type</span> → <span class="tree-value">QuoteLineItem.Charge_Type__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">arrangement_fee_gbp</span> → <span class="tree-value">QuoteLineItem.Arrangement_Fee_GBP__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">arrangement_fee_pct</span> → <span class="tree-value">QuoteLineItem.Arrangement_Fee_Pct__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">rolled_interest_coupon</span> → <span class="tree-value">QuoteLineItem.Rolled_Int_Coupon__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">rolled_interest_bbr</span> → <span class="tree-value">QuoteLineItem.Rolled_Int_BBR__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">full_interest_coupon</span> → <span class="tree-value">QuoteLineItem.Full_Int_Coupon__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">full_interest_bbr</span> → <span class="tree-value">QuoteLineItem.Full_Int_BBR__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">margin_monthly</span> → <span class="tree-value">QuoteLineItem.Margin_Monthly__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">bbr_monthly</span> → <span class="tree-value">QuoteLineItem.BBR_Monthly__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">deferred_interest_rate</span> → <span class="tree-value">QuoteLineItem.Deferred_Rate__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">monthly_payment</span> → <span class="tree-value">QuoteLineItem.Monthly_Payment__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">total_amount_repayable</span> → <span class="tree-value">QuoteLineItem.Total_Repayable__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">total_interest</span> → <span class="tree-value">QuoteLineItem.Total_Interest__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">LOAN AMOUNTS</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">gross_loan</span> → <span class="tree-value">QuoteLineItem.Gross_Loan__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">net_loan</span> → <span class="tree-value">QuoteLineItem.Net_Loan__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">property_value</span> → <span class="tree-value">QuoteLineItem.Property_Value__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">ltv_percentage</span> → <span class="tree-value">QuoteLineItem.LTV__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">net_ltv</span> → <span class="tree-value">QuoteLineItem.Net_LTV__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">gross_ltv</span> → <span class="tree-value">QuoteLineItem.Gross_LTV__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">RATES</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">initial_rate</span> → <span class="tree-value">QuoteLineItem.Initial_Rate__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">pay_rate</span> → <span class="tree-value">QuoteLineItem.Pay_Rate__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">aprc</span> → <span class="tree-value">QuoteLineItem.APRC__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">FEES</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">product_fee_percent</span> → <span class="tree-value">QuoteLineItem.Product_Fee_Pct__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">product_fee_pounds</span> → <span class="tree-value">QuoteLineItem.Product_Fee_GBP__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">admin_fee</span> → <span class="tree-value">QuoteLineItem.Admin_Fee__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">broker_commission_proc_fee_percent</span> → <span class="tree-value">QuoteLineItem.Broker_Proc_Fee_Pct__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">broker_commission_proc_fee_pounds</span> → <span class="tree-value">QuoteLineItem.Broker_Proc_Fee_GBP__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">commitment_fee_pounds</span> → <span class="tree-value">QuoteLineItem.Commitment_Fee__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">exit_fee</span> → <span class="tree-value">QuoteLineItem.Exit_Fee__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">proc_fee</span> → <span class="tree-value">QuoteLineItem.Proc_Fee__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">INTEREST CALCULATIONS</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">icr</span> → <span class="tree-value">QuoteLineItem.ICR__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">monthly_interest_cost</span> → <span class="tree-value">QuoteLineItem.Monthly_Interest__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">rolled_months</span> → <span class="tree-value">QuoteLineItem.Rolled_Months__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">rolled_months_interest</span> → <span class="tree-value">QuoteLineItem.Rolled_Interest__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">deferred_interest_percent</span> → <span class="tree-value">QuoteLineItem.Deferred_Int_Pct__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">deferred_interest_pounds</span> → <span class="tree-value">QuoteLineItem.Deferred_Int_GBP__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">serviced_interest</span> → <span class="tree-value">QuoteLineItem.Serviced_Interest__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">└──</span> <span class="tree-category">METADATA</span><br>
+                    <span class="tree-branch">    ├──</span> <span class="tree-key">product_name</span> → <span class="tree-value">QuoteLineItem.Product_Name__c</span><br>
+                    <span class="tree-branch">    ├──</span> <span class="tree-key">product_range</span> → <span class="tree-value">QuoteLineItem.Product_Range__c</span><br>
+                    <span class="tree-branch">    ├──</span> <span class="tree-key">rate_id</span> → <span class="tree-value">QuoteLineItem.Rate_Id__c</span><br>
+                    <span class="tree-branch">    └──</span> <span class="tree-key">created_at</span> → <span class="tree-value">QuoteLineItem.CreatedDate</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table 5: public_quote_submissions -->
+        <div class="section">
+            <div class="section-header">
+                <h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <code>public_quote_submissions</code> Lead Capture
+                </h3>
+                <span class="badge badge-success">Lead Object</span>
+            </div>
+            <div class="section-content">
+                <p class="section-description">Public-facing quote request forms (pre-registration leads)</p>
+
+                <div class="mapping-container">
+                    <span class="tree-root">public_quote_submissions → SF Lead Object</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">id</span> → <span class="tree-value">Lead.ExternalId__c</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-key">created_at</span> → <span class="tree-value">Lead.CreatedDate</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">CONTACT INFORMATION</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">client_name</span> → <span class="tree-value">Lead.Name</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">client_email</span> → <span class="tree-value">Lead.Email</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">client_phone</span> → <span class="tree-value">Lead.Phone</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">QUOTE DETAILS</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">calculator_type</span> → <span class="tree-value">Lead.Calculator_Type__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">property_value</span> → <span class="tree-value">Lead.Property_Value__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">monthly_rent</span> → <span class="tree-value">Lead.Monthly_Rent__c</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">criteria_answers</span> → <span class="tree-value">Lead.Criteria_Answers__c</span> <span class="tree-comment">(Long Text)</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">calculation_results</span> → <span class="tree-value">Lead.Calculation_Results__c</span> <span class="tree-comment">(Long Text)</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">├──</span> <span class="tree-category">COMPLIANCE</span><br>
+                    <span class="tree-branch">│   ├──</span> <span class="tree-key">gdpr_consent</span> → <span class="tree-value">Lead.GDPR_Consent__c</span><br>
+                    <span class="tree-branch">│   └──</span> <span class="tree-key">ip_address</span> → <span class="tree-value">Lead.IP_Address__c</span><br>
+                    <span class="tree-branch">│</span><br>
+                    <span class="tree-branch">└──</span> <span class="tree-category">STATUS</span><br>
+                    <span class="tree-branch">    ├──</span> <span class="tree-key">status</span> → <span class="tree-value">Lead.Status</span><br>
+                    <span class="tree-branch">    └──</span> <span class="tree-key">contacted_at</span> → <span class="tree-value">Lead.Contacted_Date__c</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appendix -->
+        <div class="section">
+            <div class="section-header">
+                <h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Appendix: Full Field Inventories
+                </h3>
+            </div>
+            <div class="section-content">
+                <details>
+                    <summary>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                        quotes table (73 columns)
+                    </summary>
+                    <div class="details-content">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Column</th>
+                                        <th>Type</th>
+                                        <th>Nullable</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>id</code></td><td>uuid</td><td>NO</td><td>PK</td></tr>
+                                    <tr><td><code>created_at</code></td><td>timestamptz</td><td>NO</td><td>Auto</td></tr>
+                                    <tr><td><code>name</code></td><td>text</td><td>YES</td><td>Quote name</td></tr>
+                                    <tr><td><code>user_id</code></td><td>uuid</td><td>YES</td><td>FK to users</td></tr>
+                                    <tr><td><code>status</code></td><td>text</td><td>YES</td><td>Workflow status</td></tr>
+                                    <tr><td><code>calculator_type</code></td><td>text</td><td>YES</td><td>BTL/BRIDGING</td></tr>
+                                    <tr><td><code>product_scope</code></td><td>text</td><td>YES</td><td>Product filter</td></tr>
+                                    <tr><td><code>retention_choice</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>retention_ltv</code></td><td>integer</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>tier</code></td><td>integer</td><td>YES</td><td>1-4</td></tr>
+                                    <tr><td><code>property_value</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>monthly_rent</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>top_slicing</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>loan_calculation_requested</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>specific_gross_loan</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>specific_net_loan</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>target_ltv</code></td><td>integer</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>product_type</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>add_fees_toggle</code></td><td>boolean</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>fee_calculation_type</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>additional_fee_amount</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>selected_range</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>criteria_answers</code></td><td>jsonb</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>rates_and_products</code></td><td>jsonb</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>updated_at</code></td><td>timestamptz</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>borrower_name</code></td><td>text</td><td>YES</td><td class="status-duplicate">DUPLICATE</td></tr>
+                                    <tr><td><code>notes</code></td><td>text</td><td>YES</td><td class="status-duplicate">RARELY USED</td></tr>
+                                    <tr><td><code>reference_number</code></td><td>text</td><td>YES</td><td>MFS-XXXXX</td></tr>
+                                    <tr><td><code>company_name</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>commercial_or_main_residence</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>dip_date</code></td><td>date</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>dip_expiry_date</code></td><td>date</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>guarantor_name</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>lender_legal_fee</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>number_of_applicants</code></td><td>integer</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>overpayments_percent</code></td><td>numeric</td><td>YES</td><td>Default 10</td></tr>
+                                    <tr><td><code>security_properties</code></td><td>jsonb</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>fee_type_selection</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>dip_status</code></td><td>text</td><td>YES</td><td>Default 'Not Issued'</td></tr>
+                                    <tr><td><code>quote_selected_fee_ranges</code></td><td>jsonb</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>quote_assumptions</code></td><td>jsonb</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>quote_borrower_name</code></td><td>text</td><td>YES</td><td class="status-duplicate">DUPLICATE</td></tr>
+                                    <tr><td><code>quote_additional_notes</code></td><td>text</td><td>YES</td><td class="status-duplicate">DUPLICATE</td></tr>
+                                    <tr><td><code>quote_issued_at</code></td><td>timestamptz</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>quote_status</code></td><td>text</td><td>YES</td><td>Default 'Not Issued'</td></tr>
+                                    <tr><td><code>product_range</code></td><td>text</td><td>YES</td><td class="status-duplicate">DUPLICATE</td></tr>
+                                    <tr><td><code>created_by</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>created_by_id</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>updated_by</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>updated_by_id</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>client_type</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>client_first_name</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>client_last_name</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>client_email</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>client_contact_number</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>broker_company_name</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>broker_route</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>broker_commission_percent</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>funding_line</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>rates_overrides</code></td><td>jsonb</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>product_fee_overrides</code></td><td>jsonb</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>rolled_months_per_column</code></td><td>jsonb</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>deferred_interest_per_column</code></td><td>jsonb</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>title_insurance</code></td><td>text</td><td>YES</td><td>Default 'No'</td></tr>
+                                    <tr><td><code>applicant_type</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>quote_product_range</code></td><td>text</td><td>YES</td><td class="status-duplicate">DUPLICATE</td></tr>
+                                    <tr><td><code>quote_version</code></td><td>integer</td><td>YES</td><td>Default 1</td></tr>
+                                    <tr><td><code>uw_checklist_complete</code></td><td>boolean</td><td>YES</td><td>Default false</td></tr>
+                                    <tr><td><code>uw_checklist_required_complete</code></td><td>boolean</td><td>YES</td><td>Default false</td></tr>
+                                    <tr><td><code>uw_checklist_progress</code></td><td>integer</td><td>YES</td><td>Default 0</td></tr>
+                                    <tr><td><code>dip_issued_at</code></td><td>timestamptz</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>title_number</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>company_number</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>shareholders</code></td><td>jsonb</td><td>YES</td><td>Default []</td></tr>
+                                    <tr><td><code>quote_include_title_insurance</code></td><td>boolean</td><td>YES</td><td>Default false</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </details>
+
+                <details>
+                    <summary>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                        quote_results table (68 columns)
+                    </summary>
+                    <div class="details-content">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Column</th>
+                                        <th>Type</th>
+                                        <th>Nullable</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>id</code></td><td>uuid</td><td>NO</td><td>PK</td></tr>
+                                    <tr><td><code>quote_id</code></td><td>uuid</td><td>NO</td><td>FK</td></tr>
+                                    <tr><td><code>fee_column</code></td><td>text</td><td>YES</td><td>0-2%, 2-3%, 3%+</td></tr>
+                                    <tr><td><code>gross_loan</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>net_loan</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>ltv_percentage</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>net_ltv</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>property_value</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>icr</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>initial_rate</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>pay_rate</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>revert_rate</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>revert_rate_dd</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>full_rate</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>aprc</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>product_fee_percent</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>product_fee_pounds</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>admin_fee</code></td><td>numeric</td><td>YES</td><td class="status-keep">PRIMARY</td></tr>
+                                    <tr><td><code>broker_client_fee</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>broker_commission_proc_fee_percent</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>broker_commission_proc_fee_pounds</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>commitment_fee_pounds</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>exit_fee</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>monthly_interest_cost</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>rolled_months</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>rolled_months_interest</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>deferred_interest_percent</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>deferred_interest_pounds</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>serviced_interest</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>direct_debit</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>erc</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>rent</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>top_slicing</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>nbp</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>total_cost_to_borrower</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>total_loan_term</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>product_name</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>created_at</code></td><td>timestamptz</td><td>YES</td><td>Auto</td></tr>
+                                    <tr><td><code>title_insurance_cost</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>initial_term</code></td><td>integer</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>full_term</code></td><td>integer</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>revert_rate_type</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>product_range</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>rate_id</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>revert_index</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>revert_margin</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>min_loan</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>max_loan</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>min_ltv</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>max_ltv</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>max_rolled_months</code></td><td>integer</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>max_defer_int</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>min_icr</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>tracker_flag</code></td><td>boolean</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>max_top_slicing</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>admin_fee_amount</code></td><td>numeric</td><td>YES</td><td class="status-duplicate">DUPLICATE</td></tr>
+                                    <tr><td><code>erc_1</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>erc_2</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>erc_3</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>erc_4</code></td><td>numeric</td><td>YES</td><td class="status-remove">NEVER USED</td></tr>
+                                    <tr><td><code>erc_5</code></td><td>numeric</td><td>YES</td><td class="status-remove">NEVER USED</td></tr>
+                                    <tr><td><code>rate_status</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>floor_rate</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>proc_fee</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>tier</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>property_type</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>retention_type</code></td><td>text</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>rate_percent</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>product_fee_saved</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>serviced_months</code></td><td>integer</td><td>YES</td><td></td></tr>
+                                    <tr><td><code>stage</code></td><td>text</td><td>YES</td><td>Default 'QUOTE'</td></tr>
+                                    <tr><td><code>nbp_ltv</code></td><td>numeric</td><td>YES</td><td></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </details>
+
+                <details>
+                    <summary>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                        bridge_quotes table (Similar to quotes - Bridging/Fusion specific)
+                    </summary>
+                    <div class="details-content">
+                        <p style="color: var(--gray-600); margin-bottom: 16px;">Contains same base fields as <code>quotes</code> table plus bridging-specific fields:</p>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Column</th>
+                                        <th>Type</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>bridging_loan_term</code></td><td>integer</td><td>Term in months (3-24)</td></tr>
+                                    <tr><td><code>charge_type</code></td><td>text</td><td>1st / 2nd charge</td></tr>
+                                    <tr><td><code>sub_product</code></td><td>text</td><td>Bridging sub-product type</td></tr>
+                                    <tr><td><code>first_charge_value</code></td><td>numeric</td><td>For 2nd charge only</td></tr>
+                                    <tr><td><code>commitment_fee</code></td><td>numeric</td><td></td></tr>
+                                    <tr><td><code>exit_fee_percent</code></td><td>numeric</td><td></td></tr>
+                                    <tr><td><code>gdv</code></td><td>numeric</td><td>Gross Development Value</td></tr>
+                                    <tr><td><code>loan_purpose</code></td><td>text</td><td></td></tr>
+                                    <tr><td><code>property_condition</code></td><td>text</td><td></td></tr>
+                                    <tr><td><code>exit_strategy</code></td><td>text</td><td></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </details>
+
+                <details>
+                    <summary>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                        bridge_quote_results table (Bridging/Fusion calculation results)
+                    </summary>
+                    <div class="details-content">
+                        <p style="color: var(--gray-600); margin-bottom: 16px;">Contains same base fields as <code>quote_results</code> plus bridging-specific fields:</p>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Column</th>
+                                        <th>Type</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>term_months</code></td><td>integer</td><td>Loan term in months</td></tr>
+                                    <tr><td><code>tier_name</code></td><td>text</td><td>Tier designation</td></tr>
+                                    <tr><td><code>product_kind</code></td><td>text</td><td>Bridging/Fusion type</td></tr>
+                                    <tr><td><code>ltv_bucket</code></td><td>text</td><td>LTV range bracket</td></tr>
+                                    <tr><td><code>charge_type</code></td><td>text</td><td>1st/2nd charge</td></tr>
+                                    <tr><td><code>arrangement_fee_gbp</code></td><td>numeric</td><td></td></tr>
+                                    <tr><td><code>arrangement_fee_pct</code></td><td>numeric</td><td></td></tr>
+                                    <tr><td><code>rolled_interest_coupon</code></td><td>numeric</td><td></td></tr>
+                                    <tr><td><code>rolled_interest_bbr</code></td><td>numeric</td><td></td></tr>
+                                    <tr><td><code>full_interest_coupon</code></td><td>numeric</td><td></td></tr>
+                                    <tr><td><code>full_interest_bbr</code></td><td>numeric</td><td></td></tr>
+                                    <tr><td><code>margin_monthly</code></td><td>numeric</td><td>Monthly margin rate (%)</td></tr>
+                                    <tr><td><code>bbr_monthly</code></td><td>numeric</td><td>Monthly BBR rate (%)</td></tr>
+                                    <tr><td><code>deferred_interest_rate</code></td><td>numeric</td><td></td></tr>
+                                    <tr><td><code>monthly_payment</code></td><td>numeric</td><td></td></tr>
+                                    <tr><td><code>total_amount_repayable</code></td><td>numeric</td><td></td></tr>
+                                    <tr><td><code>total_interest</code></td><td>numeric</td><td></td></tr>
+                                    <tr><td><code>aprc_annual</code></td><td>numeric</td><td class="status-duplicate">DUPLICATE of aprc</td></tr>
+                                    <tr><td><code>nbp_ltv</code></td><td>numeric</td><td class="status-remove">NEVER USED (0%)</td></tr>
+                                    <tr><td><code>full_rate_monthly</code></td><td>numeric</td><td class="status-remove">NEVER USED (0%)</td></tr>
+                                    <tr><td><code>full_annual_rate</code></td><td>numeric</td><td class="status-remove">NEVER USED (0%)</td></tr>
+                                    <tr><td><code>full_coupon_rate_monthly</code></td><td>numeric</td><td class="status-remove">NEVER USED (0%)</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+           
+        </footer>
+    </div>
+</body>
+</html>
