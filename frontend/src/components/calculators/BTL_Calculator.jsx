@@ -1495,31 +1495,22 @@ export default function BTLcalculator({
 
     const enabled = !!flatAboveCommercialOverrideObj && flatAboveCommercialOverrideObj.enabled;
     
-    // Check if user answered "Yes" to "Flat Above / Adjacent Commercial?" criteria question
+    // Check if user answered "Yes" to "Flat Above Commercial?" criteria question
     let flatAboveCommercialAnswer = null;
-    let flatAboveTierFromAnswer = null; // Track which tier was selected from the answer
     Object.keys(answers).forEach((questionKey) => {
       const questionLabel = (questions[questionKey]?.label || '').toLowerCase();
-      // Match questions containing 'flat' and 'commercial' (handles "Flat Above / Adjacent Commercial?")
       if (questionLabel.includes('flat') && questionLabel.includes('commercial')) {
         const answer = answers[questionKey];
         const answerLabel = (answer?.option_label || '').toLowerCase();
-        // Check if answer starts with 'yes' (handles "Yes (Tier 2 60% LTV)" and similar)
         if (answerLabel.startsWith('yes')) {
           flatAboveCommercialAnswer = true;
-          // Extract tier from answer if present (e.g., "Yes (Tier 2 60% LTV)" -> tier 2)
-          const tierMatch = answerLabel.match(/tier\s*(\d+)/i);
-          if (tierMatch) {
-            flatAboveTierFromAnswer = Number(tierMatch[1]);
-          }
         }
       }
     });
 
     // If flat-above-commercial rule applies (enabled AND user answered Yes), use tier-based LTV limits
     if (enabled && flatAboveCommercialAnswer) {
-      // Use tier from answer if available, otherwise fall back to currentTier
-      const ctNum = flatAboveTierFromAnswer || Number(currentTier);
+      const ctNum = Number(currentTier);
       const tier2Val = Number((flatAboveCommercialOverrideObj.tierLtv && flatAboveCommercialOverrideObj.tierLtv['2']) || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['2'] || 65);
       const tier3Val = Number((flatAboveCommercialOverrideObj.tierLtv && flatAboveCommercialOverrideObj.tierLtv['3']) || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['3'] || 75);
       
