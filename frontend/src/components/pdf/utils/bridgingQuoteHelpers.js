@@ -4,6 +4,8 @@
  * Handles three product columns: Fusion, Fixed Bridge, Variable Bridge
  */
 
+import { getMarketRates } from '../../../config/constants';
+
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
@@ -264,6 +266,10 @@ export const getAdminFee = (result) => {
   return parseNumber(result?.admin_fee) || 995;
 };
 
+export const getCommitmentFee = (result) => {
+  return parseNumber(result?.commitment_fee_pounds) || 0;
+};
+
 export const getValuationFee = (result) => {
   const fee = result?.valuation_fee;
   return fee || 'TBC';
@@ -317,51 +323,64 @@ export const getProductName = (result) => {
 
 /**
  * Get Initial Rate with BBR suffix and (pa)/(pm) indicator
- * Fusion: "4.79% + BBR (pa)" - uses fullRateText from calculator (margin only, not margin+BBR)
- * Variable Bridge: "0.65% + BBR (pm)"
- * Fixed Bridge: "1.00% (pm)"
+ * Uses the same logic as the calculator display:
+ * - Fusion: margin (annual %) + BBR (pa) - e.g., "4.79% + BBR (pa)"
+ * - Variable Bridge: margin (monthly %) + BBR (pm) - e.g., "0.65% + BBR (pm)"
+ * - Fixed Bridge: coupon (monthly %) (pm) - e.g., "1.00% (pm)"
+ * 
+ * For Fusion: initial_rate = margin + BBR, so margin = initial_rate - BBR
+ * Uses getMarketRates() for BBR - same source as calculator
  */
 export const getInitialRateFormatted = (result) => {
+  if (!result) return 'N/A';
+  
   const productName = (result?.product_name || result?.product_kind || result?.product || '').toLowerCase();
   const isFusionProduct = productName.includes('fusion');
   const isVariable = productName.includes('variable');
   
-  // Use fullRateText if available (already properly formatted from calculator)
-  if (result?.full_rate_text || result?.fullRateText) {
-    const rateText = result.full_rate_text || result.fullRateText;
-    // Add (pa) or (pm) suffix
+  // Get BBR from constants - same source as calculator uses
+  // getMarketRates().STANDARD_BBR is decimal (0.04 = 4%), convert to percentage
+  const bbrAnnualPct = (getMarketRates()?.STANDARD_BBR || 0.04) * 100; // e.g., 4.00
+  
+  // Get the initial_rate (full rate including BBR for Fusion/Variable)
+  const initialRate = parseNumber(result?.initial_rate);
+  
+  if (initialRate != null && Number.isFinite(initialRate) && initialRate > 0) {
     if (isFusionProduct) {
-      return `${rateText} (pa)`;
+      // Fusion: initial_rate = margin + BBR (annual)
+      // margin = initial_rate - BBR_annual
+      // This is exactly what the calculator does: initialRatePct - bbrPercent
+      const marginAnnual = initialRate - bbrAnnualPct;
+      const rounded = Math.round(marginAnnual * 100) / 100;
+      return `${rounded.toFixed(2)}% + BBR (pa)`;
+    } else if (isVariable) {
+      // Variable Bridge: initial_rate = (margin + BBR) * 12 annually
+      // Monthly margin = (initial_rate - BBR_annual) / 12
+      const marginMonthly = (initialRate - bbrAnnualPct) / 12;
+      const rounded = Math.round(marginMonthly * 100) / 100;
+      return `${rounded.toFixed(2)}% + BBR (pm)`;
     } else {
-      return `${rateText} (pm)`;
+      // Fixed Bridge: initial_rate = coupon * 12 (no BBR)
+      // Monthly coupon = initial_rate / 12
+      const couponMonthly = initialRate / 12;
+      const rounded = Math.round(couponMonthly * 100) / 100;
+      return `${rounded.toFixed(2)}% (pm)`;
     }
   }
   
-  // Fallback: calculate from individual fields
+  // Fallback if initial_rate not available
+  const marginMonthly = parseNumber(result?.margin_monthly) || parseNumber(result?.marginMonthly) || 0;
+  
   if (isFusionProduct) {
-    // Fusion: Show margin (coupon) rate + BBR (pa) - NOT the combined rate
-    // marginMonthly * 12 gives annual margin, or use margin_monthly directly if stored as annual
-    const marginMonthly = parseNumber(result?.margin_monthly) || parseNumber(result?.marginMonthly) || 0;
-    // If marginMonthly is stored as monthly percentage, convert to annual
-    // Otherwise use fullCouponRateMonthly * 12 for annual
-    const annualMargin = marginMonthly > 1 ? marginMonthly : marginMonthly * 12;
-    return `${annualMargin.toFixed(2)}% + BBR (pa)`;
+    const annualMargin = marginMonthly * 12;
+    const rounded = Math.round(annualMargin * 100) / 100;
+    return `${rounded.toFixed(2)}% + BBR (pa)`;
   } else if (isVariable) {
-    // Variable Bridge: Show monthly coupon + BBR (pm)
-    const rate = parseNumber(result?.full_coupon_rate_monthly) ||
-                 parseNumber(result?.fullCouponRateMonthly) ||
-                 parseNumber(result?.margin_monthly) ||
-                 parseNumber(result?.marginMonthly) ||
-                 0;
-    return `${rate.toFixed(2)}% + BBR (pm)`;
+    const rounded = Math.round(marginMonthly * 100) / 100;
+    return `${rounded.toFixed(2)}% + BBR (pm)`;
   } else {
-    // Fixed Bridge: Show monthly rate (pm) - no BBR
-    const rate = parseNumber(result?.full_coupon_rate_monthly) ||
-                 parseNumber(result?.fullCouponRateMonthly) ||
-                 parseNumber(result?.margin_monthly) ||
-                 parseNumber(result?.marginMonthly) ||
-                 0;
-    return `${rate.toFixed(2)}% (pm)`;
+    const rounded = Math.round(marginMonthly * 100) / 100;
+    return `${rounded.toFixed(2)}% (pm)`;
   }
 };
 

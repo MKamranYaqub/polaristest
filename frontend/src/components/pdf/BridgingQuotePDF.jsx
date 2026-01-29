@@ -208,14 +208,6 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
             })}
           </View>
 
-          {/* Section: Rate Information */}
-          <View style={btlQuoteStyles.tableRowSectionHeader}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { fontWeight: 'bold', width: labelWidth }]}>Rate Information</Text>
-            {displayProductTypes.map((_, index) => (
-              <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}></Text>
-            ))}
-          </View>
-
           {/* Initial Rate - with BBR suffix and (pa)/(pm) indicator */}
           <View style={btlQuoteStyles.tableRow}>
             <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Initial Rate</Text>
@@ -400,16 +392,19 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
             })}
           </View>
 
-          {/* Title Insurance - Only shown if quote_include_title_insurance is true */}
-          {quote.quote_include_title_insurance && (
+          {/* Title Insurance - Only shown if quote_include_title_insurance is explicitly true */}
+          {(quote.quote_include_title_insurance === true || quote.quote_include_title_insurance === 'true') && (
             <View style={btlQuoteStyles.tableRowAlt}>
               <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Title Insurance</Text>
               {displayProductTypes.map((productType, index) => {
                 const result = getResultForColumn(productType);
                 const titleInsurance = result ? h.getTitleInsuranceCost(result) : 0;
+                const grossLoan = result ? h.getGrossLoan(result) : 0;
+                // Title Insurance only available for loans up to £3 million
+                const isEligible = grossLoan <= 3000000;
                 return (
                   <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                    {titleInsurance > 0 ? h.formatCurrencyWithPence(titleInsurance) : 'Not required'}
+                    {!isEligible ? 'Not eligible' : titleInsurance > 0 ? h.formatCurrencyWithPence(titleInsurance) : 'N/A'}
                   </Text>
                 );
               })}
@@ -420,33 +415,31 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
           {/* Left Column: Terms Section */}
           <View style={{ flex: 1 }}>
             <Text style={btlQuoteStyles.termsTitle}>Terms</Text>
-            <View style={btlQuoteStyles.termsGrid}>
-              {/* Left Column */}
-              <View style={btlQuoteStyles.termsColumn}>
-                <View style={btlQuoteStyles.termsRow}>
-                  <Text style={btlQuoteStyles.termsLabel}>Top slicing used</Text>
-                  <Text style={btlQuoteStyles.termsValue}>{h.formatCurrency(quote.top_slicing || 0)}</Text>
-                </View>
-                <View style={btlQuoteStyles.termsRow}>
-                  <Text style={btlQuoteStyles.termsLabel}>Admin fee</Text>
-                  <Text style={btlQuoteStyles.termsValue}>£199 per property</Text>
-                </View>
-                <View style={btlQuoteStyles.termsRow}>
-                  <Text style={btlQuoteStyles.termsLabel}>Valuation fee</Text>
-                  <Text style={btlQuoteStyles.termsValue}>TBC by the underwriter.</Text>
-                </View>
+            {/* Terms table with Label, Value, Description columns */}
+            <View style={{ marginTop: 4 }}>
+              {/* Commitment Fee Row */}
+              <View style={{ flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#e0e0e0', paddingVertical: 3 }}>
+                <Text style={{ fontSize: 8, width: '25%', color: '#333' }}>Commitment Fee</Text>
+                <Text style={{ fontSize: 8, width: '25%', color: '#333' }}>
+                  {(() => {
+                    const firstResult = getResultForColumn(displayProductTypes[0]);
+                    const fee = h.getCommitmentFee(firstResult);
+                    return fee > 0 ? h.formatCurrency(fee) : '£0';
+                  })()}
+                </Text>
+                <Text style={{ fontSize: 8, width: '50%', color: '#666' }}>Payable when DIP signed, refundable on completion</Text>
               </View>
-              
-              {/* Right Column */}
-              <View style={btlQuoteStyles.termsColumn}>
-                <View style={btlQuoteStyles.termsRow}>
-                  <Text style={btlQuoteStyles.termsLabel}>Lender legal fee</Text>
-                  <Text style={btlQuoteStyles.termsValue}>TBC</Text>
-                </View>
-                <View style={btlQuoteStyles.termsRow}>
-                  <Text style={btlQuoteStyles.termsLabel}>Fee payments</Text>
-                  <Text style={btlQuoteStyles.termsValue}>Fees payable when DIP signed.</Text>
-                </View>
+              {/* Valuation Fee Row */}
+              <View style={{ flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#e0e0e0', paddingVertical: 3 }}>
+                <Text style={{ fontSize: 8, width: '25%', color: '#333' }}>Valuation Fee</Text>
+                <Text style={{ fontSize: 8, width: '25%', color: '#333' }}>TBC by the Underwriter</Text>
+                <Text style={{ fontSize: 8, width: '50%', color: '#666' }}>Payable when DIP is signed</Text>
+              </View>
+              {/* Lender Legal Fee Row */}
+              <View style={{ flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#e0e0e0', paddingVertical: 3 }}>
+                <Text style={{ fontSize: 8, width: '25%', color: '#333' }}>Lender Legal Fee</Text>
+                <Text style={{ fontSize: 8, width: '25%', color: '#333' }}>TBC by the Underwriter</Text>
+                <Text style={{ fontSize: 8, width: '50%', color: '#666' }}>Excludes the borrower's own legal cost</Text>
               </View>
             </View>
           </View>
