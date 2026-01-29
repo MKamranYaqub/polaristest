@@ -72,6 +72,7 @@ export default function ClientDetailsSection({
   setFeeCalculationType,
   additionalFeeAmount,
   setAdditionalFeeAmount,
+  handleAdditionalFeeAmountChange,
   expanded = true,
   onToggle,
   isReadOnly = false,
@@ -232,7 +233,7 @@ export default function ClientDetailsSection({
                 type="number"
                 step="0.01"
                 value={feeCalculationType === 'pound' ? additionalFeeAmount : ''}
-                onChange={(e) => setAdditionalFeeAmount(e.target.value)}
+                onChange={(e) => handleAdditionalFeeAmountChange ? handleAdditionalFeeAmountChange(e, 'pound') : setAdditionalFeeAmount(e.target.value)}
                 placeholder="£0.00"
                 aria-label="Additional fee amount in pounds"
                 disabled={isReadOnly || !addFeesToggle || feeCalculationType !== 'pound'}
@@ -241,14 +242,15 @@ export default function ClientDetailsSection({
           </div>
 
           <div className="slds-form-element">
-            <label className="slds-form-element__label">Additional fee amount (%)</label>
+            <label className="slds-form-element__label">Additional fee amount (%) <span className="slds-text-body_small slds-text-color_weak">(max 1.5%)</span></label>
             <div className="slds-form-element__control">
               <input
                 className="slds-input"
                 type="number"
                 step="0.1"
+                max="1.5"
                 value={feeCalculationType === 'percentage' ? additionalFeeAmount : ''}
-                onChange={(e) => setAdditionalFeeAmount(e.target.value)}
+                onChange={(e) => handleAdditionalFeeAmountChange ? handleAdditionalFeeAmountChange(e, 'percentage') : setAdditionalFeeAmount(e.target.value)}
                 placeholder="0%"
                 aria-label="Additional fee amount in percentage"
                 disabled={isReadOnly || !addFeesToggle || feeCalculationType !== 'percentage'}

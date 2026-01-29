@@ -108,27 +108,107 @@ export default function useBrokerSettings(initialQuote = null, calculatorType = 
     }
   }, [initialQuote]);
 
-  // Handle proc fee change (no validation/clamping - user can enter any value)
+  // Handle proc fee change with tolerance clamping
   const handleProcFeeSpecialistChange = (e) => {
     const value = e.target.value;
-    if (value === '' || value === '-') {
+    
+    // Allow empty or partial input while typing
+    if (value === '' || value === '.' || value === '0.' || value === '-') {
       setProcFeeSpecialistPercent(value);
       return;
     }
-    setProcFeeSpecialistPercent(Number(value));
+    
+    const val = Number(value);
+    if (Number.isNaN(val)) {
+      setProcFeeSpecialistPercent(value);
+      return;
+    }
+    
+    // Get tolerance range based on broker route
+    const { defaults, tolerance } = getBrokerRoutesAndDefaults();
+    const routeDefaults = defaults[brokerRoute];
+    const defaultVal = typeof routeDefaults === 'object' ? (routeDefaults.btl ?? routeDefaults.bridge ?? 0.9) : (routeDefaults ?? 0.9);
+    const min = Math.max(0, defaultVal - tolerance);
+    const max = defaultVal + tolerance;
+    
+    // Only cap at boundaries, allow free typing within range
+    if (val > max) {
+      setProcFeeSpecialistPercent(Math.round(max * 10) / 10);
+    } else if (val < min) {
+      setProcFeeSpecialistPercent(Math.round(min * 10) / 10);
+    } else {
+      // Allow the raw value for free typing
+      setProcFeeSpecialistPercent(value);
+    }
   };
 
   const handleProcFeeCoreChange = (e) => {
     const value = e.target.value;
-    if (value === '' || value === '-') {
+    
+    // Allow empty or partial input while typing
+    if (value === '' || value === '.' || value === '0.' || value === '-') {
       setProcFeeCorePercent(value);
       return;
     }
-    setProcFeeCorePercent(Number(value));
+    
+    const val = Number(value);
+    if (Number.isNaN(val)) {
+      setProcFeeCorePercent(value);
+      return;
+    }
+    
+    // Get tolerance range based on broker route
+    const { defaults, tolerance } = getBrokerRoutesAndDefaults();
+    const routeDefaults = defaults[brokerRoute];
+    const defaultVal = typeof routeDefaults === 'object' ? (routeDefaults.core ?? 0.5) : 0.5;
+    const min = Math.max(0, defaultVal - tolerance);
+    const max = defaultVal + tolerance;
+    
+    // Only cap at boundaries, allow free typing within range
+    if (val > max) {
+      setProcFeeCorePercent(Math.round(max * 10) / 10);
+    } else if (val < min) {
+      setProcFeeCorePercent(Math.round(min * 10) / 10);
+    } else {
+      // Allow the raw value for free typing
+      setProcFeeCorePercent(value);
+    }
   };
   
   // Legacy handler for backwards compatibility
   const handleBrokerCommissionChange = calculatorType === 'core' ? handleProcFeeCoreChange : handleProcFeeSpecialistChange;
+
+  // Handle additional fee amount change with percentage cap
+  const handleAdditionalFeeAmountChange = (e, type) => {
+    const value = e.target.value;
+    
+    // Allow empty or partial input while typing
+    if (value === '' || value === '.' || value === '0.' || value === '1.') {
+      setAdditionalFeeAmount(value);
+      return;
+    }
+    
+    const val = Number(value);
+    if (Number.isNaN(val)) {
+      setAdditionalFeeAmount(value);
+      return;
+    }
+    
+    // Cap percentage at 1.5%, no cap for pound amounts
+    if (type === 'percentage') {
+      // Only cap at max, allow any value from 0 to 1.5
+      if (val > 1.5) {
+        setAdditionalFeeAmount('1.5');
+      } else if (val < 0) {
+        setAdditionalFeeAmount('0');
+      } else {
+        // Allow the raw value for free typing
+        setAdditionalFeeAmount(value);
+      }
+    } else {
+      setAdditionalFeeAmount(value);
+    }
+  };
 
   // Get all broker settings as a single object for saving
   const getAllSettings = () => ({
@@ -194,6 +274,9 @@ export default function useBrokerSettings(initialQuote = null, calculatorType = 
     
     // Legacy handler
     handleBrokerCommissionChange,
+    
+    // Additional fee handler
+    handleAdditionalFeeAmountChange,
     
     // Utils
     getBrokerRoutesAndDefaults,

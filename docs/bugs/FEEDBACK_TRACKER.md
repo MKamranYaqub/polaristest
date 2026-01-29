@@ -1,6 +1,6 @@
 # Bridging Calculator Feedback Tracker
 
-**Last Updated**: 2026-01-26  
+**Last Updated**: 2026-01-29  
 **Reviewer**: Shaun  
 **Status**: In Progress
 
@@ -50,6 +50,53 @@
 | [BUG-003](BUG-003_BRIDGING_NET_LOAN_INCORRECT_DEDUCTIONS.md) | Net Loan incorrect deductions | M5 |
 | [BUG-004](BUG-004_BRIDGING_APRC_FORMULA_INCORRECT.md) | APRC formula incorrect | M5 |
 | [BUG-005](BUG-005_FUSION_ICR_HIGHLIGHT_MISSING.md) | Fusion ICR highlight missing | M1 |
+| BUG-006 | NPB LTV not saving in Bridging calculator | - |
+| BUG-007 | Product Scope dropdown showing wrong scopes per calculator | - |
+| BUG-008 | Proc Fee not capping based on commission tolerance | #1 |
+| BUG-009 | Proc Fee & Additional Fee inputs not allowing free typing | - |
+
+---
+
+## Session Fixes (2026-01-29)
+
+| # | Issue | Status | Fix Applied |
+|---|-------|--------|-------------|
+| BUG-006 | NPB LTV not saving in Bridging calculator - `nbpLTV` was missing from result mapping | ✅ Complete | Added `nbpLTV: calculated.nbpLTV?.toFixed(2)` to BridgingCalculator.jsx line ~1104 |
+| BUG-007 | Product Scope in Bridging pulling BTL scopes instead of Bridging scopes | ✅ Complete | Added `criteria_set` filtering in both calculators |
+| BUG-008 | Proc Fee not capping based on commission tolerance - user could enter any value | ✅ Complete | Added tolerance clamping to `useBrokerSettings.js` handlers |
+| BUG-009 | Proc Fee & Additional Fee inputs blocked free typing due to aggressive clamping | ✅ Complete | Changed handlers to only cap at min/max boundaries, allow free input within range |
+
+### Fix Details - BUG-007
+
+**Root Cause**: Both BTL and Bridging calculators pulled ALL product_scope values from `criteria_config_flat` without filtering by `criteria_set`.
+
+**Solution Applied**:
+- **BridgingCalculator.jsx**: Filter by `criteria_set` containing 'bridge'/'bridging'/'fusion'
+- **BTL_Calculator.jsx**: Filter by `criteria_set = 'btl'`
+- Both sorted: Residential → Commercial → Semi-Commercial
+
+**Database Fix Required**: User ran SQL to ensure correct `criteria_set` values in `criteria_config_flat` table.
+
+---
+
+## Feature Planning Documents
+
+| Feature | Status | Document |
+|---------|--------|----------|
+| Field-Level Permissions System | 📋 Planned | [PERMISSION_AND_ENTRA_PLAN.md](../PERMISSION_AND_ENTRA_PLAN.md) |
+| Microsoft Entra ID Integration | 📋 Planned | [PERMISSION_AND_ENTRA_PLAN.md](../PERMISSION_AND_ENTRA_PLAN.md) |
+| Role Expansion (5 → 9 roles) | 📋 Planned | [PERMISSION_AND_ENTRA_PLAN.md](../PERMISSION_AND_ENTRA_PLAN.md) |
+
+### Planned Roles (from PERMISSION_AND_ENTRA_PLAN.md)
+1. Admin
+2. UW Team Lead
+3. Head of Underwriting
+4. Underwriter
+5. Product Team
+6. Retention
+7. Sales
+8. Head of Retention
+9. Head of Sales
 
 ---
 
@@ -67,10 +114,11 @@
 
 ## Completion Summary
 
-- **Total Items**: 21
-- **Completed**: 0
+- **Total Items**: 25
+- **Completed**: 4
 - **In Progress**: 0
 - **Open**: 21
+- **Planned Features**: 3
 
 ---
 
@@ -78,4 +126,9 @@
 
 | Date | Item | Change | By |
 |------|------|--------|-----|
+| 2026-01-29 | BUG-009 | Fixed Proc Fee & Additional Fee inputs not allowing free typing | AI Agent |
+| 2026-01-29 | BUG-008 | Fixed Proc Fee not capping based on commission tolerance | AI Agent |
+| 2026-01-29 | BUG-006 | Fixed NPB LTV not saving in Bridging calculator | AI Agent |
+| 2026-01-29 | BUG-007 | Fixed Product Scope filtering in BTL & Bridging calculators | AI Agent |
+| 2026-01-29 | Feature | Created PERMISSION_AND_ENTRA_PLAN.md for role expansion & Entra ID | AI Agent |
 | 2026-01-26 | All | Initial feedback document created | - |

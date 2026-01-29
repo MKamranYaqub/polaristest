@@ -270,25 +270,39 @@ export default function BTLcalculator({
     }
   }, [allCriteria, productScope, effectiveInitialQuote]);
 
+  // Memoized BTL scopes for auto-select (filtered by criteria_set = 'btl')
+  const btlScopes = React.useMemo(() => {
+    const normalizeStr = (s) => (s || '').toString().trim().toLowerCase();
+    
+    // Filter to only BTL criteria
+    const btlCriteria = allCriteria.filter((r) => {
+      if (!r) return false;
+      const cs = normalizeStr(r.criteria_set);
+      return cs === 'btl';
+    });
+    
+    // Get unique scopes and sort
+    const scopes = Array.from(new Set(btlCriteria.map(r => r.product_scope).filter(Boolean)));
+    const sortOrder = ['residential - btl', 'residential', 'commercial', 'semi-commercial', 'semi commercial'];
+    return scopes.sort((a, b) => {
+      const aLower = a.toLowerCase();
+      const bLower = b.toLowerCase();
+      const aIndex = sortOrder.findIndex(s => aLower.includes(s) || s.includes(aLower));
+      const bIndex = sortOrder.findIndex(s => bLower.includes(s) || s.includes(bLower));
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }, [allCriteria]);
+
   // Auto-select a product scope when data loads if none selected
   useEffect(() => {
     // Skip auto-setting defaults if we're loading from a saved quote
     if (effectiveInitialQuote) return;
     
-    if (!productScope) {
-      const available = Array.from(new Set(allCriteria.map((r) => r.product_scope).filter(Boolean))).sort((a, b) => {
-        const order = ['Residential - BTL', 'Commercial', 'Semi-Commercial'];
-        const indexA = order.indexOf(a);
-        const indexB = order.indexOf(b);
-        
-        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-        if (indexA !== -1) return -1;
-        if (indexB !== -1) return 1;
-        return a.localeCompare(b);
-      });
-      if (available.length > 0) {
-        setProductScope(available[0]);
-      }
+    if (!productScope && btlScopes.length > 0) {
+      setProductScope(btlScopes[0]);
     }
     // apply any constants overrides from localStorage for product lists (use productScope as the key)
     try {
@@ -1086,18 +1100,34 @@ export default function BTLcalculator({
     </select>
   );
 
-  // Build unique product_scope values for top control; criteria_set is fixed to BTL
+  // Build unique product_scope values for top control; filter to BTL criteria only
   // Custom sort order: Residential - BTL first, then Commercial, then Semi-Commercial, then alphabetically
-  const productScopes = Array.from(new Set(allCriteria.map((r) => r.product_scope).filter(Boolean))).sort((a, b) => {
-    const order = ['Residential - BTL', 'Commercial', 'Semi-Commercial'];
-    const indexA = order.indexOf(a);
-    const indexB = order.indexOf(b);
+  const productScopes = React.useMemo(() => {
+    const normalizeStr = (s) => (s || '').toString().trim().toLowerCase();
     
-    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-    if (indexA !== -1) return -1;
-    if (indexB !== -1) return 1;
-    return a.localeCompare(b);
-  });
+    // Filter to only BTL criteria (criteria_set = 'btl')
+    const btlCriteria = allCriteria.filter((r) => {
+      if (!r) return false;
+      const cs = normalizeStr(r.criteria_set);
+      return cs === 'btl';
+    });
+    
+    // Get unique product_scope values from BTL criteria only
+    const scopes = Array.from(new Set(btlCriteria.map(r => r.product_scope).filter(Boolean)));
+    
+    // Sort: Residential - BTL first, then Commercial, then Semi-Commercial, then others alphabetically
+    const sortOrder = ['residential - btl', 'residential', 'commercial', 'semi-commercial', 'semi commercial'];
+    return scopes.sort((a, b) => {
+      const aLower = a.toLowerCase();
+      const bLower = b.toLowerCase();
+      const aIndex = sortOrder.findIndex(s => aLower.includes(s) || s.includes(aLower));
+      const bIndex = sortOrder.findIndex(s => bLower.includes(s) || s.includes(bLower));
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }, [allCriteria]);
 
   // DIP Modal Handlers
   const handleOpenDipModal = async () => {

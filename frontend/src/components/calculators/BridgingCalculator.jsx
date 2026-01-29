@@ -249,30 +249,22 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   useEffect(() => {
     // Build question map for bridging.
-    // Strategy: look for any rows that explicitly mention 'bridge' or 'fusion' in common fields
-    // (product_scope, criteria_set, question_group, question_label, question_key, option_label).
-    // If none found, fall back to the currently-selected productScope (if any) or show a helpful message.
-    const needle = /bridge|fusion/i;
+    // Strategy: Filter by criteria_set containing 'bridge' or 'bridging' (case-insensitive)
+    // This provides clean separation from BTL criteria
     const raw = (allCriteria || []);
     const normalizeStr = (s) => (s || '').toString().trim().toLowerCase();
-    // Find explicit matches that mention bridge/fusion. If a productScope is already
-    // selected, restrict explicit matches to that scope to avoid leaking rows from other scopes.
-    const explicitMatches = raw.filter((r) => {
+    
+    // Filter to only Bridging criteria (criteria_set = 'bridging', 'bridge', or contains 'bridge')
+    const bridgingCriteria = raw.filter((r) => {
       if (!r) return false;
-      const fields = [r.product_scope, r.criteria_set, r.question_group, r.question_label, r.question_key, r.option_label];
-      const mentions = fields.some(f => typeof f === 'string' && needle.test(f));
-      if (!mentions) return false;
-      if (productScope) {
-        // only keep explicit matches within the selected product scope
-        return normalizeStr(r.product_scope) === normalizeStr(productScope);
-      }
-      return true;
+      const cs = normalizeStr(r.criteria_set);
+      return cs === 'bridging' || cs === 'bridge' || cs.includes('bridge') || cs.includes('fusion');
     });
-
-    // If we have explicit matches, prefer those. Otherwise, if a productScope is selected, use rows matching that scope.
-    let filtered = explicitMatches;
-    if (filtered.length === 0 && productScope) {
-      filtered = raw.filter(r => normalizeStr(r.product_scope) === normalizeStr(productScope));
+    
+    // Further filter by selected productScope if one is selected
+    let filtered = bridgingCriteria;
+    if (productScope) {
+      filtered = bridgingCriteria.filter(r => normalizeStr(r.product_scope) === normalizeStr(productScope));
     }
 
     const map = {};
@@ -341,19 +333,41 @@ export default function BridgingCalculator({ initialQuote = null }) {
     }
   }, [allCriteria, productScope, effectiveInitialQuote]);
 
-  // Auto-select productScope intelligently after criteria load: prefer an explicit scope that mentions bridge/fusion
-  useEffect(() => {
-    if (!allCriteria || allCriteria.length === 0) return;
-    const needle = /bridge|fusion/i;
-    const scopes = Array.from(new Set(allCriteria.map(r => r.product_scope).filter(Boolean)));
-    const explicit = scopes.find(s => needle.test(s));
-    if (explicit) {
-      setProductScope(explicit);
-      return;
-    }
-    // fallback: choose first available scope if none explicitly references bridge/fusion
-    if (!productScope && scopes.length > 0) setProductScope(scopes[0]);
+  // Auto-select productScope after criteria load: filter to Bridging criteria only and sort
+  // Desired order: Residential, Commercial, Semi-Commercial
+  const bridgingScopes = React.useMemo(() => {
+    if (!allCriteria || allCriteria.length === 0) return [];
+    const normalizeStr = (s) => (s || '').toString().trim().toLowerCase();
+    
+    // Filter to only Bridging criteria (criteria_set = 'bridging', 'bridge', or contains 'bridge')
+    const bridgingCriteria = allCriteria.filter((r) => {
+      if (!r) return false;
+      const cs = normalizeStr(r.criteria_set);
+      return cs === 'bridging' || cs === 'bridge' || cs.includes('bridge') || cs.includes('fusion');
+    });
+    
+    // Get unique product_scope values from Bridging criteria only
+    const scopes = Array.from(new Set(bridgingCriteria.map(r => r.product_scope).filter(Boolean)));
+    
+    // Sort: Residential first, then Commercial, then Semi-Commercial, then others alphabetically
+    const sortOrder = ['residential', 'commercial', 'semi-commercial', 'semi commercial'];
+    return scopes.sort((a, b) => {
+      const aLower = a.toLowerCase();
+      const bLower = b.toLowerCase();
+      const aIndex = sortOrder.findIndex(s => aLower.includes(s));
+      const bIndex = sortOrder.findIndex(s => bLower.includes(s));
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      return a.localeCompare(b);
+    });
   }, [allCriteria]);
+  
+  useEffect(() => {
+    if (bridgingScopes.length === 0) return;
+    // Auto-select first scope (Residential) if none selected
+    if (!productScope && bridgingScopes.length > 0) setProductScope(bridgingScopes[0]);
+  }, [bridgingScopes]);
 
   // If an initialQuote is provided, populate fields from the database structure
   useEffect(() => {
@@ -1100,6 +1114,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
           gross_loan: calculated.gross?.toFixed(0) || null,
           net_loan: calculated.netLoanGBP?.toFixed(0) || null,
           nbp: calculated.npb?.toFixed(0) || null,
+          nbpLTV: calculated.nbpLTV?.toFixed(2) || null,
           property_value: calculated.propertyValue?.toFixed(0) || null,
           
           // LTV metrics
@@ -1607,7 +1622,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
       <BridgingProductSection
         productScope={productScope}
         onProductScopeChange={setProductScope}
-        availableScopes={Array.from(new Set(allCriteria.map(r => r.product_scope).filter(Boolean)))}
+        availableScopes={bridgingScopes}
         questions={questions}
         answers={answers}
         onAnswerChange={handleAnswerChange}
