@@ -16,7 +16,6 @@ import supportRouter from './routes/support.js';
 import adminRouter from './routes/admin.js';
 import reportingRouter from './routes/reporting.js';
 import apiKeysRouter from './routes/apiKeys.js';
-import canvasRouter from './routes/canvas.js';
 // Rate limiting middleware
 import { apiLimiter, exportLimiter, pdfLimiter, reportingLimiter } from './middleware/rateLimiter.js';
 
@@ -78,8 +77,6 @@ app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'API root - use /health or /api/rates' });
 });
 
-// Salesforce Canvas endpoint - handles signed_request POST from Salesforce
-app.use('/api/canvas', canvasRouter);
 
 // Rates endpoints - fetches rates from rates_flat table
 app.use('/api/rates', ratesRouter);

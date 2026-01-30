@@ -659,20 +659,11 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
     const payload = { ...uwCheckedItems };
 
-    // eslint-disable-next-line no-console
-    console.log('[Bridge] autosave effect scheduled', { currentQuoteId, payload });
-
     const timeoutId = setTimeout(() => {
       try {
         Promise.resolve()
           .then(() => {
-            // eslint-disable-next-line no-console
-            console.log('[Bridge] autosave firing', { currentQuoteId, payload, customRequirements: uwCustomRequirements });
             return saveUWChecklistState(currentQuoteId, payload, 'both', token, uwCustomRequirements);
-          })
-          .then((response) => {
-            // eslint-disable-next-line no-console
-            console.log('[Bridge] autosave success', { response });
           })
           .catch((error) => {
              

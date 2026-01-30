@@ -24,16 +24,6 @@ export function filterActiveRates(rates, referenceDate = new Date()) {
   // Normalize reference date to YYYY-MM-DD string for comparison
   const today = referenceDate.toISOString().split('T')[0];
   
-  // Debug: log total rates and first rate's lifecycle fields
-  if (rates.length > 0) {
-    console.log('[filterActiveRates] Total rates:', rates.length, 'Sample rate lifecycle:', {
-      rate_status: rates[0].rate_status,
-      start_date: rates[0].start_date,
-      end_date: rates[0].end_date,
-      today
-    });
-  }
-  
   const filtered = rates.filter(rate => {
     // Check status - must be Active (check both possible field names)
     const status = rate.rate_status ?? rate.status ?? 'Active'; // Use nullish coalescing - only default if null/undefined
@@ -50,7 +40,6 @@ export function filterActiveRates(rates, referenceDate = new Date()) {
     return true;
   });
   
-  console.log('[filterActiveRates] After filtering:', filtered.length, 'active rates');
   return filtered;
 }
 

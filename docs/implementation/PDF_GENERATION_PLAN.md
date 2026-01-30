@@ -6,7 +6,6 @@
 - **Conditional rendering** using React logic (if/else, ternary, &&)
 - **Component-based** structure for reusability
 - **Professional output** with proper fonts, tables, and layouts
-- **Easy maintenance** compared to canvas drawing
 - **Automatic pagination** and page breaks
 
 ## Installation
@@ -255,14 +254,6 @@ Create once, use in both Quote and DIP PDFs
   ))}
 </View>
 ```
-
-## Alternative: HTML Canvas Approach (Not Recommended)
-
-If you insist on canvas:
-1. Use **jsPDF** library with **html2canvas**
-2. Render HTML template with React conditionals
-3. Convert to canvas, then to PDF
-4. **Downsides**: Lower quality, harder to maintain, pixel-based
 
 ## Migration from Current Backend PDF Generation
 

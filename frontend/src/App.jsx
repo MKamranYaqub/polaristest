@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 const LazyApiKeys = React.lazy(() => import('./components/admin/ApiKeysManagement'));
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 // Removed Carbon Content/Theme; using SLDS + app styles
-import Calculator from './components/calculators/Calculator';
 import BTLCalculator from './components/calculators/BTL_Calculator';
 import BridgingCalculator from './components/calculators/BridgingCalculator';
 import QuotesList from './components/calculators/QuotesList';
@@ -17,7 +16,6 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { ToastProvider } from './contexts/ToastContext';
-import { SalesforceCanvasProvider } from './contexts/SalesforceCanvasContext';
 import { AppSettingsProvider } from './contexts/AppSettingsContext';
 import AdminPage from './pages/AdminPage';
 import UsersPage from './pages/UsersPage';
@@ -327,17 +325,15 @@ function App() {
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <ToastProvider>
-        <SalesforceCanvasProvider>
-          <AuthProvider>
-            <AppSettingsProvider>
-              <ThemeProvider>
-                <AccessibilityProvider>
-                  <AppContent />
-                </AccessibilityProvider>
-              </ThemeProvider>
-            </AppSettingsProvider>
-          </AuthProvider>
-        </SalesforceCanvasProvider>
+        <AuthProvider>
+          <AppSettingsProvider>
+            <ThemeProvider>
+              <AccessibilityProvider>
+                <AppContent />
+              </AccessibilityProvider>
+            </ThemeProvider>
+          </AppSettingsProvider>
+        </AuthProvider>
       </ToastProvider>
     </Router>
   );

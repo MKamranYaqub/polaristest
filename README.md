@@ -54,8 +54,6 @@ A full-stack specialist mortgage calculation platform for UK Buy-to-Let (BTL) an
    SMTP_USER=your-email@gmail.com
    SMTP_PASS=your-app-password
    
-   # Salesforce Canvas Integration (optional)
-   CANVAS_CONSUMER_SECRET=your-salesforce-consumer-secret
    ```
 
 3. **Start development servers:**
@@ -88,7 +86,6 @@ polaristest/
 │   │   │   ├── layout/          # AppShell, navigation
 │   │   │   ├── modals/          # Modal dialogs
 │   │   │   ├── pdf/             # PDF generation (Quote & DIP)
-│   │   │   ├── salesforce/      # Salesforce Canvas components
 │   │   │   ├── shared/          # Reusable components
 │   │   │   ├── tables/          # Data tables
 │   │   │   └── ui/              # UI primitives
@@ -96,7 +93,6 @@ polaristest/
 │   │   │   ├── AuthContext.jsx
 │   │   │   ├── ThemeContext.jsx
 │   │   │   ├── ToastContext.jsx
-│   │   │   ├── SalesforceCanvasContext.jsx
 │   │   │   └── ...
 │   │   ├── hooks/               # Custom React hooks
 │   │   ├── pages/               # Route page components
@@ -106,7 +102,6 @@ polaristest/
 │   │   │   └── rateFiltering.js
 │   │   └── styles/              # SCSS + CSS design tokens
 │   ├── public/
-│   │   └── canvas-all.js        # Salesforce Canvas SDK
 │   └── vite.config.js
 │
 ├── backend/                     # Express 4.18 + Node.js 20+
@@ -114,7 +109,6 @@ polaristest/
 │   │   ├── admin.js             # Admin data endpoints
 │   │   ├── apiKeys.js           # API key management
 │   │   ├── auth.js              # Authentication (login, register, reset)
-│   │   ├── canvas.js            # Salesforce Canvas integration
 │   │   ├── dipPdf.js            # DIP PDF generation
 │   │   ├── export.js            # Word document export
 │   │   ├── postcodeLookup.js    # UK postcode lookup
@@ -147,7 +141,6 @@ polaristest/
     ├── guides/                  # How-to guides
     ├── CSS_STYLE_GUIDE.md       # Styling guidelines
     ├── DESIGN_TOKENS.md         # Token system
-    ├── SALESFORCE_CANVAS_INTEGRATION.md
     └── ...
 ```
 
@@ -194,7 +187,6 @@ polaristest/
 - Audit logging
 
 ### 🔗 Integrations
-- **Salesforce Canvas** - Embed calculator in Salesforce
 - **Power BI** - Reporting API for data teams
 - **UK Postcode Lookup** - Address validation
 
@@ -272,12 +264,6 @@ npm run test:coverage
 | POST | `/api/quotes` | Save new quote |
 | GET | `/api/admin/*` | Admin endpoints |
 
-### Salesforce Canvas
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/canvas/signed-request` | Receive signed request from SF |
-| GET | `/api/canvas/context` | Decode canvas context token |
-
 ### Reporting API (API Key required)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -294,7 +280,6 @@ All project documentation is in the [`docs/`](docs/) directory:
 |----------|-------------|
 | [CSS_STYLE_GUIDE.md](docs/CSS_STYLE_GUIDE.md) | Styling guidelines & tokens |
 | [DESIGN_TOKENS.md](docs/DESIGN_TOKENS.md) | Token system reference |
-| [SALESFORCE_CANVAS_INTEGRATION.md](docs/SALESFORCE_CANVAS_INTEGRATION.md) | SF Canvas setup guide |
 | [REPORTING_API_SUMMARY.md](docs/REPORTING_API_SUMMARY.md) | Power BI integration |
 | [ADMIN_API_KEY_GUIDE.md](docs/ADMIN_API_KEY_GUIDE.md) | API key management |
 

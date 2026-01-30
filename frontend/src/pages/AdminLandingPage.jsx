@@ -23,40 +23,6 @@ SkeletonPulse.propTypes = {
   height: PropTypes.string
 };
 
-// Stat badge component
-const StatBadge = ({ value, loading, variant = 'default' }) => {
-  const variantStyles = {
-    success: { background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#fff' },
-    warning: { background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: '#fff' },
-    info: { background: 'linear-gradient(135deg, var(--token-color-brand-navy) 0%, #003d8f 100%)', color: '#fff' },
-    default: { background: 'var(--token-layer-02, #f4f4f4)', color: 'var(--token-text-primary)' }
-  };
-  
-  if (loading) {
-    return <SkeletonPulse width="40px" height="28px" />;
-  }
-  
-  return (
-    <span style={{
-      ...variantStyles[variant],
-      padding: '4px 12px',
-      borderRadius: '20px',
-      fontSize: '0.875rem',
-      fontWeight: '600',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      display: 'inline-block'
-    }}>
-      {value}
-    </span>
-  );
-};
-
-StatBadge.propTypes = {
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  loading: PropTypes.bool,
-  variant: PropTypes.oneOf(['success', 'warning', 'info', 'default'])
-};
-
 const AdminLandingPage = () => {
   const { user } = useAuth();
   const { supabase } = useSupabase();

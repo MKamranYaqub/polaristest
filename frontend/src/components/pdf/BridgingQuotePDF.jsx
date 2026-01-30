@@ -34,25 +34,12 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
   // Get all results
   const allResults = quote.results || [];
   
-  // Debug: Log results to help diagnose issues
-  console.log('BridgingQuotePDF - Total results:', allResults.length);
-  if (allResults.length > 0) {
-    console.log('BridgingQuotePDF - Sample result:', {
-      product_name: allResults[0].product_name,
-      product_type: allResults[0].product_type,
-      type: allResults[0].type,
-      product: allResults[0].product,
-    });
-  }
-  
   // Get available product types and filter results
   const productTypes = h.getProductTypes(allResults);
-  console.log('BridgingQuotePDF - Detected product types:', productTypes);
   
   // Check if specific product types are selected from Issue Quote modal
   // The database field is quote_selected_fee_ranges (stores selected products like ["Fusion", "Fixed Bridge"])
   const selectedProductTypes = quote.quote_selected_fee_ranges || [];
-  console.log('BridgingQuotePDF - Selected product types:', selectedProductTypes);
   
   // Use selected product types if provided, otherwise use all available
   let displayProductTypes;
@@ -72,7 +59,6 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
   // If no product types detected but we have results, show them anyway with generic labels
   let useDirectProductNames = false;
   if (displayProductTypes.length === 0 && allResults.length > 0) {
-    console.warn('BridgingQuotePDF - No product types detected, showing all results');
     // Group results by unique product names or just show all
     const uniqueProducts = [...new Set(allResults.map(r => r.product_name || r.product || 'Product'))];
     displayProductTypes = uniqueProducts.slice(0, 3); // Max 3 columns

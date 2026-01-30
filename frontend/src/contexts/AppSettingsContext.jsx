@@ -272,10 +272,8 @@ export function AppSettingsProvider({ children }) {
           headerColors: supabaseSettings.headerColors,
         });
         
-        console.log('AppSettingsContext: Loaded settings from database');
       } else {
         // Fallback to localStorage (already loaded in initialState)
-        console.log('AppSettingsContext: Using localStorage fallback');
       }
 
       setLoading(false);
