@@ -166,8 +166,11 @@ export default function SaveQuoteButton({
         borrower_name: borrowerType === 'Personal' ? borrowerName : null,
         company_name: borrowerType === 'Corporate' ? companyName : null,
         notes: notes || null,
-        created_by: user?.name || 'Unknown User', // Get name from authenticated user
-        created_by_id: user?.id || null, // Store user ID for tracking
+        // Only set created_by fields for NEW quotes, not updates
+        ...(existingQuote ? {} : {
+          created_by: user?.name || 'Unknown User',
+          created_by_id: user?.id || null,
+        }),
       };
 
       // Debug: Log user info being saved
