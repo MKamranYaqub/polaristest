@@ -1,6 +1,6 @@
 # Bridging Calculator Feedback Tracker
 
-**Last Updated**: 2026-01-29  
+**Last Updated**: 2026-01-30  
 **Reviewer**: Shaun  
 **Status**: In Progress
 
@@ -67,6 +67,50 @@
 | BUG-009 | Proc Fee & Additional Fee inputs blocked free typing due to aggressive clamping | ✅ Complete | Changed handlers to only cap at min/max boundaries, allow free input within range |
 | BUG-010 | Admin Dashboard stats were hardcoded, not dynamically fetched | ✅ Complete | Added API calls to fetch real counts for users, rates, quotes, support requests |
 
+---
+
+## Session Fixes (2026-01-30)
+
+| # | Issue | Status | Fix Applied |
+|---|-------|--------|-------------|
+| BUG-011 | BTL Core range floor rate not applied when saving to database | ✅ Complete | Fixed `selectedRange` to derive from rate's `rate_type`/`product_range` instead of UI toggle |
+
+### Fix Details - BUG-011
+
+**Symptom**: UI displayed correct gross loan (£1,745,455) using floor rate 5.5%, but database saved incorrect value (£1,814,744.80) calculated without floor rate.
+
+**Root Cause**: The BTL calculation engine determines `isCore` for floor rate application based on `selectedRange` parameter:
+```javascript
+this.isCore = selectedRange === 'core' || productScope === 'Core';
+```
+
+The `selectedRange` was passed from the UI toggle state (which tab user selected), not from the rate's own `rate_type` field. This caused Core rates to be calculated WITHOUT floor rate when `selectedRange` was 'specialist'.
+
+**Solution Applied**:
+Modified 3 locations to derive `selectedRange` from the rate's own `rate_type`/`product_range`:
+
+1. **BTL_Calculator.jsx** - `fullComputedResults` calculation (line ~915-928)
+2. **BTL_Calculator.jsx** - Table display calculation (line ~2028)
+3. **useBTLCalculation.js** - New BTL calculator hook (line ~140-153)
+
+```javascript
+// Derive selectedRange from rate's own product_range/rate_type
+const rangeField = (rate.product_range || rate.rate_type || '').toLowerCase();
+const isRateCore = rangeField === 'core' || rangeField.includes('core');
+const rateSelectedRange = isRateCore ? 'core' : 'specialist';
+
+// Pass rate's range to calculation
+selectedRange: rateSelectedRange
+```
+
+**Files Modified**:
+- `frontend/src/components/calculators/BTL_Calculator.jsx`
+- `frontend/src/features/btl-calculator/hooks/useBTLCalculation.js`
+
+**Verification**: All 28 BTL calculation engine tests pass ✅
+
+---
+
 ### Fix Details - BUG-007
 
 **Root Cause**: Both BTL and Bridging calculators pulled ALL product_scope values from `criteria_config_flat` without filtering by `criteria_set`.
@@ -115,8 +159,8 @@
 
 ## Completion Summary
 
-- **Total Items**: 26
-- **Completed**: 5
+- **Total Items**: 27
+- **Completed**: 6
 - **In Progress**: 0
 - **Open**: 21
 - **Planned Features**: 3
@@ -127,6 +171,7 @@
 
 | Date | Item | Change | By |
 |------|------|--------|-----|
+| 2026-01-30 | BUG-011 | Fixed BTL Core range floor rate not applied when saving to database | AI Agent |
 | 2026-01-29 | BUG-010 | Fixed Admin Dashboard stats to be dynamically fetched from API | AI Agent |
 | 2026-01-29 | BUG-009 | Fixed Proc Fee & Additional Fee inputs not allowing free typing | AI Agent |
 | 2026-01-29 | BUG-008 | Fixed Proc Fee not capping based on commission tolerance | AI Agent |
