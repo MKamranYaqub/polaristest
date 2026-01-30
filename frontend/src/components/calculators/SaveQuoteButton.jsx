@@ -162,6 +162,9 @@ export default function SaveQuoteButton({
         broker_company_name: calculationData.brokerCompanyName || null,
         broker_route: calculationData.brokerRoute || null, // Direct Broker | Mortgage club | Network | Packager
         broker_commission_percent: calculationData.brokerCommissionPercent != null ? Number(calculationData.brokerCommissionPercent) : null,
+        // Save both proc fee values separately to preserve them on reload
+        proc_fee_specialist_percent: calculationData.procFeeSpecialistPercent != null ? Number(calculationData.procFeeSpecialistPercent) : null,
+        proc_fee_core_percent: calculationData.procFeeCorePercent != null ? Number(calculationData.procFeeCorePercent) : null,
         applicant_type: borrowerType,
         borrower_name: borrowerType === 'Personal' ? borrowerName : null,
         company_name: borrowerType === 'Corporate' ? companyName : null,
