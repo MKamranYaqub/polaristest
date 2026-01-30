@@ -907,6 +907,10 @@ export default function BTLcalculator({
         ? 'Fee: —' 
         : `Fee: ${productFee}%`;
 
+      // Derive selectedRange from rate's own product_range/rate_type for correct floor rate application
+      // This ensures Core rates get floor rate applied regardless of UI toggle position
+      const rateSelectedRange = isRateCore ? 'core' : 'specialist';
+
       const calculationParams = {
         colKey,
         selectedRate: rate,
@@ -921,7 +925,7 @@ export default function BTLcalculator({
         productType,
         productScope,
         tier: currentTier,
-        selectedRange,
+        selectedRange: rateSelectedRange, // Use rate's range for floor rate determination
         criteria: answers,
         retentionChoice,
         retentionLtv,
@@ -2020,7 +2024,7 @@ export default function BTLcalculator({
                                         productType,
                                         productScope,
                                         tier: currentTier,
-                                        selectedRange,
+                                        selectedRange: isThisRateCore ? 'core' : 'specialist', // Use rate's range for floor rate determination
                                         criteria: answers,
                                         retentionChoice,
                                         retentionLtv,

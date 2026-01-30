@@ -136,6 +136,12 @@ export function useBTLCalculation() {
           return null;
         }
 
+        // Derive selectedRange from rate's own product_range/rate_type for correct floor rate application
+        // This ensures Core rates get floor rate applied regardless of UI toggle position
+        const rangeField = (selectedRate.product_range || selectedRate.rate_type || '').toLowerCase();
+        const isRateCore = rangeField === 'core' || rangeField.includes('core');
+        const rateSelectedRange = isRateCore ? 'core' : 'specialist';
+
         // Prepare calculation parameters for this column
         const colKey = `Fee: ${fee}%`;
         const calculationParams = {
@@ -151,7 +157,7 @@ export function useBTLCalculation() {
           productType: inputs.productType,
           productScope: inputs.productScope,
           tier: tier,
-          selectedRange: inputs.selectedRange,
+          selectedRange: rateSelectedRange, // Use rate's range for floor rate determination
           productFeePercent: fee,
           feeOverrides: inputs.productFeeOverrides || {},
           manualRolled: inputs.rolledMonthsPerColumn?.[colKey],
