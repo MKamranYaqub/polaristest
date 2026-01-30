@@ -637,11 +637,17 @@ export class BTLCalculationEngine {
     const hitMax = Math.abs(bestLoan.grossLoan - maxLoan) < 1;
 
     // --- Calculate additional placeholders
-    // APRC calculation (simplified - actual APRC requires complex APR calculation)
-    const totalInterestCost = bestLoan.rolledInterestAmount + (bestLoan.directDebit * this.termMonths);
-    const totalRepayment = bestLoan.grossLoan + totalInterestCost;
-    const aprc = bestLoan.grossLoan > 0 
-      ? ((totalRepayment - bestLoan.grossLoan) / bestLoan.grossLoan) * (12 / this.termMonths) * 100 
+    // APRC (Excel-aligned approximation)
+    // Excel: (TotalInterest + ProductFee) / NetLoan / TermMonths * 12
+    // Notes:
+    // - We multiply by 100 to return a percentage value.
+    // - Total interest = deferred interest + rolled interest + serviced interest (matching Bridge formula)
+    // - Serviced months excludes rolled months to avoid double-counting
+    const servicedMonths = Math.max(this.termMonths - (bestLoan.rolledMonths || 0), 0);
+    const servicedInterestForTotal = bestLoan.directDebit * servicedMonths;
+    const totalInterestCost = bestLoan.deferredInterestAmount + bestLoan.rolledInterestAmount + servicedInterestForTotal;
+    const aprc = bestLoan.netLoan > 0 && this.termMonths > 0
+      ? ((totalInterestCost + bestLoan.productFeeAmount) / bestLoan.netLoan / this.termMonths) * 12 * 100
       : null;
 
     // Admin fee (from rate if available)

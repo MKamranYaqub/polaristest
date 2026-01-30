@@ -582,10 +582,10 @@ export class BridgeFusionCalculator {
     const netLTV = pv > 0 ? (netLoanGBP / pv) * 100 : 0;
 
     // === APR/APRC CALCULATION ===
-    // APRC = (Additional Broker Fee + Arrangement Fee + Total Interest) / Net Loan / Term (months) * 12 * 100
-    // This represents the annual cost as a percentage of the net loan received
-    // Note: "Additional Broker Fee" in Excel (1% proc fee) = procFeeGBP in code
-    const totalCreditCost = procFeeGBP + arrangementFeeGBP + totalInterest;
+    // Excel-aligned APRC:
+    // APRC = (TotalInterest + Product/Arrangement Fee) / NetLoan / TermMonths * 12
+    // We multiply by 100 to return a percentage value.
+    const totalCreditCost = arrangementFeeGBP + totalInterest;
     const aprcAnnual = netLoanGBP > 0 && term > 0
       ? (totalCreditCost / netLoanGBP / term * 12) * 100
       : 0;
