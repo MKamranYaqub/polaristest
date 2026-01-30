@@ -196,6 +196,15 @@ export default function useBrokerSettings(initialQuote = null, calculatorType = 
     
     // Cap percentage at 1.5%, no cap for pound amounts
     if (type === 'percentage') {
+      // Restrict to 2 decimal places for percentage
+      const decimalMatch = value.match(/\.(\d+)/);
+      if (decimalMatch && decimalMatch[1].length > 2) {
+        // Truncate to 2 decimal places (don't round, just truncate for typing experience)
+        const truncated = Math.floor(val * 100) / 100;
+        setAdditionalFeeAmount(truncated > 1.5 ? '1.5' : truncated < 0 ? '0' : String(truncated));
+        return;
+      }
+      
       // Only cap at max, allow any value from 0 to 1.5
       if (val > 1.5) {
         setAdditionalFeeAmount('1.5');
