@@ -292,7 +292,7 @@ export default function DataHealthReport() {
               <div className="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
                 <h4 className="slds-text-title_caps section-subtitle">Non-numeric Fees</h4>
                 <Table
-                  columns={[{ key: 'id', label: 'ID' }, { key: 'product', label: 'Product' }, { key: 'product_fee', label: 'Product Fee' }]}
+                  columns={[{ key: 'id', label: 'ID' }, { key: 'product', label: 'Product' }, { key: 'product_fee', label: 'Arrangement Fee' }]}
                   rows={report?.anomalies?.nonNumericFees || []}
                   emptyLabel="No non-numeric fee anomalies."
                 />

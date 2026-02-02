@@ -549,7 +549,7 @@ function BridgeFusionRates() {
               <th onClick={() => changeSort('product')} className={`sortable ${sortField === 'product' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Product</th>
               <th onClick={() => changeSort('type')} className={`sortable ${sortField === 'type' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Type</th>
               <th onClick={() => changeSort('charge_type')} className={`sortable ${sortField === 'charge_type' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Charge Type</th>
-              <th onClick={() => changeSort('product_fee')} className={`sortable text-center ${sortField === 'product_fee' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Product Fee</th>
+              <th onClick={() => changeSort('product_fee')} className={`sortable text-center ${sortField === 'product_fee' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Arrangement Fee</th>
               <th onClick={() => changeSort('rate')} className={`sortable text-center ${sortField === 'rate' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Rate (%)</th>
               <th className="text-center">Min Term</th>
               <th className="text-center">Max Term</th>

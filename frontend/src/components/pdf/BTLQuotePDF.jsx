@@ -387,9 +387,9 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
             })}
           </View>
 
-          {/* Product fee */}
+          {/* Arrangement Fee */}
           <View style={btlQuoteStyles.tableRow}>
-            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Product fee</Text>
+            <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Arrangement Fee</Text>
             {feeRanges.map((feeRange, index) => {
               const result = h.getResultForFeeRange(results, feeRange);
               return (

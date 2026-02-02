@@ -89,7 +89,7 @@ function BridgeRateEditModal({ rate, onSave, onCancel }) {
               </div>
 
               <div className="slds-form-element">
-                <label className="slds-form-element__label">Product Fee</label>
+                <label className="slds-form-element__label">Arrangement Fee</label>
                 <div className="slds-form-element__control">
                   <input name="product_fee" value={formData.product_fee ?? ''} onChange={handleChange} className="slds-input" type="number" step="0.01" />
                 </div>

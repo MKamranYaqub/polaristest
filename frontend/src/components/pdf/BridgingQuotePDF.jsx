@@ -397,9 +397,9 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
             </View>
           )}
         </View>
-        <View style={{ flexDirection: 'row', marginTop: 12, gap: 15 }}>
+        <View style={{ flexDirection: 'row', marginTop: 12, justifyContent: 'space-between' }}>
           {/* Left Column: Terms Section */}
-          <View style={{ flex: 1 }}>
+          <View style={{ width: '70%' }}>
             <Text style={btlQuoteStyles.termsTitle}>Terms</Text>
             {/* Terms table with Label, Value, Description columns */}
             <View style={{ marginTop: 4 }}>
@@ -431,7 +431,7 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
           </View>
 
           {/* Right Column: Broker/Client Details */}
-          <View style={{ flex: 1 }}>
+          <View style={{ width: '25%' }}>
             <View style={btlQuoteStyles.brokerDetailsBox}>
               <Text style={btlQuoteStyles.brokerDetailsTitle}>
                 {((clientDetails?.clientType || quote?.client_type) === 'Direct') ? 'Client details' : 'Broker details'}
@@ -453,7 +453,7 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
                 <Text style={btlQuoteStyles.brokerDetailsValue}>{h.getClientTelephone(clientDetails, quote)}</Text>
               </View>
               <View style={btlQuoteStyles.brokerDetailsRow}>
-                <Text style={btlQuoteStyles.brokerDetailsLabel}>Route</Text>
+                <Text style={btlQuoteStyles.brokerDetailsLabel}>Submission Route</Text>
                 <Text style={btlQuoteStyles.brokerDetailsValue}>{h.getClientRoute(clientDetails, quote)}</Text>
               </View>
             </View>
@@ -498,7 +498,7 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
             <Text style={{ fontSize: 11, fontWeight: 700, color: PDF_COLORS.textWhite }}>
               Bridging/Fusion – {quote.property_type || 'Residential'}
             </Text>
-            <Text style={{ fontSize: 11, fontWeight: 700, color: 'var(--token-color-white)' }}>
+            <Text style={{ fontSize: 11, fontWeight: 700, color: PDF_COLORS.textWhite }}>
               {new Date(quote.created_at || Date.now()).toLocaleDateString()}
             </Text>
           </View>
@@ -508,16 +508,7 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
             The following list comprises the standard information required for initial credit screening and approval to issue a DIP. Note that further information will be requested during the underwriting process, depending on the nature of the transaction, specific circumstances of the borrower and the type of property.
           </Text>
 
-          {/* DIP List Header */}
-          <View style={{ 
-            backgroundColor: PDF_COLORS.columnNavyDark, 
-            padding: '8px 12px', 
-            marginBottom: 10
-          }}>
-            <Text style={{ fontSize: 12, fontWeight: 700, color: PDF_COLORS.textWhite, textAlign: 'center' }}>
-              DIP List
-            </Text>
-          </View>
+          
 
           {/* DIP List Items */}
           <View style={{ border: '1px solid var(--token-border-medium)', padding: 12 }}>

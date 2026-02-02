@@ -889,12 +889,12 @@ function RatesTable() {
           </div>
 
           <div className="filter-field">
-            <label>Product Fee</label>
+            <label>Arrangement Fee</label>
             <select
               value={filters.product_fee}
               onChange={(e) => handleFilterChange('product_fee', e.target.value)}
             >
-              <option value="">All Product Fees</option>
+              <option value="">All Arrangement Fees</option>
               {Array.from(filterOptions.productFees).sort((a, b) => a - b).map(fee => (
                 <option key={fee} value={fee}>{fee}</option>
               ))}
@@ -933,7 +933,7 @@ function RatesTable() {
               <th onClick={() => changeSort('property')} className={`sortable ${sortField === 'property' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Property</th>
               <th onClick={() => changeSort('tier')} className={`sortable ${sortField === 'tier' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Tier</th>
               <th onClick={() => changeSort('product')} className={`sortable ${sortField === 'product' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Product</th>
-              <th>Product Fee</th>
+              <th>Arrangement Fee</th>
               <th onClick={() => changeSort('initial_term')} className={`sortable ${sortField === 'initial_term' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Initial Term</th>
               <th onClick={() => changeSort('full_term')} className={`sortable ${sortField === 'full_term' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Full Term</th>
               <th onClick={() => changeSort('rate')} className={`sortable ${sortField === 'rate' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Rate (%)</th>

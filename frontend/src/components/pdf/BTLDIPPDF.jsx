@@ -250,9 +250,9 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           </Text>
         </View>
 
-        {/* Product Fee */}
+        {/* Arrangement Fee */}
         <View style={btlDipStyles.summaryRow}>
-          <Text style={btlDipStyles.summaryLabel}>Product Fee:</Text>
+          <Text style={btlDipStyles.summaryLabel}>Arrangement Fee:</Text>
           <Text style={btlDipStyles.summaryValue}>
             {productFeePercent.toFixed(2)}% ({h.formatCurrency(productFeeAmount)}) of the Gross Loan Amount
           </Text>

@@ -222,7 +222,7 @@ function RateEditModal({ rate, onSave, onCancel }) {
               </div>
 
               <div className="slds-form-element">
-                <label className="slds-form-element__label">Product Fee:</label>
+                <label className="slds-form-element__label">Arrangement Fee:</label>
                 <div className="slds-form-element__control">
                   <input
                     className="slds-input"
