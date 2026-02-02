@@ -1956,11 +1956,11 @@ export default function BTLcalculator({
                                   (() => {
                                     const columnsHeaders = feeBuckets.map((fb) => (fb === 'none' ? 'Fee: —' : `Fee: ${fb}%`));
                                     const allPlaceholders = [
-                                      'APRC','Admin Fee','Broker Client Fee','Proc Fee (%)',
+                                      'APRC','Admin Fee','Arrangement Fee %','Arrangement Fee £','Broker Client Fee','Proc Fee (%)',
                                       'Proc Fee (£)','Deferred Interest %','Deferred Interest £',
                                       'Direct Debit','ERC','Exit Fee','Full Term','Gross Loan','ICR','Initial Term',
-                                      'LTV','Monthly Interest Cost','NPB','NPB LTV','Net Loan','Net LTV','Pay Rate','Product Fee %',
-                                      'Product Fee £','Revert Rate','Revert Rate DD','Rolled Months','Rolled Months Interest',
+                                      'LTV','Monthly Interest Cost','NPB','NPB LTV','Net Loan','Net LTV','Pay Rate',
+                                      'Revert Rate','Revert Rate DD','Rolled Months','Rolled Months Interest',
                                       'Serviced Interest','Serviced Months','Title Insurance Cost','Total Cost to Borrower'
                                     ];
                                     
@@ -2060,12 +2060,12 @@ export default function BTLcalculator({
                                           values['Pay Rate'][colKey] = result.payRateText;
                                         }
 
-                                        // Product Fee %
+                                        // Arrangement Fee %
                                         const pfPercent = fb === 'none' ? NaN : Number(fb);
-                                        if (!Number.isNaN(pfPercent) && values['Product Fee %']) {
+                                        if (!Number.isNaN(pfPercent) && values['Arrangement Fee %']) {
                                           const originalFee = `${pfPercent}%`;
                                           originalProductFees[colKey] = originalFee;
-                                          values['Product Fee %'][colKey] = productFeeOverrides[colKey] || originalFee;
+                                          values['Arrangement Fee %'][colKey] = productFeeOverrides[colKey] || originalFee;
                                         }
 
                                         // Gross Loan
@@ -2078,9 +2078,9 @@ export default function BTLcalculator({
                                           values['Net Loan'][colKey] = formatCurrency(result.netLoan, 0);
                                         }
 
-                                        // Product Fee £
-                                        if (values['Product Fee £']) {
-                                          values['Product Fee £'][colKey] = formatCurrency(result.productFeeAmount, 0);
+                                        // Arrangement Fee £
+                                        if (values['Arrangement Fee £']) {
+                                          values['Arrangement Fee £'][colKey] = formatCurrency(result.productFeeAmount, 0);
                                         }
 
                                         // LTV
@@ -2401,13 +2401,13 @@ export default function BTLcalculator({
                                             formatValue={(v) => (Number.isFinite(v) ? Number(v).toFixed(2) : v)}
                                           />
                                         );
-                                      } else if (rowLabel === 'Product Fee %') {
+                                      } else if (rowLabel === 'Arrangement Fee %') {
                                         return (
                                           <EditableResultRow
-                                            key="Product Fee %"
-                                            label={getLabel('Product Fee %')}
+                                            key="Arrangement Fee %"
+                                            label={getLabel('Arrangement Fee %')}
                                             columns={columnsHeaders}
-                                            columnValues={values['Product Fee %'] || {}}
+                                            columnValues={values['Arrangement Fee %'] || {}}
                                             originalValues={originalProductFees}
                                             onValueChange={(newValue, columnKey) => {
                                               setProductFeeOverrides(prev => ({
@@ -2437,7 +2437,7 @@ export default function BTLcalculator({
                                                 delete updated[columnKey];
                                                 return updated;
                                               });
-                                              // Reset manual mode for this column when product fee is reset
+                                              // Reset manual mode for this column when arrangement fee is reset
                                               setRolledMonthsPerColumn(prev => {
                                                 const updated = { ...prev };
                                                 delete updated[columnKey];

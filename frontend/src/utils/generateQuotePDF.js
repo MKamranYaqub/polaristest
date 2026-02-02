@@ -87,6 +87,46 @@ async function fetchQuoteData(quoteId) {
 }
 
 /**
+ * Get broker settings from quote data and localStorage
+ * Priority: quote data > localStorage
+ */
+function getBrokerSettings(quote) {
+  // First try to get from quote data (saved when quote was created)
+  const fromQuote = {
+    clientType: quote.client_type,
+    clientFirstName: quote.client_first_name,
+    clientLastName: quote.client_last_name,
+    clientEmail: quote.client_email,
+    clientContact: quote.client_contact_number,
+    brokerRoute: quote.broker_route,
+    brokerCompanyName: quote.broker_company_name,
+    brokerCommissionPercent: quote.broker_commission_percent,
+    addFeesToggle: quote.add_fees_toggle,
+    additionalFeeAmount: quote.additional_fee_amount,
+    feeCalculationType: quote.fee_calculation_type
+  };
+  
+  // Also try localStorage for any additional settings
+  let fromStorage = {};
+  try {
+    const stored = localStorage.getItem('brokerSettings');
+    if (stored) {
+      fromStorage = JSON.parse(stored);
+    }
+  } catch (e) {
+    console.warn('Could not load broker settings from localStorage:', e);
+  }
+  
+  // Merge with quote data taking priority (quote data overwrites storage values if present)
+  return {
+    ...fromStorage,
+    ...Object.fromEntries(
+      Object.entries(fromQuote).filter(([, v]) => v != null && v !== undefined)
+    )
+  };
+}
+
+/**
  * Generate BTL Quote PDF and return blob
  */
 export async function generateBTLQuotePDF(quoteId) {
@@ -97,18 +137,10 @@ export async function generateBTLQuotePDF(quoteId) {
     // Attach normalized results to quote
     quote.results = results;
     
-    // Get broker settings from localStorage
-    let brokerSettings = {};
-    try {
-      const stored = localStorage.getItem('brokerSettings');
-      if (stored) {
-        brokerSettings = JSON.parse(stored);
-      }
-    } catch (e) {
-      console.error('Error loading broker settings:', e);
-    }
+    // Get broker settings from quote data (with localStorage fallback)
+    const brokerSettings = getBrokerSettings(quote);
     
-    // Get client details from localStorage (same as broker settings)
+    // Get client details from broker settings
     const clientDetails = {
       clientFirstName: brokerSettings.clientFirstName,
       clientLastName: brokerSettings.clientLastName,
@@ -146,18 +178,10 @@ export async function generateBridgingQuotePDF(quoteId) {
     // Attach normalized results to quote
     quote.results = results;
     
-    // Get broker settings from localStorage
-    let brokerSettings = {};
-    try {
-      const stored = localStorage.getItem('brokerSettings');
-      if (stored) {
-        brokerSettings = JSON.parse(stored);
-      }
-    } catch (e) {
-      console.error('Error loading broker settings:', e);
-    }
+    // Get broker settings from quote data (with localStorage fallback)
+    const brokerSettings = getBrokerSettings(quote);
     
-    // Get client details from localStorage
+    // Get client details from broker settings
     const clientDetails = {
       clientFirstName: brokerSettings.clientFirstName,
       clientLastName: brokerSettings.clientLastName,

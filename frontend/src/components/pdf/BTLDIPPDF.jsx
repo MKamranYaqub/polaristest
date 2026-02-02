@@ -285,7 +285,7 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           <View style={btlDipStyles.summaryRow}>
             <Text style={btlDipStyles.summaryLabel}>Proc Fee:</Text>
             <Text style={btlDipStyles.summaryValue}>
-              {h.formatCurrency(brokerCommission)} (to be deducted from the Product Fee)
+              {h.formatCurrency(brokerCommission)} (to be deducted from the Arrangement Fee)
             </Text>
           </View>
         )}
@@ -485,7 +485,7 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
             Please note that the financial particulars in The Summary are, at this stage, estimates only, and are subject to contract. These will only be varied in circumstances where our enquiries reveal information which differs from that provided on initial application or if there is reason to do so at our discretion.
           </Text>
           <Text style={btlDipStyles.termsText}>
-            You authorise us to deduct (and/or to instruct our solicitor), any Product Fee (which includes the Broker's Commission as specified in The Summary), Legal Fees and expenses, Title Insurance fee, any Interest (months of interest rolled and deferred until loan redemption), and any other fees, costs, or expenses payable by you (which have not already been paid), from the Gross Loan Amount upon completion of the Loan.
+            You authorise us to deduct (and/or to instruct our solicitor), any Arrangement Fee (which includes the Broker's Commission as specified in The Summary), Legal Fees and expenses, Title Insurance fee, any Interest (months of interest rolled and deferred until loan redemption), and any other fees, costs, or expenses payable by you (which have not already been paid), from the Gross Loan Amount upon completion of the Loan.
           </Text>
         </View>
 
@@ -499,12 +499,12 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
                   You authorise us to deduct the Broker Client Fee from the Net Loan Amount which is in line with your agreement with your Broker/Intermediary and payable to your Broker/Intermediary. No part of the Broker Client Fee is payable to us.
                 </Text>
                 <Text style={btlDipStyles.termsText}>
-                  In addition to any Broker Client Fee, Market Financial Solutions or its investors pay a part of the Product Fee to your Introducer/Broker as Broker's Commission upon drawdown of the Loan, in the amount as specified in The Summary. This means that your Broker/Intermediary may be unable to provide impartial advice about the Loan to you.
+                  In addition to any Broker Client Fee, Market Financial Solutions or its investors pay a part of the Arrangement Fee to your Introducer/Broker as Broker's Commission upon drawdown of the Loan, in the amount as specified in The Summary. This means that your Broker/Intermediary may be unable to provide impartial advice about the Loan to you.
                 </Text>
               </>
             ) : (
               <Text style={btlDipStyles.termsText}>
-                Market Financial Solutions or its investors pay a part of the Product Fee to your Introducer/Broker as Broker's Commission upon drawdown of the Loan, in the amount as specified in The Summary. This means that your Broker/Intermediary may be unable to provide impartial advice about the Loan to you.
+                Market Financial Solutions or its investors pay a part of the Arrangement Fee to your Introducer/Broker as Broker's Commission upon drawdown of the Loan, in the amount as specified in The Summary. This means that your Broker/Intermediary may be unable to provide impartial advice about the Loan to you.
               </Text>
             )}
           </View>

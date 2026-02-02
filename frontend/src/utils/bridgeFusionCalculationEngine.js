@@ -674,10 +674,11 @@ export class BridgeFusionCalculator {
       titleInsuranceCost,
 
       // Commitment Fee and Exit Fee (from user inputs)
+      // Note: Exit Fee applies to Bridge products only - Fusion uses ERC instead
       commitmentFeePercent: commitmentFee > 0 ? (commitmentFee / gross) * 100 : 0,
       commitmentFeePounds: commitmentFee,
-      exitFeePercent: exitFeePct,
-      exitFee: gross * (exitFeePct / 100),
+      exitFeePercent: productKind === 'fusion' ? 0 : exitFeePct,
+      exitFee: productKind === 'fusion' ? 0 : gross * (exitFeePct / 100),
 
       // ERC (Early Repayment Charges) - Fusion only (pulled from rate record, not hardcoded)
       erc1Percent: productKind === 'fusion' ? (parseNumber(rateRecord.erc_1) || 0) : 0,

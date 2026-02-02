@@ -507,25 +507,27 @@ export const getMinInterestPeriod = (result) => {
  * Get ERC/Exit Fee formatted
  * Fusion: Complex text with ERC percentages
  * Bridge: Exit fee percentage
+ * @param {Object} result - The result object from quote results
+ * @param {Object} quote - Optional parent quote object (has exit_fee_percent from user input)
  */
-export const getERCExitFeeFormatted = (result) => {
+export const getERCExitFeeFormatted = (result, quote = null) => {
   const productName = (result?.product_name || result?.product_kind || result?.product || '').toLowerCase();
   const isFusionProduct = productName.includes('fusion');
   
   if (isFusionProduct) {
-    // Fusion: Show ERC text from rate record
-    const erc1 = parseNumber(result?.erc_1) || parseNumber(result?.erc1Percent) || 3;
-    const erc2 = parseNumber(result?.erc_2) || parseNumber(result?.erc2Percent) || 1.5;
-    const rolledMonths = parseNumber(result?.rolled_months) || parseNumber(result?.rolledMonths) || 6;
-    const repaymentStartMonth = rolledMonths + 1;
+    // Fusion: Show ERC text from rate record (no hardcoded fallbacks)
+    const erc1 = parseNumber(result?.erc_1) || parseNumber(result?.erc1Percent) || parseNumber(result?.erc_1_percent) || 0;
+    const erc2 = parseNumber(result?.erc_2) || parseNumber(result?.erc2Percent) || parseNumber(result?.erc_2_percent) || 0;
     
-    // Format: "3% in Yr1, 1.5% in Yr2 (25% capital repayment allowed from month X, no ERC after 21 months)"
+    // Format: "X% in Yr1, Y% in Yr2"
     return `${erc1}% in Yr1, ${erc2}% in Yr2`;
   } else {
     // Bridge: Show exit fee percentage
+    // Check result first, then fallback to quote's exit_fee_percent (user input)
     const exitFeePercent = parseNumber(result?.exit_fee_percent) || 
                            parseNumber(result?.exitFeePercent) ||
-                           1;
+                           parseNumber(quote?.exit_fee_percent) ||
+                           0;
     return `${exitFeePercent.toFixed(2)}%`;
   }
 };
@@ -534,7 +536,9 @@ export const getERCExitFeeFormatted = (result) => {
  * Get Proc Fee (Broker Commission) formatted
  */
 export const getProcFeeFormatted = (result) => {
-  const procFee = parseNumber(result?.proc_fee) || 
+  const procFee = parseNumber(result?.broker_commission_proc_fee_pounds) ||
+                  parseNumber(result?.broker_commission_fee) ||
+                  parseNumber(result?.proc_fee) || 
                   parseNumber(result?.procFeeGBP) || 
                   parseNumber(result?.broker_fee) ||
                   0;

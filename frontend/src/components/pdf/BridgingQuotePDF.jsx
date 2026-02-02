@@ -346,7 +346,7 @@ const BridgingQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) =>
               const result = getResultForColumn(productType);
               return (
                 <Text key={index} style={[btlQuoteStyles.tableCellValue, { width: valueWidth }]}>
-                  {result ? h.getERCExitFeeFormatted(result) : 'N/A'}
+                  {result ? h.getERCExitFeeFormatted(result, quote) : 'N/A'}
                 </Text>
               );
             })}

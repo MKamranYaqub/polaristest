@@ -314,168 +314,170 @@ public_quote_submissions → SF Lead Object
 
 ## 📎 Appendix: Full Field Inventories
 
-### quotes table (73 columns)
+### quotes table (77 columns)
 <details>
 <summary>Click to expand full column list</summary>
 
 | Column | Type | Nullable | Notes |
 |--------|------|----------|-------|
-| id | uuid | NO | PK |
-| created_at | timestamptz | NO | Auto |
-| name | text | YES | Quote name |
-| user_id | uuid | YES | FK to users |
-| status | text | YES | Workflow status |
+| add_fees_toggle | boolean | YES | Toggle for additional fees |
+| additional_fee_amount | numeric | YES | Additional fee value |
+| applicant_type | text | YES | Type of applicant |
+| borrower_name | text | YES | **DUPLICATE** - Primary borrower name |
+| broker_commission_percent | numeric | YES | Broker commission % |
+| broker_company_name | text | YES | Broker's company |
+| broker_route | text | YES | Broker route type |
 | calculator_type | text | YES | BTL/BRIDGING |
-| product_scope | text | YES | Product filter |
-| retention_choice | text | YES | |
-| retention_ltv | integer | YES | |
-| tier | integer | YES | 1-4 |
-| property_value | numeric | YES | |
-| monthly_rent | numeric | YES | |
-| top_slicing | numeric | YES | |
-| loan_calculation_requested | text | YES | |
-| specific_gross_loan | numeric | YES | |
-| specific_net_loan | numeric | YES | |
-| target_ltv | integer | YES | |
-| product_type | text | YES | |
-| add_fees_toggle | boolean | YES | |
-| fee_calculation_type | text | YES | |
-| additional_fee_amount | numeric | YES | |
-| selected_range | text | YES | |
-| criteria_answers | jsonb | YES | |
-| rates_and_products | jsonb | YES | |
-| updated_at | timestamptz | YES | |
-| borrower_name | text | YES | **DUPLICATE** |
-| notes | text | YES | **RARELY USED** |
-| reference_number | text | YES | MFS-XXXXX |
-| company_name | text | YES | |
-| commercial_or_main_residence | text | YES | |
-| dip_date | date | YES | |
-| dip_expiry_date | date | YES | |
-| guarantor_name | text | YES | |
-| lender_legal_fee | text | YES | |
-| number_of_applicants | integer | YES | |
-| overpayments_percent | numeric | YES | Default 10 |
-| security_properties | jsonb | YES | |
-| fee_type_selection | text | YES | |
+| client_contact_number | text | YES | Client phone |
+| client_email | text | YES | Client email |
+| client_first_name | text | YES | Client first name |
+| client_last_name | text | YES | Client last name |
+| client_type | text | YES | Individual/Ltd Company |
+| commercial_or_main_residence | text | YES | Property classification |
+| company_name | text | YES | Ltd company name |
+| company_number | text | YES | Companies House number |
+| created_at | timestamptz | NO | Auto-generated |
+| created_by | text | YES | Creator display name |
+| created_by_id | text | YES | Creator user ID |
+| criteria_answers | jsonb | YES | Eligibility criteria JSON |
+| deferred_interest_per_column | jsonb | YES | Deferred interest by fee column |
+| dip_date | date | YES | DIP issue date |
+| dip_expiry_date | date | YES | DIP expiry date |
+| dip_issued_at | timestamptz | YES | DIP issue timestamp |
 | dip_status | text | YES | Default 'Not Issued' |
-| quote_selected_fee_ranges | jsonb | YES | |
-| quote_assumptions | jsonb | YES | |
-| quote_borrower_name | text | YES | **DUPLICATE** |
-| quote_additional_notes | text | YES | **DUPLICATE** |
-| quote_issued_at | timestamptz | YES | |
-| quote_status | text | YES | Default 'Not Issued' |
-| product_range | text | YES | **DUPLICATE** |
-| created_by | text | YES | |
-| created_by_id | text | YES | |
-| updated_by | text | YES | |
-| updated_by_id | text | YES | |
-| client_type | text | YES | |
-| client_first_name | text | YES | |
-| client_last_name | text | YES | |
-| client_email | text | YES | |
-| client_contact_number | text | YES | |
-| broker_company_name | text | YES | |
-| broker_route | text | YES | |
-| broker_commission_percent | numeric | YES | |
-| funding_line | text | YES | |
-| rates_overrides | jsonb | YES | |
-| product_fee_overrides | jsonb | YES | |
-| rolled_months_per_column | jsonb | YES | |
-| deferred_interest_per_column | jsonb | YES | |
-| title_insurance | text | YES | Default 'No' |
-| applicant_type | text | YES | |
-| quote_product_range | text | YES | **DUPLICATE** |
-| quote_version | integer | YES | Default 1 |
-| uw_checklist_complete | boolean | YES | Default false |
-| uw_checklist_required_complete | boolean | YES | Default false |
-| uw_checklist_progress | integer | YES | Default 0 |
-| dip_issued_at | timestamptz | YES | |
-| title_number | text | YES | |
-| company_number | text | YES | |
-| shareholders | jsonb | YES | Default [] |
+| fee_calculation_type | text | YES | Fee calc method |
+| fee_type_selection | text | YES | Fee type selected |
+| funding_line | text | YES | Funding line |
+| guarantor_name | text | YES | Guarantor name |
+| id | uuid | NO | PK |
+| lender_legal_fee | text | YES | Lender legal fee |
+| loan_calculation_requested | text | YES | Loan calc type |
+| monthly_rent | numeric | YES | Monthly rental income |
+| name | text | YES | Quote name |
+| notes | text | YES | **RARELY USED** - General notes |
+| number_of_applicants | integer | YES | Number of applicants |
+| overpayments_percent | numeric | YES | Default 10 |
+| proc_fee_core_percent | numeric | YES | **NEW** - BTL Core proc fee % |
+| proc_fee_specialist_percent | numeric | YES | **NEW** - BTL Specialist proc fee % |
+| product_fee_overrides | jsonb | YES | Product fee overrides JSON |
+| product_range | text | YES | **DUPLICATE** - Product range |
+| product_scope | text | YES | Product filter scope |
+| product_type | text | YES | Product type |
+| property_value | numeric | YES | Property value |
+| quote_additional_notes | text | YES | **DUPLICATE** - PDF notes |
+| quote_assumptions | jsonb | YES | PDF assumptions JSON |
+| quote_borrower_name | text | YES | **DUPLICATE** - PDF borrower name |
 | quote_include_title_insurance | boolean | YES | Default false |
+| quote_issued_at | timestamptz | YES | Quote issue timestamp |
+| quote_product_range | text | YES | **DUPLICATE** - PDF product range |
+| quote_selected_fee_ranges | jsonb | YES | Selected fee columns for PDF |
+| quote_status | text | YES | Default 'Not Issued' |
+| quote_version | integer | YES | Default 1 |
+| rates_and_products | jsonb | YES | Selected rates/products JSON |
+| rates_overrides | jsonb | YES | Rate overrides JSON |
+| reference_number | text | YES | MFS-XXXXX format |
+| retention_choice | text | YES | Retention type |
+| retention_ltv | integer | YES | Retention LTV % |
+| rolled_months_per_column | jsonb | YES | Rolled months by fee column |
+| security_properties | jsonb | YES | Security property details |
+| selected_range | text | YES | Selected product range |
+| shareholders | jsonb | YES | Default [] - Shareholder details |
+| specific_gross_loan | numeric | YES | Specific gross loan amount |
+| specific_net_loan | numeric | YES | Specific net loan amount |
+| status | text | YES | Workflow status |
+| target_ltv | integer | YES | Target LTV % |
+| tier | integer | YES | 1-4 tier level |
+| title_insurance | text | YES | Default 'No' |
+| title_number | text | YES | Land Registry title number |
+| top_slicing | numeric | YES | Top slicing amount |
+| updated_at | timestamptz | YES | Last update timestamp |
+| updated_by | text | YES | Last updater display name |
+| updated_by_id | text | YES | Last updater user ID |
+| user_id | uuid | YES | FK to users table |
+| uw_checklist_complete | boolean | YES | Default false |
+| uw_checklist_progress | integer | YES | Default 0 |
+| uw_checklist_required_complete | boolean | YES | Default false |
 
 </details>
 
-### quote_results table (68 columns)
+### quote_results table (71 columns)
 <details>
 <summary>Click to expand full column list</summary>
 
 | Column | Type | Nullable | Notes |
 |--------|------|----------|-------|
-| id | uuid | NO | PK |
-| quote_id | uuid | NO | FK |
+| admin_fee | numeric | YES | **PRIMARY** - Admin fee |
+| admin_fee_amount | numeric | YES | **DUPLICATE** - Admin fee amount |
+| aprc | numeric | YES | Annual Percentage Rate of Charge |
+| broker_client_fee | numeric | YES | Broker client fee |
+| broker_commission_proc_fee_percent | numeric | YES | Broker proc fee % |
+| broker_commission_proc_fee_pounds | numeric | YES | Broker proc fee £ |
+| commitment_fee_pounds | numeric | YES | Commitment fee £ |
+| created_at | timestamptz | YES | Auto-generated |
+| deferred_interest_percent | numeric | YES | Deferred interest % |
+| deferred_interest_pounds | numeric | YES | Deferred interest £ |
+| direct_debit | text | YES | Direct debit details |
+| erc | text | YES | ERC schedule text |
+| erc_1 | numeric | YES | Year 1 ERC % |
+| erc_2 | numeric | YES | Year 2 ERC % |
+| erc_3 | numeric | YES | Year 3 ERC % |
+| erc_4 | numeric | YES | **NEVER USED** - Year 4 ERC % |
+| erc_5 | numeric | YES | **NEVER USED** - Year 5 ERC % |
+| exit_fee | numeric | YES | Exit fee |
 | fee_column | text | YES | 0-2%, 2-3%, 3%+ |
-| gross_loan | numeric | YES | |
-| net_loan | numeric | YES | |
-| ltv_percentage | numeric | YES | |
-| net_ltv | numeric | YES | |
-| property_value | numeric | YES | |
-| icr | numeric | YES | |
-| initial_rate | numeric | YES | |
-| pay_rate | numeric | YES | |
-| revert_rate | numeric | YES | |
-| revert_rate_dd | numeric | YES | |
-| full_rate | numeric | YES | |
-| aprc | numeric | YES | |
-| product_fee_percent | numeric | YES | |
-| product_fee_pounds | numeric | YES | |
-| admin_fee | numeric | YES | **PRIMARY** |
-| broker_client_fee | numeric | YES | |
-| broker_commission_proc_fee_percent | numeric | YES | |
-| broker_commission_proc_fee_pounds | numeric | YES | |
-| commitment_fee_pounds | numeric | YES | |
-| exit_fee | numeric | YES | |
-| monthly_interest_cost | numeric | YES | |
-| rolled_months | numeric | YES | |
-| rolled_months_interest | numeric | YES | |
-| deferred_interest_percent | numeric | YES | |
-| deferred_interest_pounds | numeric | YES | |
-| serviced_interest | numeric | YES | |
-| direct_debit | text | YES | |
-| erc | text | YES | |
-| rent | numeric | YES | |
-| top_slicing | numeric | YES | |
-| nbp | numeric | YES | |
-| total_cost_to_borrower | numeric | YES | |
-| total_loan_term | numeric | YES | |
-| product_name | text | YES | |
-| created_at | timestamptz | YES | Auto |
-| title_insurance_cost | numeric | YES | |
-| initial_term | integer | YES | |
-| full_term | integer | YES | |
-| revert_rate_type | text | YES | |
-| product_range | text | YES | |
-| rate_id | text | YES | |
-| revert_index | text | YES | |
-| revert_margin | numeric | YES | |
-| min_loan | numeric | YES | |
-| max_loan | numeric | YES | |
-| min_ltv | numeric | YES | |
-| max_ltv | numeric | YES | |
-| max_rolled_months | integer | YES | |
-| max_defer_int | numeric | YES | |
-| min_icr | numeric | YES | |
-| tracker_flag | boolean | YES | |
-| max_top_slicing | numeric | YES | |
-| admin_fee_amount | numeric | YES | **DUPLICATE** |
-| erc_1 | numeric | YES | |
-| erc_2 | numeric | YES | |
-| erc_3 | numeric | YES | |
-| erc_4 | numeric | YES | **NEVER USED** |
-| erc_5 | numeric | YES | **NEVER USED** |
-| rate_status | text | YES | |
-| floor_rate | numeric | YES | |
-| proc_fee | numeric | YES | |
-| tier | text | YES | |
-| property_type | text | YES | |
-| retention_type | text | YES | |
-| rate_percent | numeric | YES | |
-| product_fee_saved | numeric | YES | |
-| serviced_months | integer | YES | |
-| stage | text | YES | Default 'QUOTE' |
-| nbp_ltv | numeric | YES | |
+| floor_rate | numeric | YES | Floor rate (tracker) |
+| full_rate | numeric | YES | Full/reversion rate |
+| full_term | integer | YES | Full term months |
+| gross_loan | numeric | YES | Gross loan amount |
+| icr | numeric | YES | Interest Cover Ratio |
+| id | uuid | NO | PK |
+| initial_rate | numeric | YES | Initial rate % |
+| initial_term | integer | YES | Initial term months |
+| ltv_percentage | numeric | YES | LTV percentage |
+| max_defer_int | numeric | YES | Max deferred interest % |
+| max_loan | numeric | YES | Maximum loan amount |
+| max_ltv | numeric | YES | Maximum LTV % |
+| max_rolled_months | integer | YES | Max rolled months |
+| max_top_slicing | numeric | YES | Max top slicing |
+| min_icr | numeric | YES | Minimum ICR |
+| min_loan | numeric | YES | Minimum loan amount |
+| min_ltv | numeric | YES | Minimum LTV % |
+| monthly_interest_cost | numeric | YES | Monthly interest £ |
+| nbp | numeric | YES | Net borrowing power |
+| nbp_ltv | numeric | YES | NBP LTV % |
+| net_loan | numeric | YES | Net loan amount |
+| net_ltv | numeric | YES | Net LTV % |
+| pay_rate | numeric | YES | Pay rate % |
+| proc_fee | numeric | YES | Proc fee amount |
+| product_fee_percent | numeric | YES | Product fee % |
+| product_fee_pounds | numeric | YES | Product fee £ |
+| product_fee_saved | numeric | YES | Product fee saved |
+| product_name | text | YES | Product name |
+| product_range | text | YES | Product range |
+| property_type | text | YES | Property type |
+| property_value | numeric | YES | Property value |
+| quote_id | uuid | NO | FK to quotes |
+| rate_id | text | YES | Rate table ID |
+| rate_percent | numeric | YES | Rate percentage |
+| rate_status | text | YES | Rate status |
+| rent | numeric | YES | Monthly rent |
+| retention_type | text | YES | Retention type |
+| revert_index | text | YES | Revert rate index |
+| revert_margin | numeric | YES | Revert margin |
+| revert_rate | numeric | YES | Revert rate % |
+| revert_rate_dd | numeric | YES | Revert rate (DD) |
+| revert_rate_type | text | YES | Revert rate type |
+| rolled_months | numeric | YES | Rolled months |
+| rolled_months_interest | numeric | YES | Rolled interest £ |
+| serviced_interest | numeric | YES | Serviced interest £ |
+| serviced_months | integer | YES | Serviced months |
+| stage | text | YES | Default 'QUOTE' - QUOTE/DIP |
+| tier | text | YES | Tier name |
+| title_insurance_cost | numeric | YES | Title insurance cost |
+| top_slicing | numeric | YES | Top slicing amount |
+| total_cost_to_borrower | numeric | YES | Total cost to borrower |
+| total_loan_term | numeric | YES | Total loan term |
+| tracker_flag | boolean | YES | Is tracker product |
 
 </details>
 

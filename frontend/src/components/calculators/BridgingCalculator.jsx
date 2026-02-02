@@ -96,6 +96,20 @@ export default function BridgingCalculator({ initialQuote = null }) {
   // Track whether we loaded results from a saved quote (skip rates fetch if so)
   const loadedFromSavedQuoteRef = useRef(false);
 
+  // Track whether commitment fee has been manually edited by user
+  const commitmentFeeTouchedRef = useRef(false);
+
+  // Helper function to calculate commitment fee based on gross loan
+  const calculateCommitmentFee = (grossLoanValue) => {
+    if (!grossLoanValue || grossLoanValue <= 0) return 0;
+    if (grossLoanValue <= 500000) return 495;
+    if (grossLoanValue <= 1000000) return 995;
+    // From 1m onwards: each 500k bracket = tier * 500
+    // 1m-1.5m: 1500, 1.5m-2m: 2000, 2m-2.5m: 2500, etc.
+    const tier = Math.ceil(grossLoanValue / 500000);
+    return tier * 500;
+  };
+
   // Editable rate and product fee overrides - per-column state
   const [ratesOverrides, setRatesOverrides] = useState({});
   const [productFeeOverrides, setProductFeeOverrides] = useState({});
@@ -419,6 +433,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
           ? quote.commitment_fee 
           : parseFloat(String(quote.commitment_fee).replace(/[^0-9.-]/g, '')) || 0;
         setCommitmentFee(formatCurrencyInput(commitmentFeeValue));
+        // Mark as touched so auto-populate doesn't overwrite saved value
+        commitmentFeeTouchedRef.current = true;
       }
       // Handle exit_fee_percent - allow 0 values
       if (quote.exit_fee_percent !== undefined && quote.exit_fee_percent !== null) {
@@ -982,6 +998,21 @@ export default function BridgingCalculator({ initialQuote = null }) {
     setRelevantRates([...bridgeOut, ...fusionOut]);
   }, [rates, productScope, subProduct, propertyValue, grossLoan, specificNetLoan, useSpecificNet, answers, chargeType, firstChargeValue]);
 
+  // Auto-populate commitment fee based on gross loan (if not manually touched)
+  useEffect(() => {
+    // Skip if user has manually edited the commitment fee
+    if (commitmentFeeTouchedRef.current) return;
+    
+    // Skip if loading from saved quote (commitment fee will be set from quote data)
+    if (loadedFromSavedQuoteRef.current) return;
+    
+    const grossLoanValue = parseNumber(grossLoan);
+    if (grossLoanValue && grossLoanValue > 0) {
+      const calculatedFee = calculateCommitmentFee(grossLoanValue);
+      setCommitmentFee(formatCurrencyInput(calculatedFee));
+    }
+  }, [grossLoan]);
+
   // Compute calculated rates using Bridge & Fusion calculation engine
   const calculatedRates = useMemo(() => {
     if (!relevantRates || relevantRates.length === 0) return [];
@@ -1181,10 +1212,13 @@ export default function BridgingCalculator({ initialQuote = null }) {
           // Commitment Fee and Exit Fee (from calculation engine, 0 decimal places)
           commitment_fee_pounds: calculated.commitmentFeePounds?.toFixed(0) || null,
           exit_fee: calculated.exitFee?.toFixed(0) || null,
+          exit_fee_percent: calculated.exitFeePercent?.toFixed(2) || null,
           
           // ERC (Early Repayment Charges) - Fusion only, 0 decimal places
           erc_1_pounds: calculated.erc1Pounds?.toFixed(0) || null,
           erc_2_pounds: calculated.erc2Pounds?.toFixed(0) || null,
+          erc_1_percent: calculated.erc1Percent?.toFixed(2) || null,
+          erc_2_percent: calculated.erc2Percent?.toFixed(2) || null,
           
           // Legacy/unused fields (keep for compatibility)
           revert_rate: null,
@@ -1343,6 +1377,12 @@ export default function BridgingCalculator({ initialQuote = null }) {
     }
   };
 
+  // Handler for commitment fee changes - marks as touched so auto-populate stops
+  const handleCommitmentFeeChange = (value) => {
+    commitmentFeeTouchedRef.current = true;
+    setCommitmentFee(value);
+  };
+
   const handleCreatePDF = async (quoteId) => {
     try {
       // Use frontend React PDF generation (like BTL)
@@ -1450,6 +1490,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
     setChargeType('');
     setSubProduct('');
     
+    // Reset commitment fee touched flag so auto-populate works again
+    commitmentFeeTouchedRef.current = false;
+    
     // Reset criteria answers
     setAnswers({});
     
@@ -1514,6 +1557,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
     setExitFeePercent(0);
     setChargeType('');
     setSubProduct('');
+
+    // Reset commitment fee touched flag so auto-populate works again
+    commitmentFeeTouchedRef.current = false;
 
     // Reset criteria answers
     setAnswers({});
@@ -1763,7 +1809,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
         term={bridgingTerm}
         onTermChange={setBridgingTerm}
         commitmentFee={commitmentFee}
-        onCommitmentFeeChange={setCommitmentFee}
+        onCommitmentFeeChange={handleCommitmentFeeChange}
         exitFeePercent={exitFeePercent}
         onExitFeePercentChange={setExitFeePercent}
         termRange={termRange}
@@ -1907,11 +1953,11 @@ export default function BridgingCalculator({ initialQuote = null }) {
                           (() => {
                             const columnsHeaders = [ 'Fusion', 'Variable Bridge', 'Fixed Bridge' ];
                             const allPlaceholders = [
-                              'APRC', 'Admin Fee', 'Broker Client Fee', 'Proc Fee (%)',
+                              'APRC', 'Admin Fee', 'Arrangement Fee %', 'Arrangement Fee £', 'Broker Client Fee', 'Proc Fee (%)',
                               'Proc Fee (£)', 'Commitment Fee £', 'Deferred Interest %', 'Deferred Interest £',
                               'Direct Debit', 'Early Repayment Charge Yr1', 'Early Repayment Charge Yr2', 'Exit Fee', 'Full Int BBR £', 'Full Int Coupon £', 'Full Term',
                               'Gross Loan', 'ICR', 'Initial Term', 'LTV', 'Monthly Interest Cost',
-                              'NPB', 'NPB LTV', 'Net Loan', 'Net LTV', 'Pay Rate', 'Product Fee %', 'Product Fee £', 'Revert Rate', 'Revert Rate DD',
+                              'NPB', 'NPB LTV', 'Net Loan', 'Net LTV', 'Pay Rate', 'Revert Rate', 'Revert Rate DD',
                               'Rolled Months', 'Rolled Months Interest', 'Serviced Interest', 'Serviced Months', 'Title Insurance Cost', 'Total Interest'
                             ];
                             
@@ -1938,8 +1984,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
                               const needsBBR = col === 'Fusion' || col === 'Variable Bridge';
                               
                               // Use the already-calculated values from bridgeFusionCalculationEngine
-                              // Product Fee %
-                              if (values['Product Fee %']) {
+                              // Arrangement Fee %
+                              if (values['Arrangement Fee %']) {
                                 const originalFeeValue = getNumericValue(best.original_product_fee ?? best.product_fee_percent);
                                 const appliedFeeValue = getNumericValue(best.product_fee_percent);
 
@@ -1951,7 +1997,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
                                 if (appliedFeeValue != null) {
                                   const appliedFeeText = `${appliedFeeValue}%`;
-                                  values['Product Fee %'][col] = productFeeOverrides[col] || appliedFeeText;
+                                  values['Arrangement Fee %'][col] = productFeeOverrides[col] || appliedFeeText;
                                 }
                               }
 
@@ -1960,9 +2006,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                 values['Gross Loan'][col] = `£${Number(best.gross_loan).toLocaleString('en-GB')}`;
                               }
 
-                              // Product Fee £
-                              if (best.product_fee_pounds && values['Product Fee £']) {
-                                values['Product Fee £'][col] = `£${Number(best.product_fee_pounds).toLocaleString('en-GB')}`;
+                              // Arrangement Fee £
+                              if (best.product_fee_pounds && values['Arrangement Fee £']) {
+                                values['Arrangement Fee £'][col] = `£${Number(best.product_fee_pounds).toLocaleString('en-GB')}`;
                               }
 
                               // Net Loan
@@ -2109,8 +2155,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                 values['Commitment Fee £'][col] = `£${Number(best.commitment_fee_pounds).toLocaleString('en-GB')}`;
                               }
 
-                              // Exit Fee (if available)
-                              if (best.exit_fee && values['Exit Fee']) {
+                              // Exit Fee (if available) - Bridge products only, Fusion uses ERC
+                              if (best.exit_fee && values['Exit Fee'] && best.product_kind !== 'fusion') {
                                 values['Exit Fee'][col] = `£${Number(best.exit_fee).toLocaleString('en-GB')}`;
                               }
 
@@ -2257,13 +2303,13 @@ export default function BridgingCalculator({ initialQuote = null }) {
                                     columnDisabled={isDeferredDisabledPerCol}
                                   />
                                 );
-                              } else if (rowLabel === 'Product Fee %') {
+                              } else if (rowLabel === 'Arrangement Fee %') {
                                 return (
                                   <EditableResultRow
-                                    key="Product Fee %"
-                                    label={getLabel('Product Fee %')}
+                                    key="Arrangement Fee %"
+                                    label={getLabel('Arrangement Fee %')}
                                     columns={columnsHeaders}
-                                    columnValues={values['Product Fee %'] || {}}
+                                    columnValues={values['Arrangement Fee %'] || {}}
                                     originalValues={originalProductFees}
                                     onValueChange={(newValue, columnKey) => {
                                       setProductFeeOverrides(prev => ({ ...prev, [columnKey]: newValue }));

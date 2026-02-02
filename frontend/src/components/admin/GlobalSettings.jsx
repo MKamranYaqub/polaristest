@@ -57,8 +57,8 @@ const DEFAULT_LABEL_ALIASES_BTL = {
   'Net Loan': 'Net Loan',
   'Net LTV': 'Net LTV',
   'Pay Rate': 'Pay Rate',
-  'Product Fee %': 'Arrangement Fee %',
-  'Product Fee £': 'Arrangement Fee £',
+  'Arrangement Fee %': 'Arrangement Fee %',
+  'Arrangement Fee £': 'Arrangement Fee £',
   'Revert Rate': 'Revert Rate',
   'Revert Rate DD': 'Revert Rate DD',
   'Rolled Months': 'Rolled Months',
@@ -96,8 +96,8 @@ const DEFAULT_LABEL_ALIASES_BRIDGE = {
   'Net Loan': 'Net Loan',
   'Net LTV': 'Net LTV',
   'Pay Rate': 'Pay Rate',
-  'Product Fee %': 'Arrangement Fee %',
-  'Product Fee £': 'Arrangement Fee £',
+  'Arrangement Fee %': 'Arrangement Fee %',
+  'Arrangement Fee £': 'Arrangement Fee £',
   'Rates': 'Rates',
   'Revert Rate': 'Revert Rate',
   'Revert Rate DD': 'Revert Rate DD',
@@ -132,8 +132,8 @@ const DEFAULT_LABEL_ALIASES_CORE = {
   'Net Loan': 'Net Loan',
   'Net LTV': 'Net LTV',
   'Pay Rate': 'Pay Rate',
-  'Product Fee %': 'Arrangement Fee %',
-  'Product Fee £': 'Arrangement Fee £',
+  'Arrangement Fee %': 'Arrangement Fee %',
+  'Arrangement Fee £': 'Arrangement Fee £',
   'Revert Rate': 'Revert Rate',
   'Revert Rate DD': 'Revert Rate DD',
   'Rolled Months': 'Rolled Months',
@@ -234,8 +234,8 @@ export default function GlobalSettings() {
     'Net Loan',
     'Net LTV',
     'Pay Rate',
-    'Product Fee %',
-    'Product Fee £',
+    'Arrangement Fee %',
+    'Arrangement Fee £',
     'Revert Rate',
     'Revert Rate DD',
     'Rolled Months',
@@ -273,8 +273,8 @@ export default function GlobalSettings() {
     'Net Loan',
     'Net LTV',
     'Pay Rate',
-    'Product Fee %',
-    'Product Fee £',
+    'Arrangement Fee %',
+    'Arrangement Fee £',
     'Revert Rate',
     'Revert Rate DD',
     'Rolled Months',
@@ -308,8 +308,8 @@ export default function GlobalSettings() {
     'Net Loan',
     'Net LTV',
     'Pay Rate',
-    'Product Fee %',
-    'Product Fee £',
+    'Arrangement Fee %',
+    'Arrangement Fee £',
     'Revert Rate',
     'Revert Rate DD',
     'Rolled Months',
@@ -913,7 +913,7 @@ export default function GlobalSettings() {
   };
 
   // Helper function to render visibility checkboxes
-  const renderVisibilitySection = (rows, visibleRows, toggleHandler, selectAllHandler, deselectAllHandler) => (
+  const renderVisibilitySection = (rows, visibleRows, toggleHandler, selectAllHandler, deselectAllHandler, labelAliases = {}) => (
     <div className="settings-accordion-section">
       <section className="slds-accordion__section">
         <div 
@@ -964,7 +964,7 @@ export default function GlobalSettings() {
                     />
                     <label className="slds-checkbox__label" htmlFor={`${activeTab}-${row}`}>
                       <span className="slds-checkbox_faux"></span>
-                      <span className="slds-form-element__label">{row}</span>
+                      <span className="slds-form-element__label">{labelAliases[row] || row}</span>
                     </label>
                   </div>
                 </div>
@@ -977,7 +977,7 @@ export default function GlobalSettings() {
   );
 <br />
   // Helper function to render row order section
-  const renderRowOrderSection = (rowOrder, visibleRows, type) => (
+  const renderRowOrderSection = (rowOrder, visibleRows, type, labelAliases = {}) => (
     <div className="settings-accordion-section">
       <section className="slds-accordion__section">
         <div 
@@ -1008,7 +1008,7 @@ export default function GlobalSettings() {
                     >
                       <span className="row-order-label">
                         <span className="row-order-number">{index + 1}.</span>
-                        {row}
+                        {labelAliases[row] || row}
                         {visibleRows[row] === false && (
                           <span className="row-order-hidden-badge">(Hidden)</span>
                         )}
@@ -1440,8 +1440,8 @@ export default function GlobalSettings() {
       {/* BTL Tab Content */}
       {activeTab === 'btl' && (
         <div className="slds-accordion">
-          {renderVisibilitySection(DEFAULT_BTL_ROWS, btlVisibleRows, handleToggleBtlRow, handleSelectAllBtl, handleDeselectAllBtl)}
-          {renderRowOrderSection(btlRowOrder, btlVisibleRows, 'btl')}
+          {renderVisibilitySection(DEFAULT_BTL_ROWS, btlVisibleRows, handleToggleBtlRow, handleSelectAllBtl, handleDeselectAllBtl, btlLabelAliases)}
+          {renderRowOrderSection(btlRowOrder, btlVisibleRows, 'btl', btlLabelAliases)}
           {renderLabelAliasSection('btl', btlLabelAliases, DEFAULT_LABEL_ALIASES_BTL)}
           {renderHeaderColorsSection('btl')}
         </div>
@@ -1450,8 +1450,8 @@ export default function GlobalSettings() {
       {/* Bridge Tab Content */}
       {activeTab === 'bridge' && (
         <div className="slds-accordion">
-          {renderVisibilitySection(DEFAULT_BRIDGE_ROWS, bridgeVisibleRows, handleToggleBridgeRow, handleSelectAllBridge, handleDeselectAllBridge)}
-          {renderRowOrderSection(bridgeRowOrder, bridgeVisibleRows, 'bridge')}
+          {renderVisibilitySection(DEFAULT_BRIDGE_ROWS, bridgeVisibleRows, handleToggleBridgeRow, handleSelectAllBridge, handleDeselectAllBridge, bridgeLabelAliases)}
+          {renderRowOrderSection(bridgeRowOrder, bridgeVisibleRows, 'bridge', bridgeLabelAliases)}
           {renderLabelAliasSection('bridge', bridgeLabelAliases, DEFAULT_LABEL_ALIASES_BRIDGE)}
           {renderHeaderColorsSection('bridge')}
         </div>
@@ -1460,8 +1460,8 @@ export default function GlobalSettings() {
       {/* Core Tab Content */}
       {activeTab === 'core' && (
         <div className="slds-accordion">
-          {renderVisibilitySection(DEFAULT_CORE_ROWS, coreVisibleRows, handleToggleCoreRow, handleSelectAllCore, handleDeselectAllCore)}
-          {renderRowOrderSection(coreRowOrder, coreVisibleRows, 'core')}
+          {renderVisibilitySection(DEFAULT_CORE_ROWS, coreVisibleRows, handleToggleCoreRow, handleSelectAllCore, handleDeselectAllCore, coreLabelAliases)}
+          {renderRowOrderSection(coreRowOrder, coreVisibleRows, 'core', coreLabelAliases)}
           {renderLabelAliasSection('core', coreLabelAliases, DEFAULT_LABEL_ALIASES_CORE)}
           {renderHeaderColorsSection('core')}
         </div>
