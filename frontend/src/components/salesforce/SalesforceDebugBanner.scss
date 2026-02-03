@@ -1,0 +1,73 @@
+.salesforce-debug-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: linear-gradient(135deg, #0176d3 0%, #005fb2 100%);
+  color: white;
+  padding: var(--token-spacing-small) var(--token-spacing-medium);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: slideDown 0.3s ease-out;
+
+  &__content {
+    display: flex;
+    align-items: center;
+    gap: var(--token-spacing-small);
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  &__icon {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  &__info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    
+    strong {
+      font-weight: 600;
+      font-size: 14px;
+    }
+  }
+
+  &__details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--token-spacing-medium);
+    font-size: 12px;
+    opacity: 0.95;
+  }
+
+  &__param {
+    display: flex;
+    gap: 4px;
+    
+    strong {
+      font-weight: 500;
+    }
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+// Dark mode support
+:root[data-carbon-theme="g100"],
+.dark-mode {
+  .salesforce-debug-banner {
+    background: linear-gradient(135deg, #0353e9 0%, #002d9c 100%);
+  }
+}

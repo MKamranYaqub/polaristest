@@ -65,19 +65,27 @@
             (function() {
                 // Get URL parameters from Salesforce
                 const urlParams = new URLSearchParams(window.location.search);
-                const opportunityId = urlParams.get('oppId') || '';
+                // Salesforce passes opportunity ID as 'id', not 'oppId'
+                const opportunityId = urlParams.get('id') || urlParams.get('oppId') || '';
                 const stage = urlParams.get('stage') || '';
                 const recordType = urlParams.get('recordType') || 'btl';
                 
+                // DEBUG: Log what we received
+                console.log('[POLARIS VF] Page loaded');
+                console.log('[POLARIS VF] Window URL:', window.location.href);
+                console.log('[POLARIS VF] Opportunity ID:', opportunityId);
+                console.log('[POLARIS VF] Stage:', stage);
+                console.log('[POLARIS VF] Record Type:', recordType);
+                
                 // Build calculator URL
                 const baseUrl = 'https://polaristest-theta.vercel.app';
-                let calculatorPath = '/btl-calculator'; // Default to BTL
+                let calculatorPath = '/calculator/btl'; // Default to BTL
                 
                 // Determine which calculator based on record type or stage
                 if (recordType.toLowerCase().includes('bridg')) {
-                    calculatorPath = '/bridging-calculator';
+                    calculatorPath = '/calculator/bridging';
                 } else if (recordType.toLowerCase().includes('fusion')) {
-                    calculatorPath = '/bridging-calculator'; // Fusion uses bridging calculator
+                    calculatorPath = '/calculator/bridging'; // Fusion uses bridging calculator
                 }
                 
                 // Build query parameters
@@ -87,6 +95,9 @@
                 params.append('embedded', 'true'); // Flag for embedded mode
                 
                 const iframeUrl = `${baseUrl}${calculatorPath}?${params.toString()}`;
+                
+                // DEBUG: Log the constructed URL
+                console.log('[POLARIS VF] Calculator URL:', iframeUrl);
                 
                 // Load iframe
                 const iframe = document.getElementById('calculator-frame');

@@ -38,6 +38,7 @@ import ClientDetailsSection from '../../../components/calculator/shared/ClientDe
 import SaveQuoteButton from '../../../components/SaveQuoteButton';
 import CollapsibleSection from '../../../components/calculator/CollapsibleSection';
 import WelcomeHeader from '../../../components/shared/WelcomeHeader';
+import SalesforceDebugBanner from '../../../components/salesforce/SalesforceDebugBanner';
 
 // Utilities
 import { getQuote, upsertQuoteData } from '../../../utils/quotes';
@@ -202,6 +203,9 @@ export default function BTLCalculator({ initialQuote = null }) {
 
   return (
     <div className="btl-calculator">
+      {/* Salesforce Debug Banner */}
+      <SalesforceDebugBanner />
+      
       {/* Header */}
       <div className="slds-page-header">
         <div className="slds-page-header__row">

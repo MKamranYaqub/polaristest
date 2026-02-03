@@ -35,6 +35,19 @@ export const isEmbeddedMode = () => {
 };
 
 /**
+ * Get Salesforce parameters from URL
+ * @returns {object} Object containing Salesforce opportunity ID, stage, and embedded status
+ */
+export const getSalesforceParams = () => {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    opportunityId: params.get('sf_opp_id') || null,
+    stage: params.get('sf_stage') || null,
+    embedded: params.get('embedded') === '1' || params.get('embedded') === 'true',
+  };
+};
+
+/**
  * Send a message to the parent window (Salesforce host)
  * @param {string} type - Message type
  * @param {object} data - Message payload
