@@ -36,14 +36,17 @@ export const isEmbeddedMode = () => {
 
 /**
  * Get Salesforce parameters from URL
- * @returns {object} Object containing Salesforce opportunity ID, stage, and embedded status
+ * @returns {object} Object containing Salesforce opportunity ID, stage, user info, org ID, and embedded status
  */
 export const getSalesforceParams = () => {
   const params = new URLSearchParams(window.location.search);
   return {
     opportunityId: params.get('sf_opp_id') || null,
     stage: params.get('sf_stage') || null,
-    embedded: params.get('embedded') === '1' || params.get('embedded') === 'true',
+    userId: params.get('sf_user_id') || null,
+    userName: params.get('sf_user_name') || null,
+    orgId: params.get('sf_org_id') || null,
+    embedded: params.get('embedded') || (params.get('embedded') === '1' || params.get('embedded') === 'true'),
   };
 };
 

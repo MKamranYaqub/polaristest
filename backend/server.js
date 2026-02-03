@@ -17,6 +17,7 @@ import adminRouter from './routes/admin.js';
 import reportingRouter from './routes/reporting.js';
 import apiKeysRouter from './routes/apiKeys.js';
 import salesforceRouter from './routes/salesforce.js';
+import canvasRouter from './routes/canvas.js';
 // Rate limiting middleware
 import { apiLimiter, exportLimiter, pdfLimiter, reportingLimiter } from './middleware/rateLimiter.js';
 
@@ -102,6 +103,9 @@ app.use('/api/admin/api-keys', apiKeysRouter);
 
 // Salesforce integration endpoints
 app.use('/api/salesforce', salesforceRouter);
+
+// Canvas integration endpoint (receives signed requests from Salesforce)
+app.use('/api/canvas', canvasRouter);
 
 // Reporting API (Power BI / Data Teams) - uses API key authentication
 app.use('/api/reporting', reportingLimiter);

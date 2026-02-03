@@ -5,7 +5,7 @@ import './SalesforceDebugBanner.scss';
 
 /**
  * Debug banner that displays Salesforce parameters when embedded
- * Shows Opportunity ID, Stage, and embedded mode status
+ * Shows Opportunity ID, User, Org, and embedded mode status
  */
 function SalesforceDebugBanner({ show = true }) {
   const sfParams = getSalesforceParams();
@@ -30,8 +30,18 @@ function SalesforceDebugBanner({ show = true }) {
                 <strong>Stage:</strong> {sfParams.stage}
               </span>
             )}
+            {sfParams.userName && (
+              <span className="salesforce-debug-banner__param">
+                <strong>User:</strong> {sfParams.userName}
+              </span>
+            )}
+            {sfParams.orgId && (
+              <span className="salesforce-debug-banner__param">
+                <strong>Org ID:</strong> {sfParams.orgId.substring(0, 15)}...
+              </span>
+            )}
             <span className="salesforce-debug-banner__param">
-              <strong>Mode:</strong> {sfParams.embedded ? 'Embedded' : 'Direct'}
+              <strong>Mode:</strong> {sfParams.embedded === 'canvas' ? 'Canvas' : sfParams.embedded ? 'Embedded' : 'Direct'}
             </span>
           </div>
         </div>

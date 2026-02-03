@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import BTLCalculator from './components/calculators/BTL_Calculator';
 import BridgingCalculator from './components/calculators/BridgingCalculator';
 import QuotesList from './components/calculators/QuotesList';
+import CanvasLoader from './components/salesforce/CanvasLoader';
 import AppShell from './components/layout/AppShell';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import { 
@@ -87,6 +88,9 @@ const AppContent = () => {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
+                
+                {/* Canvas route - loads Salesforce Canvas context */}
+                <Route path="/canvas" element={<CanvasLoader />} />
                 
                 {/* Public calculator routes - no authentication required */}
                 <Route 

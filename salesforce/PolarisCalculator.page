@@ -78,8 +78,8 @@
                 console.log('[POLARIS VF] Record Type:', recordType);
                 
                 // Build calculator URL
-                const baseUrl = 'https://polaristest-theta.vercel.app/calculator/bridging'; // Base URL for calculators
-                let calculatorPath = '/calculator/btl'; // Default to BTL
+                const baseUrl = 'https://polaristest-theta.vercel.app/'; // Base URL for calculators
+                let calculatorPath = '/calculator/bridging'; // Default to Bridging
                 
                 // Determine which calculator based on record type or stage
                 if (recordType.toLowerCase().includes('bridg')) {
