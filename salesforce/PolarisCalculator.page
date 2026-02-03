@@ -1,0 +1,140 @@
+<apex:page showHeader="false" sidebar="false" standardStylesheets="false">
+    <html>
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>Polaris Calculator</title>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+                background: #f4f4f4;
+            }
+            
+            #calculator-frame {
+                width: 100%;
+                height: 100vh;
+                border: none;
+                display: block;
+            }
+            
+            .loading-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                background: #f4f4f4;
+            }
+            
+            .loading-spinner {
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #0176d3;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+            }
+            
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            
+            .error-container {
+                display: none;
+                padding: 20px;
+                background: #c23934;
+                color: white;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="loading-container" id="loading">
+            <div class="loading-spinner"></div>
+        </div>
+        
+        <div class="error-container" id="error">
+            <p>Unable to load calculator. Please check your connection.</p>
+        </div>
+        
+        <iframe id="calculator-frame" style="display: none;"></iframe>
+        
+        <script>
+            (function() {
+                // Get URL parameters from Salesforce
+                const urlParams = new URLSearchParams(window.location.search);
+                const opportunityId = urlParams.get('oppId') || '';
+                const stage = urlParams.get('stage') || '';
+                const recordType = urlParams.get('recordType') || 'btl';
+                
+                // Build calculator URL
+                const baseUrl = 'https://polaristest-theta.vercel.app';
+                let calculatorPath = '/btl-calculator'; // Default to BTL
+                
+                // Determine which calculator based on record type or stage
+                if (recordType.toLowerCase().includes('bridg')) {
+                    calculatorPath = '/bridging-calculator';
+                } else if (recordType.toLowerCase().includes('fusion')) {
+                    calculatorPath = '/bridging-calculator'; // Fusion uses bridging calculator
+                }
+                
+                // Build query parameters
+                const params = new URLSearchParams();
+                if (opportunityId) params.append('sf_opp_id', opportunityId);
+                if (stage) params.append('sf_stage', stage);
+                params.append('embedded', 'true'); // Flag for embedded mode
+                
+                const iframeUrl = `${baseUrl}${calculatorPath}?${params.toString()}`;
+                
+                // Load iframe
+                const iframe = document.getElementById('calculator-frame');
+                const loading = document.getElementById('loading');
+                const error = document.getElementById('error');
+                
+                iframe.onload = function() {
+                    loading.style.display = 'none';
+                    iframe.style.display = 'block';
+                };
+                
+                iframe.onerror = function() {
+                    loading.style.display = 'none';
+                    error.style.display = 'block';
+                };
+                
+                // Set timeout for loading
+                setTimeout(function() {
+                    if (loading.style.display !== 'none') {
+                        loading.style.display = 'none';
+                        iframe.style.display = 'block';
+                    }
+                }, 3000);
+                
+                // Set iframe source
+                iframe.src = iframeUrl;
+                
+                // Handle messages from iframe (for future bidirectional communication)
+                window.addEventListener('message', function(event) {
+                    // Verify origin
+                    if (event.origin !== baseUrl) return;
+                    
+                    const data = event.data;
+                    
+                    // Handle different message types
+                    if (data.type === 'QUOTE_SAVED') {
+                        console.log('Quote saved:', data.payload);
+                        // Future: Update Salesforce Opportunity with quote details
+                    } else if (data.type === 'STAGE_CHANGE') {
+                        console.log('Stage changed:', data.payload);
+                        // Future: Update Salesforce Opportunity stage
+                    } else if (data.type === 'CALCULATOR_READY') {
+                        console.log('Calculator ready');
+                    }
+                });
+                
+            })();
+        </script>
+    </body>
+    </html>
+</apex:page>
