@@ -16,6 +16,7 @@ const BridgingProductSection = ({
   onAnswerChange,
   allCriteria,
   chargeType,
+  isMultiPropertyLoan = false,
   subProductLimits = {},
   quoteId,
   quoteReference,
@@ -179,14 +180,20 @@ const BridgingProductSection = ({
           
           let effectiveIndex = safeIndex;
           let isDisabled = isReadOnly;
-          if (isChargeTypeQuestion && isNonResidential) {
-            const firstChargeIndex = q.options.findIndex(opt => 
-              (opt.option_label || '').toString().toLowerCase().includes('first')
-            );
-            if (firstChargeIndex >= 0) {
-              effectiveIndex = firstChargeIndex;
-              if (safeIndex !== firstChargeIndex) {
-                handleAnswerChange(qk, firstChargeIndex);
+          
+          // Disable charge type question for non-residential OR for Multi-Property Loan
+          if (isChargeTypeQuestion && (isNonResidential || isMultiPropertyLoan)) {
+            // For Multi-Property Loan, the charge type is driven by the multi-property rows
+            // For non-residential, force to first charge
+            if (isNonResidential && !isMultiPropertyLoan) {
+              const firstChargeIndex = q.options.findIndex(opt => 
+                (opt.option_label || '').toString().toLowerCase().includes('first')
+              );
+              if (firstChargeIndex >= 0) {
+                effectiveIndex = firstChargeIndex;
+                if (safeIndex !== firstChargeIndex) {
+                  handleAnswerChange(qk, firstChargeIndex);
+                }
               }
             }
             isDisabled = true;

@@ -14,7 +14,7 @@ import CollapsibleSection from '../calculator/CollapsibleSection';
 import ClientDetailsSection from '../calculator/shared/ClientDetailsSection';
 import BridgingProductSection from '../calculator/bridging/BridgingProductSection';
 import LoanDetailsSection from '../calculator/bridging/LoanDetailsSection';
-import MultiPropertyDetailsSection from '../calculator/bridging/MultiPropertyDetailsSection';
+import MultiPropertyLoanSection from '../calculator/bridging/MultiPropertyLoanSection';
 import useBrokerSettings from '../../hooks/calculator/useBrokerSettings';
 import { useResultsVisibility } from '../../hooks/useResultsVisibility';
 import { useResultsRowOrder } from '../../hooks/useResultsRowOrder';
@@ -130,83 +130,238 @@ export default function BridgingCalculator({ initialQuote = null }) {
   const [feeCalculationType, setFeeCalculationType] = useState('pound');
   const [additionalFeeAmount, setAdditionalFeeAmount] = useState('');
 
-  const [multiPropertyDetailsExpanded, setMultiPropertyDetailsExpanded] = useState(false);
-  const [multiPropertyRows, setMultiPropertyRows] = useState([
-    { id: Date.now(), property_address: '', property_type: 'Residential', property_value: '', charge_type: 'First charge', first_charge_amount: '', gross_loan: 0 }
-  ]);
-
   // UW Requirements checklist state
   const [uwChecklistExpanded, setUwChecklistExpanded] = useState(false);
   const [uwCheckedItems, setUwCheckedItems] = useState({});
   const [uwCustomRequirements, setUwCustomRequirements] = useState(null);
 
-  // Multi-property helper functions
-  const calculateMultiPropertyGrossLoan = (propertyType, propertyValue, firstChargeAmount) => {
-    const pv = Number(propertyValue) || 0;
-    const fca = Number(firstChargeAmount) || 0;
-    const maxLtv = propertyType === 'Residential' ? 0.75 : 0.70; // 75% for Residential, 70% for Commercial/Semi-Commercial
-    const grossLoan = (pv * maxLtv) - fca;
-    return grossLoan > 0 ? grossLoan : 0;
-  };
+  // POC: Check if Multi-Property Loan is selected in Product Scope dropdown
+  const isMultiPropertyLoan = useMemo(() => {
+    return productScope === 'Multi-Property Loan';
+  }, [productScope]);
 
-  const handleMultiPropertyRowChange = (id, field, value) => {
-    setMultiPropertyRows(prev => prev.map(row => {
+  // POC: Enhanced multi-property loan rows with rates and LTV
+  const [multiPropertyLoanRows, setMultiPropertyLoanRows] = useState([
+    { 
+      id: Date.now(), 
+      property_type: 'Residential',
+      sub_product: 'Resi Single Unit',
+      property_address: '', 
+      property_value: '', 
+      charge_type: 'First charge', 
+      first_charge_amount: '', 
+      fixed_rate: 0.85,
+      variable_rate: 0.50,
+      max_ltv: 75,
+      max_gross_loan: 0 
+    }
+  ]);
+  const [multiPropertyLoanExpanded, setMultiPropertyLoanExpanded] = useState(true);
+
+  // POC: Handle multi-property loan row changes
+  const handleMultiPropertyLoanRowChange = (id, field, value) => {
+    setMultiPropertyLoanRows(prev => prev.map(row => {
       if (row.id !== id) return row;
       
-      // Parse numeric fields to remove formatting before storing
+      // Parse numeric fields
       let processedValue = value;
-      if (field === 'property_value' || field === 'first_charge_amount') {
+      if (['property_value', 'first_charge_amount', 'fixed_rate', 'variable_rate', 'max_ltv'].includes(field)) {
         processedValue = parseNumber(value);
-        // Keep empty string if user cleared the field
         if (!Number.isFinite(processedValue)) {
-          processedValue = '';
+          processedValue = field === 'property_value' || field === 'first_charge_amount' ? '' : 0;
         }
       }
       
       const updated = { ...row, [field]: processedValue };
-      // Recalculate gross loan when property_type, property_value, or first_charge_amount changes
-      if (['property_type', 'property_value', 'first_charge_amount'].includes(field)) {
-        updated.gross_loan = calculateMultiPropertyGrossLoan(
-          updated.property_type,
-          updated.property_value,
-          updated.first_charge_amount
-        );
+      
+      // Recalculate max gross loan when relevant fields change
+      if (['property_type', 'property_value', 'first_charge_amount', 'charge_type', 'max_ltv'].includes(field)) {
+        const pv = parseNumber(updated.property_value) || 0;
+        const ltv = parseNumber(updated.max_ltv) || 0;
+        const fca = updated.charge_type === 'Second charge' ? (parseNumber(updated.first_charge_amount) || 0) : 0;
+        updated.max_gross_loan = Math.max(0, (pv * (ltv / 100)) - fca);
       }
+      
       return updated;
     }));
   };
 
-  const addMultiPropertyRow = () => {
-    setMultiPropertyRows(prev => [
+  // POC: Handle batch updates to a multi-property loan row (for multiple fields at once)
+  const handleMultiPropertyLoanRowBatchChange = (id, updates) => {
+    setMultiPropertyLoanRows(prev => prev.map(row => {
+      if (row.id !== id) return row;
+      
+      const updated = { ...row };
+      
+      // Apply all updates
+      Object.entries(updates).forEach(([field, value]) => {
+        let processedValue = value;
+        if (['property_value', 'first_charge_amount', 'fixed_rate', 'variable_rate', 'max_ltv', 'max_gross_loan'].includes(field)) {
+          processedValue = parseNumber(value);
+          if (!Number.isFinite(processedValue)) {
+            processedValue = field === 'property_value' || field === 'first_charge_amount' ? '' : 0;
+          }
+        }
+        updated[field] = processedValue;
+      });
+      
+      // Recalculate max gross loan if any relevant field changed
+      const relevantFields = ['property_type', 'property_value', 'first_charge_amount', 'charge_type', 'max_ltv'];
+      if (relevantFields.some(f => f in updates)) {
+        const pv = parseNumber(updated.property_value) || 0;
+        const ltv = parseNumber(updated.max_ltv) || 0;
+        const fca = updated.charge_type === 'Second charge' ? (parseNumber(updated.first_charge_amount) || 0) : 0;
+        updated.max_gross_loan = Math.max(0, (pv * (ltv / 100)) - fca);
+      }
+      
+      return updated;
+    }));
+  };
+
+  // POC: Add new multi-property loan row
+  const addMultiPropertyLoanRow = () => {
+    setMultiPropertyLoanRows(prev => [
       ...prev,
-      { id: Date.now(), property_address: '', property_type: 'Residential', property_value: '', charge_type: 'First charge', first_charge_amount: '', gross_loan: 0 }
+      { 
+        id: Date.now(), 
+        property_type: 'Residential',
+        sub_product: '',
+        property_address: '', 
+        property_value: '', 
+        charge_type: 'First charge', 
+        first_charge_amount: '', 
+        fixed_rate: 0.85,
+        variable_rate: 0.50,
+        max_ltv: 75,
+        max_gross_loan: 0 
+      }
     ]);
   };
 
-  const deleteMultiPropertyRow = (id) => {
-    if (multiPropertyRows.length <= 1) return; // Keep at least one row
-    setMultiPropertyRows(prev => prev.filter(row => row.id !== id));
+  // POC: Delete multi-property loan row
+  const deleteMultiPropertyLoanRow = (id) => {
+    if (multiPropertyLoanRows.length <= 1) return;
+    setMultiPropertyLoanRows(prev => prev.filter(row => row.id !== id));
   };
 
-  // Calculate totals for multi-property
-  const multiPropertyTotals = useMemo(() => {
-    return multiPropertyRows.reduce((acc, row) => {
-      acc.property_value += Number(row.property_value) || 0;
-      acc.first_charge_amount += Number(row.first_charge_amount) || 0;
-      acc.gross_loan += Number(row.gross_loan) || 0;
-      return acc;
-    }, { property_value: 0, first_charge_amount: 0, gross_loan: 0 });
-  }, [multiPropertyRows]);
+  // POC: Handler for "Use Blended Values" button
+  const handleUseBlendedValues = (totals) => {
+    // Transfer blended values to main Loan Details section
+    setPropertyValue(formatCurrencyInput(totals.totalPropertyValue));
+    setGrossLoan(formatCurrencyInput(totals.totalMaxGrossLoan));
+    if (totals.totalFirstChargeAmount > 0) {
+      setFirstChargeValue(formatCurrencyInput(totals.totalFirstChargeAmount));
+    }
+    
+    // Update charge type based on hasSecondCharge flag
+    if (totals.hasSecondCharge !== undefined) {
+      const derivedCharge = totals.hasSecondCharge ? 'Second' : 'First';
+      setChargeType(derivedCharge);
+      
+      // Also update answers state to reflect charge type in the dropdown
+      if (questions && Object.keys(questions).length > 0) {
+        for (const qk of Object.keys(questions)) {
+          const q = questions[qk];
+          const label = (q?.label || qk || '').toLowerCase();
+          if (/charge[-_ ]?type|chargetype/i.test(label)) {
+            const targetLabel = totals.hasSecondCharge ? 'second' : 'first';
+            const optionIndex = q.options?.findIndex(opt => 
+              (opt.option_label || '').toLowerCase().includes(targetLabel)
+            );
+            if (optionIndex >= 0) {
+              setAnswers(prev => ({ ...prev, [qk]: q.options[optionIndex] }));
+            }
+            break;
+          }
+        }
+      }
+    }
+    
+    // Apply blended rates to rate overrides so calculations can run
+    // For Multi-Property Loan, we push blended rates to Variable Bridge and Fixed Bridge columns
+    if (totals.blendedFixedRate != null) {
+      setRatesOverrides(prev => ({
+        ...prev,
+        'Fixed Bridge': `${totals.blendedFixedRate.toFixed(2)}%`
+      }));
+    }
+    if (totals.blendedVariableRate != null) {
+      setRatesOverrides(prev => ({
+        ...prev,
+        'Variable Bridge': `${totals.blendedVariableRate.toFixed(2)}% + BBR`
+      }));
+    }
+  };
 
-  // Check if Multi-property is set to "Yes"
-  const isMultiProperty = useMemo(() => {
-    const multiPropAnswer = Object.entries(answers).find(([key]) => 
-      key.toLowerCase().includes('multi') && key.toLowerCase().includes('property')
-    );
-    if (!multiPropAnswer) return false;
-    const answer = multiPropAnswer[1];
-    return answer?.option_label?.toString().toLowerCase() === 'yes';
-  }, [answers]);
+  // POC: Column headers for results table - hide Fusion when Multi-Property Loan is selected
+  const resultsColumnHeaders = useMemo(() => {
+    if (isMultiPropertyLoan) {
+      // Only show Variable Bridge and Fixed Bridge for Multi-Property Loan
+      return ['Variable Bridge', 'Fixed Bridge'];
+    }
+    // Default: show all three columns
+    return ['Fusion', 'Variable Bridge', 'Fixed Bridge'];
+  }, [isMultiPropertyLoan]);
+
+  // POC: Sync charge type and totals when multi-property loan rows change
+  // This enables the first charge field in the main calculator and keeps values in sync
+  useEffect(() => {
+    if (!isMultiPropertyLoan) return;
+    
+    const hasSecondCharge = multiPropertyLoanRows.some(row => row.charge_type === 'Second charge');
+    const derivedCharge = hasSecondCharge ? 'Second' : 'First';
+    
+    // If any row has 2nd charge, set main calculator charge type to Second
+    // This enables the first charge value field for totals
+    setChargeType(derivedCharge);
+    
+    // Also update answers state to reflect charge type in the dropdown
+    // Find the charge type question key and update it
+    if (questions && Object.keys(questions).length > 0) {
+      for (const qk of Object.keys(questions)) {
+        const q = questions[qk];
+        const label = (q?.label || qk || '').toLowerCase();
+        if (/charge[-_ ]?type|chargetype/i.test(label)) {
+          // Find the matching option (First Charge or Second Charge)
+          const targetLabel = hasSecondCharge ? 'second' : 'first';
+          const optionIndex = q.options?.findIndex(opt => 
+            (opt.option_label || '').toLowerCase().includes(targetLabel)
+          );
+          if (optionIndex >= 0) {
+            setAnswers(prev => ({ ...prev, [qk]: q.options[optionIndex] }));
+          }
+          break;
+        }
+      }
+    }
+    
+    // Auto-sync totals from multi-property loan rows to main calculator
+    // This ensures calculations can run with the blended values
+    let totalPropertyValue = 0;
+    let totalMaxGrossLoan = 0;
+    let totalFirstChargeAmount = 0;
+    
+    multiPropertyLoanRows.forEach(row => {
+      totalPropertyValue += parseNumber(row.property_value) || 0;
+      totalMaxGrossLoan += parseNumber(row.max_gross_loan) || 0;
+      if (row.charge_type === 'Second charge') {
+        totalFirstChargeAmount += parseNumber(row.first_charge_amount) || 0;
+      }
+    });
+    
+    // Only update if we have valid totals
+    if (totalPropertyValue > 0) {
+      setPropertyValue(formatCurrencyInput(totalPropertyValue));
+    }
+    if (totalMaxGrossLoan > 0) {
+      setGrossLoan(formatCurrencyInput(totalMaxGrossLoan));
+    }
+    if (totalFirstChargeAmount > 0) {
+      setFirstChargeValue(formatCurrencyInput(totalFirstChargeAmount));
+    } else if (!hasSecondCharge) {
+      setFirstChargeValue('');
+    }
+  }, [isMultiPropertyLoan, multiPropertyLoanRows, questions]);
 
   // Calculate available term range from bridge rates (exclude Fusion products)
   const termRange = useMemo(() => {
@@ -348,7 +503,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
   }, [allCriteria, productScope, effectiveInitialQuote]);
 
   // Auto-select productScope after criteria load: filter to Bridging criteria only and sort
-  // Desired order: Residential, Commercial, Semi-Commercial
+  // Desired order: Residential, Commercial, Semi-Commercial, Multi-Property Loan
   const bridgingScopes = React.useMemo(() => {
     if (!allCriteria || allCriteria.length === 0) return [];
     const normalizeStr = (s) => (s || '').toString().trim().toLowerCase();
@@ -365,7 +520,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
     
     // Sort: Residential first, then Commercial, then Semi-Commercial, then others alphabetically
     const sortOrder = ['residential', 'commercial', 'semi-commercial', 'semi commercial'];
-    return scopes.sort((a, b) => {
+    const sortedScopes = scopes.sort((a, b) => {
       const aLower = a.toLowerCase();
       const bLower = b.toLowerCase();
       const aIndex = sortOrder.findIndex(s => aLower.includes(s));
@@ -375,6 +530,11 @@ export default function BridgingCalculator({ initialQuote = null }) {
       if (bIndex !== -1) return 1;
       return a.localeCompare(b);
     });
+    
+    // Add "Multi-Property Loan" as last option (POC feature)
+    // Filter out any existing Multi-Property Loan to avoid duplicate keys
+    const filteredScopes = sortedScopes.filter(s => s !== 'Multi-Property Loan');
+    return [...filteredScopes, 'Multi-Property Loan'];
   }, [allCriteria]);
   
   useEffect(() => {
@@ -456,16 +616,26 @@ export default function BridgingCalculator({ initialQuote = null }) {
           .order('row_order', { ascending: true })
           .then(({ data, error }) => {
             if (!error && data && data.length > 0) {
-              const loadedRows = data.map(row => ({
-                id: row.id,
-                property_address: row.property_address || '',
-                property_type: row.property_type || 'Residential',
-                property_value: row.property_value || '',
-                charge_type: row.charge_type || 'First charge',
-                first_charge_amount: row.first_charge_amount || '',
-                gross_loan: row.gross_loan || 0
-              }));
-              setMultiPropertyRows(loadedRows);
+              // Load only multi-property loan rows (POC)
+              const loanRows = data.filter(row => row.is_multi_property_loan);
+              
+              // Load multi-property loan rows (POC)
+              if (loanRows.length > 0) {
+                const loadedLoanRows = loanRows.map(row => ({
+                  id: row.id,
+                  property_address: row.property_address || '',
+                  property_type: row.property_type || 'Residential',
+                  sub_product: row.sub_product || 'BTL Single Property Investment',
+                  property_value: row.property_value ? String(row.property_value) : '',
+                  charge_type: row.charge_type || 'First charge',
+                  first_charge_amount: row.first_charge_amount ? String(row.first_charge_amount) : '',
+                  fixed_rate: row.fixed_rate || 0.85,
+                  variable_rate: row.variable_rate || 0.50,
+                  max_ltv: row.max_ltv || 75,
+                  max_gross_loan: row.max_gross_loan || 0
+                }));
+                setMultiPropertyLoanRows(loadedLoanRows);
+              }
             }
           });
       }
@@ -704,8 +874,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
     setClientDetailsExpanded(newState);
     if (newState) {
       setCriteriaExpanded(false);
-      setMultiPropertyDetailsExpanded(false);
       setLoanDetailsExpanded(false);
+      setMultiPropertyLoanExpanded(false);
     }
   };
 
@@ -714,18 +884,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
     setCriteriaExpanded(newState);
     if (newState) {
       setClientDetailsExpanded(false);
-      setMultiPropertyDetailsExpanded(false);
       setLoanDetailsExpanded(false);
-    }
-  };
-
-  const handleMultiPropertyToggle = () => {
-    const newState = !multiPropertyDetailsExpanded;
-    setMultiPropertyDetailsExpanded(newState);
-    if (newState) {
-      setClientDetailsExpanded(false);
-      setCriteriaExpanded(false);
-      setLoanDetailsExpanded(false);
+      setMultiPropertyLoanExpanded(false);
     }
   };
 
@@ -735,7 +895,17 @@ export default function BridgingCalculator({ initialQuote = null }) {
     if (newState) {
       setClientDetailsExpanded(false);
       setCriteriaExpanded(false);
-      setMultiPropertyDetailsExpanded(false);
+      setMultiPropertyLoanExpanded(false);
+    }
+  };
+
+  const handleMultiPropertyLoanToggle = () => {
+    const newState = !multiPropertyLoanExpanded;
+    setMultiPropertyLoanExpanded(newState);
+    if (newState) {
+      setClientDetailsExpanded(false);
+      setCriteriaExpanded(false);
+      setLoanDetailsExpanded(false);
     }
   };
 
@@ -853,6 +1023,96 @@ export default function BridgingCalculator({ initialQuote = null }) {
     // The saved quote's computed results should be preserved until user changes inputs
     if (loadedFromSavedQuoteRef.current) {
       loadedFromSavedQuoteRef.current = false;
+      return;
+    }
+    
+    // POC: For Multi-Property Loan, create synthetic rates from blended property values
+    if (isMultiPropertyLoan && multiPropertyLoanRows && multiPropertyLoanRows.length > 0) {
+      // Calculate blended rates and blended max LTV from multi-property loan rows
+      let weightedFixedSum = 0;
+      let weightedVariableSum = 0;
+      let totalPropertyValue = 0;
+      let totalMaxGrossLoan = 0;
+      
+      multiPropertyLoanRows.forEach(row => {
+        const pv = parseNumber(row.property_value) || 0;
+        const fixedRate = parseNumber(row.fixed_rate) || 0;
+        const variableRate = parseNumber(row.variable_rate) || 0;
+        const maxGrossLoan = parseNumber(row.max_gross_loan) || 0;
+        
+        if (pv > 0) {
+          weightedFixedSum += pv * fixedRate;
+          weightedVariableSum += pv * variableRate;
+          totalPropertyValue += pv;
+          totalMaxGrossLoan += maxGrossLoan;
+        }
+      });
+      
+      const blendedFixedRate = totalPropertyValue > 0 ? weightedFixedSum / totalPropertyValue : 0.85;
+      const blendedVariableRate = totalPropertyValue > 0 ? weightedVariableSum / totalPropertyValue : 0.50;
+      
+      // Calculate blended max LTV from the actual property-level max gross loans
+      // This respects individual property LTV caps (75% for 1st charge, 70% for 2nd charge, etc.)
+      const blendedMaxLtv = totalPropertyValue > 0 
+        ? (totalMaxGrossLoan / totalPropertyValue) * 100 
+        : 75;
+      
+      // Create synthetic rate objects that the calculation engine can use
+      const syntheticVariableRate = {
+        rate: blendedVariableRate,
+        original_rate: blendedVariableRate,
+        label: 'Variable Bridge (Blended)',
+        type: 'variable',
+        set_key: 'bridge-var',
+        product: 'Multi-Property Variable',
+        product_name: 'Multi-Property Variable',
+        property: 'Multi-Property',
+        max_ltv: blendedMaxLtv, // Use blended max LTV from property table
+        min_ltv: 0,
+        min_loan: 75000,
+        max_loan: 25000000,
+        min_rolled_months: 0,
+        max_rolled_months: 18,
+        arrangement_fee_pct: 2,
+        arrangement_fee_pounds: 0,
+        admin_fee: 495,
+        exit_fee_pct: 1,
+        proc_fee_pct: 1,
+        min_term: 3,
+        max_term: parseNumber(bridgingTerm) || 18,
+        full_term: parseNumber(bridgingTerm) || 18,
+        min_icr: 0,
+      };
+      
+      const syntheticFixedRate = {
+        rate: blendedFixedRate,
+        original_rate: blendedFixedRate,
+        label: 'Fixed Bridge (Blended)',
+        type: 'fixed',
+        set_key: 'bridge-fix',
+        product: 'Multi-Property Fixed',
+        product_name: 'Multi-Property Fixed',
+        property: 'Multi-Property',
+        max_ltv: blendedMaxLtv, // Use blended max LTV from property table
+        min_ltv: 0,
+        min_loan: 75000,
+        max_loan: 25000000,
+        min_rolled_months: 0,
+        max_rolled_months: 18,
+        arrangement_fee_pct: 2,
+        arrangement_fee_pounds: 0,
+        admin_fee: 495,
+        exit_fee_pct: 1,
+        proc_fee_pct: 1,
+        min_term: 3,
+        max_term: parseNumber(bridgingTerm) || 18,
+        full_term: parseNumber(bridgingTerm) || 18,
+        min_icr: 0,
+      };
+      
+      setBridgeMatched([syntheticVariableRate, syntheticFixedRate]);
+      setFusionMatched([]);
+      setRelevantRates([syntheticVariableRate, syntheticFixedRate]);
       return;
     }
     
@@ -996,7 +1256,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
     setBridgeMatched(bridgeOut);
     setFusionMatched(fusionOut);
     setRelevantRates([...bridgeOut, ...fusionOut]);
-  }, [rates, productScope, subProduct, propertyValue, grossLoan, specificNetLoan, useSpecificNet, answers, chargeType, firstChargeValue]);
+  }, [rates, productScope, subProduct, propertyValue, grossLoan, specificNetLoan, useSpecificNet, answers, chargeType, firstChargeValue, isMultiPropertyLoan, multiPropertyLoanRows]);
 
   // Auto-populate commitment fee based on gross loan (if not manually touched)
   useEffect(() => {
@@ -1087,8 +1347,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
             brokerCommissionPercent: brokerSettings.brokerCommissionPercent,
           },
           // Second charge context
-          chargeType,
-          firstChargeValue: getNumericValue(firstChargeValue),
+          // For Multi-Property Loan, DON'T pass chargeType as Second - the blended LTV already accounts for individual property charge types
+          chargeType: isMultiPropertyLoan ? 'First' : chargeType,
+          firstChargeValue: isMultiPropertyLoan ? 0 : getNumericValue(firstChargeValue),
         });
 
         // Determine product name for display
@@ -1271,6 +1532,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
   const loanSize = computeLoanSize(specificNetLoan, grossLoan);
 
   const bestBridgeRates = useMemo(() => {
+    // POC: For Multi-Property Loan, the synthetic rates are already in calculatedRates
+    // We just need to pick from calculatedRates like normal, but exclude Fusion
+    
     if (!calculatedRates || calculatedRates.length === 0) {
       return { fusion: null, variable: null, fixed: null };
     }
@@ -1311,11 +1575,11 @@ export default function BridgingCalculator({ initialQuote = null }) {
     const cappedLtvForSelection = Number.isFinite(loanLtv) ? Math.min(loanLtv, selectionCap) : loanLtv;
     
     return {
-      fusion: pickBestRate(fusionRows, loanSize, 'min_loan', 'max_loan'),
+      fusion: isMultiPropertyLoan ? null : pickBestRate(fusionRows, loanSize, 'min_loan', 'max_loan'),
       variable: pickBestRate(variableRows, cappedLtvForSelection, 'min_ltv', 'max_ltv'),
       fixed: pickBestRate(fixedRows, cappedLtvForSelection, 'min_ltv', 'max_ltv'),
     };
-  }, [calculatedRates, loanLtv, loanSize, chargeType]);
+  }, [calculatedRates, loanLtv, loanSize, chargeType, isMultiPropertyLoan]);
 
   const bestBridgeRatesArray = useMemo(() => (
     ['fusion', 'variable', 'fixed']
@@ -1398,7 +1662,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
   };
 
   // Available fee types for Bridge: Fusion, Variable Bridge, Fixed Bridge
-  const bridgeFeeTypes = ['Fusion', 'Variable Bridge', 'Fixed Bridge'];
+  // POC: Exclude Fusion for Multi-Property Loan
+  const bridgeFeeTypes = isMultiPropertyLoan 
+    ? ['Variable Bridge', 'Fixed Bridge'] 
+    : ['Fusion', 'Variable Bridge', 'Fixed Bridge'];
 
   // Handle fee type selection in DIP modal to filter rates
   const handleFeeTypeSelection = (feeTypeLabel) => {
@@ -1499,9 +1766,20 @@ export default function BridgingCalculator({ initialQuote = null }) {
     // Reset results
     setBestBridgeRatesArray([]);
     
-    // Reset multi-property
-    setIsMultiProperty(false);
-    setMultiPropertyRows([{ propertyValue: '', grossLoan: '' }]);
+    // Reset multi-property loan rows
+    setMultiPropertyLoanRows([{
+      id: Date.now(),
+      property_address: '',
+      property_type: 'Residential',
+      sub_product: 'BTL Single Property Investment',
+      property_value: '',
+      charge_type: 'First charge',
+      first_charge_amount: '',
+      fixed_rate: 0.85,
+      variable_rate: 0.50,
+      max_ltv: 75,
+      max_gross_loan: 0
+    }]);
     
     // Reset DIP data
     setDipData({});
@@ -1567,9 +1845,20 @@ export default function BridgingCalculator({ initialQuote = null }) {
     // Reset results
     setBestBridgeRatesArray([]);
 
-    // Reset multi-property
-    setIsMultiProperty(false);
-    setMultiPropertyRows([{ propertyValue: '', grossLoan: '' }]);
+    // Reset multi-property loan rows
+    setMultiPropertyLoanRows([{
+      id: Date.now(),
+      property_address: '',
+      property_type: 'Residential',
+      sub_product: 'BTL Single Property Investment',
+      property_value: '',
+      charge_type: 'First charge',
+      first_charge_amount: '',
+      fixed_rate: 0.85,
+      variable_rate: 0.50,
+      max_ltv: 75,
+      max_gross_loan: 0
+    }]);
 
     // Reset DIP data
     setDipData({});
@@ -1665,6 +1954,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
         onAnswerChange={handleAnswerChange}
         allCriteria={allCriteria}
         chargeType={chargeType}
+        isMultiPropertyLoan={isMultiPropertyLoan}
         subProductLimits={subProductLimits}
         quoteId={currentQuoteId}
         quoteReference={currentQuoteRef}
@@ -1701,7 +1991,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
               productFeeOverrides,
               rolledMonthsPerColumn,
               deferredInterestPerColumn,
-              multiPropertyRows: isMultiProperty ? multiPropertyRows : null
+              multiPropertyLoanRows: isMultiPropertyLoan ? multiPropertyLoanRows : null
             }}
             allColumnData={relevantRates || []}
             existingQuote={currentQuoteData}
@@ -1716,27 +2006,44 @@ export default function BridgingCalculator({ initialQuote = null }) {
               if (savedQuote && savedQuote.reference_number) {
                 setCurrentQuoteRef(savedQuote.reference_number);
               }
-              if (isMultiProperty && multiPropertyRows.length > 0 && savedQuote && savedQuote.id) {
+              
+              // Save multi-property loan details
+              if (savedQuote && savedQuote.id) {
                 try {
+                  // Delete all existing multi-property details for this quote
                   await supabase
                     .from('bridge_multi_property_details')
                     .delete()
-                    .eq('quote_id', savedQuote.id);
+                    .eq('bridge_quote_id', savedQuote.id);
                   
-                  const rowsToInsert = multiPropertyRows.map(row => ({
-                    quote_id: savedQuote.id,
-                    property_value: row.propertyValue || null,
-                    first_charge_value: row.firstChargeValue || null,
-                    gross_loan: row.grossLoan || null,
-                    monthly_rent: row.monthlyRent || null,
-                    top_slicing: row.topSlicing || null
-                  }));
-                  
-                  await supabase
-                    .from('bridge_multi_property_details')
-                    .insert(rowsToInsert);
+                  // Add multi-property loan rows (isMultiPropertyLoan)
+                  if (isMultiPropertyLoan && multiPropertyLoanRows.length > 0) {
+                    const rowsToInsert = multiPropertyLoanRows.map((row, index) => ({
+                      bridge_quote_id: savedQuote.id,
+                      property_address: row.property_address || null,
+                      property_type: row.property_type || 'Residential',
+                      sub_product: row.sub_product || null,
+                      property_value: row.property_value || null,
+                      charge_type: row.charge_type || 'First charge',
+                      first_charge_amount: row.first_charge_amount || null,
+                      fixed_rate: row.fixed_rate || null,
+                      variable_rate: row.variable_rate || null,
+                      max_ltv: row.max_ltv || null,
+                      max_gross_loan: row.max_gross_loan || null,
+                      gross_loan: row.max_gross_loan || null,
+                      row_order: index,
+                      is_multi_property_loan: true
+                    }));
+                    
+                    // Insert rows if any
+                    if (rowsToInsert.length > 0) {
+                      await supabase
+                        .from('bridge_multi_property_details')
+                        .insert(rowsToInsert);
+                    }
+                  }
                 } catch (error) {
-                  // Error saving multi-property details
+                  console.error('Error saving multi-property loan details:', error);
                 }
               }
               
@@ -1773,21 +2080,21 @@ export default function BridgingCalculator({ initialQuote = null }) {
         isReadOnly={isReadOnly}
       />
 
-      {/* Multi Property Details Section - Only shown when Multi-property = Yes */}
-      {isMultiProperty && (
-        <MultiPropertyDetailsSection
-          expanded={multiPropertyDetailsExpanded}
-          onToggle={handleMultiPropertyToggle}
-          rows={multiPropertyRows}
-          onRowChange={handleMultiPropertyRowChange}
-          onAddRow={addMultiPropertyRow}
-          onDeleteRow={deleteMultiPropertyRow}
-          totals={multiPropertyTotals}
-          onUseTotalGrossLoan={(total) => setGrossLoan(formatCurrencyInput(total))}
+      {/* POC: Enhanced Multi-Property Loan Section - Only shown when Product Scope = Multi-Property Loan */}
+      {isMultiPropertyLoan && (
+        <MultiPropertyLoanSection
+          expanded={multiPropertyLoanExpanded}
+          onToggle={handleMultiPropertyLoanToggle}
+          rows={multiPropertyLoanRows}
+          onRowChange={handleMultiPropertyLoanRowChange}
+          onRowBatchChange={handleMultiPropertyLoanRowBatchChange}
+          onAddRow={addMultiPropertyLoanRow}
+          onDeleteRow={deleteMultiPropertyLoanRow}
+          rates={rates}
+          onUseBlendedValues={handleUseBlendedValues}
           isReadOnly={isReadOnly}
         />
       )}
-
       <LoanDetailsSection
         expanded={loanDetailsExpanded}
         onToggle={handleLoanDetailsToggle}
@@ -1849,13 +2156,16 @@ export default function BridgingCalculator({ initialQuote = null }) {
                     <tr>
                       {/* increase label width a bit and adjust other columns */}
                       <th className="width-24 th-label">Label</th>
-                      <th 
-                        className="width-25 text-align-center th-data-col brand-header"
-                        style={{ 
-                          backgroundColor: 'var(--results-header-bridge-col1-bg, var(--results-header-col1-bg))',
-                          color: 'var(--results-header-bridge-col1-text, var(--results-header-col1-text))'
-                        }}
-                      >{bestBridgeRates.fusion?.label || 'Fusion'}</th>
+                      {/* POC: Conditionally show Fusion column - hide for Multi-Property Loan */}
+                      {!isMultiPropertyLoan && (
+                        <th 
+                          className="width-25 text-align-center th-data-col brand-header"
+                          style={{ 
+                            backgroundColor: 'var(--results-header-bridge-col1-bg, var(--results-header-col1-bg))',
+                            color: 'var(--results-header-bridge-col1-text, var(--results-header-col1-text))'
+                          }}
+                        >{bestBridgeRates.fusion?.label || 'Fusion'}</th>
+                      )}
                       <th 
                         className="width-25 text-align-center th-data-col brand-header"
                         style={{ 
@@ -1894,8 +2204,11 @@ export default function BridgingCalculator({ initialQuote = null }) {
                         {
                           (() => {
                             // Calculate rates for all columns first
-                            const columnsHeaders = [ 'Fusion', 'Variable Bridge', 'Fixed Bridge' ];
-                            const colBest = [bestFusion, bestVariable, bestFixed];
+                            // POC: Use dynamic column headers (excludes Fusion for Multi-Property Loan)
+                            const columnsHeaders = resultsColumnHeaders;
+                            const colBest = isMultiPropertyLoan 
+                              ? [bestVariable, bestFixed] 
+                              : [bestFusion, bestVariable, bestFixed];
                             const originalRates = {};
                             const ratesDisplayValues = {};
                             const columnSuffixes = {}; // Track suffix per column
@@ -1951,7 +2264,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
                         {
                           (() => {
-                            const columnsHeaders = [ 'Fusion', 'Variable Bridge', 'Fixed Bridge' ];
+                            // POC: Use dynamic column headers (excludes Fusion for Multi-Property Loan)
+                            const columnsHeaders = resultsColumnHeaders;
                             const allPlaceholders = [
                               'APRC', 'Admin Fee', 'Arrangement Fee %', 'Arrangement Fee £', 'Broker Client Fee', 'Proc Fee (%)',
                               'Proc Fee (£)', 'Commitment Fee £', 'Deferred Interest %', 'Deferred Interest £',
@@ -1971,7 +2285,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
                             const icrWarnings = {};
                             orderedRows.forEach(p => { values[p] = {}; });
 
-                            const colBest = [bestFusion, bestVariable, bestFixed];
+                            const colBest = isMultiPropertyLoan 
+                              ? [bestVariable, bestFixed] 
+                              : [bestFusion, bestVariable, bestFixed];
                             const pv = parseNumber(propertyValue);
                             const grossInput = parseNumber(grossLoan);
                             const specificNet = parseNumber(specificNetLoan);
