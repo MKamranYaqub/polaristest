@@ -1191,18 +1191,10 @@ export default function BridgingCalculator({ initialQuote = null }) {
         // For standard bridge, use the original loanLtv
         const ltvForSelection = parsedCharge === 'second' ? combinedLtv : loanLtv;
         
-        // Cap the LTV for rate selection at the row's max LTV
-        // This allows the engine to cap the gross loan while still showing results
-        const cappedLtvForSelection = Number.isFinite(rowMax) 
-          ? Math.min(ltvForSelection, rowMax)
-          : ltvForSelection;
-        
-        // Enforce minimum LTV using the capped value
-        if (Number.isFinite(rowMin) && cappedLtvForSelection < rowMin) return false;
-        
-        // Check if the capped LTV falls within this rate's bracket
-        // This allows showing rates even when user's requested loan exceeds max LTV
-        if (Number.isFinite(rowMax) && cappedLtvForSelection > rowMax + 0.01) return false;
+        // Use exclusive lower bound and inclusive upper bound: min_ltv < LTV <= max_ltv
+        // This prevents overlapping ranges (e.g., 60% LTV matches only the 60% tier, not 70%)
+        if (Number.isFinite(rowMin) && ltvForSelection <= rowMin) return false;
+        if (Number.isFinite(rowMax) && ltvForSelection > rowMax) return false;
       }
       return true;
     };

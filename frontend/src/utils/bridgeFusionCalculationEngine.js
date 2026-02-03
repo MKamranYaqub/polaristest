@@ -221,8 +221,8 @@ export class BridgeFusionCalculator {
       const estimatedRolledRate = estimatedMonthlyRate * rolled;
       const estimatedDeferredRate = productKind === 'fusion' ? deferredMonthlyRate * term : 0;
       
-      // Total deduction rate (as percentage of gross)
-      const totalDeductionRate = arrangementPct + estimatedRolledRate + estimatedDeferredRate + (procFeePct / 100);
+      // Total deduction rate (as percentage of gross) - only three deductions
+      const totalDeductionRate = arrangementPct + estimatedRolledRate + estimatedDeferredRate;
       
       // Use algebraic formula for initial estimate
       let estimatedGross = targetNet / (1 - totalDeductionRate);
@@ -272,8 +272,8 @@ export class BridgeFusionCalculator {
         const tempDeferredMonthlyRate = deferredAnnualRate / 12;
         const tempDeferred = productKind === 'fusion' ? tempGross * tempDeferredMonthlyRate * term : 0;
         
-        // Calculate net with ALL fees
-        const calculatedNet = tempGross - tempArrangementFee - tempRolledInterest - tempDeferred - tempProcFee - tempBrokerFee - tempBrokerClientFee - adminFeeAmt - tempTitleInsurance;
+        // Calculate net with ONLY the three deductions: Arrangement Fee, Rolled Interest, Deferred Interest
+        const calculatedNet = tempGross - tempArrangementFee - tempRolledInterest - tempDeferred;
         
         // Check if we're close enough (within £1)
         const diff = Math.abs(calculatedNet - targetNet);
@@ -351,23 +351,9 @@ export class BridgeFusionCalculator {
         const rolledInterestCand = rolledIntCouponCand + rolledIntBBRCand;
         const deferredCand = productKind === 'fusion' ? gCandidate * deferredMonthlyRateCand * term : 0;
         const arrangementFeeCand = gCandidate * arrangementPct;
-        const procFeeCand = gCandidate * (procFeePct / 100);
-        // Broker client fee from brokerSettings if percentage
-        let brokerClientFeeCand = parseNumber(brokerClientFee) || 0;
-        if (brokerSettings?.addFeesToggle && brokerSettings?.additionalFeeAmount) {
-          const feeAmount = parseNumber(brokerSettings.additionalFeeAmount);
-          if (brokerSettings.feeCalculationType === 'percentage' && gCandidate > 0) {
-            brokerClientFeeCand = gCandidate * (feeAmount / 100);
-          } else {
-            brokerClientFeeCand = feeAmount;
-          }
-        }
-        let titleInsuranceCand = null;
-        if (gCandidate > 0 && gCandidate <= 3000000) {
-          const base = gCandidate * 0.0013;
-          titleInsuranceCand = Math.max(392, base * 1.12);
-        }
-        const netCand = Math.max(0, gCandidate - arrangementFeeCand - rolledInterestCand - deferredCand - procFeeCand - (parseNumber(brokerFeeFlat) || 0) - brokerClientFeeCand - adminFeeAmt - (titleInsuranceCand || 0));
+        
+        // Net Loan = Gross Loan - Arrangement Fee - Rolled Interest - Deferred Interest
+        const netCand = Math.max(0, gCandidate - arrangementFeeCand - rolledInterestCand - deferredCand);
         return { netCand };
       };
 
