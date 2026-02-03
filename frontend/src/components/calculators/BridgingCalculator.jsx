@@ -1496,8 +1496,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
           max_ltv: rate.max_ltv || null,
           min_icr: rate.min_icr || null,
           max_defer: rate.max_defer || null,
-          erc_1_percent: rate.erc_1_percent || rate.erc_1 || null,
-          erc_2_percent: rate.erc_2_percent || rate.erc_2 || null,
           rate_percent: rate.rate || null,
           product_fee_saved: rate.product_fee || null,
           charge_type: rate.charge_type || null,
