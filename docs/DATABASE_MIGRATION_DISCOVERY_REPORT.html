@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Migration Discovery Report - Polaris Platform</title>
+    <style>
+        :root {
+            --primary-color: #0078d4;
+            --secondary-color: #106ebe;
+            --success-color: #107c10;
+            --warning-color: #ff8c00;
+            --danger-color: #d13438;
+            --neutral-100: #faf9f8;
+            --neutral-200: #f3f2f1;
+            --neutral-300: #edebe9;
+            --neutral-600: #605e5c;
+            --neutral-800: #323130;
+            --neutral-900: #201f1e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--neutral-800);
+            background-color: var(--neutral-100);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 48px 0;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        header .subtitle {
+            font-size: 1.25rem;
+            opacity: 0.9;
+        }
+
+        header .meta {
+            margin-top: 24px;
+            display: flex;
+            gap: 32px;
+            font-size: 0.9rem;
+            opacity: 0.85;
+        }
+
+        header .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Navigation */
+        .toc {
+            background: white;
+            border-radius: 8px;
+            padding: 24px 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .toc h2 {
+            font-size: 1.1rem;
+            color: var(--neutral-600);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+
+        .toc ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 8px 24px;
+        }
+
+        .toc a {
+            color: var(--primary-color);
+            text-decoration: none;
+            padding: 4px 0;
+            display: block;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+
+        /* Sections */
+        section {
+            background: white;
+            border-radius: 8px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        section h2 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--neutral-200);
+        }
+
+        section h3 {
+            font-size: 1.2rem;
+            color: var(--neutral-800);
+            margin: 24px 0 16px 0;
+        }
+
+        section h4 {
+            font-size: 1rem;
+            color: var(--neutral-600);
+            margin: 16px 0 12px 0;
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--neutral-800);
+        }
+
+        /* Executive Summary Box */
+        .exec-summary {
+            background: linear-gradient(135deg, #f0f6ff 0%, #e8f0fe 100%);
+            border-left: 4px solid var(--primary-color);
+            padding: 24px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 24px;
+        }
+
+        .exec-summary h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .stat-card {
+            background: var(--neutral-100);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--neutral-300);
+        }
+
+        .stat-card .number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-card .label {
+            font-size: 0.9rem;
+            color: var(--neutral-600);
+            margin-top: 4px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.95rem;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--neutral-300);
+        }
+
+        th {
+            background: var(--neutral-200);
+            font-weight: 600;
+            color: var(--neutral-800);
+        }
+
+        tr:hover {
+            background: var(--neutral-100);
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            margin: 24px 0;
+        }
+
+        .comparison-table th {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .comparison-table th.azure-pg {
+            background: #0078d4;
+        }
+
+        .comparison-table th.azure-sql {
+            background: #50e6ff;
+            color: var(--neutral-900);
+        }
+
+        .comparison-table .category {
+            background: var(--neutral-200);
+            font-weight: 600;
+        }
+
+        .comparison-table .winner {
+            background: #dff6dd;
+        }
+
+        .comparison-table .loser {
+            background: #fde7e9;
+        }
+
+        /* Status Indicators */
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #dff6dd;
+            color: #107c10;
+        }
+
+        .status-warning {
+            background: #fff4ce;
+            color: #8a6914;
+        }
+
+        .status-danger {
+            background: #fde7e9;
+            color: #a80000;
+        }
+
+        .status-info {
+            background: #cce4f6;
+            color: #004578;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-recommended {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .badge-alternative {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        /* Risk Cards */
+        .risk-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .risk-card {
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid;
+        }
+
+        .risk-card.high {
+            background: #fde7e9;
+            border-color: var(--danger-color);
+        }
+
+        .risk-card.medium {
+            background: #fff4ce;
+            border-color: var(--warning-color);
+        }
+
+        .risk-card.low {
+            background: #dff6dd;
+            border-color: var(--success-color);
+        }
+
+        .risk-card h4 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .risk-card .impact {
+            font-size: 0.9rem;
+            color: var(--neutral-600);
+            margin-bottom: 8px;
+        }
+
+        .risk-card .mitigation {
+            font-size: 0.9rem;
+            padding: 12px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 4px;
+            margin-top: 12px;
+        }
+
+        /* Feature List */
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: var(--neutral-100);
+            border-radius: 8px;
+        }
+
+        .feature-item .icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .feature-item .content h4 {
+            margin: 0 0 4px 0;
+            font-size: 1rem;
+        }
+
+        .feature-item .content p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--neutral-600);
+        }
+
+        /* Timeline */
+        .timeline {
+            margin: 24px 0;
+            position: relative;
+            padding-left: 32px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--neutral-300);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 24px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -28px;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+
+        .timeline-item h4 {
+            margin: 0 0 8px 0;
+            color: var(--neutral-800);
+        }
+
+        .timeline-item p {
+            margin: 0;
+            color: var(--neutral-600);
+            font-size: 0.95rem;
+        }
+
+        /* Callout Boxes */
+        .callout {
+            padding: 20px 24px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .callout.info {
+            background: #cce4f6;
+            border: 1px solid #5c9fd4;
+        }
+
+        .callout.warning {
+            background: #fff4ce;
+            border: 1px solid #d4a45c;
+        }
+
+        .callout.success {
+            background: #dff6dd;
+            border: 1px solid #5cd45c;
+        }
+
+        .callout.danger {
+            background: #fde7e9;
+            border: 1px solid #d45c5c;
+        }
+
+        .callout .icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .callout .content {
+            flex: 1;
+        }
+
+        .callout .content strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* Progress Bars */
+        .progress-container {
+            margin: 16px 0;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--neutral-300);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .progress-fill.low {
+            background: var(--success-color);
+        }
+
+        .progress-fill.medium {
+            background: var(--warning-color);
+        }
+
+        .progress-fill.high {
+            background: var(--danger-color);
+        }
+
+        /* Decision Matrix */
+        .decision-matrix {
+            background: var(--neutral-100);
+            border-radius: 8px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .decision-row {
+            display: flex;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--neutral-300);
+            align-items: center;
+        }
+
+        .decision-row:last-child {
+            border-bottom: none;
+        }
+
+        .decision-condition {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .decision-result {
+            flex-shrink: 0;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+            }
+
+            header {
+                background: var(--primary-color) !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            section {
+                box-shadow: none;
+                border: 1px solid var(--neutral-300);
+                break-inside: avoid;
+            }
+
+            .no-print {
+                display: none;
+            }
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--neutral-600);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Database Migration Discovery Report</h1>
+            <p class="subtitle">Polaris Specialist Mortgage Platform</p>
+            <div class="meta">
+                <div class="meta-item">
+                    <span>📅</span>
+                    <span>Report Date: February 4, 2026</span>
+                </div>
+                <div class="meta-item">
+                    <span>🏢</span>
+                    <span>Organisation: MFS UK</span>
+                </div>
+                <div class="meta-item">
+                    <span>📊</span>
+                    <span>Current Platform: Supabase (PostgreSQL)</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Table of Contents -->
+        <nav class="toc">
+            <h2>Contents</h2>
+            <ul>
+                <li><a href="#executive-summary">Executive Summary</a></li>
+                <li><a href="#current-state">Current State Analysis</a></li>
+                <li><a href="#database-structure">Database Structure Overview</a></li>
+                <li><a href="#supabase-features">Supabase-Specific Features</a></li>
+                <li><a href="#comparison">Migration Options Comparison</a></li>
+                <li><a href="#option-a">Option A: Azure PostgreSQL</a></li>
+                <li><a href="#option-b">Option B: Azure SQL Database</a></li>
+                <li><a href="#risks">Risks & Blockers</a></li>
+                <li><a href="#recommendation">Recommendation</a></li>
+                <li><a href="#next-steps">Next Steps</a></li>
+            </ul>
+        </nav>
+
+        <!-- Executive Summary -->
+        <section id="executive-summary">
+            <h2>Executive Summary</h2>
+            <div class="exec-summary">
+                <h3>Key Findings</h3>
+                <p>
+                    The Polaris platform currently uses <strong>Supabase (PostgreSQL)</strong> as its database, 
+                    leveraging PostgreSQL-specific features including JSONB data types, Row Level Security (RLS), 
+                    and custom functions. Two migration paths to Azure have been evaluated: 
+                    <strong>Azure Database for PostgreSQL</strong> and <strong>Azure SQL Database</strong>.
+                </p>
+                <p>
+                    <strong>Recommendation:</strong> Based on effort, risk, and reward analysis, 
+                    <strong>Azure Database for PostgreSQL</strong> is the recommended migration path, offering 
+                    near-complete compatibility with minimal code changes.
+                </p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="number">17</div>
+                    <div class="label">Database Tables</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">15+</div>
+                    <div class="label">JSONB Columns</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">10+</div>
+                    <div class="label">RLS Policies</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">61</div>
+                    <div class="label">Migration Files</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Current State Analysis -->
+        <section id="current-state">
+            <h2>Current State Analysis</h2>
+            
+            <h3>Platform Overview</h3>
+            <p>
+                Polaris is a UK specialist mortgage calculation platform supporting Buy-to-Let (BTL) and 
+                Bridging loan products. The system handles complex mortgage calculations, multi-rate comparisons, 
+                PDF quote generation, and underwriting workflows.
+            </p>
+
+            <h3>Technology Stack</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Technology</th>
+                        <th>Hosting</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Frontend</td>
+                        <td>React 18.2 + Vite 5.0</td>
+                        <td>Vercel</td>
+                    </tr>
+                    <tr>
+                        <td>Backend</td>
+                        <td>Node.js 20+ / Express 4.18</td>
+                        <td>Render</td>
+                    </tr>
+                    <tr>
+                        <td>Database</td>
+                        <td>PostgreSQL 15.x</td>
+                        <td>Supabase</td>
+                    </tr>
+                    <tr>
+                        <td>Authentication</td>
+                        <td>Supabase Auth + JWT</td>
+                        <td>Supabase</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout info">
+                <div class="icon">ℹ️</div>
+                <div class="content">
+                    <strong>Note on Supabase</strong>
+                    Supabase provides additional services beyond the database including authentication, 
+                    real-time subscriptions, and file storage. Migration will require replacement solutions 
+                    for these services.
+                </div>
+            </div>
+        </section>
+
+        <!-- Database Structure Overview -->
+        <section id="database-structure">
+            <h2>Database Structure Overview</h2>
+
+            <h3>Core Tables</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Table Name</th>
+                        <th>Purpose</th>
+                        <th>Key Features</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td rowspan="4"><strong>Quotes</strong></td>
+                        <td>quotes</td>
+                        <td>BTL mortgage quotes</td>
+                        <td>UUID PK, JSONB payload</td>
+                    </tr>
+                    <tr>
+                        <td>bridge_quotes</td>
+                        <td>Bridging/Fusion quotes</td>
+                        <td>UUID PK, JSONB payload</td>
+                    </tr>
+                    <tr>
+                        <td>quote_results</td>
+                        <td>BTL rate results</td>
+                        <td>FK to quotes</td>
+                    </tr>
+                    <tr>
+                        <td>bridge_quote_results</td>
+                        <td>Bridging rate results</td>
+                        <td>FK to bridge_quotes</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="2"><strong>Rates</strong></td>
+                        <td>rates_flat</td>
+                        <td>BTL rates data</td>
+                        <td>Lifecycle management</td>
+                    </tr>
+                    <tr>
+                        <td>bridge_fusion_rates_full</td>
+                        <td>Bridging/Fusion rates</td>
+                        <td>ERC columns, lifecycle</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="3"><strong>Configuration</strong></td>
+                        <td>app_constants</td>
+                        <td>Runtime settings</td>
+                        <td>Multiple JSONB columns</td>
+                    </tr>
+                    <tr>
+                        <td>app_settings</td>
+                        <td>Application settings</td>
+                        <td>JSONB value column</td>
+                    </tr>
+                    <tr>
+                        <td>results_configuration</td>
+                        <td>Results UI config</td>
+                        <td>Row order, visibility</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="3"><strong>Users</strong></td>
+                        <td>users</td>
+                        <td>User authentication</td>
+                        <td>5 access levels</td>
+                    </tr>
+                    <tr>
+                        <td>password_reset_tokens</td>
+                        <td>Password reset</td>
+                        <td>Expiration tracking</td>
+                    </tr>
+                    <tr>
+                        <td>api_keys</td>
+                        <td>External API access</td>
+                        <td>SHA-256 hashed keys</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="3"><strong>Audit</strong></td>
+                        <td>audit_logs</td>
+                        <td>User action tracking</td>
+                        <td>JSONB old/new values</td>
+                    </tr>
+                    <tr>
+                        <td>rate_audit_log</td>
+                        <td>Rate changes audit</td>
+                        <td>Field-level tracking</td>
+                    </tr>
+                    <tr>
+                        <td>app_constants_history</td>
+                        <td>Constants history</td>
+                        <td>Trigger-based</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Data Types in Use</h3>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="icon">🔑</div>
+                    <div class="content">
+                        <h4>UUID</h4>
+                        <p>All primary keys and foreign keys use UUID type for globally unique identifiers</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">📦</div>
+                    <div class="content">
+                        <h4>JSONB</h4>
+                        <p>15+ columns storing flexible nested data (quotes, settings, audit trails)</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">📝</div>
+                    <div class="content">
+                        <h4>TEXT[]</h4>
+                        <p>Array type used for API key permissions</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">⏰</div>
+                    <div class="content">
+                        <h4>TIMESTAMPTZ</h4>
+                        <p>Timezone-aware timestamps for all date/time tracking</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">💰</div>
+                    <div class="content">
+                        <h4>NUMERIC</h4>
+                        <p>Precise decimal values for financial calculations (LTV, ICR, rates)</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">✓</div>
+                    <div class="content">
+                        <h4>BOOLEAN</h4>
+                        <p>Standard boolean flags throughout the schema</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Supabase-Specific Features -->
+        <section id="supabase-features">
+            <h2>Supabase-Specific Features</h2>
+            
+            <p>The following Supabase-specific features are currently in use and will require attention during migration:</p>
+
+            <h3>Row Level Security (RLS)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Table</th>
+                        <th>Policy Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>users</td>
+                        <td>SELECT, UPDATE</td>
+                        <td>Users can only see/edit their own record OR all if admin</td>
+                    </tr>
+                    <tr>
+                        <td>btl_quotes</td>
+                        <td>ALL</td>
+                        <td>Backend access with authentication</td>
+                    </tr>
+                    <tr>
+                        <td>bridging_quotes</td>
+                        <td>ALL</td>
+                        <td>Backend access with authentication</td>
+                    </tr>
+                    <tr>
+                        <td>api_keys</td>
+                        <td>SELECT only</td>
+                        <td>Admin read-only, no direct writes</td>
+                    </tr>
+                    <tr>
+                        <td>rate_audit_log</td>
+                        <td>SELECT only</td>
+                        <td>Admin view only</td>
+                    </tr>
+                    <tr>
+                        <td>support_requests</td>
+                        <td>INSERT, SELECT, UPDATE, DELETE</td>
+                        <td>Anyone can create, admins manage</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Database Functions</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Purpose</th>
+                        <th>Migration Impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>generate_reference_number()</code></td>
+                        <td>Returns 'MFS' + 6-digit sequential number</td>
+                        <td><span class="status status-warning">Rewrite required for Azure SQL</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>update_updated_at_column()</code></td>
+                        <td>Auto-updates updated_at timestamp</td>
+                        <td><span class="status status-warning">Rewrite required for Azure SQL</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>track_app_constants_changes()</code></td>
+                        <td>Tracks changes to history table</td>
+                        <td><span class="status status-warning">Rewrite required for Azure SQL</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>auth.uid()</code></td>
+                        <td>Supabase user context for RLS</td>
+                        <td><span class="status status-danger">Custom implementation required</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Extensions</h3>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="icon">🔐</div>
+                    <div class="content">
+                        <h4>pgcrypto</h4>
+                        <p>Used for <code>gen_random_uuid()</code> function for generating UUIDs</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout warning">
+                <div class="icon">⚠️</div>
+                <div class="content">
+                    <strong>Supabase Managed Schemas</strong>
+                    The <code>auth</code> and <code>storage</code> schemas are fully managed by Supabase and 
+                    <strong>cannot be directly migrated</strong>. Alternative solutions (Azure AD B2C, Azure Blob Storage) 
+                    will be required.
+                </div>
+            </div>
+        </section>
+
+        <!-- Migration Options Comparison -->
+        <section id="comparison">
+            <h2>Migration Options Comparison</h2>
+
+            <p>The following comparison evaluates both migration options across key dimensions:</p>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">Aspect</th>
+                        <th class="azure-pg" style="width: 35%;">Azure PostgreSQL <span class="badge badge-recommended">Recommended</span></th>
+                        <th class="azure-sql" style="width: 35%;">Azure SQL Database</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="category">
+                        <td colspan="3"><strong>📊 Effort</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Schema Changes</td>
+                        <td class="winner">Minimal</td>
+                        <td class="loser">Significant rewrites</td>
+                    </tr>
+                    <tr>
+                        <td>Application Code Changes</td>
+                        <td class="winner">Minimal (connection string)</td>
+                        <td class="loser">Extensive (all queries)</td>
+                    </tr>
+                    <tr class="category">
+                        <td colspan="3"><strong>🔧 Technical Compatibility</strong></td>
+                    </tr>
+                    <tr>
+                        <td>UUID Support</td>
+                        <td class="winner">Native <code>uuid</code> type</td>
+                        <td><code>UNIQUEIDENTIFIER</code> (compatible)</td>
+                    </tr>
+                    <tr>
+                        <td>JSONB Support</td>
+                        <td class="winner">Full JSONB operators</td>
+                        <td class="loser"><code>NVARCHAR(MAX)</code> + JSON_VALUE()</td>
+                    </tr>
+                    <tr>
+                        <td>Row Level Security</td>
+                        <td class="winner">Native RLS support</td>
+                        <td class="loser">Must rebuild with views/procedures</td>
+                    </tr>
+                    <tr>
+                        <td>PostgreSQL Functions</td>
+                        <td class="winner">Compatible</td>
+                        <td class="loser">Rewrite in T-SQL</td>
+                    </tr>
+                    <tr>
+                        <td>Triggers</td>
+                        <td class="winner">Compatible</td>
+                        <td class="loser">Rewrite in T-SQL</td>
+                    </tr>
+                    <tr>
+                        <td>Arrays</td>
+                        <td class="winner">Native array support</td>
+                        <td class="loser">No native support, use JSON</td>
+                    </tr>
+                    <tr class="category">
+                        <td colspan="3"><strong>⚡ Performance</strong></td>
+                    </tr>
+                    <tr>
+                        <td>JSON Query Performance</td>
+                        <td class="winner">Optimised JSONB indexing</td>
+                        <td class="loser">May degrade with heavy JSON use</td>
+                    </tr>
+                    <tr>
+                        <td>Existing Query Plans</td>
+                        <td class="winner">Preserved</td>
+                        <td class="loser">Must re-optimise</td>
+                    </tr>
+                    <tr class="category">
+                        <td colspan="3"><strong>🔗 Integration</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Azure Ecosystem</td>
+                        <td>Good integration</td>
+                        <td class="winner">Excellent integration</td>
+                    </tr>
+                    <tr>
+                        <td>Power BI</td>
+                        <td>Good</td>
+                        <td class="winner">Slightly better native support</td>
+                    </tr>
+                    <tr>
+                        <td>Azure AD Integration</td>
+                        <td>Supported</td>
+                        <td class="winner">Native AAD support</td>
+                    </tr>
+                    <tr class="category">
+                        <td colspan="3"><strong>⚠️ Risk</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Migration Risk</td>
+                        <td class="winner">Low</td>
+                        <td class="loser">High</td>
+                    </tr>
+                    <tr>
+                        <td>Data Integrity Risk</td>
+                        <td class="winner">Minimal (same engine)</td>
+                        <td class="loser">Type conversion errors possible</td>
+                    </tr>
+                    <tr>
+                        <td>Security Gap Risk</td>
+                        <td class="winner">RLS preserved</td>
+                        <td class="loser">RLS must be rebuilt</td>
+                    </tr>
+                    <tr class="category">
+                        <td colspan="3"><strong>💰 Cost</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Azure Service Cost</td>
+                        <td>Comparable</td>
+                        <td>Comparable</td>
+                    </tr>
+                    <tr>
+                        <td>Migration Development Cost</td>
+                        <td class="winner">Lower (less dev time)</td>
+                        <td class="loser">Higher (extensive rewrites)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Visual Comparison</h3>
+            
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>Migration Complexity</span>
+                </div>
+            </div>
+            <table style="margin-bottom: 24px;">
+                <tr>
+                    <td style="width: 140px;">Azure PostgreSQL</td>
+                    <td>
+                        <div class="progress-bar">
+                            <div class="progress-fill low" style="width: 25%;"></div>
+                        </div>
+                    </td>
+                    <td style="width: 60px; text-align: right;">Low</td>
+                </tr>
+                <tr>
+                    <td>Azure SQL</td>
+                    <td>
+                        <div class="progress-bar">
+                            <div class="progress-fill high" style="width: 80%;"></div>
+                        </div>
+                    </td>
+                    <td style="width: 60px; text-align: right;">High</td>
+                </tr>
+            </table>
+
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>Code Change Required</span>
+                </div>
+            </div>
+            <table style="margin-bottom: 24px;">
+                <tr>
+                    <td style="width: 140px;">Azure PostgreSQL</td>
+                    <td>
+                        <div class="progress-bar">
+                            <div class="progress-fill low" style="width: 15%;"></div>
+                        </div>
+                    </td>
+                    <td style="width: 60px; text-align: right;">Minimal</td>
+                </tr>
+                <tr>
+                    <td>Azure SQL</td>
+                    <td>
+                        <div class="progress-bar">
+                            <div class="progress-fill high" style="width: 70%;"></div>
+                        </div>
+                    </td>
+                    <td style="width: 60px; text-align: right;">Extensive</td>
+                </tr>
+            </table>
+
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>Azure Integration Quality</span>
+                </div>
+            </div>
+            <table>
+                <tr>
+                    <td style="width: 140px;">Azure PostgreSQL</td>
+                    <td>
+                        <div class="progress-bar">
+                            <div class="progress-fill low" style="width: 75%;"></div>
+                        </div>
+                    </td>
+                    <td style="width: 60px; text-align: right;">Good</td>
+                </tr>
+                <tr>
+                    <td>Azure SQL</td>
+                    <td>
+                        <div class="progress-bar">
+                            <div class="progress-fill low" style="width: 95%;"></div>
+                        </div>
+                    </td>
+                    <td style="width: 60px; text-align: right;">Excellent</td>
+                </tr>
+            </table>
+
+            <h3>Effort / Risk / Reward Analysis</h3>
+            <p>A comprehensive view of the trade-offs between migration options:</p>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Dimension</th>
+                        <th class="azure-pg" style="width: 40%;">Azure PostgreSQL</th>
+                        <th class="azure-sql" style="width: 40%;">Azure SQL Database</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="category">
+                        <td colspan="3"><strong>💪 EFFORT</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Development Effort</td>
+                        <td class="winner"><strong>Low</strong> - Minimal code changes required</td>
+                        <td class="loser"><strong>High</strong> - Extensive rewrites needed</td>
+                    </tr>
+                    <tr>
+                        <td>Schema Conversion</td>
+                        <td class="winner"><strong>Minimal</strong> - Direct export/import</td>
+                        <td class="loser"><strong>Significant</strong> - Manual type mapping</td>
+                    </tr>
+                    <tr>
+                        <td>Query Rewrites</td>
+                        <td class="winner"><strong>None</strong> - JSONB queries work as-is</td>
+                        <td class="loser"><strong>All JSONB queries</strong> - Must convert to JSON_VALUE()</td>
+                    </tr>
+                    <tr>
+                        <td>Security Implementation</td>
+                        <td class="winner"><strong>Low</strong> - RLS policies recreated directly</td>
+                        <td class="loser"><strong>High</strong> - Must design view-based security</td>
+                    </tr>
+                    <tr>
+                        <td>Testing Effort</td>
+                        <td class="winner"><strong>Standard</strong> - Similar behaviour expected</td>
+                        <td class="loser"><strong>Extensive</strong> - All queries need validation</td>
+                    </tr>
+                    <tr>
+                        <td>Team Training</td>
+                        <td class="winner"><strong>None</strong> - Same PostgreSQL skills</td>
+                        <td class="loser"><strong>Required</strong> - T-SQL syntax & patterns</td>
+                    </tr>
+                    <tr class="category">
+                        <td colspan="3"><strong>⚠️ RISK</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Migration Failure Risk</td>
+                        <td class="winner"><strong>Low</strong> - Same database engine</td>
+                        <td class="loser"><strong>Medium-High</strong> - Engine differences</td>
+                    </tr>
+                    <tr>
+                        <td>Data Integrity Risk</td>
+                        <td class="winner"><strong>Very Low</strong> - Native type compatibility</td>
+                        <td class="loser"><strong>Medium</strong> - Type conversion errors possible</td>
+                    </tr>
+                    <tr>
+                        <td>Security Gap Risk</td>
+                        <td class="winner"><strong>Low</strong> - RLS preserved</td>
+                        <td class="loser"><strong>High</strong> - RLS must be rebuilt from scratch</td>
+                    </tr>
+                    <tr>
+                        <td>Performance Regression Risk</td>
+                        <td class="winner"><strong>Low</strong> - Query plans preserved</td>
+                        <td class="loser"><strong>Medium</strong> - JSON queries may be slower</td>
+                    </tr>
+                    <tr>
+                        <td>Project Overrun Risk</td>
+                        <td class="winner"><strong>Low</strong> - Predictable scope</td>
+                        <td class="loser"><strong>High</strong> - Hidden complexity in rewrites</td>
+                    </tr>
+                    <tr>
+                        <td>Business Disruption Risk</td>
+                        <td class="winner"><strong>Low</strong> - Shorter migration window</td>
+                        <td class="loser"><strong>Medium</strong> - Extended development period</td>
+                    </tr>
+                    <tr class="category">
+                        <td colspan="3"><strong>🏆 REWARD</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Azure Ecosystem Integration</td>
+                        <td><strong>Good</strong> - Standard Azure services</td>
+                        <td class="winner"><strong>Excellent</strong> - Native Microsoft integration</td>
+                    </tr>
+                    <tr>
+                        <td>Power BI Integration</td>
+                        <td><strong>Good</strong> - Direct Connect supported</td>
+                        <td class="winner"><strong>Excellent</strong> - Native connector</td>
+                    </tr>
+                    <tr>
+                        <td>Azure AD Integration</td>
+                        <td><strong>Supported</strong> - Azure AD auth available</td>
+                        <td class="winner"><strong>Native</strong> - First-class AAD support</td>
+                    </tr>
+                    <tr>
+                        <td>Enterprise Tooling</td>
+                        <td><strong>Good</strong> - pgAdmin, Azure tools</td>
+                        <td class="winner"><strong>Excellent</strong> - SSMS, Azure Data Studio</td>
+                    </tr>
+                    <tr>
+                        <td>Long-term Microsoft Alignment</td>
+                        <td><strong>Moderate</strong> - PostgreSQL is third-party</td>
+                        <td class="winner"><strong>Strong</strong> - Native Microsoft product</td>
+                    </tr>
+                    <tr>
+                        <td>Feature Richness</td>
+                        <td class="winner"><strong>Higher</strong> - Full PostgreSQL features</td>
+                        <td><strong>Different</strong> - SQL Server feature set</td>
+                    </tr>
+                    <tr>
+                        <td>JSONB/Document Performance</td>
+                        <td class="winner"><strong>Excellent</strong> - Optimised JSONB engine</td>
+                        <td><strong>Good</strong> - JSON functions available</td>
+                    </tr>
+                    <tr>
+                        <td>Cost Efficiency</td>
+                        <td><strong>Comparable</strong> - Similar pricing tiers</td>
+                        <td><strong>Comparable</strong> - Similar pricing tiers</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Effort/Risk/Reward Score Summary</h3>
+            <div class="stats-grid">
+                <div class="stat-card" style="border-left: 4px solid #0078d4;">
+                    <div class="number" style="font-size: 1.5rem;">Azure PostgreSQL</div>
+                    <div class="label" style="margin-top: 16px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Effort:</span>
+                            <span style="color: #107c10; font-weight: 600;">LOW ⭐⭐⭐⭐⭐</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Risk:</span>
+                            <span style="color: #107c10; font-weight: 600;">LOW ⭐⭐⭐⭐⭐</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Reward:</span>
+                            <span style="color: #107c10; font-weight: 600;">HIGH ⭐⭐⭐⭐</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card" style="border-left: 4px solid #50e6ff;">
+                    <div class="number" style="font-size: 1.5rem;">Azure SQL Database</div>
+                    <div class="label" style="margin-top: 16px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Effort:</span>
+                            <span style="color: #d13438; font-weight: 600;">HIGH ⭐⭐</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Risk:</span>
+                            <span style="color: #ff8c00; font-weight: 600;">MEDIUM-HIGH ⭐⭐</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Reward:</span>
+                            <span style="color: #107c10; font-weight: 600;">HIGH ⭐⭐⭐⭐⭐</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout info" style="margin-top: 24px;">
+                <div class="icon">💡</div>
+                <div class="content">
+                    <strong>Key Insight</strong>
+                    <p style="margin-bottom: 0;">
+                        While Azure SQL offers marginally better Microsoft ecosystem integration (reward), 
+                        the significantly higher effort and risk make <strong>Azure PostgreSQL the clear winner</strong> 
+                        for this migration. The reward differential does not justify the additional effort and risk.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Option A: Azure PostgreSQL -->
+        <section id="option-a">
+            <h2>Option A: Azure Database for PostgreSQL <span class="badge badge-recommended">Recommended</span></h2>
+
+            <div class="exec-summary">
+                <p>
+                    Azure Database for PostgreSQL Flexible Server provides <strong>near-complete compatibility</strong> 
+                    with the existing Supabase PostgreSQL database. Most features will work directly with minimal changes.
+                </p>
+            </div>
+
+            <h3>What Works Without Changes</h3>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="icon">✅</div>
+                    <div class="content">
+                        <h4>All PostgreSQL Data Types</h4>
+                        <p>UUID, JSONB, Arrays, TIMESTAMPTZ all work natively</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">✅</div>
+                    <div class="content">
+                        <h4>Row Level Security</h4>
+                        <p>Native RLS policies can be recreated directly</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">✅</div>
+                    <div class="content">
+                        <h4>All Triggers</h4>
+                        <p>PL/pgSQL triggers work without modification</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">✅</div>
+                    <div class="content">
+                        <h4>All Functions</h4>
+                        <p>Custom PostgreSQL functions work natively</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">✅</div>
+                    <div class="content">
+                        <h4>All Indexes</h4>
+                        <p>Index definitions and performance preserved</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">✅</div>
+                    <div class="content">
+                        <h4>pgcrypto Extension</h4>
+                        <p>Available and can be enabled</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Required Changes</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Change</th>
+                        <th>Effort</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Replace <code>auth.uid()</code></td>
+                        <td><span class="status status-warning">Medium</span></td>
+                        <td>Implement session-based user context using <code>current_setting('app.current_user_id')</code></td>
+                    </tr>
+                    <tr>
+                        <td>Update RLS Policies</td>
+                        <td><span class="status status-info">Low</span></td>
+                        <td>Modify policies to use new user context mechanism</td>
+                    </tr>
+                    <tr>
+                        <td>Connection String</td>
+                        <td><span class="status status-success">Trivial</span></td>
+                        <td>Update environment variable to Azure PostgreSQL endpoint</td>
+                    </tr>
+                    <tr>
+                        <td>Replace Supabase Client</td>
+                        <td><span class="status status-warning">Medium</span></td>
+                        <td>Use standard node-postgres client instead of Supabase SDK</td>
+                    </tr>
+                    <tr>
+                        <td>Authentication</td>
+                        <td><span class="status status-warning">Medium</span></td>
+                        <td>Implement custom auth or integrate Azure AD B2C</td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </section>
+
+        <!-- Option B: Azure SQL Database -->
+        <section id="option-b">
+            <h2>Option B: Azure SQL Database <span class="badge badge-alternative">Alternative</span></h2>
+
+            <div class="callout warning">
+                <div class="icon">⚠️</div>
+                <div class="content">
+                    <strong>Significant Rewrites Required</strong>
+                    Azure SQL uses T-SQL syntax and lacks native support for JSONB operators, RLS policies, 
+                    and PostgreSQL-specific features. This option requires extensive code changes.
+                </div>
+            </div>
+
+            <h3>Major Conversion Requirements</h3>
+
+            <h4>Data Type Conversions</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>PostgreSQL</th>
+                        <th>Azure SQL</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>uuid</code></td>
+                        <td><code>UNIQUEIDENTIFIER</code></td>
+                        <td><span class="status status-success">Direct mapping</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>jsonb</code></td>
+                        <td><code>NVARCHAR(MAX)</code></td>
+                        <td><span class="status status-danger">All queries must be rewritten</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>boolean</code></td>
+                        <td><code>BIT</code></td>
+                        <td><span class="status status-info">true→1, false→0</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>timestamptz</code></td>
+                        <td><code>DATETIMEOFFSET</code></td>
+                        <td><span class="status status-success">Direct mapping</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>text[]</code></td>
+                        <td><code>NVARCHAR(MAX)</code> as JSON</td>
+                        <td><span class="status status-danger">No native array support</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>text</code></td>
+                        <td><code>NVARCHAR(MAX)</code></td>
+                        <td><span class="status status-success">Direct mapping</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>JSONB Query Rewrites</h4>
+            <p>Every JSONB query must be rewritten to use SQL Server JSON functions:</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>PostgreSQL Syntax</th>
+                        <th>Azure SQL Equivalent</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>payload->>'propertyValue'</code></td>
+                        <td><code>JSON_VALUE(payload, '$.propertyValue')</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>payload->'borrower'</code></td>
+                        <td><code>JSON_QUERY(payload, '$.borrower')</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>payload @> '{"type": "BTL"}'</code></td>
+                        <td><code>JSON_VALUE(payload, '$.type') = 'BTL'</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>'read' = ANY(permissions)</code></td>
+                        <td><code>EXISTS (SELECT 1 FROM OPENJSON(permissions) WHERE value = 'read')</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Function Rewrites</h4>
+            <p>All PL/pgSQL functions must be converted to T-SQL:</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>PostgreSQL</th>
+                        <th>Azure SQL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>now()</code></td>
+                        <td><code>SYSDATETIMEOFFSET()</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>gen_random_uuid()</code></td>
+                        <td><code>NEWID()</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>nextval('sequence')</code></td>
+                        <td><code>NEXT VALUE FOR sequence</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>RLS Replacement</h4>
+            <p>Row Level Security must be completely rebuilt using:</p>
+            <ul style="margin-left: 24px; margin-bottom: 16px;">
+                <li>Filtered views for each protected table</li>
+                <li>SESSION_CONTEXT for user identity</li>
+                <li>Application-layer authorisation checks</li>
+            </ul>
+
+            <h3>When to Choose Azure SQL</h3>
+            <div class="decision-matrix">
+                <div class="decision-row">
+                    <div class="decision-condition">Your team has strong SQL Server/T-SQL expertise</div>
+                    <div class="decision-result"><span class="status status-success">Consider Azure SQL</span></div>
+                </div>
+                <div class="decision-row">
+                    <div class="decision-condition">Deep integration with Microsoft ecosystem is critical</div>
+                    <div class="decision-result"><span class="status status-success">Consider Azure SQL</span></div>
+                </div>
+                <div class="decision-row">
+                    <div class="decision-condition">Plan to use SSRS, SSIS, or other SQL Server tools</div>
+                    <div class="decision-result"><span class="status status-success">Consider Azure SQL</span></div>
+                </div>
+                <div class="decision-row">
+                    <div class="decision-condition">Budget allows extensive development and higher risk tolerance</div>
+                    <div class="decision-result"><span class="status status-info">Possible option</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Risks & Blockers -->
+        <section id="risks">
+            <h2>Risks & Blockers</h2>
+
+            <h3>High Priority Risks</h3>
+            <div class="risk-grid">
+                <div class="risk-card high">
+                    <h4>🔴 RLS Policy Complexity</h4>
+                    <div class="impact"><strong>Impact:</strong> Security gaps possible if policies incorrectly implemented</div>
+                    <p>Row Level Security policies must be carefully recreated to maintain data isolation between users and roles.</p>
+                    <div class="mitigation">
+                        <strong>Mitigation:</strong> Thorough security audit, comprehensive testing with multiple user roles, 
+                        penetration testing before production cutover.
+                    </div>
+                </div>
+                <div class="risk-card high">
+                    <h4>🔴 auth.uid() Replacement</h4>
+                    <div class="impact"><strong>Impact:</strong> Authentication system redesign required</div>
+                    <p>Supabase's <code>auth.uid()</code> provides automatic user context in RLS. This must be replaced with a custom solution.</p>
+                    <div class="mitigation">
+                        <strong>Mitigation:</strong> Implement session context early in migration, test all RLS policies with new context system.
+                    </div>
+                </div>
+                <div class="risk-card high">
+                    <h4>🔴 JSONB Query Performance (Azure SQL)</h4>
+                    <div class="impact"><strong>Impact:</strong> Slower query performance with heavy JSON usage</div>
+                    <p>Azure SQL's JSON functions are less optimised than PostgreSQL's native JSONB operators.</p>
+                    <div class="mitigation">
+                        <strong>Mitigation:</strong> Index frequently accessed JSON paths, consider denormalising critical JSON fields, 
+                        comprehensive performance testing.
+                    </div>
+                </div>
+            </div>
+
+            <h3>Medium Priority Risks</h3>
+            <div class="risk-grid">
+                <div class="risk-card medium">
+                    <h4>🟡 Supabase Realtime Features</h4>
+                    <div class="impact"><strong>Impact:</strong> May lose real-time data updates</div>
+                    <p>If real-time subscriptions are used, alternative solutions like Azure SignalR or Pusher will be needed.</p>
+                    <div class="mitigation">
+                        <strong>Mitigation:</strong> Audit current real-time usage, evaluate Azure SignalR for replacement.
+                    </div>
+                </div>
+                <div class="risk-card medium">
+                    <h4>🟡 Data Migration Errors</h4>
+                    <div class="impact"><strong>Impact:</strong> Data integrity issues</div>
+                    <p>Type conversion errors or data truncation possible during migration.</p>
+                    <div class="mitigation">
+                        <strong>Mitigation:</strong> Checksums, row counts, spot checks, parallel run period.
+                    </div>
+                </div>
+                <div class="risk-card medium">
+                    <h4>🟡 Connection Pool Differences</h4>
+                    <div class="impact"><strong>Impact:</strong> Performance issues under load</div>
+                    <p>Connection handling may differ between platforms.</p>
+                    <div class="mitigation">
+                        <strong>Mitigation:</strong> Load testing before cutover, configure connection pooling appropriately.
+                    </div>
+                </div>
+            </div>
+
+            <h3>Blockers</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Blocker</th>
+                        <th>Resolution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>auth</code> schema migration</td>
+                        <td><span class="status status-danger">Do NOT migrate</span> - Implement custom auth or Azure AD B2C</td>
+                    </tr>
+                    <tr>
+                        <td><code>storage</code> schema migration</td>
+                        <td><span class="status status-danger">Do NOT migrate</span> - Use Azure Blob Storage instead</td>
+                    </tr>
+                    <tr>
+                        <td>pg_stat_statements not enabled</td>
+                        <td><span class="status status-info">Enable in Supabase</span> or skip performance analysis</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Recommendation -->
+        <section id="recommendation">
+            <h2>Recommendation</h2>
+
+            <div class="callout success">
+                <div class="icon">✅</div>
+                <div class="content">
+                    <strong>Recommended: Azure Database for PostgreSQL Flexible Server</strong>
+                    <p style="margin-bottom: 0;">
+                        Based on the technical analysis, <strong>Azure Database for PostgreSQL</strong> is the recommended 
+                        migration path due to near-complete compatibility, lower risk, reduced effort, and better reward-to-effort ratio.
+                    </p>
+                </div>
+            </div>
+
+            <h3>Decision Matrix</h3>
+            <div class="decision-matrix">
+                <div class="decision-row">
+                    <div class="decision-condition">You want the fastest, lowest-risk migration</div>
+                    <div class="decision-result"><span class="status status-success">Azure PostgreSQL</span></div>
+                </div>
+                <div class="decision-row">
+                    <div class="decision-condition">You have heavy JSONB usage (15+ columns)</div>
+                    <div class="decision-result"><span class="status status-success">Azure PostgreSQL</span></div>
+                </div>
+                <div class="decision-row">
+                    <div class="decision-condition">You need RLS with minimal changes</div>
+                    <div class="decision-result"><span class="status status-success">Azure PostgreSQL</span></div>
+                </div>
+                <div class="decision-row">
+                    <div class="decision-condition">Your team knows PostgreSQL</div>
+                    <div class="decision-result"><span class="status status-success">Azure PostgreSQL</span></div>
+                </div>
+                <div class="decision-row">
+                    <div class="decision-condition">You want tightest Azure/Microsoft integration</div>
+                    <div class="decision-result"><span class="status status-info">Azure SQL</span></div>
+                </div>
+                <div class="decision-row">
+                    <div class="decision-condition">Your team has SQL Server expertise</div>
+                    <div class="decision-result"><span class="status status-info">Azure SQL</span></div>
+                </div>
+                <div class="decision-row">
+                    <div class="decision-condition">Long-term Microsoft ecosystem alignment is priority</div>
+                    <div class="decision-result"><span class="status status-info">Azure SQL</span></div>
+                </div>
+            </div>
+
+            <h3>Summary Comparison</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Factor</th>
+                        <th>Azure PostgreSQL</th>
+                        <th>Azure SQL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Risk Level</strong></td>
+                        <td>Low</td>
+                        <td>High</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Code Changes</strong></td>
+                        <td>Minimal</td>
+                        <td>Extensive</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Team Expertise Needed</strong></td>
+                        <td>PostgreSQL (existing)</td>
+                        <td>T-SQL (may need training)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Feature Compatibility</strong></td>
+                        <td>~95%</td>
+                        <td>~60%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Next Steps -->
+        <section id="next-steps">
+            <h2>Next Steps</h2>
+
+            <h3>Immediate Actions</h3>
+            <ol style="margin-left: 24px; margin-bottom: 24px;">
+                <li style="margin-bottom: 12px;"><strong>Run Discovery Queries</strong> — Execute the SQL discovery scripts against Supabase to validate findings and gather metrics</li>
+                <li style="margin-bottom: 12px;"><strong>Business Decision</strong> — Review this report with stakeholders and confirm migration path (Azure PostgreSQL recommended)</li>
+                <li style="margin-bottom: 12px;"><strong>Architecture Review</strong> — Finalise authentication strategy (custom auth vs Azure AD B2C)</li>
+                <li style="margin-bottom: 12px;"><strong>Provision Azure Resources</strong> — Create Azure PostgreSQL Flexible Server in appropriate region with correct sizing</li>
+                <li style="margin-bottom: 12px;"><strong>Begin Migration</strong> — Execute migration plan with proper testing gates</li>
+            </ol>
+
+            <h3>Questions for Discussion</h3>
+            <ol style="margin-left: 24px;">
+                <li>Is there a preference between Azure PostgreSQL and Azure SQL based on organisational standards?</li>
+                <li>What is the acceptable downtime window for cutover?</li>
+                <li>Should we implement Azure AD B2C for authentication, or build custom auth?</li>
+                <li>Are there any compliance requirements that affect the migration approach?</li>
+                <li>What is the budget allocation for this migration project?</li>
+            </ol>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>
+                Polaris Platform Database Migration Discovery Report<br>
+                Generated: February 4, 2026 | Team Polaris | MFS UK
+            </p>
+            <p style="margin-top: 16px;">
+                <a href="#executive-summary">Back to Top</a>
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
