@@ -54,8 +54,6 @@ VITE_API_URL=https://polaristest-backend.vercel.app
 
 Create `frontend/.env` file:
 ```bash
-VITE_SUPABASE_URL=your-supabase-url
-VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_API_URL=http://localhost:3001
 ```
 

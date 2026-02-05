@@ -5,7 +5,6 @@
  */
 
 import { useEffect } from 'react';
-import { useSupabase } from '../contexts/SupabaseContext';
 
 // Default column colors (these values are applied as CSS custom properties)
 const DEFAULT_COLUMNS = [
@@ -109,8 +108,6 @@ const applyAllHeaderColors = (allColors) => {
 };
 
 export function useHeaderColors() {
-  const { supabase } = useSupabase();
-
   useEffect(() => {
     const loadColors = async () => {
       try {
@@ -129,42 +126,15 @@ export function useHeaderColors() {
           }
         }
 
-        // Then load from Supabase for the latest values
-        if (supabase) {
-          const { data, error } = await supabase
-            .from('results_configuration')
-            .select('*')
-            .eq('key', 'header_colors');
-
-          if (!error && data && data.length > 0) {
-            const allColors = { ...DEFAULT_HEADER_COLORS };
-            
-            // Reconstruct colors from the per-calculator-type rows
-            data.forEach(row => {
-              const config = typeof row.config === 'string' ? JSON.parse(row.config) : row.config;
-              
-              if (row.calculator_type === 'btl') {
-                allColors.btl = migrateToColumnsFormat(config, DEFAULT_HEADER_COLORS.btl);
-              } else if (row.calculator_type === 'bridge') {
-                allColors.bridge = migrateToColumnsFormat(config, DEFAULT_HEADER_COLORS.bridge);
-              } else if (row.calculator_type === 'core') {
-                allColors.core = migrateToColumnsFormat(config, DEFAULT_HEADER_COLORS.core);
-              }
-            });
-            
-            applyAllHeaderColors(allColors);
-            
-            // Update localStorage
-            localStorage.setItem('results_table_header_colors', JSON.stringify(allColors));
-          }
-        }
+        // Note: Backend API integration for header colors would go here
+        // For now, using localStorage only
       } catch (e) {
         console.warn('Failed to load header colors:', e);
       }
     };
 
     loadColors();
-  }, [supabase]);
+  }, []);
 }
 
 export default useHeaderColors;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { API_BASE_URL } from '../../config/api';
 import { useAppSettings } from '../../contexts/AppSettingsContext';
 import NotificationModal from '../modals/NotificationModal';
 import WelcomeHeader from '../shared/WelcomeHeader';
@@ -187,7 +188,7 @@ const applyHeaderColorsToCss = (allColors) => {
  * and their display order
  */
 export default function GlobalSettings() {
-  const { supabase } = useSupabase();
+  const { token } = useAuth();
   const { refreshSettings } = useAppSettings();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -377,25 +378,31 @@ export default function GlobalSettings() {
   };
   const [headerColors, setHeaderColors] = useState({ ...DEFAULT_HEADER_COLORS });
 
-  // Load settings from Supabase
+  // Load settings from API
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [token]);
 
   const loadSettings = async() => {
+    if (!token) return;
+    
     try {
       setLoading(true);
       
-      // Load visibility settings from results_configuration
-      const { data: visibilityData, error: visibilityError } = await supabase
-        .from('results_configuration')
-        .select('*')
-        .eq('key', 'visibility');
-
-      if (visibilityError && visibilityError.code !== 'PGRST116') {
-        throw visibilityError;
+      // Load all results configuration from API
+      const response = await fetch(`${API_BASE_URL}/api/admin/results-configuration`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to load results configuration');
       }
-
+      
+      const { configurations } = await response.json();
+      const data = configurations || [];
+      
+      // Process visibility settings
+      const visibilityData = data.filter(row => row.key === 'visibility');
       if (visibilityData && visibilityData.length > 0) {
         visibilityData.forEach(row => {
           const settings = typeof row.config === 'string' ? JSON.parse(row.config) : row.config;
@@ -413,16 +420,8 @@ export default function GlobalSettings() {
         });
       }
 
-      // Load row order settings from results_configuration
-      const { data: orderData, error: orderError } = await supabase
-        .from('results_configuration')
-        .select('*')
-        .eq('key', 'row_order');
-
-      if (orderError && orderError.code !== 'PGRST116') {
-        throw orderError;
-      }
-
+      // Process row order settings
+      const orderData = data.filter(row => row.key === 'row_order');
       if (orderData && orderData.length > 0) {
         orderData.forEach(row => {
           const settings = typeof row.config === 'string' ? JSON.parse(row.config) : row.config;
@@ -443,16 +442,8 @@ export default function GlobalSettings() {
         });
       }
 
-      // Load label aliases from results_configuration
-      const { data: labelData, error: labelError } = await supabase
-        .from('results_configuration')
-        .select('*')
-        .eq('key', 'label_aliases');
-
-      if (labelError && labelError.code !== 'PGRST116') {
-        throw labelError;
-      }
-
+      // Process label aliases
+      const labelData = data.filter(row => row.key === 'label_aliases');
       let labelAliasesLoaded = false;
       if (labelData && labelData.length > 0) {
         labelData.forEach(row => {
@@ -490,7 +481,7 @@ export default function GlobalSettings() {
         }
       }
 
-      // Fallback: Load label aliases from localStorage if not in Supabase
+      // Fallback: Load label aliases from localStorage if not loaded from API
       if (!labelAliasesLoaded) {
         try {
           const stored = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
@@ -508,16 +499,8 @@ export default function GlobalSettings() {
         }
       }
 
-      // Load header colors from results_configuration
-      const { data: headerColorData, error: headerColorError } = await supabase
-        .from('results_configuration')
-        .select('*')
-        .eq('key', 'header_colors');
-
-      if (headerColorError && headerColorError.code !== 'PGRST116') {
-        throw headerColorError;
-      }
-
+      // Process header colors
+      const headerColorData = data.filter(row => row.key === 'header_colors');
       if (headerColorData && headerColorData.length > 0) {
         const mergedColors = { ...DEFAULT_HEADER_COLORS };
         
@@ -579,125 +562,52 @@ export default function GlobalSettings() {
   };
 
   const handleSave = async () => {
+    if (!token) {
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Not authenticated'
+      });
+      return;
+    }
+    
     try {
       setSaving(true);
       
-      // Save visibility settings (one row per calculator type)
-      const visibilityPromises = [
-        supabase.from('results_configuration').upsert({
-          key: 'visibility',
-          calculator_type: 'btl',
-          config: btlVisibleRows,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'visibility',
-          calculator_type: 'bridge',
-          config: bridgeVisibleRows,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'visibility',
-          calculator_type: 'core',
-          config: coreVisibleRows,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' })
+      // Build all configuration records to save
+      const configurations = [
+        // Visibility settings
+        { key: 'visibility', calculator_type: 'btl', config: btlVisibleRows },
+        { key: 'visibility', calculator_type: 'bridge', config: bridgeVisibleRows },
+        { key: 'visibility', calculator_type: 'core', config: coreVisibleRows },
+        // Row order settings
+        { key: 'row_order', calculator_type: 'btl', config: btlRowOrder },
+        { key: 'row_order', calculator_type: 'bridge', config: bridgeRowOrder },
+        { key: 'row_order', calculator_type: 'core', config: coreRowOrder },
+        // Label aliases
+        { key: 'label_aliases', calculator_type: 'btl', config: Object.fromEntries(Object.entries(btlLabelAliases)) },
+        { key: 'label_aliases', calculator_type: 'bridge', config: Object.fromEntries(Object.entries(bridgeLabelAliases)) },
+        { key: 'label_aliases', calculator_type: 'core', config: Object.fromEntries(Object.entries(coreLabelAliases)) },
+        // Header colors
+        { key: 'header_colors', calculator_type: 'btl', config: headerColors.btl },
+        { key: 'header_colors', calculator_type: 'bridge', config: headerColors.bridge },
+        { key: 'header_colors', calculator_type: 'core', config: headerColors.core },
       ];
       
-      const visibilityResults = await Promise.all(visibilityPromises);
-      const visibilityError = visibilityResults.find(r => r.error)?.error;
-      if (visibilityError) throw visibilityError;
-
-      // Save row order settings (one row per calculator type)
-      const orderPromises = [
-        supabase.from('results_configuration').upsert({
-          key: 'row_order',
-          calculator_type: 'btl',
-          config: btlRowOrder,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'row_order',
-          calculator_type: 'bridge',
-          config: bridgeRowOrder,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'row_order',
-          calculator_type: 'core',
-          config: coreRowOrder,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' })
-      ];
+      const response = await fetch(`${API_BASE_URL}/api/admin/results-configuration`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ configurations })
+      });
       
-      const orderResults = await Promise.all(orderPromises);
-      const orderError = orderResults.find(r => r.error)?.error;
-      if (orderError) throw orderError;
-
-      // Save label aliases - save ALL labels, not just changes from defaults
-      const btlConfig = Object.fromEntries(
-        Object.entries(btlLabelAliases)
-      );
-      const bridgeConfig = Object.fromEntries(
-        Object.entries(bridgeLabelAliases)
-      );
-      const coreConfig = Object.fromEntries(
-        Object.entries(coreLabelAliases)
-      );
-      
-      const labelAliasPromises = [
-        supabase.from('results_configuration').upsert({
-          key: 'label_aliases',
-          calculator_type: 'btl',
-          config: btlConfig,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'label_aliases',
-          calculator_type: 'bridge',
-          config: bridgeConfig,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'label_aliases',
-          calculator_type: 'core',
-          config: coreConfig,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' })
-      ];
-      
-      const labelResults = await Promise.all(labelAliasPromises);
-      const labelError = labelResults.find(r => r.error)?.error;
-      if (labelError) {
-        console.error('Label alias save error:', labelError);
-        throw labelError;
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to save results configuration');
       }
-
-      // Save header colors (one row per calculator type)
-      const headerColorPromises = [
-        supabase.from('results_configuration').upsert({
-          key: 'header_colors',
-          calculator_type: 'btl',
-          config: headerColors.btl,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'header_colors',
-          calculator_type: 'bridge',
-          config: headerColors.bridge,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'header_colors',
-          calculator_type: 'core',
-          config: headerColors.core,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' })
-      ];
-      
-      const headerColorResults = await Promise.all(headerColorPromises);
-      const headerColorError = headerColorResults.find(r => r.error)?.error;
-      if (headerColorError) throw headerColorError;
 
       // Save header colors to localStorage for immediate effect
       localStorage.setItem('results_table_header_colors', JSON.stringify(headerColors));

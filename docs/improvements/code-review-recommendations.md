@@ -664,15 +664,11 @@ test('BTL Calculator: Complete quote journey', async ({ page }) => {
 
 **Current Issue**: Sensitive keys in client-side code
 
-**Recommendation**: Verify only ANON key is in frontend
+**Recommendation**: Keep Supabase credentials backend-only; frontend should only call your backend API
 
 ```javascript
 // ✅ CORRECT - Frontend .env
-VITE_SUPABASE_URL=https://xxx.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-
-// ❌ WRONG - NEVER put service role key in frontend!
-// VITE_SUPABASE_SERVICE_ROLE_KEY=xxx // DANGEROUS!
+VITE_API_URL=https://your-backend.example.com
 
 // ✅ CORRECT - Backend .env
 SUPABASE_URL=https://xxx.supabase.co

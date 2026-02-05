@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { API_BASE_URL } from '../../config/api';
 import RateEditModal from './RateEditModal';
 // Bridge & Fusion rates tab removed - keep BTL rates only
 import NotificationModal from '../modals/NotificationModal';
@@ -49,86 +50,57 @@ function RatesTable() {
   // Notification state
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
 
-  const { supabase } = useSupabase();
+  const { token } = useAuth();
 
   const fetchRates = async () => {
+    if (!token) return;
     setLoading(true);
     setError(null);
     try {
+      // Build query params for filtering
+      const params = new URLSearchParams({ table: 'btl' });
+      if (filters.set_key) params.append('set_key', filters.set_key);
+      if (filters.property) params.append('property', filters.property);
+      if (filters.rate_type) params.append('rate_type', filters.rate_type);
+      if (filters.tier) params.append('tier', filters.tier);
+      if (filters.product) params.append('product', filters.product);
+      if (filters.product_fee) params.append('product_fee', filters.product_fee);
+      if (filters.initial_term) params.append('initial_term', filters.initial_term);
+      if (filters.full_term) params.append('full_term', filters.full_term);
+      if (filters.is_retention !== '' && filters.is_retention !== null && filters.is_retention !== undefined) {
+        params.append('is_retention', filters.is_retention);
+      }
+      if (filters.rate_status && filters.rate_status !== 'all') {
+        params.append('rate_status', filters.rate_status);
+      }
+      params.append('sort', sortField);
+      params.append('order', sortDir);
+      params.append('limit', '2000');
       
-      // First, fetch all data to populate filter options
-      const { data: allData, error: allDataError } = await supabase
-        .from('rates_flat')
-        .select('set_key, property, rate_type, tier, product, product_fee, initial_term, full_term, rate_status');
+      const response = await fetch(`${API_BASE_URL}/api/rates?${params}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
-      if (allDataError) throw allDataError;
+      if (!response.ok) {
+        throw new Error('Failed to fetch rates');
+      }
+      
+      const { rates: ratesData } = await response.json();
 
       // Update filter options from all data
       setFilterOptions({
-        setKeys: new Set(allData.map(r => r.set_key).filter(Boolean)),
-        properties: new Set(allData.map(r => r.property).filter(Boolean)),
-        rateTypes: new Set(allData.map(r => r.rate_type).filter(Boolean)),
-        tiers: new Set(allData.map(r => r.tier).filter(Boolean)),
-        products: new Set(allData.map(r => r.product).filter(Boolean)),
-        productFees: new Set(allData.map(r => r.product_fee).filter(Boolean)),
-        initialTerms: new Set(allData.map(r => r.initial_term).filter(Boolean)),
-        fullTerms: new Set(allData.map(r => r.full_term).filter(Boolean)),
+        setKeys: new Set(ratesData.map(r => r.set_key).filter(Boolean)),
+        properties: new Set(ratesData.map(r => r.property).filter(Boolean)),
+        rateTypes: new Set(ratesData.map(r => r.rate_type).filter(Boolean)),
+        tiers: new Set(ratesData.map(r => r.tier).filter(Boolean)),
+        products: new Set(ratesData.map(r => r.product).filter(Boolean)),
+        productFees: new Set(ratesData.map(r => r.product_fee).filter(Boolean)),
+        initialTerms: new Set(ratesData.map(r => r.initial_term).filter(Boolean)),
+        fullTerms: new Set(ratesData.map(r => r.full_term).filter(Boolean)),
         rateStatuses: new Set(['Active', 'Inactive'])
       });
 
-      // Then fetch filtered data
-      // Use a generic select('*') so the app stays resilient if the DB is missing
-      // recently-added columns (e.g. migrations haven't been applied yet).
-      let query = supabase
-        .from('rates_flat')
-        .select('*');
-      
-      // Apply filters
-  if (filters.set_key) query = query.eq('set_key', filters.set_key);
-      if (filters.property) query = query.eq('property', filters.property);
-
-      // Rate status filter (default shows Active)
-      if (filters.rate_status && filters.rate_status !== 'all') {
-        query = query.eq('rate_status', filters.rate_status);
-      }
-
-      // Retention filter (accepts 'Yes' / 'No' / boolean-like values)
-      if (filters.is_retention !== '' && filters.is_retention !== null && filters.is_retention !== undefined) {
-        const v = String(filters.is_retention).toLowerCase();
-        if (['yes', 'true', '1'].includes(v)) {
-          query = query.eq('is_retention', true);
-        } else if (['no', 'false', '0'].includes(v)) {
-          query = query.eq('is_retention', false);
-        }
-      }
-
-  // rate_type, tier, product_fee and term-like fields may be numeric in DB. Coerce numeric strings when filtering.
-  const numericFields = ['rate_type', 'tier', 'product_fee', 'initial_term', 'full_term'];
-      const applyFilter = (field) => {
-        const val = filters[field];
-        if (val === '' || val === null || val === undefined) return;
-        if (numericFields.includes(field) && !Number.isNaN(Number(val))) {
-          query = query.eq(field, Number(val));
-        } else {
-          query = query.eq(field, val);
-        }
-      };
-
-  applyFilter('rate_type');
-  applyFilter('tier');
-  applyFilter('product_fee');
-  applyFilter('initial_term');
-  applyFilter('full_term');
-      if (filters.product) query = query.eq('product', filters.product);
-      
-      const { data, error } = await query.order('set_key', { ascending: true });
-      
-      if (error) throw error;
-
-      setRates(data);
-      
-      if (error) throw error;
-      setRates(data);
+      setRates(ratesData || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -138,7 +110,7 @@ function RatesTable() {
 
   useEffect(() => {
     fetchRates();
-  }, [filters]);
+  }, [filters, token]);
 
   const handleEdit = (rate) => {
     setEditingRate(rate);
@@ -159,45 +131,54 @@ function RatesTable() {
         }
       }
 
-      const { error } = await supabase
-        .from('rates_flat')
-        .update({
-          tier: updatedRate.tier || null,
-          property: updatedRate.property || null,
-          product: updatedRate.product || null,
-          rate_type: updatedRate.rate_type || null,
-          rate: updatedRate.rate,
-          product_fee: updatedRate.product_fee,
-          max_ltv: updatedRate.max_ltv ?? null,
-          revert_index: updatedRate.revert_index || null,
-          revert_margin: updatedRate.revert_margin ?? null,
-          min_loan: updatedRate.min_loan ?? null,
-          max_loan: updatedRate.max_loan ?? null,
-          max_rolled_months: updatedRate.max_rolled_months ?? null,
-          max_defer_int: updatedRate.max_defer_int ?? null,
-          min_icr: updatedRate.min_icr ?? null,
-          max_top_slicing: updatedRate.max_top_slicing ?? null,
-          admin_fee: updatedRate.admin_fee ?? null,
-          erc_1: updatedRate.erc_1 ?? null,
-          erc_2: updatedRate.erc_2 ?? null,
-          erc_3: updatedRate.erc_3 ?? null,
-          erc_4: updatedRate.erc_4 ?? null,
-          erc_5: updatedRate.erc_5 ?? null,
-          status: updatedRate.status || null,
-          floor_rate: updatedRate.floor_rate ?? null,
-          proc_fee: updatedRate.proc_fee ?? null,
-          is_tracker: updatedRate.is_tracker,
-          is_retention: updatedRate.is_retention || false,
-          initial_term: updatedRate.initial_term ?? null,
-          full_term: updatedRate.full_term ?? null,
-          // Rate lifecycle fields
-          rate_status: updatedRate.rate_status || 'Active',
-          start_date: updatedRate.start_date || null,
-          end_date: updatedRate.end_date || null,
+      const response = await fetch(`${API_BASE_URL}/api/rates/${updatedRate.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          rate: {
+            tier: updatedRate.tier || null,
+            property: updatedRate.property || null,
+            product: updatedRate.product || null,
+            rate_type: updatedRate.rate_type || null,
+            rate: updatedRate.rate,
+            product_fee: updatedRate.product_fee,
+            max_ltv: updatedRate.max_ltv ?? null,
+            revert_index: updatedRate.revert_index || null,
+            revert_margin: updatedRate.revert_margin ?? null,
+            min_loan: updatedRate.min_loan ?? null,
+            max_loan: updatedRate.max_loan ?? null,
+            max_rolled_months: updatedRate.max_rolled_months ?? null,
+            max_defer_int: updatedRate.max_defer_int ?? null,
+            min_icr: updatedRate.min_icr ?? null,
+            max_top_slicing: updatedRate.max_top_slicing ?? null,
+            admin_fee: updatedRate.admin_fee ?? null,
+            erc_1: updatedRate.erc_1 ?? null,
+            erc_2: updatedRate.erc_2 ?? null,
+            erc_3: updatedRate.erc_3 ?? null,
+            erc_4: updatedRate.erc_4 ?? null,
+            erc_5: updatedRate.erc_5 ?? null,
+            status: updatedRate.status || null,
+            floor_rate: updatedRate.floor_rate ?? null,
+            proc_fee: updatedRate.proc_fee ?? null,
+            is_tracker: updatedRate.is_tracker,
+            is_retention: updatedRate.is_retention || false,
+            initial_term: updatedRate.initial_term ?? null,
+            full_term: updatedRate.full_term ?? null,
+            rate_status: updatedRate.rate_status || 'Active',
+            start_date: updatedRate.start_date || null,
+            end_date: updatedRate.end_date || null,
+          },
+          tableName: 'rates_flat'
         })
-        .eq('id', updatedRate.id);
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to update rate');
+      }
       
       setEditingRate(null);
       fetchRates(); // Refresh the table
@@ -305,14 +286,26 @@ function RatesTable() {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this rate?')) {
       try {
-        const { error } = await supabase
-          .from('rates_flat')
-          .delete()
-          .eq('id', id);
+        const response = await fetch(`${API_BASE_URL}/api/rates/${id}?tableName=rates_flat`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
 
-        if (error) throw error;
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to delete rate');
+        }
+
         fetchRates();
         setSelectedRows(new Set());
+        setNotification({
+          show: true,
+          type: 'success',
+          title: 'Success',
+          message: 'Rate deleted successfully'
+        });
       } catch (err) {
         setError(err.message);
       }
@@ -328,15 +321,32 @@ function RatesTable() {
 
     if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected rates?`)) {
       try {
-        const { error } = await supabase
-          .from('rates_flat')
-          .delete()
-          .in('id', selectedIds);
+        const response = await fetch(`${API_BASE_URL}/api/rates/bulk`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            ids: selectedIds,
+            tableName: 'rates_flat'
+          })
+        });
 
-        if (error) throw error;
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to delete rates');
+        }
+
         fetchRates();
         setSelectedRows(new Set());
         setSelectAll(false);
+        setNotification({
+          show: true,
+          type: 'success',
+          title: 'Success',
+          message: `${selectedIds.length} rate(s) deleted successfully`
+        });
       } catch (err) {
         setError(err.message);
       }
@@ -615,22 +625,36 @@ function RatesTable() {
           return rec;
         });
 
-        // Upsert in chunks (updates existing records if key matches, inserts new ones)
+        // Upsert via backend API (handles chunking internally)
         // Key columns match the idx_rates_flat_unique_version unique constraint
         const onConflictCols = 'set_key,property,tier,product,product_fee,initial_term,start_date';
-        for (let i = 0; i < cleanedRecords.length; i += chunkSize) {
-          const chunk = cleanedRecords.slice(i, i + chunkSize);
-          const { data, error } = await supabase
-            .from('rates_flat')
-            .upsert(chunk, { onConflict: onConflictCols });
+        
+        const response = await fetch(`${API_BASE_URL}/api/rates/import`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            records: cleanedRecords,
+            tableName: 'rates_flat',
+            onConflict: onConflictCols
+          })
+        });
 
-          if (error) {
-            setError(error.message || JSON.stringify(error));
-            return;
-          }
-
-          // Optionally log progress
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          setError(errData.message || 'Failed to import rates');
+          return;
         }
+
+        const result = await response.json();
+        setNotification({
+          show: true,
+          type: 'success',
+          title: 'Import Complete',
+          message: result.message || `Successfully imported ${cleanedRecords.length} rates`
+        });
 
         // Refresh table after import
         fetchRates();

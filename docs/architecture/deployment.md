@@ -20,8 +20,6 @@ Go to your Vercel project settings → Environment Variables and add:
 
 ```
 VITE_API_URL=https://your-app.onrender.com
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 **Important**: 
@@ -39,10 +37,6 @@ For local development, create a `.env` file in the `frontend` directory:
 ```bash
 # Leave VITE_API_URL empty for local dev (uses Vite proxy to localhost:3001)
 VITE_API_URL=
-
-# Your Supabase credentials
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 The Vite proxy (configured in `vite.config.js`) will automatically forward `/api/*` requests to `http://localhost:3001`.

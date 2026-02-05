@@ -537,4 +537,85 @@ router.put('/:id/uw-checklist', asyncHandler(async (req, res) => {
   });
 }));
 
+// ==========================================
+// Multi-Property Details Endpoints
+// ==========================================
+
+// GET /api/quotes/:id/multi-property-details
+// Fetch multi-property details for a bridge quote
+router.get('/:id/multi-property-details', asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  log.info('GET /api/quotes/:id/multi-property-details', { quote_id: id });
+  
+  const { data, error } = await supabase
+    .from('bridge_multi_property_details')
+    .select('*')
+    .eq('bridge_quote_id', id)
+    .order('row_order', { ascending: true });
+  
+  if (error) {
+    log.error('❌ Error fetching multi-property details', error);
+    throw ErrorTypes.database('Failed to fetch multi-property details', error);
+  }
+  
+  return res.json({ details: data || [] });
+}));
+
+// PUT /api/quotes/:id/multi-property-details
+// Save/replace multi-property details for a bridge quote
+router.put('/:id/multi-property-details', asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { details } = req.body;
+  
+  log.info('PUT /api/quotes/:id/multi-property-details', { quote_id: id, count: details?.length || 0 });
+  
+  // Delete existing details for this quote
+  const { error: deleteError } = await supabase
+    .from('bridge_multi_property_details')
+    .delete()
+    .eq('bridge_quote_id', id);
+  
+  if (deleteError) {
+    log.error('❌ Error deleting existing multi-property details', deleteError);
+    throw ErrorTypes.database('Failed to delete existing multi-property details', deleteError);
+  }
+  
+  // Insert new details if provided
+  if (details && Array.isArray(details) && details.length > 0) {
+    const rowsToInsert = details.map((row, index) => ({
+      bridge_quote_id: id,
+      property_address: row.property_address || null,
+      property_type: row.property_type || 'Residential',
+      sub_product: row.sub_product || null,
+      property_value: row.property_value || null,
+      charge_type: row.charge_type || 'First charge',
+      first_charge_amount: row.first_charge_amount || null,
+      fixed_rate: row.fixed_rate || null,
+      variable_rate: row.variable_rate || null,
+      max_ltv: row.max_ltv || null,
+      max_gross_loan: row.max_gross_loan || null,
+      gross_loan: row.gross_loan || row.max_gross_loan || null,
+      row_order: index,
+      is_multi_property_loan: row.is_multi_property_loan || false
+    }));
+    
+    const { data: insertedData, error: insertError } = await supabase
+      .from('bridge_multi_property_details')
+      .insert(rowsToInsert)
+      .select();
+    
+    if (insertError) {
+      log.error('❌ Error inserting multi-property details', insertError);
+      throw ErrorTypes.database('Failed to insert multi-property details', insertError);
+    }
+    
+    log.info('✅ Multi-property details saved', { quote_id: id, count: rowsToInsert.length });
+    return res.json({ details: insertedData || [] });
+  }
+  
+  log.info('✅ Multi-property details cleared', { quote_id: id });
+  return res.json({ details: [] });
+}));
+
 export default router;

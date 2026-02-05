@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { API_BASE_URL } from '../../config/api';
 import WelcomeHeader from '../shared/WelcomeHeader';
 import BridgeRateEditModal from './BridgeRateEditModal';
 import NotificationModal from '../modals/NotificationModal';
@@ -8,7 +9,7 @@ import '../../styles/slds.css';
 import '../../styles/admin-tables.css';
 
 function BridgeFusionRates() {
-  const { supabase } = useSupabase();
+  const { token } = useAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,19 +36,25 @@ function BridgeFusionRates() {
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
 
   const fetch = async () => {
+    if (!token) return;
     setLoading(true);
     try {
-      // fetch filtered data (select * — we'll derive available columns from returned rows)
-      let q = supabase.from('bridge_fusion_rates_full').select('*');
-      
-      // Apply rate_status filter
+      // Build query params
+      const params = new URLSearchParams({ table: 'bridging' });
       if (filters.rate_status && filters.rate_status !== 'all') {
-        q = q.eq('rate_status', filters.rate_status);
+        params.append('rate_status', filters.rate_status);
       }
       
-      const { data, error } = await q.order('set_key', { ascending: true });
-      if (error) throw error;
-      const rowsData = data || [];
+      const response = await window.fetch(`${API_BASE_URL}/api/rates?${params}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch rates');
+      }
+      
+      const { rates } = await response.json();
+      const rowsData = rates || [];
       setRows(rowsData);
 
       // derive filter options from the returned rows dynamically (tolerant to schema differences)
@@ -66,7 +73,7 @@ function BridgeFusionRates() {
     }
   };
 
-  useEffect(() => { fetch(); }, [supabase, filters.rate_status]);
+  useEffect(() => { fetch(); }, [token, filters.rate_status]);
   
   // Reset to page 1 when filters change
   useEffect(() => { 
@@ -124,12 +131,36 @@ function BridgeFusionRates() {
       // Ensure rate_status has a default
       if (!rec.rate_status) rec.rate_status = 'Active';
 
+      const tableName = 'bridge_fusion_rates_full';
+      
       if (rec.id) {
-        const { error } = await supabase.from('bridge_fusion_rates_full').update(rec).eq('id', rec.id);
-        if (error) throw error;
+        // Update existing rate
+        const response = await window.fetch(`${API_BASE_URL}/api/rates/${rec.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ rate: rec, tableName })
+        });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to update rate');
+        }
       } else {
-        const { error } = await supabase.from('bridge_fusion_rates_full').insert([rec]);
-        if (error) throw error;
+        // Create new rate
+        const response = await window.fetch(`${API_BASE_URL}/api/rates`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ rate: rec, tableName })
+        });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to create rate');
+        }
       }
       setEditing(null);
       setNotification({
@@ -210,8 +241,14 @@ function BridgeFusionRates() {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this rate?')) return;
     try {
-  const { error } = await supabase.from('bridge_fusion_rates_full').delete().eq('id', id);
-      if (error) throw error;
+      const response = await window.fetch(`${API_BASE_URL}/api/rates/${id}?tableName=bridge_fusion_rates_full`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to delete rate');
+      }
       await fetch();
     } catch (e) {
       setError(e.message || e);
@@ -226,8 +263,18 @@ function BridgeFusionRates() {
     }
     if (!window.confirm(`Delete ${ids.length} selected rates?`)) return;
     try {
-  const { error } = await supabase.from('bridge_fusion_rates_full').delete().in('id', ids);
-      if (error) throw error;
+      const response = await window.fetch(`${API_BASE_URL}/api/rates/bulk`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ ids, tableName: 'bridge_fusion_rates_full' })
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to delete rates');
+      }
       setSelectedRows(new Set());
       setSelectAll(false);
       await fetch();
@@ -406,20 +453,25 @@ function BridgeFusionRates() {
           return rec;
         });
 
-        // Upsert in chunks (updates existing records if key matches, inserts new ones)
-        // Key columns match the idx_bridge_fusion_rates_unique constraint
+        // Upsert via API
         const onConflictCols = 'set_key,property,product,type,charge_type,product_fee,min_ltv,max_ltv,start_date';
-        const chunkSize = 200;
-        for (let i = 0; i < cleanedRecords.length; i += chunkSize) {
-          const chunk = cleanedRecords.slice(i, i + chunkSize);
-          const { error } = await supabase
-            .from('bridge_fusion_rates_full')
-            .upsert(chunk, { onConflict: onConflictCols });
-
-          if (error) {
-            setError(error.message || JSON.stringify(error));
-            return;
-          }
+        const response = await window.fetch(`${API_BASE_URL}/api/rates/import`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            records: cleanedRecords,
+            tableName: 'bridge_fusion_rates_full',
+            onConflict: onConflictCols
+          })
+        });
+        
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          setError(errData.message || 'Failed to import rates');
+          return;
         }
 
         // Refresh table after import

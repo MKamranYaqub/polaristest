@@ -1,5 +1,7 @@
 node_modules/
 dist/
+frontend/dist/
+backend/dist/
 /.vite/
 .DS_Store
 # Environment files (keep secrets out of repo)

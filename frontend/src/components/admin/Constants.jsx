@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { API_BASE_URL } from '../../config/api';
 import { useAppSettings } from '../../contexts/AppSettingsContext';
 import NotificationModal from '../modals/NotificationModal';
 import {
@@ -46,7 +47,7 @@ export default function Constants() {
   const [fundingLinesBTL, setFundingLinesBTL] = useState([]);
   const [fundingLinesBridge, setFundingLinesBridge] = useState([]);
   const [message, setMessage] = useState('');
-  const { supabase } = useSupabase();
+  const { token } = useAuth();
   const { refreshSettings } = useAppSettings();
   const [saving, setSaving] = useState(false);
   // per-field editing state and temporary values
@@ -274,57 +275,76 @@ export default function Constants() {
     }
   };
 
-  // Persist to database. Uses app_settings table with separate rows per setting type.
+  // Persist to database via API
   const saveToSupabase = async (payload) => {
-    if (!supabase) return { error: 'Database client unavailable' };
+    if (!token) return { error: 'Not authenticated' };
     try {
-      const timestamp = new Date().toISOString();
-      
       // Create separate rows for each setting type
-      const rows = [
-        { key: 'product_lists', value: payload.productLists, updated_at: timestamp },
-        { key: 'fee_columns', value: payload.feeColumns, updated_at: timestamp },
-        { key: 'flat_above_commercial_rule', value: payload.flatAboveCommercialRule, updated_at: timestamp },
-        { key: 'market_rates', value: payload.marketRates, updated_at: timestamp },
-        { key: 'broker_routes', value: payload.brokerRoutes, updated_at: timestamp },
-        { key: 'broker_commission_defaults', value: payload.brokerCommissionDefaults, updated_at: timestamp },
-        { key: 'broker_commission_tolerance', value: payload.brokerCommissionTolerance, updated_at: timestamp },
-        { key: 'funding_lines_btl', value: payload.fundingLinesBTL, updated_at: timestamp },
-        { key: 'funding_lines_bridge', value: payload.fundingLinesBridge, updated_at: timestamp },
-        { key: 'ui_preferences', value: payload.uiPreferences || {}, updated_at: timestamp },
+      const settings = [
+        { key: 'product_lists', value: payload.productLists },
+        { key: 'fee_columns', value: payload.feeColumns },
+        { key: 'flat_above_commercial_rule', value: payload.flatAboveCommercialRule },
+        { key: 'market_rates', value: payload.marketRates },
+        { key: 'broker_routes', value: payload.brokerRoutes },
+        { key: 'broker_commission_defaults', value: payload.brokerCommissionDefaults },
+        { key: 'broker_commission_tolerance', value: payload.brokerCommissionTolerance },
+        { key: 'funding_lines_btl', value: payload.fundingLinesBTL },
+        { key: 'funding_lines_bridge', value: payload.fundingLinesBridge },
+        { key: 'ui_preferences', value: payload.uiPreferences || {} },
       ];
       
-      const { error } = await supabase.from('app_settings').upsert(rows, { onConflict: 'key' });
-      return { error };
+      const response = await fetch(`${API_BASE_URL}/api/admin/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ settings })
+      });
+      
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        return { error: errData.message || 'Failed to save settings' };
+      }
+      
+      return { error: null };
     } catch (e) {
-      return { error: e };
+      return { error: e.message || e };
     }
   };
 
   useEffect(() => {
     let mounted = true;
-    // Load constants from database
+    // Load constants from database via API
     (async () => {
-      if (!supabase) return;
+      if (!token) return;
       try {
-        // Fetch all setting rows from app_settings
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('*')
-          .in('key', [
-            'product_lists',
-            'fee_columns',
-            'flat_above_commercial_rule',
-            'market_rates',
-            'broker_routes',
-            'broker_commission_defaults',
-            'broker_commission_tolerance',
-            'funding_lines_btl',
-            'funding_lines_bridge',
-            'ui_preferences'
-          ]);
+        const keys = [
+          'product_lists',
+          'fee_columns',
+          'flat_above_commercial_rule',
+          'market_rates',
+          'broker_routes',
+          'broker_commission_defaults',
+          'broker_commission_tolerance',
+          'funding_lines_btl',
+          'funding_lines_bridge',
+          'ui_preferences'
+        ];
         
-        if (!error && data && data.length && mounted) {
+        const response = await fetch(
+          `${API_BASE_URL}/api/admin/settings?keys=${keys.join(',')}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        if (!response.ok) {
+          console.error('Failed to load settings from API');
+          return;
+        }
+        
+        const { data } = await response.json();
+        
+        if (data && data.length && mounted) {
           // Convert array of rows into single object
           const loadedData = {};
           data.forEach(row => {
@@ -428,7 +448,7 @@ export default function Constants() {
       }
     })();
     return () => { mounted = false; };
-  }, [supabase]);
+  }, [token]);
 
   const saveToStorage = async () => {
     const payload = { 

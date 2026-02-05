@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useSupabase } from '../contexts/SupabaseContext';
 
 /**
  * Custom hook to manage results table row visibility settings
@@ -7,7 +6,6 @@ import { useSupabase } from '../contexts/SupabaseContext';
  * @returns {Object} - { visibleRows: Object, isRowVisible: Function, loading: boolean }
  */
 export function useResultsVisibility(calculatorType) {
-  const { supabase } = useSupabase();
   const [visibleRows, setVisibleRows] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -29,29 +27,8 @@ export function useResultsVisibility(calculatorType) {
           }
         }
 
-        // Fallback to Supabase results_configuration table
-        if (supabase) {
-          const { data, error } = await supabase
-            .from('results_configuration')
-            .select('config')
-            .eq('key', 'visibility')
-            .eq('calculator_type', calculatorType)
-            .maybeSingle();
-
-          if (data && data.config) {
-            setVisibleRows(data.config);
-            // Also save to localStorage for faster future access
-            const localData = localStorage.getItem('results_table_visibility');
-            let allSettings = {};
-            if (localData) {
-              try {
-                allSettings = JSON.parse(localData);
-              } catch (e) { /* ignore */ }
-            }
-            allSettings[calculatorType] = data.config;
-            localStorage.setItem('results_table_visibility', JSON.stringify(allSettings));
-          }
-        }
+        // Note: Backend API integration would go here
+        // For now, using localStorage only
       } catch (err) {
         // Error loading settings
       } finally {
@@ -60,7 +37,7 @@ export function useResultsVisibility(calculatorType) {
     };
 
     loadSettings();
-  }, [supabase, calculatorType]);
+  }, [calculatorType]);
 
   // Listen for storage events to update when settings change
   useEffect(() => {

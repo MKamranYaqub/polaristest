@@ -12,8 +12,10 @@ import exportRouter from './routes/export.js';
 import authRouter from './routes/auth.js';
 import postcodeLookupRouter from './routes/postcodeLookup.js';
 import ratesRouter from './routes/rates.js';
+import criteriaRouter from './routes/criteria.js';
 import supportRouter from './routes/support.js';
 import adminRouter from './routes/admin.js';
+import adminSettingsRouter from './routes/adminSettings.js';
 import reportingRouter from './routes/reporting.js';
 import apiKeysRouter from './routes/apiKeys.js';
 import salesforceRouter from './routes/salesforce.js';
@@ -83,6 +85,9 @@ app.get('/', (req, res) => {
 // Rates endpoints - fetches rates from rates_flat table
 app.use('/api/rates', ratesRouter);
 
+// Criteria endpoints - fetches criteria config for calculators
+app.use('/api/criteria', criteriaRouter);
+
 // Quotes endpoints (CRUD)
 app.use('/api/quotes', quotesRouter);
 
@@ -97,6 +102,9 @@ app.use('/api/support', supportRouter);
 
 // Admin data health endpoint
 app.use('/api/admin', adminRouter);
+
+// Admin settings and configuration endpoints
+app.use('/api/admin', adminSettingsRouter);
 
 // API Key management endpoint (admin only)
 app.use('/api/admin/api-keys', apiKeysRouter);

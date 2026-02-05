@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useSupabase } from '../../contexts/SupabaseContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
+import { API_BASE_URL } from '../../config/api';
 import '../../styles/Calculator.scss';
 import SaveQuoteButton from './SaveQuoteButton';
 import IssueDIPModal from '../modals/IssueDIPModal';
@@ -34,7 +34,6 @@ const getNumericValue = (value) => {
 };
 
 export default function BridgingCalculator({ initialQuote = null }) {
-  const { supabase } = useSupabase();
   const { canEditCalculators, token } = useAuth();
   const { showToast } = useToast();
   const location = useLocation();
@@ -393,7 +392,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
     
     return { min: minTerm, max: maxTerm };
   }, [rates]);
-
   
   useEffect(() => {
     let mounted = true;
@@ -401,12 +399,17 @@ export default function BridgingCalculator({ initialQuote = null }) {
       setLoading(true);
       setError(null);
       try {
-        const { data, error } = await supabase
-          .from('criteria_config_flat')
-          .select('*');
-        if (error) throw error;
+        // Fetch criteria via backend API instead of direct Supabase
+        const response = await fetch(`${API_BASE_URL}/api/criteria`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to load criteria');
+        }
+        const result = await response.json();
         if (!mounted) return;
-        setAllCriteria(data || []);
+        setAllCriteria(result.criteria || []);
       } catch (err) {
         setError(err.message || String(err));
       } finally {
@@ -415,7 +418,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
     }
     load();
     return () => { mounted = false; };
-  }, [supabase]);
+  }, [token]);
 
   useEffect(() => {
     // Build question map for bridging.
@@ -608,15 +611,15 @@ export default function BridgingCalculator({ initialQuote = null }) {
       
       // Note: Client details are loaded by useBrokerSettings hook
       
-      // Load multi-property details if available
-      if (quote.id) {
-        supabase
-          .from('bridge_multi_property_details')
-          .select('*')
-          .eq('bridge_quote_id', quote.id)
-          .order('row_order', { ascending: true })
-          .then(({ data, error }) => {
-            if (!error && data && data.length > 0) {
+      // Load multi-property details if available (via API)
+      if (quote.id && token) {
+        fetch(`${API_BASE_URL}/api/quotes/${quote.id}/multi-property-details`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(res => res.json())
+          .then(result => {
+            const data = result.details || [];
+            if (data.length > 0) {
               // Load only multi-property loan rows (POC)
               const loanRows = data.filter(row => row.is_multi_property_loan);
               
@@ -638,6 +641,9 @@ export default function BridgingCalculator({ initialQuote = null }) {
                 setMultiPropertyLoanRows(loadedLoanRows);
               }
             }
+          })
+          .catch(err => {
+            console.error('Error loading multi-property details:', err);
           });
       }
       
@@ -912,21 +918,28 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   // Fetch rates for Bridging: filter depending on mode
   useEffect(() => {
-    if (!supabase) return;
-    
     // Always fetch rates from database - they're needed for filtering
     // The loadedFromSavedQuoteRef flag is used in the filtering effect, not here
     
     let mounted = true;
     async function loadRates() {
       try {
-        // load bridge & fusion rates (not BTL rates)
-        const { data, error } = await supabase.from('bridge_fusion_rates_full').select('*');
-        if (error) throw error;
+        // Fetch bridge & fusion rates via backend API
+        // Use table=bridging to get rates from bridge_fusion_rates_full table
+        const response = await fetch(`${API_BASE_URL}/api/rates?table=bridging&limit=2000`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to load rates');
+        }
+        const result = await response.json();
+        const bridgingRates = result.rates || [];
+        
         if (!mounted) return;
         
         // Filter to only active rates that are within date range (for calculator use)
-        const activeRates = filterActiveRates(data || []);
+        const activeRates = filterActiveRates(bridgingRates);
         setRates(activeRates);
         // derive sub-product options (prefer `product` field in rates as the sub-product identifier)
         const discovered = new Set();
@@ -967,7 +980,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
     }
     loadRates();
     return () => { mounted = false; };
-  }, [supabase]);
+  }, [token]);
 
   useEffect(() => {
     // when second-charge is selected, clear subProduct and disable sub-product selection in UI
@@ -1922,7 +1935,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
     return bridgeFeeTypes;
   };
 
-  if (!supabase) return <div className="slds-p-around_medium">Database client missing</div>;
   if (loading) return (
     <div className="slds-spinner_container">
       <div className="slds-spinner slds-spinner_medium">
@@ -2001,41 +2013,36 @@ export default function BridgingCalculator({ initialQuote = null }) {
                 setCurrentQuoteRef(savedQuote.reference_number);
               }
               
-              // Save multi-property loan details
-              if (savedQuote && savedQuote.id) {
+              // Save multi-property loan details via API
+              if (savedQuote && savedQuote.id && token) {
                 try {
-                  // Delete all existing multi-property details for this quote
-                  await supabase
-                    .from('bridge_multi_property_details')
-                    .delete()
-                    .eq('bridge_quote_id', savedQuote.id);
+                  // Prepare details to save
+                  const detailsToSave = isMultiPropertyLoan && multiPropertyLoanRows.length > 0
+                    ? multiPropertyLoanRows.map((row, index) => ({
+                        property_address: row.property_address || null,
+                        property_type: row.property_type || 'Residential',
+                        sub_product: row.sub_product || null,
+                        property_value: row.property_value || null,
+                        charge_type: row.charge_type || 'First charge',
+                        first_charge_amount: row.first_charge_amount || null,
+                        fixed_rate: row.fixed_rate || null,
+                        variable_rate: row.variable_rate || null,
+                        max_ltv: row.max_ltv || null,
+                        max_gross_loan: row.max_gross_loan || null,
+                        gross_loan: row.max_gross_loan || null,
+                        row_order: index,
+                        is_multi_property_loan: true
+                      }))
+                    : [];
                   
-                  // Add multi-property loan rows (isMultiPropertyLoan)
-                  if (isMultiPropertyLoan && multiPropertyLoanRows.length > 0) {
-                    const rowsToInsert = multiPropertyLoanRows.map((row, index) => ({
-                      bridge_quote_id: savedQuote.id,
-                      property_address: row.property_address || null,
-                      property_type: row.property_type || 'Residential',
-                      sub_product: row.sub_product || null,
-                      property_value: row.property_value || null,
-                      charge_type: row.charge_type || 'First charge',
-                      first_charge_amount: row.first_charge_amount || null,
-                      fixed_rate: row.fixed_rate || null,
-                      variable_rate: row.variable_rate || null,
-                      max_ltv: row.max_ltv || null,
-                      max_gross_loan: row.max_gross_loan || null,
-                      gross_loan: row.max_gross_loan || null,
-                      row_order: index,
-                      is_multi_property_loan: true
-                    }));
-                    
-                    // Insert rows if any
-                    if (rowsToInsert.length > 0) {
-                      await supabase
-                        .from('bridge_multi_property_details')
-                        .insert(rowsToInsert);
-                    }
-                  }
+                  await fetch(`${API_BASE_URL}/api/quotes/${savedQuote.id}/multi-property-details`, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ details: detailsToSave })
+                  });
                 } catch (error) {
                   console.error('Error saving multi-property loan details:', error);
                 }

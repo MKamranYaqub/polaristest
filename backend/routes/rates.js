@@ -32,12 +32,45 @@ router.get('/', asyncHandler(async (req, res) => {
     sort = 'set_key',
     order = 'asc',
     limit = '500',
-    offset = '0'
+    offset = '0',
+    table // Optional: explicitly specify table ('btl', 'bridging', or 'all')
   } = req.query;
 
-  // Determine which table to query based on set_key
-  const isBridgingRate = set_key && BRIDGING_SET_KEYS.includes(set_key);
-  const tableName = isBridgingRate ? 'bridge_fusion_rates_full' : 'rates_flat';
+  // Determine which table to query based on set_key or explicit table parameter
+  let tableName;
+  let isBridgingRate = set_key && BRIDGING_SET_KEYS.includes(set_key);
+  
+  // Explicit table parameter takes precedence
+  if (table === 'bridging') {
+    tableName = 'bridge_fusion_rates_full';
+    isBridgingRate = true;
+  } else if (table === 'btl') {
+    tableName = 'rates_flat';
+    isBridgingRate = false;
+  } else if (table === 'all') {
+    // Fetch from both tables and merge results
+    log.info('GET /api/rates - fetching ALL rates from both tables');
+    
+    const [btlResult, bridgingResult] = await Promise.all([
+      supabase.from('rates_flat').select('*'),
+      supabase.from('bridge_fusion_rates_full').select('*')
+    ]);
+    
+    if (btlResult.error) {
+      log.error('❌ Error fetching BTL rates', btlResult.error);
+      throw ErrorTypes.database('Failed to fetch BTL rates');
+    }
+    if (bridgingResult.error) {
+      log.error('❌ Error fetching bridging rates', bridgingResult.error);
+      throw ErrorTypes.database('Failed to fetch bridging rates');
+    }
+    
+    const allRates = [...(btlResult.data || []), ...(bridgingResult.data || [])];
+    return res.json({ rates: allRates });
+  } else {
+    // Default behavior based on set_key
+    tableName = isBridgingRate ? 'bridge_fusion_rates_full' : 'rates_flat';
+  }
 
   log.info('GET /api/rates - fetching rates', { set_key, property, tableName, rate_type, tier, product, sort, order, limit, offset });
 
@@ -326,6 +359,280 @@ router.get('/audit-log', authenticateToken, requireAccessLevel(1), asyncHandler(
   }
 
   res.json({ auditLog: data || [] });
+}));
+
+// POST /api/rates
+// Create a new rate record (Admin only)
+router.post('/', authenticateToken, requireAccessLevel(1), asyncHandler(async (req, res) => {
+  const { rate, tableName } = req.body;
+
+  // Validate required fields
+  if (!rate || typeof rate !== 'object') {
+    throw ErrorTypes.validation('Missing rate data');
+  }
+  if (!tableName) {
+    throw ErrorTypes.validation('Missing tableName');
+  }
+
+  // Validate table name
+  const allowedTables = ['bridge_fusion_rates_full', 'rates_flat'];
+  if (!allowedTables.includes(tableName)) {
+    throw ErrorTypes.validation('Invalid table name');
+  }
+
+  // Remove id field if present (let database auto-generate)
+  const { id, ...rateData } = rate;
+
+  log.info('POST /api/rates - creating new rate', {
+    tableName,
+    set_key: rateData.set_key,
+    product: rateData.product,
+    userId: req.user.id,
+    userEmail: req.user.email
+  });
+
+  // Insert the new rate
+  const { data: insertedRate, error: insertError } = await supabase
+    .from(tableName)
+    .insert([{ ...rateData, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }])
+    .select()
+    .single();
+
+  if (insertError) {
+    log.error('❌ Error creating rate', insertError);
+    throw ErrorTypes.database('Failed to create rate');
+  }
+
+  // Create audit log entry
+  const auditEntry = {
+    table_name: tableName,
+    record_id: insertedRate.id,
+    field_name: 'created',
+    old_value: null,
+    new_value: JSON.stringify(insertedRate),
+    set_key: insertedRate.set_key,
+    product: insertedRate.product,
+    property: insertedRate.property,
+    min_ltv: insertedRate.min_ltv,
+    max_ltv: insertedRate.max_ltv,
+    user_id: req.user.id,
+    user_email: req.user.email,
+    user_name: req.user.name || req.user.email
+  };
+
+  const { error: auditError } = await supabase
+    .from('rate_audit_log')
+    .insert(auditEntry);
+
+  if (auditError) {
+    log.error('⚠️ Failed to create audit log entry for new rate', auditError);
+  }
+
+  res.status(201).json({
+    success: true,
+    rate: insertedRate,
+    message: 'Rate created successfully'
+  });
+}));
+
+// PUT /api/rates/:id
+// Full update of a rate record (Admin only)
+router.put('/:id', authenticateToken, requireAccessLevel(1), asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { rate, tableName } = req.body;
+
+  // Validate required fields
+  if (!id) {
+    throw ErrorTypes.validation('Missing rate id');
+  }
+  if (!rate || typeof rate !== 'object') {
+    throw ErrorTypes.validation('Missing rate data');
+  }
+  if (!tableName) {
+    throw ErrorTypes.validation('Missing tableName');
+  }
+
+  // Validate table name
+  const allowedTables = ['bridge_fusion_rates_full', 'rates_flat'];
+  if (!allowedTables.includes(tableName)) {
+    throw ErrorTypes.validation('Invalid table name');
+  }
+
+  log.info('PUT /api/rates/:id - updating rate', {
+    id,
+    tableName,
+    userId: req.user.id,
+    userEmail: req.user.email
+  });
+
+  // Update the rate
+  const { data: updatedRate, error: updateError } = await supabase
+    .from(tableName)
+    .update({ ...rate, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (updateError) {
+    log.error('❌ Error updating rate', updateError);
+    throw ErrorTypes.database('Failed to update rate');
+  }
+
+  res.json({
+    success: true,
+    rate: updatedRate,
+    message: 'Rate updated successfully'
+  });
+}));
+
+// DELETE /api/rates/:id
+// Delete a single rate (Admin only)
+router.delete('/:id', authenticateToken, requireAccessLevel(1), asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { tableName } = req.query;
+
+  // Validate required fields
+  if (!id) {
+    throw ErrorTypes.validation('Missing rate id');
+  }
+  if (!tableName) {
+    throw ErrorTypes.validation('Missing tableName query parameter');
+  }
+
+  // Validate table name
+  const allowedTables = ['bridge_fusion_rates_full', 'rates_flat'];
+  if (!allowedTables.includes(tableName)) {
+    throw ErrorTypes.validation('Invalid table name');
+  }
+
+  log.info('DELETE /api/rates/:id - deleting rate', {
+    id,
+    tableName,
+    userId: req.user.id,
+    userEmail: req.user.email
+  });
+
+  // Delete the rate
+  const { error: deleteError } = await supabase
+    .from(tableName)
+    .delete()
+    .eq('id', id);
+
+  if (deleteError) {
+    log.error('❌ Error deleting rate', deleteError);
+    throw ErrorTypes.database('Failed to delete rate');
+  }
+
+  res.json({
+    success: true,
+    message: 'Rate deleted successfully'
+  });
+}));
+
+// DELETE /api/rates/bulk
+// Delete multiple rates (Admin only)
+router.delete('/bulk', authenticateToken, requireAccessLevel(1), asyncHandler(async (req, res) => {
+  const { ids, tableName } = req.body;
+
+  // Validate required fields
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    throw ErrorTypes.validation('Missing or invalid ids array');
+  }
+  if (!tableName) {
+    throw ErrorTypes.validation('Missing tableName');
+  }
+
+  // Validate table name
+  const allowedTables = ['bridge_fusion_rates_full', 'rates_flat'];
+  if (!allowedTables.includes(tableName)) {
+    throw ErrorTypes.validation('Invalid table name');
+  }
+
+  log.info('DELETE /api/rates/bulk - deleting multiple rates', {
+    ids,
+    tableName,
+    userId: req.user.id,
+    userEmail: req.user.email
+  });
+
+  // Delete the rates
+  const { error: deleteError } = await supabase
+    .from(tableName)
+    .delete()
+    .in('id', ids);
+
+  if (deleteError) {
+    log.error('❌ Error bulk deleting rates', deleteError);
+    throw ErrorTypes.database('Failed to bulk delete rates');
+  }
+
+  res.json({
+    success: true,
+    deletedCount: ids.length,
+    message: `${ids.length} rates deleted successfully`
+  });
+}));
+
+// POST /api/rates/import
+// Bulk import/upsert rates from CSV (Admin only)
+router.post('/import', authenticateToken, requireAccessLevel(1), asyncHandler(async (req, res) => {
+  const { records, tableName, onConflict } = req.body;
+
+  // Validate required fields
+  if (!records || !Array.isArray(records) || records.length === 0) {
+    throw ErrorTypes.validation('Missing or invalid records array');
+  }
+  if (!tableName) {
+    throw ErrorTypes.validation('Missing tableName');
+  }
+
+  // Validate table name
+  const allowedTables = ['bridge_fusion_rates_full', 'rates_flat'];
+  if (!allowedTables.includes(tableName)) {
+    throw ErrorTypes.validation('Invalid table name');
+  }
+
+  log.info('POST /api/rates/import - bulk importing rates', {
+    recordCount: records.length,
+    tableName,
+    onConflict,
+    userId: req.user.id,
+    userEmail: req.user.email
+  });
+
+  // Process in chunks
+  const chunkSize = 200;
+  let totalUpserted = 0;
+  const errors = [];
+
+  for (let i = 0; i < records.length; i += chunkSize) {
+    const chunk = records.slice(i, i + chunkSize);
+    
+    const { data, error } = await supabase
+      .from(tableName)
+      .upsert(chunk, { onConflict: onConflict || undefined })
+      .select();
+
+    if (error) {
+      log.error(`❌ Error importing chunk ${i / chunkSize + 1}`, error);
+      errors.push({ chunk: i / chunkSize + 1, error: error.message });
+    } else {
+      totalUpserted += data?.length || chunk.length;
+    }
+  }
+
+  if (errors.length > 0 && totalUpserted === 0) {
+    throw ErrorTypes.database('Failed to import rates: ' + errors.map(e => e.error).join(', '));
+  }
+
+  res.json({
+    success: true,
+    importedCount: totalUpserted,
+    errors: errors.length > 0 ? errors : undefined,
+    message: errors.length > 0 
+      ? `Imported ${totalUpserted} rates with ${errors.length} chunk errors`
+      : `${totalUpserted} rates imported successfully`
+  });
 }));
 
 export default router;

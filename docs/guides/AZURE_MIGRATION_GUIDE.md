@@ -50,10 +50,6 @@ SUPPORT_EMAIL=<support-email>
 ### Frontend Environment Variables (REQUIRED)
 
 ```plaintext
-# Supabase (Frontend)
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=<your-anon-key>
-
 # Backend API URL
 VITE_API_URL=https://wa-mfs-sf-calculator-001-f5gngdd7eyambdfb.uksouth-01.azurewebsites.net
 

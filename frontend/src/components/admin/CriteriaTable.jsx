@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuth } from '../../contexts/AuthContext';
 import WelcomeHeader from '../shared/WelcomeHeader';
 import SalesforceIcon from "../shared/SalesforceIcon";
 import CriteriaEditModal from './CriteriaEditModal';
 import NotificationModal from '../modals/NotificationModal';
 import '../../styles/slds.css';
 import '../../styles/admin-tables.css';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 function CriteriaTable() {
   const [criteria, setCriteria] = useState([]);
@@ -35,12 +37,12 @@ function CriteriaTable() {
   // Notification state
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
 
-  const { supabase } = useSupabase();
+  const { token } = useAuth();
 
   // Exclude bookkeeping and unique identifier fields from UI and export/import
   const excluded = new Set(['created_at', 'updated_at', 'id']);
 
-  // sanitize a record before sending to Supabase:
+  // sanitize a record before sending to the API:
   // - remove id/timestamps
   // - convert empty-string values to null (Postgres integer columns cannot accept "")
   // - coerce numeric-looking values to Number for obvious numeric columns
@@ -92,35 +94,43 @@ function CriteriaTable() {
     setLoading(true);
     setError(null);
     try {
-      // First, fetch all data to populate filter options
-      const { data: allData, error: allDataError } = await supabase
-        .from('criteria_config_flat')
-        .select('criteria_set, product_scope, question_group');
+      // Fetch filter options
+      const filterResponse = await fetch(`${API_BASE_URL}/api/criteria/filter-options`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
-      if (allDataError) throw allDataError;
+      if (filterResponse.ok) {
+        const filterData = await filterResponse.json();
+        setFilterOptions({
+          criteriaSets: new Set(filterData.criteriaSets || []),
+          productScopes: new Set(filterData.productScopes || []),
+          questionGroups: new Set(filterData.questionGroups || []),
+        });
+      }
 
-      // Update filter options
-      setFilterOptions({
-        criteriaSets: new Set(allData.map(c => c.criteria_set).filter(Boolean)),
-        productScopes: new Set(allData.map(c => c.product_scope).filter(Boolean)),
-        questionGroups: new Set(allData.map(c => c.question_group).filter(Boolean)),
+      // Build query params for filtered data
+      const params = new URLSearchParams();
+      if (filters.criteria_set) params.append('criteria_set', filters.criteria_set);
+      if (filters.product_scope) params.append('product_scope', filters.product_scope);
+
+      const response = await fetch(`${API_BASE_URL}/api/criteria?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Then fetch filtered data
-      let query = supabase
-        .from('criteria_config_flat')
-        .select('*');
-      
-      // Apply filters
-      if (filters.criteria_set) query = query.eq('criteria_set', filters.criteria_set);
-      if (filters.product_scope) query = query.eq('product_scope', filters.product_scope);
-      if (filters.question_group) query = query.eq('question_group', filters.question_group);
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to fetch criteria');
+      }
 
-      setCriteria(data);
+      const data = await response.json();
+      
+      // Filter by question_group client-side if specified (API may not support it)
+      let filteredData = data.criteria || [];
+      if (filters.question_group) {
+        filteredData = filteredData.filter(c => c.question_group === filters.question_group);
+      }
+
+      setCriteria(filteredData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -220,58 +230,34 @@ function CriteriaTable() {
     setImportLoading(true);
     try {
       const { records } = importPreview;
-      // sanitize records: remove created_at/updated_at and coerce display_order
       // sanitize records (remove id/timestamps, convert empty strings to null, coerce numeric strings)
       const prepared = records.map(r => sanitizeRecord(r));
 
-      // Batch upsert: try a single upsert with ON CONFLICT first (fast),
-      // but Postgres requires a unique constraint matching the conflict target.
-      // If the DB doesn't have that constraint, fall back to a safe per-record
-      // insert-or-update loop (slower but reliable).
-      const chunkSize = 50;
-      for (let i = 0; i < prepared.length; i += chunkSize) {
-        const chunk = prepared.slice(i, i + chunkSize);
-        try {
-          const { error } = await supabase
-            .from('criteria_config_flat')
-            .upsert(chunk, {
-              onConflict: 'criteria_set,product_scope,question_key,option_label'
-            });
-          if (error) throw error;
-        } catch (upsertErr) {
-          // Fallback: do per-record insert/update
-          for (const rec of chunk) {
-            const matchObj = {
-              criteria_set: rec.criteria_set,
-              product_scope: rec.product_scope,
-              question_key: rec.question_key,
-              option_label: rec.option_label
-            };
+      // Use backend API for import
+      const response = await fetch(`${API_BASE_URL}/api/criteria/import`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          records: prepared,
+          onConflict: 'criteria_set,product_scope,question_key,option_label'
+        })
+      });
 
-            // Check if a matching row exists
-            const { data: existing, error: selErr } = await supabase
-              .from('criteria_config_flat')
-              .select('id')
-              .match(matchObj)
-              .limit(1);
-            if (selErr) throw selErr;
-
-            if (existing && existing.length > 0) {
-              // update
-              const { error: upErr } = await supabase
-                .from('criteria_config_flat')
-                .update(rec)
-                .match(matchObj);
-              if (upErr) throw upErr;
-            } else {
-              const { error: insErr } = await supabase
-                .from('criteria_config_flat')
-                .insert(rec);
-              if (insErr) throw insErr;
-            }
-          }
-        }
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to import criteria');
       }
+
+      const result = await response.json();
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Import Complete',
+        message: result.message || `Successfully imported ${prepared.length} criteria`
+      });
 
       // refresh - clear preview and reload criteria
       setShowImportPreview(false);
@@ -337,65 +323,115 @@ function CriteriaTable() {
   };
 
   // Save handler: use insert for new records, update for edits.
-  // Avoids relying on ON CONFLICT which requires a DB unique constraint.
   const handleSave = async (updatedCriteria, isNew, original) => {
-      try {
-        const sanitized = sanitizeRecord(updatedCriteria);
-        if (isNew) {
-          const { error } = await supabase
-            .from('criteria_config_flat')
-            .insert([sanitized]);
-          if (error) throw error;
-        } else {
+    try {
+      const sanitized = sanitizeRecord(updatedCriteria);
+      
+      if (isNew) {
+        // Create new criteria
+        const response = await fetch(`${API_BASE_URL}/api/criteria`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ criteria: sanitized })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to create criteria');
+        }
+      } else {
+        // Update existing criteria
+        if (updatedCriteria.id) {
           // Prefer id-based update when available
-          if (sanitized.id) {
-            const { error } = await supabase
-              .from('criteria_config_flat')
-              .update(sanitized)
-              .eq('id', sanitized.id);
-            if (error) throw error;
-          } else {
-            // Fallback: update using composite key fields
-            const matchObj = original ? {
-              criteria_set: original.criteria_set,
-              product_scope: original.product_scope,
-              question_key: original.question_key,
-              option_label: original.option_label
-            } : {
-              criteria_set: sanitized.criteria_set,
-              product_scope: sanitized.product_scope,
-              question_key: sanitized.question_key,
-              option_label: sanitized.option_label
-            };
-            const { error } = await supabase
-              .from('criteria_config_flat')
-              .update(sanitized)
-              .match(matchObj);
-            if (error) throw error;
+          const response = await fetch(`${API_BASE_URL}/api/criteria/${updatedCriteria.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ criteria: sanitized })
+          });
+
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.message || 'Failed to update criteria');
+          }
+        } else {
+          // Fallback: update using composite key fields
+          const matchKey = original ? {
+            criteria_set: original.criteria_set,
+            product_scope: original.product_scope,
+            question_key: original.question_key,
+            option_label: original.option_label
+          } : {
+            criteria_set: sanitized.criteria_set,
+            product_scope: sanitized.product_scope,
+            question_key: sanitized.question_key,
+            option_label: sanitized.option_label
+          };
+
+          const response = await fetch(`${API_BASE_URL}/api/criteria/by-key`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ criteria: sanitized, matchKey })
+          });
+
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.message || 'Failed to update criteria');
           }
         }
+      }
 
       setEditingCriteria(null);
       fetchCriteria();
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Success',
+        message: isNew ? 'Criteria created successfully' : 'Criteria updated successfully'
+      });
     } catch (err) {
       setError(err.message || String(err));
     }
   };
 
-  const handleDelete = async (criteria) => {
+  const handleDelete = async (criteriaItem) => {
     if (window.confirm('Are you sure you want to delete this criteria?')) {
       try {
-        const { error } = await supabase
-          .from('criteria_config_flat')
-          .delete()
-          .eq('criteria_set', criteria.criteria_set)
-          .eq('product_scope', criteria.product_scope)
-          .eq('question_key', criteria.question_key)
-          .eq('option_label', criteria.option_label);
+        const response = await fetch(`${API_BASE_URL}/api/criteria/by-key`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            criteria_set: criteriaItem.criteria_set,
+            product_scope: criteriaItem.product_scope,
+            question_key: criteriaItem.question_key,
+            option_label: criteriaItem.option_label
+          })
+        });
 
-        if (error) throw error;
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to delete criteria');
+        }
+
         fetchCriteria();
         setSelectedRows(new Set());
+        setNotification({
+          show: true,
+          type: 'success',
+          title: 'Success',
+          message: 'Criteria deleted successfully'
+        });
       } catch (err) {
         setError(err.message);
       }
@@ -414,22 +450,38 @@ function CriteriaTable() {
         // Get the selected criteria objects
         const selectedCriteria = getCurrentPageCriteria().filter(c => selectedRows.has(getItemKey(c)));
         
-        // Delete each selected criteria
-        for (const criteria of selectedCriteria) {
-          const { error } = await supabase
-            .from('criteria_config_flat')
-            .delete()
-            .eq('criteria_set', criteria.criteria_set)
-            .eq('product_scope', criteria.product_scope)
-            .eq('question_key', criteria.question_key)
-            .eq('option_label', criteria.option_label);
-          
-          if (error) throw error;
+        // Bulk delete via API
+        const response = await fetch(`${API_BASE_URL}/api/criteria/bulk-delete`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            criteria: selectedCriteria.map(c => ({
+              criteria_set: c.criteria_set,
+              product_scope: c.product_scope,
+              question_key: c.question_key,
+              option_label: c.option_label
+            }))
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to delete criteria');
         }
 
+        const result = await response.json();
         fetchCriteria();
         setSelectedRows(new Set());
         setSelectAll(false);
+        setNotification({
+          show: true,
+          type: 'success',
+          title: 'Success',
+          message: result.message || `${selectedCriteria.length} criteria deleted successfully`
+        });
       } catch (err) {
         setError(err.message);
       }

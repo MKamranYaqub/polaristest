@@ -70,8 +70,8 @@ Vercel (Frontend) → VITE_API_URL → Render (Backend)
 
 ### Vercel (Frontend):
 - ✅ `VITE_API_URL` - Backend URL from Render
-- ✅ `VITE_SUPABASE_URL` - Your Supabase project URL
-- ✅ `VITE_SUPABASE_ANON_KEY` - Your Supabase anon key
+
+Note: Supabase credentials must NOT be configured in the frontend.
 
 ### Render (Backend):
 - ✅ `SUPABASE_URL` - Your Supabase project URL

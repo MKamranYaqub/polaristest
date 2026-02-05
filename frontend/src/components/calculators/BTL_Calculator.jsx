@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useSupabase } from '../../contexts/SupabaseContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { API_BASE_URL } from '../../config/api';
 import { useToast } from '../../contexts/ToastContext';
 import SalesforceIcon from '../shared/SalesforceIcon';
 import '../../styles/slds.css';
@@ -78,7 +78,6 @@ export default function BTLcalculator({
   fixedRange = null,
   allowedScopes = null // Optional: filter which product scopes are available in dropdown
 }) {
-  const { supabase } = useSupabase();
   const { canEditCalculators, token } = useAuth();
   const { showToast } = useToast();
   const location = useLocation();
@@ -193,13 +192,16 @@ export default function BTLcalculator({
       setLoading(true);
       setError(null);
       try {
-        const { data, error: e } = await supabase
-          .from('criteria_config_flat')
-          .select('*');
-        if (e) throw e;
-        // Debug log rows count
-         
-        setAllCriteria(data || []);
+        // Fetch criteria via backend API instead of direct Supabase
+        const response = await fetch(`${API_BASE_URL}/api/criteria`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to load criteria');
+        }
+        const result = await response.json();
+        setAllCriteria(result.criteria || []);
       } catch (err) {
         setError(err.message || String(err));
       } finally {
@@ -207,7 +209,7 @@ export default function BTLcalculator({
       }
     }
     loadAll();
-  }, [supabase]);
+  }, [token]);
 
   // helper to format currency inputs with thousand separators (display-only)
   const formatCurrencyInput = (v) => {
@@ -579,8 +581,6 @@ export default function BTLcalculator({
 
   // Fetch relevant rates whenever productScope, currentTier or productType changes
   useEffect(() => {
-    if (!supabase) return;
-    
     // Skip fetching from rates_flat if we loaded results from a saved quote
     // The saved quote already has computed results; fetching raw rates would overwrite them
     if (loadedFromSavedQuoteRef.current) {
@@ -597,11 +597,19 @@ export default function BTLcalculator({
         return;
       }
       try {
-        const { data, error } = await supabase.from('rates_flat').select('*');
-        if (error) throw error;
+        // Fetch rates via backend API instead of direct Supabase
+        const response = await fetch(`${API_BASE_URL}/api/rates?limit=2000`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to load rates');
+        }
+        const result = await response.json();
+        const data = result.rates || [];
         
         // Filter to only active rates that are within date range
-        const activeData = filterActiveRates(data || []);
+        const activeData = filterActiveRates(data);
   // Filter client-side to avoid DB column mismatch errors.
   // We'll build matched using an explicit loop so we can collect debug samples when nothing matches.
   const debugSamples = [];
@@ -848,7 +856,7 @@ export default function BTLcalculator({
       }
     }
     fetchRelevant();
-  }, [supabase, productScope, currentTier, productType, retentionChoice, retentionLtv, selectedRange]);
+  }, [token, productScope, currentTier, productType, retentionChoice, retentionLtv, selectedRange]);
 
   // Update optimized values state after calculations complete
   // This runs after render to avoid infinite loop
@@ -1496,15 +1504,6 @@ export default function BTLcalculator({
 
     setFilteredRatesForDip(filtered);
   };
-
-  // Defensive: show helpful message if Supabase client missing
-  if (!supabase) {
-    return (
-      <div className="slds-p-around_medium">
-        <div className="slds-text-color_error">Database client not available. Calculator cannot load data.</div>
-      </div>
-    );
-  }
 
   // Visible debug header so the page is never blank
   const totalRows = allCriteria.length;

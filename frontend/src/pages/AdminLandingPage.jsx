@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useSupabase } from '../contexts/SupabaseContext';
+import { API_BASE_URL } from '../config/api';
 import PropTypes from 'prop-types';
 
 // Loading skeleton component for professional loading state
@@ -24,8 +24,7 @@ SkeletonPulse.propTypes = {
 };
 
 const AdminLandingPage = () => {
-  const { user } = useAuth();
-  const { supabase } = useSupabase();
+  const { user, token } = useAuth();
   
   // Dynamic stats state
   const [stats, setStats] = useState({
@@ -42,57 +41,32 @@ const AdminLandingPage = () => {
   // Fetch dynamic stats on mount
   useEffect(() => {
     const fetchStats = async () => {
-      if (!supabase) {
-        console.warn('Supabase client not available');
-        setError('Database connection unavailable');
+      if (!token) {
+        console.warn('Auth token not available');
+        setError('Not authenticated');
         setLoading(false);
         return;
       }
       
       try {
-        // Get today's date at midnight for filtering
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayISO = today.toISOString();
-        
-        // Fetch all counts in parallel
-        const [
-          usersResult, 
-          btlRatesResult, 
-          bridgingRatesResult, 
-          btlQuotesResult,
-          bridgeQuotesResult,
-          supportResult, 
-          criteriaResult
-        ] = await Promise.all([
-          supabase.from('users').select('*', { count: 'exact', head: true }),
-          supabase.from('rates_flat').select('*', { count: 'exact', head: true }),
-          supabase.from('bridge_fusion_rates_full').select('*', { count: 'exact', head: true }),
-          supabase.from('quotes').select('*', { count: 'exact', head: true }).gte('created_at', todayISO),
-          supabase.from('bridge_quotes').select('*', { count: 'exact', head: true }).gte('created_at', todayISO),
-          supabase.from('support_requests').select('*', { count: 'exact', head: true }).in('status', ['open', 'pending']),
-          supabase.from('criteria_config_flat').select('*', { count: 'exact', head: true })
-        ]);
-        
-        // Log any errors for debugging
-        const results = { usersResult, btlRatesResult, bridgingRatesResult, btlQuotesResult, bridgeQuotesResult, supportResult, criteriaResult };
-        Object.entries(results).forEach(([key, result]) => {
-          if (result.error) {
-            console.error(`Error fetching ${key}:`, result.error.message);
-          }
+        // Fetch stats from the API
+        const response = await fetch(`${API_BASE_URL}/api/admin/stats`, {
+          headers: { Authorization: `Bearer ${token}` }
         });
         
-        // Calculate combined quotes today
-        const btlToday = btlQuotesResult.count || 0;
-        const bridgeToday = bridgeQuotesResult.count || 0;
+        if (!response.ok) {
+          throw new Error('Failed to fetch admin stats');
+        }
+        
+        const data = await response.json();
         
         setStats({
-          users: usersResult.count || 0,
-          btlRates: btlRatesResult.count || 0,
-          bridgingRates: bridgingRatesResult.count || 0,
-          quotesToday: btlToday + bridgeToday,
-          supportRequests: supportResult.count || 0,
-          criteriaRules: criteriaResult.count || 0
+          users: data.users || 0,
+          btlRates: data.btlRates || 0,
+          bridgingRates: data.bridgingRates || 0,
+          quotesToday: data.quotesToday || 0,
+          supportRequests: data.supportRequests || 0,
+          criteriaRules: data.criteriaRules || 0
         });
         
       } catch (err) {
@@ -104,7 +78,7 @@ const AdminLandingPage = () => {
     };
     
     fetchStats();
-  }, [supabase]);
+  }, [token]);
 
   const adminTools = [
     {

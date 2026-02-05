@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { useSupabase } from './SupabaseContext';
+import { useAuth } from './AuthContext';
+import { API_BASE_URL } from '../config/api';
 import {
   MARKET_RATES as DEFAULT_MARKET_RATES,
   PRODUCT_TYPES_LIST as DEFAULT_PRODUCT_TYPES_LIST,
@@ -18,13 +19,13 @@ import {
  * AppSettingsContext
  * 
  * Provides centralized access to app settings (market rates, broker settings, etc.)
- * from Supabase database, with localStorage fallback.
+ * from backend API, with localStorage fallback.
  * 
  * This solves the issue where localStorage is unavailable or partitioned in
  * Salesforce iframe contexts due to third-party storage restrictions.
  * 
  * Priority order:
- * 1. Supabase app_settings table (source of truth)
+ * 1. Backend API (source of truth)
  * 2. localStorage cache (for offline/quick access)
  * 3. Hardcoded defaults (failsafe)
  */
@@ -64,7 +65,7 @@ function isInIframe() {
 }
 
 export function AppSettingsProvider({ children }) {
-  const { supabase } = useSupabase();
+  const { token } = useAuth();
   
   // Initialize from localStorage synchronously (if available) before async Supabase fetch
   // This provides immediate values for components that render before Supabase responds
@@ -106,43 +107,23 @@ export function AppSettingsProvider({ children }) {
   const [isIframe] = useState(isInIframe);
   const [initialized, setInitialized] = useState(false);
 
-  // Load ALL settings from Supabase (app_settings + results_configuration)
-  const loadFromSupabase = useCallback(async () => {
-    if (!supabase) {
-      console.warn('Supabase client not available');
+  // Load ALL settings from backend API (app_settings + results_configuration)
+  const loadFromAPI = useCallback(async () => {
+    if (!token) {
+      // Token not ready yet - this is normal on initial load
       return null;
     }
 
     try {
-      // Load from app_settings table (Constants page data)
-      const { data: appSettingsData, error: appSettingsError } = await supabase
-        .from('app_settings')
-        .select('key, value')
-        .in('key', [
-          'market_rates',
-          'product_lists',
-          'fee_columns',
-          'flat_above_commercial_rule',
-          'broker_routes',
-          'broker_commission_defaults',
-          'broker_commission_tolerance',
-          'funding_lines_btl',
-          'funding_lines_bridge',
-        ]);
-
-      if (appSettingsError) {
-        console.error('Error fetching app_settings:', appSettingsError);
-      }
-
-      // Load from results_configuration table (GlobalSettings page data)
-      const { data: resultsConfigData, error: resultsConfigError } = await supabase
-        .from('results_configuration')
-        .select('key, calculator_type, config')
-        .in('key', ['visibility', 'row_order', 'label_aliases', 'header_colors']);
-
-      if (resultsConfigError && resultsConfigError.code !== 'PGRST116') {
-        console.error('Error fetching results_configuration:', resultsConfigError);
-      }
+      // Load from both endpoints in parallel
+      const [appSettingsRes, resultsConfigRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/admin/settings?keys=market_rates,product_lists,fee_columns,flat_above_commercial_rule,broker_routes,broker_commission_defaults,broker_commission_tolerance,funding_lines_btl,funding_lines_bridge`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${API_BASE_URL}/api/admin/results-configuration`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
 
       const settings = {
         marketRates: DEFAULT_MARKET_RATES,
@@ -161,115 +142,131 @@ export function AppSettingsProvider({ children }) {
       };
 
       // Process app_settings data
-      if (appSettingsData && appSettingsData.length > 0) {
-        appSettingsData.forEach(row => {
-          if (!row.value) return;
-          switch (row.key) {
-            case 'market_rates':
-              settings.marketRates = row.value;
-              break;
-            case 'product_lists':
-              settings.productLists = row.value;
-              break;
-            case 'fee_columns':
-              settings.feeColumns = row.value;
-              break;
-            case 'flat_above_commercial_rule':
-              settings.flatAboveCommercialRule = row.value;
-              break;
-            case 'broker_routes':
-              settings.brokerRoutes = row.value;
-              break;
-            case 'broker_commission_defaults':
-              settings.brokerCommissionDefaults = row.value;
-              break;
-            case 'broker_commission_tolerance':
-              settings.brokerCommissionTolerance = row.value;
-              break;
-            case 'funding_lines_btl':
-              settings.fundingLinesBTL = row.value;
-              break;
-            case 'funding_lines_bridge':
-              settings.fundingLinesBridge = row.value;
-              break;
-          }
-        });
+      if (appSettingsRes.ok) {
+        const { data: appSettingsData } = await appSettingsRes.json();
+        if (appSettingsData && appSettingsData.length > 0) {
+          appSettingsData.forEach(row => {
+            if (!row.value) return;
+            switch (row.key) {
+              case 'market_rates':
+                settings.marketRates = row.value;
+                break;
+              case 'product_lists':
+                settings.productLists = row.value;
+                break;
+              case 'fee_columns':
+                settings.feeColumns = row.value;
+                break;
+              case 'flat_above_commercial_rule':
+                settings.flatAboveCommercialRule = row.value;
+                break;
+              case 'broker_routes':
+                settings.brokerRoutes = row.value;
+                break;
+              case 'broker_commission_defaults':
+                settings.brokerCommissionDefaults = row.value;
+                break;
+              case 'broker_commission_tolerance':
+                settings.brokerCommissionTolerance = row.value;
+                break;
+              case 'funding_lines_btl':
+                settings.fundingLinesBTL = row.value;
+                break;
+              case 'funding_lines_bridge':
+                settings.fundingLinesBridge = row.value;
+                break;
+            }
+          });
+        }
+      } else {
+        console.error('Error fetching app_settings from API');
       }
 
       // Process results_configuration data
-      if (resultsConfigData && resultsConfigData.length > 0) {
-        resultsConfigData.forEach(row => {
-          const config = typeof row.config === 'string' ? JSON.parse(row.config) : row.config;
-          const calcType = row.calculator_type;
-          
-          switch (row.key) {
-            case 'visibility':
-              settings.resultsVisibility[calcType] = config;
-              break;
-            case 'row_order':
-              settings.resultsRowOrder[calcType] = config;
-              break;
-            case 'label_aliases':
-              settings.resultsLabelAliases[calcType] = config;
-              break;
-            case 'header_colors':
-              settings.headerColors[calcType] = config;
-              break;
-          }
-        });
+      if (resultsConfigRes.ok) {
+        const { data: resultsConfigData } = await resultsConfigRes.json();
+        if (resultsConfigData && resultsConfigData.length > 0) {
+          resultsConfigData.forEach(row => {
+            const config = typeof row.config === 'string' ? JSON.parse(row.config) : row.config;
+            const calcType = row.calculator_type;
+            
+            switch (row.key) {
+              case 'visibility':
+                settings.resultsVisibility[calcType] = config;
+                break;
+              case 'row_order':
+                settings.resultsRowOrder[calcType] = config;
+                break;
+              case 'label_aliases':
+                settings.resultsLabelAliases[calcType] = config;
+                break;
+              case 'header_colors':
+                settings.headerColors[calcType] = config;
+                break;
+            }
+          });
+        }
+      } else if (resultsConfigRes.status !== 404) {
+        console.error('Error fetching results_configuration from API');
       }
 
       return settings;
     } catch (err) {
-      console.error('Failed to load app settings from Supabase:', err);
+      console.error('Failed to load app settings from API:', err);
       return null;
     }
-  }, [supabase]);
+  }, [token]);
 
   // Initialize settings on mount
   useEffect(() => {
+    // Wait for token to be available before initializing
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     let mounted = true;
 
     const initialize = async () => {
       setLoading(true);
       setError(null);
 
-      // Try to load from Supabase first (source of truth)
-      const supabaseSettings = await loadFromSupabase();
+      // Try to load from API first (source of truth)
+      const apiSettings = await loadFromAPI();
 
       if (!mounted) return;
 
-      if (supabaseSettings) {
-        // Got settings from Supabase - update all state
-        setMarketRates(supabaseSettings.marketRates);
-        setProductLists(supabaseSettings.productLists);
-        setFeeColumns(supabaseSettings.feeColumns);
-        setFlatAboveCommercialRule(supabaseSettings.flatAboveCommercialRule);
-        setBrokerRoutes(supabaseSettings.brokerRoutes);
-        setBrokerCommissionDefaults(supabaseSettings.brokerCommissionDefaults);
-        setBrokerCommissionTolerance(supabaseSettings.brokerCommissionTolerance);
-        setFundingLinesBTL(supabaseSettings.fundingLinesBTL);
-        setFundingLinesBridge(supabaseSettings.fundingLinesBridge);
-        setResultsVisibility(supabaseSettings.resultsVisibility);
-        setResultsRowOrder(supabaseSettings.resultsRowOrder);
-        setResultsLabelAliases(supabaseSettings.resultsLabelAliases);
-        setHeaderColors(supabaseSettings.headerColors);
+      if (apiSettings) {
+        // Got settings from API - update all state
+        setMarketRates(apiSettings.marketRates);
+        setProductLists(apiSettings.productLists);
+        setFeeColumns(apiSettings.feeColumns);
+        setFlatAboveCommercialRule(apiSettings.flatAboveCommercialRule);
+        setBrokerRoutes(apiSettings.brokerRoutes);
+        setBrokerCommissionDefaults(apiSettings.brokerCommissionDefaults);
+        setBrokerCommissionTolerance(apiSettings.brokerCommissionTolerance);
+        setFundingLinesBTL(apiSettings.fundingLinesBTL);
+        setFundingLinesBridge(apiSettings.fundingLinesBridge);
+        setResultsVisibility(apiSettings.resultsVisibility);
+        setResultsRowOrder(apiSettings.resultsRowOrder);
+        setResultsLabelAliases(apiSettings.resultsLabelAliases);
+        setHeaderColors(apiSettings.headerColors);
         
         // Update localStorage cache for components that still read from localStorage
         writeLocalStorage(LOCALSTORAGE_CONSTANTS_KEY, {
-          marketRates: supabaseSettings.marketRates,
-          productLists: supabaseSettings.productLists,
-          feeColumns: supabaseSettings.feeColumns,
-          flatAboveCommercialRule: supabaseSettings.flatAboveCommercialRule,
-          brokerRoutes: supabaseSettings.brokerRoutes,
-          brokerCommissionDefaults: supabaseSettings.brokerCommissionDefaults,
-          brokerCommissionTolerance: supabaseSettings.brokerCommissionTolerance,
-          fundingLinesBTL: supabaseSettings.fundingLinesBTL,
-          fundingLinesBridge: supabaseSettings.fundingLinesBridge,
-          resultsVisibility: supabaseSettings.resultsVisibility,
-          resultsRowOrder: supabaseSettings.resultsRowOrder,
-          resultsLabelAliases: supabaseSettings.resultsLabelAliases,
-          headerColors: supabaseSettings.headerColors,
+          marketRates: apiSettings.marketRates,
+          productLists: apiSettings.productLists,
+          feeColumns: apiSettings.feeColumns,
+          flatAboveCommercialRule: apiSettings.flatAboveCommercialRule,
+          brokerRoutes: apiSettings.brokerRoutes,
+          brokerCommissionDefaults: apiSettings.brokerCommissionDefaults,
+          brokerCommissionTolerance: apiSettings.brokerCommissionTolerance,
+          fundingLinesBTL: apiSettings.fundingLinesBTL,
+          fundingLinesBridge: apiSettings.fundingLinesBridge,
+          resultsVisibility: apiSettings.resultsVisibility,
+          resultsRowOrder: apiSettings.resultsRowOrder,
+          resultsLabelAliases: apiSettings.resultsLabelAliases,
+          headerColors: apiSettings.headerColors,
         });
         
       } else {
@@ -285,46 +282,46 @@ export function AppSettingsProvider({ children }) {
     return () => {
       mounted = false;
     };
-  }, [loadFromSupabase]);
+  }, [token, loadFromAPI]);
 
   // Refresh settings (can be called after admin updates)
   const refreshSettings = useCallback(async () => {
     setLoading(true);
-    const supabaseSettings = await loadFromSupabase();
-    if (supabaseSettings) {
-      setMarketRates(supabaseSettings.marketRates);
-      setProductLists(supabaseSettings.productLists);
-      setFeeColumns(supabaseSettings.feeColumns);
-      setFlatAboveCommercialRule(supabaseSettings.flatAboveCommercialRule);
-      setBrokerRoutes(supabaseSettings.brokerRoutes);
-      setBrokerCommissionDefaults(supabaseSettings.brokerCommissionDefaults);
-      setBrokerCommissionTolerance(supabaseSettings.brokerCommissionTolerance);
-      setFundingLinesBTL(supabaseSettings.fundingLinesBTL);
-      setFundingLinesBridge(supabaseSettings.fundingLinesBridge);
-      setResultsVisibility(supabaseSettings.resultsVisibility);
-      setResultsRowOrder(supabaseSettings.resultsRowOrder);
-      setResultsLabelAliases(supabaseSettings.resultsLabelAliases);
-      setHeaderColors(supabaseSettings.headerColors);
+    const apiSettings = await loadFromAPI();
+    if (apiSettings) {
+      setMarketRates(apiSettings.marketRates);
+      setProductLists(apiSettings.productLists);
+      setFeeColumns(apiSettings.feeColumns);
+      setFlatAboveCommercialRule(apiSettings.flatAboveCommercialRule);
+      setBrokerRoutes(apiSettings.brokerRoutes);
+      setBrokerCommissionDefaults(apiSettings.brokerCommissionDefaults);
+      setBrokerCommissionTolerance(apiSettings.brokerCommissionTolerance);
+      setFundingLinesBTL(apiSettings.fundingLinesBTL);
+      setFundingLinesBridge(apiSettings.fundingLinesBridge);
+      setResultsVisibility(apiSettings.resultsVisibility);
+      setResultsRowOrder(apiSettings.resultsRowOrder);
+      setResultsLabelAliases(apiSettings.resultsLabelAliases);
+      setHeaderColors(apiSettings.headerColors);
       
       // Update localStorage cache
       writeLocalStorage(LOCALSTORAGE_CONSTANTS_KEY, {
-        marketRates: supabaseSettings.marketRates,
-        productLists: supabaseSettings.productLists,
-        feeColumns: supabaseSettings.feeColumns,
-        flatAboveCommercialRule: supabaseSettings.flatAboveCommercialRule,
-        brokerRoutes: supabaseSettings.brokerRoutes,
-        brokerCommissionDefaults: supabaseSettings.brokerCommissionDefaults,
-        brokerCommissionTolerance: supabaseSettings.brokerCommissionTolerance,
-        fundingLinesBTL: supabaseSettings.fundingLinesBTL,
-        fundingLinesBridge: supabaseSettings.fundingLinesBridge,
-        resultsVisibility: supabaseSettings.resultsVisibility,
-        resultsRowOrder: supabaseSettings.resultsRowOrder,
-        resultsLabelAliases: supabaseSettings.resultsLabelAliases,
-        headerColors: supabaseSettings.headerColors,
+        marketRates: apiSettings.marketRates,
+        productLists: apiSettings.productLists,
+        feeColumns: apiSettings.feeColumns,
+        flatAboveCommercialRule: apiSettings.flatAboveCommercialRule,
+        brokerRoutes: apiSettings.brokerRoutes,
+        brokerCommissionDefaults: apiSettings.brokerCommissionDefaults,
+        brokerCommissionTolerance: apiSettings.brokerCommissionTolerance,
+        fundingLinesBTL: apiSettings.fundingLinesBTL,
+        fundingLinesBridge: apiSettings.fundingLinesBridge,
+        resultsVisibility: apiSettings.resultsVisibility,
+        resultsRowOrder: apiSettings.resultsRowOrder,
+        resultsLabelAliases: apiSettings.resultsLabelAliases,
+        headerColors: apiSettings.headerColors,
       });
     }
     setLoading(false);
-  }, [loadFromSupabase]);
+  }, [loadFromAPI]);
 
   const value = {
     // Constants page settings
