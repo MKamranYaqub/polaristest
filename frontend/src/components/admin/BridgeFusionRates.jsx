@@ -371,22 +371,58 @@ function BridgeFusionRates() {
 
         if (!mapped || mapped.length === 0) { setError('No valid records found in CSV. Ensure each row includes set_key etc.'); const fileEl = document.getElementById('bridge-csv-import'); if (fileEl) fileEl.value = ''; return; }
 
-        const cleaned = mapped.map(r => {
+        // Remove any DB-managed fields (id, timestamps) before insert
+        const cleanedRecords = mapped.map(r => {
           const rec = { ...r };
-          if ('created_at' in rec) delete rec.created_at; if ('updated_at' in rec) delete rec.updated_at; if ('id' in rec) delete rec.id;
-          // ensure type and product_fee exist
+          if ('created_at' in rec) delete rec.created_at;
+          if ('updated_at' in rec) delete rec.updated_at;
+          if ('id' in rec) delete rec.id;
+          // Remove 'status' column - only 'rate_status' exists in DB
+          if ('status' in rec) delete rec.status;
+
+          // Convert date strings to PostgreSQL format (YYYY-MM-DD)
+          // Handle DD/MM/YYYY, MM/DD/YYYY, or empty values
+          const convertDate = (dateStr) => {
+            if (!dateStr || dateStr === '' || dateStr === undefined) return null;
+            const str = String(dateStr).trim();
+            if (!str) return null;
+            // Already in YYYY-MM-DD format
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+            // DD/MM/YYYY format (UK) - convert to YYYY-MM-DD
+            const ukMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (ukMatch) {
+              const [, day, month, year] = ukMatch;
+              return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            }
+            return null; // Invalid format
+          };
+          rec.start_date = convertDate(rec.start_date);
+          rec.end_date = convertDate(rec.end_date);
+
+          // ensure type and product_fee exist with defaults
           if (!rec.type) rec.type = 'Fixed';
           if (rec.product_fee === null || rec.product_fee === undefined) rec.product_fee = 2;
+
           return rec;
         });
 
+        // Upsert in chunks (updates existing records if key matches, inserts new ones)
+        // Key columns match the idx_bridge_fusion_rates_unique constraint
+        const onConflictCols = 'set_key,property,product,type,charge_type,product_fee,min_ltv,max_ltv,start_date';
         const chunkSize = 200;
-        for (let i = 0; i < cleaned.length; i += chunkSize) {
-          const chunk = cleaned.slice(i, i + chunkSize);
-          // Insert new records (does not update existing)
-          const { error } = await supabase.from('bridge_fusion_rates_full').insert(chunk);
-          if (error) { setError(error.message || JSON.stringify(error)); return; }
+        for (let i = 0; i < cleanedRecords.length; i += chunkSize) {
+          const chunk = cleanedRecords.slice(i, i + chunkSize);
+          const { error } = await supabase
+            .from('bridge_fusion_rates_full')
+            .upsert(chunk, { onConflict: onConflictCols });
+
+          if (error) {
+            setError(error.message || JSON.stringify(error));
+            return;
+          }
         }
+
+        // Refresh table after import
         setSelectedRows(new Set()); setSelectAll(false);
         await fetch();
       } catch (err) { setError(err.message || String(err)); }
