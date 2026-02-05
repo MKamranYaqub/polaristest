@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useSupabase } from '../../contexts/SupabaseContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { API_BASE_URL } from '../../config/api';
 import { useToast } from '../../contexts/ToastContext';
 import SalesforceIcon from '../shared/SalesforceIcon';
 import '../../styles/slds.css';
@@ -24,7 +24,7 @@ import { getQuote, upsertQuoteData, saveUWChecklistState, loadUWChecklistState }
 import { downloadDIPPDF } from '../../utils/generateDIPPDF';
 import { downloadQuotePDF } from '../../utils/generateQuotePDF';
 import { parseNumber, formatCurrency, formatPercent } from '../../utils/calculator/numberFormatting';
-import { computeTierFromAnswers } from '../../utils/calculator/rateFiltering';
+import { computeTierFromAnswers, filterActiveRates } from '../../utils/calculator/rateFiltering';
 import { computeBTLLoan } from '../../utils/btlCalculationEngine';
 import CollapsibleSection from '../calculator/CollapsibleSection';
 import UWRequirementsChecklist from '../shared/UWRequirementsChecklist';
@@ -71,8 +71,13 @@ function parseRateMetadata(rate) {
   };
 }
 
-export default function BTLcalculator({ initialQuote = null }) {
-  const { supabase } = useSupabase();
+export default function BTLcalculator({ 
+  initialQuote = null,
+  publicMode = false,
+  fixedProductScope = null,
+  fixedRange = null,
+  allowedScopes = null // Optional: filter which product scopes are available in dropdown
+}) {
   const { canEditCalculators, token } = useAuth();
   const { showToast } = useToast();
   const location = useLocation();
@@ -82,13 +87,19 @@ export default function BTLcalculator({ initialQuote = null }) {
   
   // Check if user has permission to edit calculator fields
   // Access levels 1-3 can edit, level 4 (Underwriter) is read-only
-  const isReadOnly = !canEditCalculators();
-  
-  // Use custom hook for broker settings
-  const brokerSettings = useBrokerSettings(effectiveInitialQuote);
+  // In public mode, users can edit but product scope is locked
+  const isReadOnly = !publicMode && !canEditCalculators();
   
   // Range toggle state (Core or Specialist) - moved before hooks that depend on it
-  const [selectedRange, setSelectedRange] = useState('specialist');
+  // In public mode, use fixedRange if provided
+  const [selectedRange, setSelectedRange] = useState(fixedRange || 'specialist');
+  
+  // Determine calculator type based on selected range for proc fee selection
+  // 'btl' = BTL Specialist, 'core' = BTL Core range
+  const calculatorTypeForProcFee = selectedRange === 'core' ? 'core' : 'btl';
+  
+  // Use custom hook for broker settings - pass dynamic calculator type based on range
+  const brokerSettings = useBrokerSettings(effectiveInitialQuote, calculatorTypeForProcFee);
   
   // Use custom hook for results table visibility - dynamically switch based on selected range
   const calculatorTypeForSettings = selectedRange === 'core' ? 'core' : 'btl';
@@ -104,7 +115,8 @@ export default function BTLcalculator({ initialQuote = null }) {
   const [loading, setLoading] = useState(true);
   // This Calculator is restricted to BTL criteria only per user's request
   const criteriaSet = 'BTL';
-  const [productScope, setProductScope] = useState('');
+  // In public mode, use fixedProductScope if provided
+  const [productScope, setProductScope] = useState(fixedProductScope || '');
   const [retentionChoice, setRetentionChoice] = useState('No'); // default to 'No' to avoid 'Any' behaviour on load
   const [retentionLtv, setRetentionLtv] = useState('75'); // '65' or '75'
   const [topSlicing, setTopSlicing] = useState('');
@@ -180,13 +192,16 @@ export default function BTLcalculator({ initialQuote = null }) {
       setLoading(true);
       setError(null);
       try {
-        const { data, error: e } = await supabase
-          .from('criteria_config_flat')
-          .select('*');
-        if (e) throw e;
-        // Debug log rows count
-         
-        setAllCriteria(data || []);
+        // Fetch criteria via backend API instead of direct Supabase
+        const response = await fetch(`${API_BASE_URL}/api/criteria`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to load criteria');
+        }
+        const result = await response.json();
+        setAllCriteria(result.criteria || []);
       } catch (err) {
         setError(err.message || String(err));
       } finally {
@@ -194,7 +209,7 @@ export default function BTLcalculator({ initialQuote = null }) {
       }
     }
     loadAll();
-  }, [supabase]);
+  }, [token]);
 
   // helper to format currency inputs with thousand separators (display-only)
   const formatCurrencyInput = (v) => {
@@ -235,9 +250,14 @@ export default function BTLcalculator({ initialQuote = null }) {
       });
     });
 
-    // sort options by tier ascending
+    // Sort options by tier ascending, then by id as tiebreaker for same tier
     Object.keys(map).forEach((k) => {
-      map[k].options.sort((a, b) => (Number(a.tier) || 0) - (Number(b.tier) || 0));
+      map[k].options.sort((a, b) => {
+        const tierDiff = (Number(a.tier) || 0) - (Number(b.tier) || 0);
+        if (tierDiff !== 0) return tierDiff;
+        // Same tier: sort by id (database row order) to maintain consistent order
+        return (Number(a.id) || 0) - (Number(b.id) || 0);
+      });
     });
 
   setQuestions(map);
@@ -252,16 +272,39 @@ export default function BTLcalculator({ initialQuote = null }) {
     }
   }, [allCriteria, productScope, effectiveInitialQuote]);
 
+  // Memoized BTL scopes for auto-select (filtered by criteria_set = 'btl')
+  const btlScopes = React.useMemo(() => {
+    const normalizeStr = (s) => (s || '').toString().trim().toLowerCase();
+    
+    // Filter to only BTL criteria
+    const btlCriteria = allCriteria.filter((r) => {
+      if (!r) return false;
+      const cs = normalizeStr(r.criteria_set);
+      return cs === 'btl';
+    });
+    
+    // Get unique scopes and sort
+    const scopes = Array.from(new Set(btlCriteria.map(r => r.product_scope).filter(Boolean)));
+    const sortOrder = ['residential - btl', 'residential', 'commercial', 'semi-commercial', 'semi commercial'];
+    return scopes.sort((a, b) => {
+      const aLower = a.toLowerCase();
+      const bLower = b.toLowerCase();
+      const aIndex = sortOrder.findIndex(s => aLower.includes(s) || s.includes(aLower));
+      const bIndex = sortOrder.findIndex(s => bLower.includes(s) || s.includes(bLower));
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }, [allCriteria]);
+
   // Auto-select a product scope when data loads if none selected
   useEffect(() => {
     // Skip auto-setting defaults if we're loading from a saved quote
     if (effectiveInitialQuote) return;
     
-    if (!productScope) {
-      const available = Array.from(new Set(allCriteria.map((r) => r.product_scope).filter(Boolean)));
-      if (available.length > 0) {
-        setProductScope(available[0]);
-      }
+    if (!productScope && btlScopes.length > 0) {
+      setProductScope(btlScopes[0]);
     }
     // apply any constants overrides from localStorage for product lists (use productScope as the key)
     try {
@@ -297,12 +340,14 @@ export default function BTLcalculator({ initialQuote = null }) {
                          quote.funding_line || quote.product_range || quote.dip_status;
       
       if (hasDipData) {
+        // Map 'Company' to 'Corporate' for backward compatibility
+        const applicantType = quote.applicant_type === 'Company' ? 'Corporate' : quote.applicant_type;
         setDipData({
           commercial_or_main_residence: quote.commercial_or_main_residence,
           funding_line: quote.funding_line,
           dip_date: quote.dip_date,
           dip_expiry_date: quote.dip_expiry_date,
-          applicant_type: quote.applicant_type || (quote.borrower_type === 'Company' ? 'Corporate' : (quote.borrower_type ? 'Personal' : '')),
+          applicant_type: applicantType,
           guarantor_name: quote.guarantor_name,
           company_number: quote.company_number,
           title_number: quote.title_number,
@@ -536,8 +581,6 @@ export default function BTLcalculator({ initialQuote = null }) {
 
   // Fetch relevant rates whenever productScope, currentTier or productType changes
   useEffect(() => {
-    if (!supabase) return;
-    
     // Skip fetching from rates_flat if we loaded results from a saved quote
     // The saved quote already has computed results; fetching raw rates would overwrite them
     if (loadedFromSavedQuoteRef.current) {
@@ -554,8 +597,19 @@ export default function BTLcalculator({ initialQuote = null }) {
         return;
       }
       try {
-        const { data, error } = await supabase.from('rates_flat').select('*');
-        if (error) throw error;
+        // Fetch rates via backend API instead of direct Supabase
+        const response = await fetch(`${API_BASE_URL}/api/rates?limit=2000`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to load rates');
+        }
+        const result = await response.json();
+        const data = result.rates || [];
+        
+        // Filter to only active rates that are within date range
+        const activeData = filterActiveRates(data);
   // Filter client-side to avoid DB column mismatch errors.
   // We'll build matched using an explicit loop so we can collect debug samples when nothing matches.
   const debugSamples = [];
@@ -564,8 +618,8 @@ export default function BTLcalculator({ initialQuote = null }) {
   const swapYrYear = (s) => (s || '').toString().replace(/yr/g, 'year').replace(/year/g, 'yr');
   const swapFixFixed = (s) => (s || '').toString().replace(/fix/g, 'fixed').replace(/fixed/g, 'fix');
 
-  for (let i = 0; i < (data || []).length; i++) {
-    const r = data[i];
+  for (let i = 0; i < (activeData).length; i++) {
+    const r = activeData[i];
     // tolerant tier matching
     const rtRaw = r.tier;
     const rtNumRaw = Number(rtRaw);
@@ -738,6 +792,7 @@ export default function BTLcalculator({ initialQuote = null }) {
         isRetentionRow,
         passesRetentionAndLtv,
         max_ltv: r.max_ltv ?? r.maxltv ?? r.max_LTV ?? r.maxLTV ?? null,
+        rowMaxLtv, // parsed numeric value
       });
     }
 
@@ -801,7 +856,7 @@ export default function BTLcalculator({ initialQuote = null }) {
       }
     }
     fetchRelevant();
-  }, [supabase, productScope, currentTier, productType, retentionChoice, retentionLtv, selectedRange]);
+  }, [token, productScope, currentTier, productType, retentionChoice, retentionLtv, selectedRange]);
 
   // Update optimized values state after calculations complete
   // This runs after render to avoid infinite loop
@@ -839,7 +894,12 @@ export default function BTLcalculator({ initialQuote = null }) {
     const results = [];
 
     relevantRates.forEach(rate => {
-      const derivedProcFeePct = brokerSettings.clientType === 'Broker' ? Number(brokerSettings.brokerCommissionPercent) || 0 : 0;
+      // Use the appropriate proc fee based on the rate's product_range (Core vs Specialist)
+      const rangeField = (rate.product_range || rate.rate_type || '').toLowerCase();
+      const isRateCore = rangeField === 'core' || rangeField.includes('core');
+      const derivedProcFeePct = brokerSettings.clientType === 'Broker' 
+        ? Number(isRateCore ? brokerSettings.procFeeCorePercent : brokerSettings.procFeeSpecialistPercent) || 0 
+        : 0;
       
       const additionalFeeRaw = Number(brokerSettings.additionalFeeAmount);
       const derivedBrokerFeePct = (brokerSettings.addFeesToggle && brokerSettings.feeCalculationType === 'percentage' && Number.isFinite(additionalFeeRaw))
@@ -855,6 +915,10 @@ export default function BTLcalculator({ initialQuote = null }) {
         ? 'Fee: —' 
         : `Fee: ${productFee}%`;
 
+      // Derive selectedRange from rate's own product_range/rate_type for correct floor rate application
+      // This ensures Core rates get floor rate applied regardless of UI toggle position
+      const rateSelectedRange = isRateCore ? 'core' : 'specialist';
+
       const calculationParams = {
         colKey,
         selectedRate: rate,
@@ -869,14 +933,15 @@ export default function BTLcalculator({ initialQuote = null }) {
         productType,
         productScope,
         tier: currentTier,
-        selectedRange,
+        selectedRange: rateSelectedRange, // Use rate's range for floor rate determination
         criteria: answers,
         retentionChoice,
         retentionLtv,
         productFeePercent: rate.product_fee || 0,
         feeOverrides: productFeeOverrides,
-        manualRolled: rolledMonthsPerColumn[colKey],
-        manualDeferred: deferredInterestPerColumn[colKey],
+        // In public mode, force max values for rolled months and deferred interest (fully utilized)
+        manualRolled: publicMode ? (rate.max_rolled_months ?? 24) : rolledMonthsPerColumn[colKey],
+        manualDeferred: publicMode ? (rate.max_defer_int ?? 1.5) : deferredInterestPerColumn[colKey],
         brokerRoute: brokerSettings.brokerRoute,
         procFeePct: derivedProcFeePct,
         brokerFeePct: derivedBrokerFeePct,
@@ -1047,8 +1112,34 @@ export default function BTLcalculator({ initialQuote = null }) {
     </select>
   );
 
-  // Build unique product_scope values for top control; criteria_set is fixed to BTL
-  const productScopes = Array.from(new Set(allCriteria.map((r) => r.product_scope).filter(Boolean)));
+  // Build unique product_scope values for top control; filter to BTL criteria only
+  // Custom sort order: Residential - BTL first, then Commercial, then Semi-Commercial, then alphabetically
+  const productScopes = React.useMemo(() => {
+    const normalizeStr = (s) => (s || '').toString().trim().toLowerCase();
+    
+    // Filter to only BTL criteria (criteria_set = 'btl')
+    const btlCriteria = allCriteria.filter((r) => {
+      if (!r) return false;
+      const cs = normalizeStr(r.criteria_set);
+      return cs === 'btl';
+    });
+    
+    // Get unique product_scope values from BTL criteria only
+    const scopes = Array.from(new Set(btlCriteria.map(r => r.product_scope).filter(Boolean)));
+    
+    // Sort: Residential - BTL first, then Commercial, then Semi-Commercial, then others alphabetically
+    const sortOrder = ['residential - btl', 'residential', 'commercial', 'semi-commercial', 'semi commercial'];
+    return scopes.sort((a, b) => {
+      const aLower = a.toLowerCase();
+      const bLower = b.toLowerCase();
+      const aIndex = sortOrder.findIndex(s => aLower.includes(s) || s.includes(aLower));
+      const bIndex = sortOrder.findIndex(s => bLower.includes(s) || s.includes(bLower));
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }, [allCriteria]);
 
   // DIP Modal Handlers
   const handleOpenDipModal = async () => {
@@ -1065,12 +1156,14 @@ export default function BTLcalculator({ initialQuote = null }) {
                              quote.funding_line || quote.product_range || quote.dip_status;
           
           if (hasDipData) {
+            // Map 'Company' to 'Corporate' for backward compatibility
+            const applicantType = quote.applicant_type === 'Company' ? 'Corporate' : quote.applicant_type;
             setDipData({
               commercial_or_main_residence: quote.commercial_or_main_residence,
               funding_line: quote.funding_line,
               dip_date: quote.dip_date,
               dip_expiry_date: quote.dip_expiry_date,
-              applicant_type: quote.applicant_type || (quote.borrower_type === 'Company' ? 'Corporate' : (quote.borrower_type ? 'Personal' : '')),
+              applicant_type: applicantType,
               guarantor_name: quote.guarantor_name,
               company_number: quote.company_number,
               title_number: quote.title_number,
@@ -1241,7 +1334,9 @@ export default function BTLcalculator({ initialQuote = null }) {
     brokerSettings.setClientContact('');
     brokerSettings.setBrokerCompanyName('');
     brokerSettings.setBrokerRoute(BROKER_ROUTES.DIRECT_BROKER);
-    brokerSettings.setBrokerCommissionPercent(BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER]);
+    const defaultCommission = BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER];
+    brokerSettings.setProcFeeSpecialistPercent(typeof defaultCommission === 'object' ? defaultCommission.btl : defaultCommission);
+    brokerSettings.setProcFeeCorePercent(typeof defaultCommission === 'object' ? (defaultCommission.core ?? defaultCommission.btl) : defaultCommission);
     brokerSettings.setAddFeesToggle(false);
     brokerSettings.setFeeCalculationType('pound');
     brokerSettings.setAdditionalFeeAmount('');
@@ -1254,6 +1349,13 @@ export default function BTLcalculator({ initialQuote = null }) {
 
     // Navigate to the calculator route to mirror behavior when opening from navigation
     navigate('/calculator/btl', { replace: true });
+  };
+
+  // Handler for Submit Quote button in public mode
+  const handleSubmitQuote = () => {
+    // TODO: Implement submit quote logic for public mode
+    // This could open a modal to collect contact details, send to an API, etc.
+    showToast('Quote submitted successfully!', 'success');
   };
 
   const handleNewQuote = () => {
@@ -1306,7 +1408,9 @@ export default function BTLcalculator({ initialQuote = null }) {
     brokerSettings.setClientContact('');
     brokerSettings.setBrokerCompanyName('');
     brokerSettings.setBrokerRoute(BROKER_ROUTES.DIRECT_BROKER);
-    brokerSettings.setBrokerCommissionPercent(BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER]);
+    const defaultCommission = BROKER_COMMISSION_DEFAULTS[BROKER_ROUTES.DIRECT_BROKER];
+    brokerSettings.setProcFeeSpecialistPercent(typeof defaultCommission === 'object' ? defaultCommission.btl : defaultCommission);
+    brokerSettings.setProcFeeCorePercent(typeof defaultCommission === 'object' ? (defaultCommission.core ?? defaultCommission.btl) : defaultCommission);
     brokerSettings.setAddFeesToggle(false);
     brokerSettings.setFeeCalculationType('pound');
     brokerSettings.setAdditionalFeeAmount('');
@@ -1401,15 +1505,6 @@ export default function BTLcalculator({ initialQuote = null }) {
     setFilteredRatesForDip(filtered);
   };
 
-  // Defensive: show helpful message if Supabase client missing
-  if (!supabase) {
-    return (
-      <div className="slds-p-around_medium">
-        <div className="slds-text-color_error">Database client not available. Calculator cannot load data.</div>
-      </div>
-    );
-  }
-
   // Visible debug header so the page is never blank
   const totalRows = allCriteria.length;
   const btlRows = allCriteria.filter((r) => (r.criteria_set || '').toString() === 'BTL').length;
@@ -1440,7 +1535,7 @@ export default function BTLcalculator({ initialQuote = null }) {
       if (questionLabel.includes('flat') && questionLabel.includes('commercial')) {
         const answer = answers[questionKey];
         const answerLabel = (answer?.option_label || '').toLowerCase();
-        if (answerLabel === 'yes' || answerLabel === 'y') {
+        if (answerLabel.startsWith('yes')) {
           flatAboveCommercialAnswer = true;
         }
       }
@@ -1532,12 +1627,17 @@ export default function BTLcalculator({ initialQuote = null }) {
         onRetentionLtvChange={setRetentionLtv}
         currentTier={currentTier}
         availableScopes={productScopes}
+        allowedScopes={allowedScopes}
         quoteId={currentQuoteId}
         quoteReference={currentQuoteRef}
         onIssueDip={handleOpenDipModal}
         onIssueQuote={handleIssueQuote}
+        onSubmitQuote={handleSubmitQuote}
         onCancelQuote={handleCancelQuote}
         onNewQuote={handleNewQuote}
+        isReadOnly={isReadOnly}
+        isProductScopeLocked={publicMode && !!fixedProductScope && !allowedScopes}
+        publicMode={publicMode}
         saveQuoteButton={
           <SaveQuoteButton
             calculatorType="BTL"
@@ -1600,15 +1700,16 @@ export default function BTLcalculator({ initialQuote = null }) {
             onCancel={handleCancelQuote}
           />
         }
-        isReadOnly={isReadOnly}
       />
 
       {/* Client details section */}
       <ClientDetailsSection
         {...brokerSettings}
+        calculatorType="btl"
         expanded={clientDetailsExpanded}
         onToggle={handleClientDetailsToggle}
         isReadOnly={isReadOnly}
+        isBTLCalculator={true}
       />
 
       {tipOpen && (
@@ -1678,6 +1779,7 @@ export default function BTLcalculator({ initialQuote = null }) {
         specificGrossLoan={specificGrossLoan}
         onSpecificGrossLoanChange={setSpecificGrossLoan}
         isReadOnly={isReadOnly}
+        publicMode={publicMode}
       />
 
       
@@ -1686,6 +1788,8 @@ export default function BTLcalculator({ initialQuote = null }) {
       <RangeToggle
         selectedRange={selectedRange}
         onRangeChange={setSelectedRange}
+        showCore={!publicMode || fixedRange === 'core'}
+        showSpecialist={!publicMode || fixedRange === 'specialist'}
       >
         <div className="results-section">
         {/* Rates display */}
@@ -1839,6 +1943,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                             });
                                           }}
                                           disabled={isReadOnly}
+                                          displayOnly={publicMode}
                                           suffix={isTracker ? "% + BBR" : "%"}
                                         />
                                       </>
@@ -1850,11 +1955,11 @@ export default function BTLcalculator({ initialQuote = null }) {
                                   (() => {
                                     const columnsHeaders = feeBuckets.map((fb) => (fb === 'none' ? 'Fee: —' : `Fee: ${fb}%`));
                                     const allPlaceholders = [
-                                      'APRC','Admin Fee','Broker Client Fee','Broker Commission (Proc Fee %)',
-                                      'Broker Commission (Proc Fee £)','Deferred Interest %','Deferred Interest £',
+                                      'APRC','Admin Fee','Arrangement Fee %','Arrangement Fee £','Broker Client Fee','Proc Fee (%)',
+                                      'Proc Fee (£)','Deferred Interest %','Deferred Interest £',
                                       'Direct Debit','ERC','Exit Fee','Full Term','Gross Loan','ICR','Initial Term',
-                                      'LTV','Monthly Interest Cost','NBP','NBP LTV','Net Loan','Net LTV','Pay Rate','Product Fee %',
-                                      'Product Fee £','Revert Rate','Revert Rate DD','Rolled Months','Rolled Months Interest',
+                                      'LTV','Monthly Interest Cost','NPB','NPB LTV','Net Loan','Net LTV','Pay Rate',
+                                      'Revert Rate','Revert Rate DD','Rolled Months','Rolled Months Interest',
                                       'Serviced Interest','Serviced Months','Title Insurance Cost','Total Cost to Borrower'
                                     ];
                                     
@@ -1882,14 +1987,18 @@ export default function BTLcalculator({ initialQuote = null }) {
                                       const isTracker = /tracker/i.test(productType || '');
 
                                       // Get manual slider values for this column
-                                      const manualRolled = rolledMonthsPerColumn[colKey];
-                                      const manualDeferred = deferredInterestPerColumn[colKey];
+                                      // In public mode, force max values for rolled months and deferred interest (fully utilized)
+                                      const manualRolled = publicMode ? (best?.max_rolled_months ?? 24) : rolledMonthsPerColumn[colKey];
+                                      const manualDeferred = publicMode ? (best?.max_defer_int ?? 1.5) : deferredInterestPerColumn[colKey];
 
                                       // Run calculation engine for this column
                                       // Derive broker-related fees from client details
                                       const isBrokerClient = brokerSettings.clientType === 'Broker';
+                                      // Use appropriate proc fee based on rate's product_range (Core vs Specialist)
+                                      const bestRangeField = (best?.product_range || best?.rate_type || '').toLowerCase();
+                                      const isThisRateCore = bestRangeField === 'core' || bestRangeField.includes('core');
                                       const derivedProcFeePct = isBrokerClient
-                                        ? Number(brokerSettings.brokerCommissionPercent) || 0
+                                        ? Number(isThisRateCore ? brokerSettings.procFeeCorePercent : brokerSettings.procFeeSpecialistPercent) || 0
                                         : 0;
                                       const additionalFeeRaw = parseNumber(brokerSettings.additionalFeeAmount);
                                       const useAdditional = !!brokerSettings.addFeesToggle && Number.isFinite(additionalFeeRaw) && additionalFeeRaw > 0;
@@ -1914,7 +2023,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                         productType,
                                         productScope,
                                         tier: currentTier,
-                                        selectedRange,
+                                        selectedRange: isThisRateCore ? 'core' : 'specialist', // Use rate's range for floor rate determination
                                         criteria: answers,
                                         retentionChoice,
                                         retentionLtv,
@@ -1923,7 +2032,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                         manualRolled,
                                         manualDeferred,
                                         brokerRoute: brokerSettings.brokerRoute,
-                                        // Use Broker commission (%) as Proc Fee when client type is Broker
+                                        // Use Proc Fee (%) when client type is Broker
                                         procFeePct: derivedProcFeePct,
                                         // Map Additional fees toggle+amount into Broker Client Fee (either % of gross or £ flat)
                                         brokerFeePct: derivedBrokerFeePct,
@@ -1950,12 +2059,12 @@ export default function BTLcalculator({ initialQuote = null }) {
                                           values['Pay Rate'][colKey] = result.payRateText;
                                         }
 
-                                        // Product Fee %
+                                        // Arrangement Fee %
                                         const pfPercent = fb === 'none' ? NaN : Number(fb);
-                                        if (!Number.isNaN(pfPercent) && values['Product Fee %']) {
+                                        if (!Number.isNaN(pfPercent) && values['Arrangement Fee %']) {
                                           const originalFee = `${pfPercent}%`;
                                           originalProductFees[colKey] = originalFee;
-                                          values['Product Fee %'][colKey] = productFeeOverrides[colKey] || originalFee;
+                                          values['Arrangement Fee %'][colKey] = productFeeOverrides[colKey] || originalFee;
                                         }
 
                                         // Gross Loan
@@ -1968,9 +2077,9 @@ export default function BTLcalculator({ initialQuote = null }) {
                                           values['Net Loan'][colKey] = formatCurrency(result.netLoan, 0);
                                         }
 
-                                        // Product Fee £
-                                        if (values['Product Fee £']) {
-                                          values['Product Fee £'][colKey] = formatCurrency(result.productFeeAmount, 0);
+                                        // Arrangement Fee £
+                                        if (values['Arrangement Fee £']) {
+                                          values['Arrangement Fee £'][colKey] = formatCurrency(result.productFeeAmount, 0);
                                         }
 
                                         // LTV
@@ -2017,14 +2126,14 @@ export default function BTLcalculator({ initialQuote = null }) {
                                           values['Deferred Interest £'][colKey] = formatCurrency(result.deferredInterestAmount, 2);
                                         }
 
-                                        // Broker Commission (Proc Fee %)
-                                        if (values['Broker Commission (Proc Fee %)']) {
-                                          values['Broker Commission (Proc Fee %)'][colKey] = `${result.procFeePct}%`;
+                                        // Proc Fee (%)
+                                        if (values['Proc Fee (%)']) {
+                                          values['Proc Fee (%)'][colKey] = `${result.procFeePct}%`;
                                         }
 
-                                        // Broker Commission (Proc Fee £)
-                                        if (values['Broker Commission (Proc Fee £)']) {
-                                          values['Broker Commission (Proc Fee £)'][colKey] = formatCurrency(result.procFeeValue, 0);
+                                        // Proc Fee (£)
+                                        if (values['Proc Fee (£)']) {
+                                          values['Proc Fee (£)'][colKey] = formatCurrency(result.procFeeValue, 0);
                                         }
 
                                         // Broker Client Fee
@@ -2062,14 +2171,14 @@ export default function BTLcalculator({ initialQuote = null }) {
                                           values['Full Term'][colKey] = `${result.fullTerm} months`;
                                         }
 
-                                        // NBP
-                                        if (values['NBP']) {
-                                          values['NBP'][colKey] = formatCurrency(result.nbp, 0);
+                                        // NPB
+                                        if (values['NPB']) {
+                                          values['NPB'][colKey] = formatCurrency(result.nbp, 0);
                                         }
 
-                                        // NBP LTV
-                                        if (values['NBP LTV'] && result.nbpLTV != null) {
-                                          values['NBP LTV'][colKey] = `${result.nbpLTV.toFixed(2)}%`;
+                                        // NPB LTV
+                                        if (values['NPB LTV'] && result.nbpLTV != null) {
+                                          values['NPB LTV'][colKey] = `${result.nbpLTV.toFixed(2)}%`;
                                         }
 
                                         // Revert Rate
@@ -2221,6 +2330,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                             step={1}
                                             suffix=" months"
                                             disabled={isReadOnly}
+                                            displayOnly={publicMode}
                                             columns={columnsHeaders}
                                             columnValues={currentRolledMonthsPerCol}
                                             columnMinValues={rolledMonthsMinPerCol}
@@ -2280,6 +2390,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                             step={0.01}
                                             suffix="%"
                                             disabled={isReadOnly}
+                                            displayOnly={publicMode}
                                             columns={columnsHeaders}
                                             columnValues={currentDeferredInterestPerCol}
                                             columnMinValues={deferredInterestMinPerCol}
@@ -2289,13 +2400,13 @@ export default function BTLcalculator({ initialQuote = null }) {
                                             formatValue={(v) => (Number.isFinite(v) ? Number(v).toFixed(2) : v)}
                                           />
                                         );
-                                      } else if (rowLabel === 'Product Fee %') {
+                                      } else if (rowLabel === 'Arrangement Fee %') {
                                         return (
                                           <EditableResultRow
-                                            key="Product Fee %"
-                                            label={getLabel('Product Fee %')}
+                                            key="Arrangement Fee %"
+                                            label={getLabel('Arrangement Fee %')}
                                             columns={columnsHeaders}
-                                            columnValues={values['Product Fee %'] || {}}
+                                            columnValues={values['Arrangement Fee %'] || {}}
                                             originalValues={originalProductFees}
                                             onValueChange={(newValue, columnKey) => {
                                               setProductFeeOverrides(prev => ({
@@ -2325,7 +2436,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                                 delete updated[columnKey];
                                                 return updated;
                                               });
-                                              // Reset manual mode for this column when product fee is reset
+                                              // Reset manual mode for this column when arrangement fee is reset
                                               setRolledMonthsPerColumn(prev => {
                                                 const updated = { ...prev };
                                                 delete updated[columnKey];
@@ -2343,6 +2454,7 @@ export default function BTLcalculator({ initialQuote = null }) {
                                               });
                                             }}
                                             disabled={isReadOnly}
+                                            displayOnly={publicMode}
                                             suffix="%"
                                           />
                                         );
@@ -2374,8 +2486,8 @@ export default function BTLcalculator({ initialQuote = null }) {
       </div>
       </RangeToggle>
 
-      {/* UW Requirements Checklist */}
-      <div style={{ marginTop: '1rem' }}>
+      {/* UW Requirements Checklist - HIDDEN */}
+      {/* <div style={{ marginTop: '1rem' }}>
         <CollapsibleSection
           title="UW Requirements Checklist"
           expanded={uwChecklistExpanded}
@@ -2395,9 +2507,9 @@ export default function BTLcalculator({ initialQuote = null }) {
             hmo: answers['hmo'] || '',
             mufb: answers['mufb'] || '',
             holiday: answers['holiday'] || '',
-            // borrower_type comes from saved quote, not criteria answers
-            // Values are 'Personal' or 'Company'
-            borrower_type: currentQuoteData?.borrower_type || '',
+            // applicant_type comes from saved quote, not criteria answers
+            // Values are 'Personal' or 'Corporate'
+            applicant_type: currentQuoteData?.applicant_type || '',
             loan_purpose: answers['Loan purpose'] || ''
           }}
           checkedItems={uwCheckedItems || {}}
@@ -2419,7 +2531,7 @@ export default function BTLcalculator({ initialQuote = null }) {
           allowEdit={true}
         />
       </CollapsibleSection>
-      </div>
+      </div> */}
 
       {/* Issue DIP Modal */}
       <IssueDIPModal

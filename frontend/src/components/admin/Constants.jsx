@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { API_BASE_URL } from '../../config/api';
+import { useAppSettings } from '../../contexts/AppSettingsContext';
 import NotificationModal from '../modals/NotificationModal';
 import {
   PRODUCT_TYPES_LIST as DEFAULT_PRODUCT_TYPES_LIST,
@@ -45,7 +47,8 @@ export default function Constants() {
   const [fundingLinesBTL, setFundingLinesBTL] = useState([]);
   const [fundingLinesBridge, setFundingLinesBridge] = useState([]);
   const [message, setMessage] = useState('');
-  const { supabase } = useSupabase();
+  const { token } = useAuth();
+  const { refreshSettings } = useAppSettings();
   const [saving, setSaving] = useState(false);
   // per-field editing state and temporary values
   const [editingFields, setEditingFields] = useState({});
@@ -152,7 +155,16 @@ export default function Constants() {
       
       // broker settings
       Object.keys(overrides.brokerRoutes || DEFAULT_BROKER_ROUTES).forEach(k => { tv[`brokerRoutes:${k}`] = (overrides.brokerRoutes?.[k] ?? DEFAULT_BROKER_ROUTES[k]); });
-      Object.keys(overrides.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS).forEach(k => { tv[`brokerCommission:${k}`] = String((overrides.brokerCommissionDefaults?.[k] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[k])); });
+      Object.keys(overrides.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS).forEach(k => { 
+        const val = overrides.brokerCommissionDefaults?.[k] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[k];
+        if (typeof val === 'object' && val !== null) {
+          tv[`brokerCommission:${k}:btl`] = String(val.btl ?? 0.9);
+          tv[`brokerCommission:${k}:core`] = String(val.core ?? 0.5);
+          tv[`brokerCommission:${k}:bridge`] = String(val.bridge ?? 0.9);
+        } else {
+          tv[`brokerCommission:${k}`] = String(val);
+        }
+      });
       tv['brokerTolerance'] = String(overrides.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE);
       tv['fundingLinesBTL'] = (overrides.fundingLinesBTL || FUNDING_LINES_BTL).join(', ');
       tv['fundingLinesBridge'] = (overrides.fundingLinesBridge || FUNDING_LINES_BRIDGE).join(', ');
@@ -184,7 +196,16 @@ export default function Constants() {
         tv2['flatAbove:tier2'] = String(newVal.flatAboveCommercialRule?.tierLtv?.['2'] ?? DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['2'] ?? '');
         tv2['flatAbove:tier3'] = String(newVal.flatAboveCommercialRule?.tierLtv?.['3'] ?? DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE.tierLtv['3'] ?? '');
         Object.keys(newVal.brokerRoutes || DEFAULT_BROKER_ROUTES).forEach(k => { tv2[`brokerRoutes:${k}`] = (newVal.brokerRoutes?.[k] ?? DEFAULT_BROKER_ROUTES[k]); });
-        Object.keys(newVal.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS).forEach(k => { tv2[`brokerCommission:${k}`] = String((newVal.brokerCommissionDefaults?.[k] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[k])); });
+        Object.keys(newVal.brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS).forEach(k => { 
+          const val = newVal.brokerCommissionDefaults?.[k] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[k];
+          if (typeof val === 'object' && val !== null) {
+            tv2[`brokerCommission:${k}:btl`] = String(val.btl ?? 0.9);
+            tv2[`brokerCommission:${k}:core`] = String(val.core ?? 0.5);
+            tv2[`brokerCommission:${k}:bridge`] = String(val.bridge ?? 0.9);
+          } else {
+            tv2[`brokerCommission:${k}`] = String(val);
+          }
+        });
         tv2['brokerTolerance'] = String(newVal.brokerCommissionTolerance ?? DEFAULT_BROKER_COMMISSION_TOLERANCE);
         tv2['fundingLinesBTL'] = (newVal.fundingLinesBTL || FUNDING_LINES_BTL).join(', ');
         tv2['fundingLinesBridge'] = (newVal.fundingLinesBridge || FUNDING_LINES_BRIDGE).join(', ');
@@ -234,9 +255,11 @@ export default function Constants() {
         const routeKey = key.split(':')[1];
         await updateBrokerRoute(routeKey, tempValues[key] || '');
       } else if (key.startsWith('brokerCommission:')) {
-        const route = key.split(':')[1];
+        const parts = key.split(':');
+        const route = parts[1];
+        const calcType = parts[2]; // 'btl' or 'bridge' or undefined for legacy
         const n = Number(tempValues[key]);
-        await updateBrokerCommission(route, n);
+        await updateBrokerCommission(route, n, calcType);
       } else if (key === 'brokerTolerance') {
         const n = Number(tempValues[key]);
         await updateBrokerTolerance(n);
@@ -252,57 +275,76 @@ export default function Constants() {
     }
   };
 
-  // Persist to database. Uses app_settings table with separate rows per setting type.
+  // Persist to database via API
   const saveToSupabase = async (payload) => {
-    if (!supabase) return { error: 'Database client unavailable' };
+    if (!token) return { error: 'Not authenticated' };
     try {
-      const timestamp = new Date().toISOString();
-      
       // Create separate rows for each setting type
-      const rows = [
-        { key: 'product_lists', value: payload.productLists, updated_at: timestamp },
-        { key: 'fee_columns', value: payload.feeColumns, updated_at: timestamp },
-        { key: 'flat_above_commercial_rule', value: payload.flatAboveCommercialRule, updated_at: timestamp },
-        { key: 'market_rates', value: payload.marketRates, updated_at: timestamp },
-        { key: 'broker_routes', value: payload.brokerRoutes, updated_at: timestamp },
-        { key: 'broker_commission_defaults', value: payload.brokerCommissionDefaults, updated_at: timestamp },
-        { key: 'broker_commission_tolerance', value: payload.brokerCommissionTolerance, updated_at: timestamp },
-        { key: 'funding_lines_btl', value: payload.fundingLinesBTL, updated_at: timestamp },
-        { key: 'funding_lines_bridge', value: payload.fundingLinesBridge, updated_at: timestamp },
-        { key: 'ui_preferences', value: payload.uiPreferences || {}, updated_at: timestamp },
+      const settings = [
+        { key: 'product_lists', value: payload.productLists },
+        { key: 'fee_columns', value: payload.feeColumns },
+        { key: 'flat_above_commercial_rule', value: payload.flatAboveCommercialRule },
+        { key: 'market_rates', value: payload.marketRates },
+        { key: 'broker_routes', value: payload.brokerRoutes },
+        { key: 'broker_commission_defaults', value: payload.brokerCommissionDefaults },
+        { key: 'broker_commission_tolerance', value: payload.brokerCommissionTolerance },
+        { key: 'funding_lines_btl', value: payload.fundingLinesBTL },
+        { key: 'funding_lines_bridge', value: payload.fundingLinesBridge },
+        { key: 'ui_preferences', value: payload.uiPreferences || {} },
       ];
       
-      const { error } = await supabase.from('app_settings').upsert(rows, { onConflict: 'key' });
-      return { error };
+      const response = await fetch(`${API_BASE_URL}/api/admin/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ settings })
+      });
+      
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        return { error: errData.message || 'Failed to save settings' };
+      }
+      
+      return { error: null };
     } catch (e) {
-      return { error: e };
+      return { error: e.message || e };
     }
   };
 
   useEffect(() => {
     let mounted = true;
-    // Load constants from database
+    // Load constants from database via API
     (async () => {
-      if (!supabase) return;
+      if (!token) return;
       try {
-        // Fetch all setting rows from app_settings
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('*')
-          .in('key', [
-            'product_lists',
-            'fee_columns',
-            'flat_above_commercial_rule',
-            'market_rates',
-            'broker_routes',
-            'broker_commission_defaults',
-            'broker_commission_tolerance',
-            'funding_lines_btl',
-            'funding_lines_bridge',
-            'ui_preferences'
-          ]);
+        const keys = [
+          'product_lists',
+          'fee_columns',
+          'flat_above_commercial_rule',
+          'market_rates',
+          'broker_routes',
+          'broker_commission_defaults',
+          'broker_commission_tolerance',
+          'funding_lines_btl',
+          'funding_lines_bridge',
+          'ui_preferences'
+        ];
         
-        if (!error && data && data.length && mounted) {
+        const response = await fetch(
+          `${API_BASE_URL}/api/admin/settings?keys=${keys.join(',')}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        if (!response.ok) {
+          console.error('Failed to load settings from API');
+          return;
+        }
+        
+        const { data } = await response.json();
+        
+        if (data && data.length && mounted) {
           // Convert array of rows into single object
           const loadedData = {};
           data.forEach(row => {
@@ -388,7 +430,13 @@ export default function Constants() {
             tv[`brokerRoutes:${k}`] = loadedData.brokerRoutes[k];
           });
           Object.keys(loadedData.brokerCommissionDefaults).forEach(k => {
-            tv[`brokerCommission:${k}`] = String(loadedData.brokerCommissionDefaults[k]);
+            const val = loadedData.brokerCommissionDefaults[k];
+            if (typeof val === 'object' && val !== null) {
+              tv[`brokerCommission:${k}:btl`] = String(val.btl ?? 0.9);
+              tv[`brokerCommission:${k}:bridge`] = String(val.bridge ?? 0.9);
+            } else {
+              tv[`brokerCommission:${k}`] = String(val);
+            }
           });
           tv['brokerTolerance'] = String(loadedData.brokerCommissionTolerance);
           tv['fundingLinesBTL'] = (loadedData.fundingLinesBTL || FUNDING_LINES_BTL).join(', ');
@@ -400,7 +448,7 @@ export default function Constants() {
       }
     })();
     return () => { mounted = false; };
-  }, [supabase]);
+  }, [token]);
 
   const saveToStorage = async () => {
     const payload = { 
@@ -441,6 +489,11 @@ export default function Constants() {
           title: 'Success', 
           message: 'Constants saved successfully!' 
         });
+        
+        // Refresh the AppSettingsContext so all components get updated data
+        if (refreshSettings) {
+          refreshSettings();
+        }
         
         // Dispatch event so other components update immediately
         window.dispatchEvent(new StorageEvent('storage', {
@@ -846,14 +899,32 @@ export default function Constants() {
     }
   };
 
-  const updateBrokerCommission = async (key, value) => {
+  const updateBrokerCommission = async (key, value, calcType) => {
     const num = parseFloat(value);
     if (isNaN(num)) return;
-    const updated = { ...(brokerCommissionDefaults || {}), [key]: num };
+    
+    // Handle separate BTL, Core, and Bridge proc fees
+    let updated;
+    if (calcType) {
+      // Update specific calculator type (btl, core, or bridge)
+      const currentVal = brokerCommissionDefaults[key] || { btl: 0.9, core: 0.5, bridge: 0.9 };
+      // Ensure we preserve the structure and only update the specific calculator type
+      const newVal = typeof currentVal === 'object' && currentVal !== null
+        ? { ...currentVal, [calcType]: num }
+        : { btl: calcType === 'btl' ? num : 0.9, core: calcType === 'core' ? num : 0.5, bridge: calcType === 'bridge' ? num : 0.9 };
+      updated = { 
+        ...(brokerCommissionDefaults || {}), 
+        [key]: newVal
+      };
+    } else {
+      // Legacy single value support
+      updated = { ...(brokerCommissionDefaults || {}), [key]: num };
+    }
     setBrokerCommissionDefaults(updated);
     
     // Update tempValues to reflect the saved value
-    setTempValues(prev => ({ ...prev, [`brokerCommission:${key}`]: value }));
+    const tempKey = calcType ? `brokerCommission:${key}:${calcType}` : `brokerCommission:${key}`;
+    setTempValues(prev => ({ ...prev, [tempKey]: value }));
     
     // Create payload with NEW brokerCommissionDefaults value
     const payload = { 
@@ -889,7 +960,7 @@ export default function Constants() {
           show: true, 
           type: 'success', 
           title: 'Success', 
-          message: 'Broker commission saved successfully!' 
+          message: 'Proc Fee defaults saved successfully!' 
         });
         
         window.dispatchEvent(new StorageEvent('storage', {
@@ -1070,9 +1141,9 @@ export default function Constants() {
     const newRoutes = { ...brokerRoutes, [formattedKey]: newRouteDisplayName.trim() };
     setBrokerRoutes(newRoutes);
     
-    // Add to commission defaults
+    // Add to commission defaults with separate BTL, Core, and Bridge fees
     const commission = parseFloat(newRouteCommission) || 0.9;
-    const newDefaults = { ...brokerCommissionDefaults, [newRouteDisplayName.trim()]: commission };
+    const newDefaults = { ...brokerCommissionDefaults, [newRouteDisplayName.trim()]: { btl: commission, core: 0.5, bridge: commission } };
     setBrokerCommissionDefaults(newDefaults);
     
     // Save to localStorage
@@ -1561,35 +1632,101 @@ export default function Constants() {
 
             <div className="slds-m-bottom_medium">
               <br/>
-              <h5>Broker Commission Defaults (%)</h5>
+              <h5>Proc Fee Defaults (%)</h5>
+              <p className="helper-text">Each broker route has separate proc fee percentages for BTL (Specialist), BTL Core, and Bridge calculators.</p>
               <div className="slds-grid slds-wrap slds-gutters_small flex-gap-1">
                 {Object.keys(brokerCommissionDefaults || DEFAULT_BROKER_COMMISSION_DEFAULTS).map(route => {
-                  const key = `brokerCommission:${route}`;
+                  const routeValue = brokerCommissionDefaults[route] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[route];
+                  const hasSeparateFees = typeof routeValue === 'object' && routeValue !== null;
+                  const btlValue = hasSeparateFees ? routeValue.btl : routeValue;
+                  const coreValue = hasSeparateFees ? routeValue.core : 0.5;
+                  const bridgeValue = hasSeparateFees ? routeValue.bridge : routeValue;
+                  
+                  const btlKey = `brokerCommission:${route}:btl`;
+                  const coreKey = `brokerCommission:${route}:core`;
+                  const bridgeKey = `brokerCommission:${route}:bridge`;
+                  
                   return (
-                    <div key={route} className="slds-col min-width-260">
-                      <label className="slds-form-element__label">{route}</label>
-                      <div className="slds-form-element__control slds-grid align-items-center flex-gap-05">
-                        <input
-                          className={`slds-input ${!editingFields[key] ? 'constants-disabled' : ''}`}
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          max="100"
-                          value={editingFields[key] ? (tempValues[key] ?? '') : (brokerCommissionDefaults[route] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[route] ?? 0.9)}
-                          onChange={(e) => setTempValues(prev => ({ ...prev, [key]: e.target.value }))}
-                          disabled={!editingFields[key]}
-                        />
-                        <div className="percent-unit">%</div>
-                        {!editingFields[key] ? (
-                          <button className="slds-button slds-button_neutral" onClick={() => startEdit(key, String(brokerCommissionDefaults[route] ?? DEFAULT_BROKER_COMMISSION_DEFAULTS[route] ?? 0.9))}>Edit</button>
-                        ) : (
-                          <>
-                            <button className="slds-button slds-button_brand" onClick={() => saveEdit(key)}>Save</button>
-                            <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(key, true)}>Cancel</button>
-                          </>
-                        )}
+                    <div key={route} className="slds-col min-width-260" style={{ marginBottom: '1rem' }}>
+                      <label className="slds-form-element__label" style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>{route}</label>
+                      
+                      {/* BTL Specialist Proc Fee */}
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>BTL Specialist Proc Fee</label>
+                        <div className="slds-form-element__control slds-grid align-items-center flex-gap-05">
+                          <input
+                            className={`slds-input ${!editingFields[btlKey] ? 'constants-disabled' : ''}`}
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="100"
+                            value={editingFields[btlKey] ? (tempValues[btlKey] ?? '') : (btlValue ?? 0.9)}
+                            onChange={(e) => setTempValues(prev => ({ ...prev, [btlKey]: e.target.value }))}
+                            disabled={!editingFields[btlKey]}
+                          />
+                          <div className="percent-unit">%</div>
+                          {!editingFields[btlKey] ? (
+                            <button className="slds-button slds-button_neutral" onClick={() => startEdit(btlKey, String(btlValue ?? 0.9))}>Edit</button>
+                          ) : (
+                            <>
+                              <button className="slds-button slds-button_brand" onClick={() => saveEdit(btlKey)}>Save</button>
+                              <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(btlKey, true)}>Cancel</button>
+                            </>
+                          )}
+                        </div>
                       </div>
-                      {/*<div className="helper-text">Default commission percentage for {route}.</div>*/}
+                      
+                      {/* BTL Core Proc Fee */}
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>BTL Core Proc Fee</label>
+                        <div className="slds-form-element__control slds-grid align-items-center flex-gap-05">
+                          <input
+                            className={`slds-input ${!editingFields[coreKey] ? 'constants-disabled' : ''}`}
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="100"
+                            value={editingFields[coreKey] ? (tempValues[coreKey] ?? '') : (coreValue ?? 0.5)}
+                            onChange={(e) => setTempValues(prev => ({ ...prev, [coreKey]: e.target.value }))}
+                            disabled={!editingFields[coreKey]}
+                          />
+                          <div className="percent-unit">%</div>
+                          {!editingFields[coreKey] ? (
+                            <button className="slds-button slds-button_neutral" onClick={() => startEdit(coreKey, String(coreValue ?? 0.5))}>Edit</button>
+                          ) : (
+                            <>
+                              <button className="slds-button slds-button_brand" onClick={() => saveEdit(coreKey)}>Save</button>
+                              <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(coreKey, true)}>Cancel</button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Bridge Proc Fee */}
+                      <div>
+                        <label className="slds-form-element__label" style={{ fontSize: '0.875rem' }}>Bridge Proc Fee</label>
+                        <div className="slds-form-element__control slds-grid align-items-center flex-gap-05">
+                          <input
+                            className={`slds-input ${!editingFields[bridgeKey] ? 'constants-disabled' : ''}`}
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="100"
+                            value={editingFields[bridgeKey] ? (tempValues[bridgeKey] ?? '') : (bridgeValue ?? 0.9)}
+                            onChange={(e) => setTempValues(prev => ({ ...prev, [bridgeKey]: e.target.value }))}
+                            disabled={!editingFields[bridgeKey]}
+                          />
+                          <div className="percent-unit">%</div>
+                          {!editingFields[bridgeKey] ? (
+                            <button className="slds-button slds-button_neutral" onClick={() => startEdit(bridgeKey, String(bridgeValue ?? 0.9))}>Edit</button>
+                          ) : (
+                            <>
+                              <button className="slds-button slds-button_brand" onClick={() => saveEdit(bridgeKey)}>Save</button>
+                              <button className="slds-button slds-button_neutral" onClick={() => cancelEdit(bridgeKey, true)}>Cancel</button>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   );
                 })}

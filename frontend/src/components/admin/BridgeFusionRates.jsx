@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { API_BASE_URL } from '../../config/api';
 import WelcomeHeader from '../shared/WelcomeHeader';
 import BridgeRateEditModal from './BridgeRateEditModal';
 import NotificationModal from '../modals/NotificationModal';
+import { getRateLifecycleStatus } from '../../utils/calculator/rateFiltering';
 import '../../styles/slds.css';
 import '../../styles/admin-tables.css';
 
 function BridgeFusionRates() {
-  const { supabase } = useSupabase();
+  const { token } = useAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,27 +20,41 @@ function BridgeFusionRates() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortField, setSortField] = useState('set_key');
   const [sortDir, setSortDir] = useState('asc');
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [filters, setFilters] = useState({
     set_key: '',
     property: '',
     product: '',
     type: '',
-    charge_type: ''
+    charge_type: '',
+    rate_status: 'Active' // Default to showing Active rates only
   });
-  const [filterOptions, setFilterOptions] = useState({ properties: new Set(), products: new Set(), setKeys: new Set(), types: new Set(), chargeTypes: new Set() });
+  const [filterOptions, setFilterOptions] = useState({ properties: new Set(), products: new Set(), setKeys: new Set(), types: new Set(), chargeTypes: new Set(), rateStatuses: new Set(['Active', 'Inactive']) });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   
   // Notification state
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
 
   const fetch = async () => {
+    if (!token) return;
     setLoading(true);
     try {
-      // fetch filtered data (select * — we'll derive available columns from returned rows)
-  let q = supabase.from('bridge_fusion_rates_full').select('*');
-      const { data, error } = await q.order('set_key', { ascending: true });
-      if (error) throw error;
-      const rowsData = data || [];
+      // Build query params
+      const params = new URLSearchParams({ table: 'bridging' });
+      if (filters.rate_status && filters.rate_status !== 'all') {
+        params.append('rate_status', filters.rate_status);
+      }
+      
+      const response = await window.fetch(`${API_BASE_URL}/api/rates?${params}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch rates');
+      }
+      
+      const { rates } = await response.json();
+      const rowsData = rates || [];
       setRows(rowsData);
 
       // derive filter options from the returned rows dynamically (tolerant to schema differences)
@@ -47,7 +63,8 @@ function BridgeFusionRates() {
         products: new Set(rowsData.map(r => r.product).filter(Boolean)),
         setKeys: new Set(rowsData.map(r => r.set_key).filter(Boolean)),
         types: new Set(rowsData.map(r => r.type).filter(Boolean)),
-        chargeTypes: new Set(rowsData.map(r => r.charge_type).filter(Boolean))
+        chargeTypes: new Set(rowsData.map(r => r.charge_type).filter(Boolean)),
+        rateStatuses: new Set(['Active', 'Inactive'])
       });
     } catch (e) {
       setError(e.message || e);
@@ -56,7 +73,7 @@ function BridgeFusionRates() {
     }
   };
 
-  useEffect(() => { fetch(); }, [supabase]);
+  useEffect(() => { fetch(); }, [token, filters.rate_status]);
   
   // Reset to page 1 when filters change
   useEffect(() => { 
@@ -98,25 +115,140 @@ function BridgeFusionRates() {
 
   const handleSave = async (rec) => {
     try {
-        if (rec.id) {
-        const { error } = await supabase.from('bridge_fusion_rates_full').update(rec).eq('id', rec.id);
-        if (error) throw error;
+      // Validate date range if both dates are provided
+      if (rec.start_date && rec.end_date) {
+        if (new Date(rec.start_date) > new Date(rec.end_date)) {
+          setNotification({
+            show: true,
+            type: 'error',
+            title: 'Validation Error',
+            message: 'Start date must be before end date'
+          });
+          return;
+        }
+      }
+
+      // Ensure rate_status has a default
+      if (!rec.rate_status) rec.rate_status = 'Active';
+
+      const tableName = 'bridge_fusion_rates_full';
+      
+      if (rec.id) {
+        // Update existing rate
+        const response = await window.fetch(`${API_BASE_URL}/api/rates/${rec.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ rate: rec, tableName })
+        });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to update rate');
+        }
       } else {
-        const { error } = await supabase.from('bridge_fusion_rates_full').insert([rec]);
-        if (error) throw error;
+        // Create new rate
+        const response = await window.fetch(`${API_BASE_URL}/api/rates`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ rate: rec, tableName })
+        });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to create rate');
+        }
       }
       setEditing(null);
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Success',
+        message: 'Rate saved successfully'
+      });
       await fetch();
     } catch (e) {
       setError(e.message || e);
     }
   };
 
+  // Bulk status update handler
+  const handleBulkStatusUpdate = async (newStatus) => {
+    const selectedIds = Array.from(selectedRows);
+    if (selectedIds.length === 0) {
+      setNotification({
+        show: true,
+        type: 'warning',
+        title: 'Warning',
+        message: 'Please select at least one rate to update'
+      });
+      return;
+    }
+
+    const confirmMessage = `Are you sure you want to set ${selectedIds.length} rate(s) to ${newStatus}?`;
+    if (!window.confirm(confirmMessage)) return;
+
+    setBulkActionLoading(true);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const token = localStorage.getItem('auth_token');
+      
+      const response = await window.fetch(`${API_BASE}/api/rates/bulk-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ids: selectedIds,
+          status: newStatus,
+          tableName: 'bridge_fusion_rates_full'
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update rates');
+      }
+
+      const result = await response.json();
+      
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Success',
+        message: result.message || `${selectedIds.length} rate(s) updated to ${newStatus}`
+      });
+      
+      setSelectedRows(new Set());
+      setSelectAll(false);
+      await fetch();
+    } catch (err) {
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Error',
+        message: err.message || 'Failed to update rates'
+      });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this rate?')) return;
     try {
-  const { error } = await supabase.from('bridge_fusion_rates_full').delete().eq('id', id);
-      if (error) throw error;
+      const response = await window.fetch(`${API_BASE_URL}/api/rates/${id}?tableName=bridge_fusion_rates_full`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to delete rate');
+      }
       await fetch();
     } catch (e) {
       setError(e.message || e);
@@ -131,8 +263,18 @@ function BridgeFusionRates() {
     }
     if (!window.confirm(`Delete ${ids.length} selected rates?`)) return;
     try {
-  const { error } = await supabase.from('bridge_fusion_rates_full').delete().in('id', ids);
-      if (error) throw error;
+      const response = await window.fetch(`${API_BASE_URL}/api/rates/bulk`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ ids, tableName: 'bridge_fusion_rates_full' })
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to delete rates');
+      }
       setSelectedRows(new Set());
       setSelectAll(false);
       await fetch();
@@ -166,6 +308,7 @@ function BridgeFusionRates() {
       if (filters.product && r.product !== filters.product) return false;
       if (filters.type && r.type !== filters.type) return false;
       if (filters.charge_type && r.charge_type !== filters.charge_type) return false;
+      // Note: rate_status filter is applied at query level, not here
       return true;
     });
     
@@ -275,23 +418,63 @@ function BridgeFusionRates() {
 
         if (!mapped || mapped.length === 0) { setError('No valid records found in CSV. Ensure each row includes set_key etc.'); const fileEl = document.getElementById('bridge-csv-import'); if (fileEl) fileEl.value = ''; return; }
 
-        const cleaned = mapped.map(r => {
+        // Remove any DB-managed fields (id, timestamps) before insert
+        const cleanedRecords = mapped.map(r => {
           const rec = { ...r };
-          if ('created_at' in rec) delete rec.created_at; if ('updated_at' in rec) delete rec.updated_at; if ('id' in rec) delete rec.id;
-          // ensure type and product_fee exist
+          if ('created_at' in rec) delete rec.created_at;
+          if ('updated_at' in rec) delete rec.updated_at;
+          if ('id' in rec) delete rec.id;
+          // Remove 'status' column - only 'rate_status' exists in DB
+          if ('status' in rec) delete rec.status;
+
+          // Convert date strings to PostgreSQL format (YYYY-MM-DD)
+          // Handle DD/MM/YYYY, MM/DD/YYYY, or empty values
+          const convertDate = (dateStr) => {
+            if (!dateStr || dateStr === '' || dateStr === undefined) return null;
+            const str = String(dateStr).trim();
+            if (!str) return null;
+            // Already in YYYY-MM-DD format
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+            // DD/MM/YYYY format (UK) - convert to YYYY-MM-DD
+            const ukMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (ukMatch) {
+              const [, day, month, year] = ukMatch;
+              return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            }
+            return null; // Invalid format
+          };
+          rec.start_date = convertDate(rec.start_date);
+          rec.end_date = convertDate(rec.end_date);
+
+          // ensure type and product_fee exist with defaults
           if (!rec.type) rec.type = 'Fixed';
           if (rec.product_fee === null || rec.product_fee === undefined) rec.product_fee = 2;
+
           return rec;
         });
 
-        const chunkSize = 200;
-        for (let i = 0; i < cleaned.length; i += chunkSize) {
-          const chunk = cleaned.slice(i, i + chunkSize);
-          // Use the full column set for conflict so rows differing by LTV/type/etc are allowed
-          const onConflictCols = 'set_key,property,product,type,charge_type,product_fee,min_ltv,max_ltv,rate,min_term,max_term,min_rolled_months,max_rolled_months,min_loan,max_loan,min_icr,max_defer_int,erc_1,erc_2';
-          const { error } = await supabase.from('bridge_fusion_rates_full').upsert(chunk, { onConflict: onConflictCols });
-          if (error) { setError(error.message || JSON.stringify(error)); return; }
+        // Upsert via API
+        const onConflictCols = 'set_key,property,product,type,charge_type,product_fee,min_ltv,max_ltv,start_date';
+        const response = await window.fetch(`${API_BASE_URL}/api/rates/import`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            records: cleanedRecords,
+            tableName: 'bridge_fusion_rates_full',
+            onConflict: onConflictCols
+          })
+        });
+        
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          setError(errData.message || 'Failed to import rates');
+          return;
         }
+
+        // Refresh table after import
         setSelectedRows(new Set()); setSelectAll(false);
         await fetch();
       } catch (err) { setError(err.message || String(err)); }
@@ -318,7 +501,7 @@ function BridgeFusionRates() {
   };
 
   const handleExport = () => {
-  const headers = ['set_key','property','product','type','charge_type','product_fee','min_ltv','max_ltv','rate','min_term','max_term','min_rolled_months','max_rolled_months','min_loan','max_loan','min_icr','max_defer_int','erc_1','erc_2'];
+  const headers = ['set_key','property','product','type','charge_type','product_fee','min_ltv','max_ltv','rate','min_term','max_term','min_rolled_months','max_rolled_months','min_loan','max_loan','min_icr','max_defer_int','erc_1','erc_2','rate_status','start_date','end_date'];
     const headerRow = headers.map(h => formatCsvValue(h)).join(',');
     const dataRows = rows.map(r => headers.map(h => formatExportField(h, r)).join(','));
     const csv = [headerRow, ...dataRows].join('\r\n');
@@ -343,12 +526,40 @@ function BridgeFusionRates() {
           {selectedRows.size > 0 && (
             <button className="slds-button slds-button_destructive" onClick={handleBulkDelete}>Delete Selected ({selectedRows.size})</button>
           )}
+          {selectedRows.size > 0 && (
+            <>
+              <button 
+                className="slds-button slds-button_success" 
+                onClick={() => handleBulkStatusUpdate('Active')}
+                disabled={bulkActionLoading}
+              >
+                {bulkActionLoading ? 'Updating...' : `Activate (${selectedRows.size})`}
+              </button>
+              <button 
+                className="slds-button slds-button_neutral" 
+                onClick={() => handleBulkStatusUpdate('Inactive')}
+                disabled={bulkActionLoading}
+                style={{ backgroundColor: 'var(--token-layer-surface)', borderColor: 'var(--token-border-subtle)' }}
+              >
+                {bulkActionLoading ? 'Updating...' : `Deactivate (${selectedRows.size})`}
+              </button>
+            </>
+          )}
             <span className="total-count">Total: {getFilteredRowsCount()}</span>
           </div>
         </div>
       </div>
 
       <div className="filters-section">
+        <div className="filter-field">
+          <label>Status:</label>
+          <select value={filters.rate_status} onChange={(e) => setFilters(prev => ({ ...prev, rate_status: e.target.value }))}>
+            <option value="Active">Active Only</option>
+            <option value="Inactive">Inactive Only</option>
+            <option value="all">All Statuses</option>
+          </select>
+        </div>
+
         <div className="filter-field">
           <label>Set Key:</label>
           <select value={filters.set_key} onChange={(e) => setFilters(prev => ({ ...prev, set_key: e.target.value }))}>
@@ -382,10 +593,10 @@ function BridgeFusionRates() {
             >
               {showAdvancedFilters ? 'Hide Filters' : 'More Filters'}
             </button>
-            {(filters.set_key || filters.property || filters.product || filters.type || filters.charge_type) && (
+            {(filters.set_key || filters.property || filters.product || filters.type || filters.charge_type || filters.rate_status !== 'Active') && (
               <button 
                 className="slds-button slds-button_text-destructive" 
-                onClick={() => setFilters({ set_key: '', property: '', product: '', type: '', charge_type: '' })}
+                onClick={() => setFilters({ set_key: '', property: '', product: '', type: '', charge_type: '', rate_status: 'Active' })}
               >
                 Clear All
               </button>
@@ -426,7 +637,7 @@ function BridgeFusionRates() {
               <th onClick={() => changeSort('product')} className={`sortable ${sortField === 'product' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Product</th>
               <th onClick={() => changeSort('type')} className={`sortable ${sortField === 'type' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Type</th>
               <th onClick={() => changeSort('charge_type')} className={`sortable ${sortField === 'charge_type' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Charge Type</th>
-              <th onClick={() => changeSort('product_fee')} className={`sortable text-center ${sortField === 'product_fee' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Product Fee</th>
+              <th onClick={() => changeSort('product_fee')} className={`sortable text-center ${sortField === 'product_fee' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Arrangement Fee</th>
               <th onClick={() => changeSort('rate')} className={`sortable text-center ${sortField === 'rate' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Rate (%)</th>
               <th className="text-center">Min Term</th>
               <th className="text-center">Max Term</th>
@@ -440,6 +651,9 @@ function BridgeFusionRates() {
               <th className="text-center">Max Defer</th>
               <th className="text-center">ERC 1 (%)</th>
               <th className="text-center">ERC 2 (%)</th>
+              <th onClick={() => changeSort('rate_status')} className={`sortable ${sortField === 'rate_status' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Rate Status</th>
+              <th onClick={() => changeSort('start_date')} className={`sortable ${sortField === 'start_date' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Start Date</th>
+              <th onClick={() => changeSort('end_date')} className={`sortable ${sortField === 'end_date' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>End Date</th>
               <th className="sticky-action">Actions</th>
             </tr>
           </thead>
@@ -467,6 +681,34 @@ function BridgeFusionRates() {
                 <td className="text-center">{r.max_defer_int}</td>
                 <td className="text-center">{r.erc_1 || '—'}</td>
                 <td className="text-center">{r.erc_2 || '—'}</td>
+                <td>
+                  {(() => {
+                    const lifecycleStatus = getRateLifecycleStatus(r);
+                    return (
+                      <span 
+                        className={`status-badge status-${lifecycleStatus.status}`}
+                        style={{
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: '500',
+                          backgroundColor: lifecycleStatus.color === 'green' ? 'var(--token-success-background, #defbe6)' :
+                                          lifecycleStatus.color === 'red' ? 'var(--token-error-background, #fff1f1)' :
+                                          lifecycleStatus.color === 'orange' ? 'var(--token-warning-background, #fff8e1)' :
+                                          lifecycleStatus.color === 'blue' ? 'var(--token-info-background, #edf5ff)' : 'var(--token-layer-surface)',
+                          color: lifecycleStatus.color === 'green' ? 'var(--token-success-text, #198038)' :
+                                lifecycleStatus.color === 'red' ? 'var(--token-error-text, #da1e28)' :
+                                lifecycleStatus.color === 'orange' ? 'var(--token-warning-text, #f57c00)' :
+                                lifecycleStatus.color === 'blue' ? 'var(--token-info-text, #0043ce)' : 'var(--token-text-secondary)'
+                        }}
+                      >
+                        {lifecycleStatus.label}
+                      </span>
+                    );
+                  })()}
+                </td>
+                <td>{r.start_date ?? ''}</td>
+                <td>{r.end_date ?? ''}</td>
                 <td className="sticky-action">
                   <div className="row-actions">
                     <button className="slds-button slds-button_neutral" onClick={() => setEditing(r)}>Edit</button>

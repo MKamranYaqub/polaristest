@@ -15,14 +15,13 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import BTLCalculator from '../../components/BTLCalculator';
 
-// Mock contexts
-vi.mock('../../../../contexts/SupabaseContext', () => ({
-  useSupabase: vi.fn(() => ({
-    supabase: {
-      from: vi.fn()
-    }
-  }))
-}));
+// Mock global fetch for API calls
+global.fetch = vi.fn(() => 
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({ criteria: [], rates: [] })
+  })
+);
 
 vi.mock('../../../../contexts/AuthContext', () => ({
   useAuth: vi.fn(() => ({
@@ -157,7 +156,6 @@ import useBrokerSettings from '../../../../hooks/calculator/useBrokerSettings';
 import { useResultsVisibility } from '../../../../hooks/useResultsVisibility';
 import { useResultsRowOrder } from '../../../../hooks/useResultsRowOrder';
 import { getQuote, upsertQuoteData } from '../../../../utils/quotes';
-import { useSupabase } from '../../../../contexts/SupabaseContext';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { useToast } from '../../../../contexts/ToastContext';
 

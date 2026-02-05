@@ -104,8 +104,6 @@ if (error) {
 **`frontend/.env.example`:**
 ```env
 # Vite requires VITE_ prefix for exposed variables
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key-here
 VITE_API_URL=http://localhost:3001
 
 # Optional: Enable logging in production

@@ -1,13 +1,13 @@
 /**
  * Custom hook for fetching and managing BTL rates data
- * Handles Supabase queries for rates and criteria
+ * Note: This hook is deprecated - BTL calculator now uses API directly
+ * This implementation intentionally uses backend API endpoints only.
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSupabase } from '../../../contexts/SupabaseContext';
 
 export function useBTLRates(criteriaSet = 'BTL') {
-  const { supabase } = useSupabase();
+  // Note: This hook is deprecated - components now use API directly
   const [allCriteria, setAllCriteria] = useState([]);
   const [questions, setQuestions] = useState({});
   const [ratesData, setRatesData] = useState([]);
@@ -15,24 +15,31 @@ export function useBTLRates(criteriaSet = 'BTL') {
   const [error, setError] = useState(null);
 
   /**
-   * Fetch criteria questions from Supabase
+   * Fetch criteria configuration via backend API
    */
   const fetchCriteria = useCallback(async () => {
     try {
-      const { data: criteriaData, error: criteriaError } = await supabase
-        .from('criteria')
-        .select('*')
-        .eq('criteria_set', criteriaSet)
-        .order('question_order', { ascending: true });
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-      if (criteriaError) throw criteriaError;
+      const params = new URLSearchParams();
+      if (criteriaSet) params.append('criteria_set', criteriaSet);
 
-      setAllCriteria(criteriaData || []);
+      const response = await fetch(`${API_BASE}/api/criteria?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch criteria: ${response.statusText}`);
+      }
+
+      const { criteria } = await response.json();
+      const criteriaData = criteria || [];
+
+      setAllCriteria(criteriaData);
 
       // Build questions map
       const questionsMap = {};
       (criteriaData || []).forEach(crit => {
-        questionsMap[crit.question_id] = crit;
+        const key = crit.question_key || crit.question_id || crit.id;
+        if (!key) return;
+        if (!questionsMap[key]) questionsMap[key] = crit;
       });
       setQuestions(questionsMap);
 
@@ -42,7 +49,7 @@ export function useBTLRates(criteriaSet = 'BTL') {
       setError(err.message);
       return [];
     }
-  }, [supabase, criteriaSet]);
+  }, [criteriaSet]);
 
   /**
    * Fetch rates from rates_flat table via API
@@ -112,10 +119,8 @@ export function useBTLRates(criteriaSet = 'BTL') {
       }
     };
 
-    if (supabase) {
-      fetchAllData();
-    }
-  }, [supabase, fetchCriteria]);
+    fetchAllData();
+  }, [fetchCriteria]);
 
   /**
    * Refresh rates data

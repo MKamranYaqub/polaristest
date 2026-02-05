@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Polaris – Database Platform Critical & Gap Analysis</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; }
+    
+    :root {
+      --primary: #0f172a;
+      --primary-light: #1e293b;
+      --accent: #0ea5e9;
+      --accent-dark: #0284c7;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #334155;
+      --text-light: #64748b;
+      --text-dark: #0f172a;
+      --bg: #ffffff;
+      --bg-alt: #f8fafc;
+      --border: #e2e8f0;
+      --border-dark: #cbd5e1;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --radius: 8px;
+      --radius-lg: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
+    }
+
+    html {
+      font-size: 15px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-sans);
+      color: var(--text);
+      background: var(--bg-alt);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== LAYOUT ===== */
+    .document {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--bg);
+      min-height: 100vh;
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: #fff;
+      padding: 48px 48px 40px;
+    }
+
+    .header-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.9);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .header-subtitle {
+      margin: 0;
+      font-size: 15px;
+      color: rgba(255,255,255,0.8);
+      font-weight: 400;
+    }
+
+    .header-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 24px;
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .header-meta-item {
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .header-meta-item strong {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* ===== EXECUTIVE SUMMARY CARDS ===== */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 0 48px;
+      margin-top: -24px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .summary-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .summary-card h3 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .summary-card p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-light);
+      line-height: 1.55;
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    .content {
+      padding: 40px 48px 60px;
+    }
+
+    /* ===== TABLE OF CONTENTS ===== */
+    .toc {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
+      margin-bottom: 40px;
+    }
+
+    .toc-title {
+      margin: 0 0 16px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .toc-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 32px;
+    }
+
+    .toc-list li {
+      font-size: 14px;
+    }
+
+    .toc-list a {
+      color: var(--accent-dark);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .toc-list a:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    /* ===== SECTIONS ===== */
+    .section {
+      margin-bottom: 36px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--primary);
+    }
+
+    .section-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .section h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .section h3 {
+      margin: 24px 0 12px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .section p {
+      margin: 12px 0;
+      font-size: 14px;
+    }
+
+    .section ul, .section ol {
+      margin: 12px 0;
+      padding-left: 24px;
+    }
+
+    .section li {
+      margin: 6px 0;
+      font-size: 14px;
+    }
+
+    .muted {
+      color: var(--text-light);
+    }
+
+    /* ===== TAGS / PILLS ===== */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
+
+    .tag-fact {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .tag-partial {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .tag-ok {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .tag-warn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .tag-high {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .tag-strategic {
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+
+    /* ===== TABLES ===== */
+    .table-wrapper {
+      margin: 16px 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead {
+      background: var(--bg-alt);
+    }
+
+    th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-light);
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: var(--bg-alt);
+    }
+
+    td strong {
+      color: var(--text-dark);
+    }
+
+    /* ===== CODE ===== */
+    code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #0f172a;
+    }
+
+    pre {
+      margin: 16px 0;
+      padding: 16px 20px;
+      background: var(--primary);
+      color: #e2e8f0;
+      border-radius: var(--radius);
+      overflow-x: auto;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    /* ===== REFERENCES LIST ===== */
+    .refs-list {
+      margin: 16px 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .refs-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .refs-list li:last-child {
+      border-bottom: none;
+    }
+
+    .refs-list code {
+      flex-shrink: 0;
+      min-width: 280px;
+    }
+
+    .refs-list span {
+      color: var(--text-light);
+    }
+
+    /* ===== FOOTER ===== */
+    .doc-footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-light);
+      text-align: center;
+    }
+
+    /* ===== DIVIDER ===== */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 24px 0;
+    }
+
+    /* ===== PRINT STYLES ===== */
+    @media print {
+      html { font-size: 12px; }
+      body { background: #fff; }
+      .document { max-width: none; box-shadow: none; }
+      .header { padding: 24px 32px 20px; }
+      .summary-cards { padding: 0 32px; margin-top: -16px; }
+      .summary-card { box-shadow: none; border: 1px solid #ccc; }
+      .content { padding: 24px 32px 32px; }
+      .toc { page-break-after: always; }
+      .section { page-break-inside: avoid; }
+      a { color: inherit; text-decoration: none; }
+      pre { background: #f5f5f5; color: #000; border: 1px solid #ddd; }
+    }
+
+    @media (max-width: 700px) {
+      .header { padding: 32px 24px; }
+      .header-meta { grid-template-columns: 1fr; }
+      .summary-cards { grid-template-columns: 1fr; padding: 0 24px; }
+      .content { padding: 32px 24px; }
+      .toc-list { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="document">
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-badge">Technical Analysis Report</div>
+      <h1>Database Platform Critical & Gap Analysis</h1>
+      <p class="header-subtitle">Supabase (current) vs Azure Database for PostgreSQL vs Azure SQL — Polaris Specialist Mortgage Platform</p>
+      
+      <div class="header-meta">
+        <div class="header-meta-item"><strong>Date:</strong> 2026-02-05</div>
+        <div class="header-meta-item"><strong>Scope:</strong> Database + data access + security model impacts (not infra provisioning)</div>
+        <div class="header-meta-item"><strong>Key constraint:</strong> No "best choice" without requirements; this report is evidence-based and lists unknowns</div>
+        <div class="header-meta-item"><strong>Repo signals used:</strong> Supabase service-role usage, frontend direct Supabase calls, custom JWT auth, Azure SQL draft script</div>
+      </div>
+    </header>
+
+    <!-- EXECUTIVE SUMMARY CARDS -->
+    <div class="summary-cards">
+      <div class="summary-card">
+        <h3>Executive Takeaway (Non-recommendation)</h3>
+        <p>The repo is currently coupled to Supabase in both backend <em>and</em> frontend. Moving to Azure Postgres is the closest database-level migration; moving to Azure SQL is a database-engine migration and materially higher rewrite risk.</p>
+      </div>
+      <div class="summary-card">
+        <h3>What This Report Does Not Do</h3>
+        <p>It does not assume availability, cost, or compliance posture. Those depend on your chosen Azure region, network model, tenant controls, and operations.</p>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+      <!-- TABLE OF CONTENTS -->
+      <nav class="toc">
+        <h2 class="toc-title">Contents</h2>
+        <ol class="toc-list">
+          <li><a href="#ground-truth">1. Ground truth from this repo</a></li>
+          <li><a href="#comparison">2. Critical comparison (platform shape)</a></li>
+          <li><a href="#compatibility">3. Compatibility & migration complexity</a></li>
+          <li><a href="#security">4. Security & authorization (RLS, JWT, Entra direction)</a></li>
+          <li><a href="#operations">5. Operational considerations (neutral)</a></li>
+          <li><a href="#gaps">6. Gap analysis (what must change)</a></li>
+          <li><a href="#decision-matrix">7. Decision matrix (evidence-based)</a></li>
+          <li><a href="#next-steps">8. Next steps to de-risk</a></li>
+          <li><a href="#refs">9. Evidence references (files)</a></li>
+        </ol>
+      </nav>
+
+      <!-- SECTION 1 -->
+      <section id="ground-truth" class="section">
+        <div class="section-header">
+          <span class="section-number">1</span>
+          <h2>Ground truth from this repo</h2>
+        </div>
+        <p class="muted">These points are derived directly from code and documentation in the workspace.</p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Observation</th>
+                <th>Why it matters</th>
+                <th>Signal in repo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="tag tag-fact">Fact</span> Backend uses Supabase Postgres via service role (bypasses RLS).</td>
+                <td>Backend has broad DB permissions; security relies heavily on backend logic + secret management.</td>
+                <td><code>SUPABASE_SERVICE_ROLE_KEY</code> client creation with "bypasses RLS".</td>
+              </tr>
+              <tr>
+                <td><span class="tag tag-fact">Fact</span> Frontend directly queries Supabase using anon key in multiple screens.</td>
+                <td>Any move away from Supabase requires replacing frontend data access paths (unless you build a Supabase-like API layer).</td>
+                <td>Frontend creates client with <code>VITE_SUPABASE_ANON_KEY</code>; UI uses <code>supabase.from(...)</code>.</td>
+              </tr>
+              <tr>
+                <td><span class="tag tag-fact">Fact</span> Auth is custom: email/password + JWT + <code>users</code> table; not Supabase Auth.</td>
+                <td>Database migration affects user/audit data, but auth migration is mainly app-driven (Express + JWT) and can be kept.</td>
+                <td>Frontend uses <code>/api/auth/*</code> and stores JWT; backend queries <code>users</code>.</td>
+              </tr>
+              <tr>
+                <td><span class="tag tag-fact">Fact</span> Postgres-specific features appear in use (e.g., DB function via RPC).</td>
+                <td>Azure SQL migration needs function rewrites and behavior parity checks.</td>
+                <td>Backend calls <code>supabase.rpc('generate_reference_number')</code>.</td>
+              </tr>
+              <tr>
+                <td><span class="tag tag-partial">Partial</span> Azure SQL migration script exists as a master template.</td>
+                <td>Useful starting point, but must be validated against the current Postgres schema, data types, constraints, and app queries.</td>
+                <td><code>database/azure-sql/migrations/master_migration.sql</code>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Key coupling risk (highest-impact)</h3>
+        <p>The platform currently has a <strong>mixed data access model</strong>: some data flows go through the Express backend, while others go directly from the frontend to Supabase. This is a primary driver of migration scope.</p>
+      </section>
+
+      <!-- SECTION 2 -->
+      <section id="comparison" class="section">
+        <div class="section-header">
+          <span class="section-number">2</span>
+          <h2>Critical comparison (platform shape)</h2>
+        </div>
+        <p class="muted">This section compares each option by what it fundamentally is (platform vs managed database).</p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Option</th>
+                <th>What you get</th>
+                <th>What you must provide (if leaving Supabase)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Supabase (current)</strong></td>
+                <td>Managed Postgres + platform layer (SDK, API conventions, tooling). Repo currently uses SDK in frontend + backend.</td>
+                <td>Less custom plumbing required because direct SDK usage already exists.</td>
+              </tr>
+              <tr>
+                <td><strong>Azure Database for PostgreSQL</strong></td>
+                <td>Managed Postgres database (engine-level compatibility with current schema patterns).</td>
+                <td>You must supply the platform layer: most commonly <em>backend-only API</em> for all client access, identity mapping, migration tooling.</td>
+              </tr>
+              <tr>
+                <td><strong>Azure SQL</strong></td>
+                <td>Managed SQL Server database (different dialect and semantics).</td>
+                <td>You must supply the platform layer <em>and</em> rework schema/functions/queries for T‑SQL/SQL Server types.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p><span class="tag tag-warn">Important</span> If the goal is "move databases with minimal change," the biggest obstacle is not just the DB engine—it is the <strong>frontend's direct Supabase dependency</strong>.</p>
+      </section>
+
+      <!-- SECTION 3 -->
+      <section id="compatibility" class="section">
+        <div class="section-header">
+          <span class="section-number">3</span>
+          <h2>Compatibility & migration complexity</h2>
+        </div>
+        <p class="muted">Neutral, non-numeric comparison focused on rewrite risk and semantic differences.</p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Area</th>
+                <th>Supabase → Azure PostgreSQL</th>
+                <th>Supabase → Azure SQL</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Schema types</strong></td>
+                <td><span class="tag tag-ok">Lower risk</span> Same engine family (UUID, JSONB, timestamptz, indexes generally portable).</td>
+                <td><span class="tag tag-high">Higher risk</span> UUID/JSONB/time types require conversions and query rewrites.</td>
+              </tr>
+              <tr>
+                <td><strong>Functions / stored logic</strong></td>
+                <td><span class="tag tag-warn">Medium</span> Most Postgres functions can be ported; still needs testing.</td>
+                <td><span class="tag tag-high">Higher</span> Postgres functions must be rewritten in T‑SQL equivalents.</td>
+              </tr>
+              <tr>
+                <td><strong>Query semantics</strong></td>
+                <td><span class="tag tag-warn">Medium</span> Supabase query-builder still needs replacement if you remove Supabase APIs.</td>
+                <td><span class="tag tag-high">Higher</span> Query-builder replacement + SQL Server behavior differences compound.</td>
+              </tr>
+              <tr>
+                <td><strong>Upsert / conflict handling</strong></td>
+                <td><span class="tag tag-ok">Lower</span> Postgres upsert patterns remain available.</td>
+                <td><span class="tag tag-warn">Medium/High</span> MERGE/UPSERT approaches differ; edge cases require care.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Concrete repo example: DB function dependency</h3>
+        <pre><code>// Backend creates reference numbers via Postgres function
+const { data: refData, error: refError } = await supabase.rpc('generate_reference_number');</code></pre>
+        <p class="muted">Any move off Supabase/Postgres APIs needs an equivalent implementation: either a DB function in the target DB or an application-side generator with concurrency guarantees.</p>
+      </section>
+
+      <!-- SECTION 4 -->
+      <section id="security" class="section">
+        <div class="section-header">
+          <span class="section-number">4</span>
+          <h2>Security & authorization (RLS, JWT, Entra direction)</h2>
+        </div>
+        <p><span class="tag tag-fact">Fact</span> Backend uses service-role Supabase credentials (bypass RLS). This is a trusted-server pattern.</p>
+        <p><span class="tag tag-fact">Fact</span> Frontend uses anon-key Supabase client and performs direct table queries in places.</p>
+
+        <h3>What changes when you move</h3>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Concern</th>
+                <th>Supabase</th>
+                <th>Azure PostgreSQL</th>
+                <th>Azure SQL</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>RLS / row-level controls</strong></td>
+                <td>RLS is first-class; service-role bypass is powerful (and dangerous if misused).</td>
+                <td>Postgres RLS exists; identity/session mapping is your responsibility.</td>
+                <td>SQL Server has RLS via predicate functions; policy migration is a redesign exercise.</td>
+              </tr>
+              <tr>
+                <td><strong>Secrets exposure risk</strong></td>
+                <td>Anon key in client is expected; service role must remain server-only.</td>
+                <td>Likely no DB secrets in client; move to API-only pattern reduces client DB exposure.</td>
+                <td>Same as Azure Postgres: API-only is typical.</td>
+              </tr>
+              <tr>
+                <td><strong>Future Entra SSO</strong></td>
+                <td>Entra integration is app-level; DB choice doesn't automatically implement it.</td>
+                <td>Aligns with Azure identity patterns, but app changes still required.</td>
+                <td>Aligns with Azure identity patterns, but app changes still required.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="muted">This report does not claim one platform is inherently "more compliant." Compliance depends on configuration (network isolation, audit, retention), operating procedures, and evidence.</p>
+      </section>
+
+      <!-- SECTION 5 -->
+      <section id="operations" class="section">
+        <div class="section-header">
+          <span class="section-number">5</span>
+          <h2>Operational considerations (neutral)</h2>
+        </div>
+        <p class="muted">These are framed as tradeoffs rather than "pros/cons," because the right answer depends on your operating model.</p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Dimension</th>
+                <th>Supabase</th>
+                <th>Azure PostgreSQL</th>
+                <th>Azure SQL</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Time-to-change</strong></td>
+                <td>Fast iteration, fewer moving parts for small teams.</td>
+                <td>Often more platform work (networking/identity) but stable managed DB footprint.</td>
+                <td>Similar to Azure Postgres; plus dialect migration work if switching from Postgres.</td>
+              </tr>
+              <tr>
+                <td><strong>Governance integration</strong></td>
+                <td>Depends on plan and how you integrate controls.</td>
+                <td>Strong Azure-native governance patterns available.</td>
+                <td>Strong Azure-native governance patterns available.</td>
+              </tr>
+              <tr>
+                <td><strong>Observability</strong></td>
+                <td>Good baseline; depth depends on plan/tooling.</td>
+                <td>Azure monitoring ecosystem available; requires setup decisions.</td>
+                <td>Azure monitoring ecosystem available; requires setup decisions.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 6 -->
+      <section id="gaps" class="section">
+        <div class="section-header">
+          <span class="section-number">6</span>
+          <h2>Gap analysis (what must change)</h2>
+        </div>
+        <p>The gaps below are based on how the repo is structured today.</p>
+
+        <h3>A. Frontend direct Supabase usage</h3>
+        <p><span class="tag tag-high">High impact</span> Multiple screens call <code>supabase.from(...)</code> directly. For either Azure target, the typical approach is to route all data through the backend API.</p>
+        <ul>
+          <li>Work required: replace supabase-js calls with backend endpoints (and add endpoints where missing).</li>
+          <li>Risk: missed code paths lead to partial migrations where some features still require Supabase.</li>
+        </ul>
+
+        <h3>B. Backend data access layer</h3>
+        <p><span class="tag tag-warn">Medium–High</span> Backend routes are written against Supabase query builder semantics.</p>
+        <ul>
+          <li>Azure Postgres: replace with SQL queries (e.g., <code>pg</code>) while preserving pagination/filter behavior.</li>
+          <li>Azure SQL: you already have a connection helper (<code>mssql</code>) but routes must be rewritten.</li>
+        </ul>
+
+        <h3>C. Schema and stored logic</h3>
+        <p><span class="tag tag-warn">Azure Postgres</span> mostly a migration plumbing + verification exercise. <span class="tag tag-high">Azure SQL</span> requires re-modeling types and rewriting functions.</p>
+
+        <h3>D. Authorization model (RLS vs API enforcement)</h3>
+        <p><span class="tag tag-strategic">Strategic gap</span> You must decide where enforcement lives. Database choice changes implementation cost.</p>
+
+        <h3>E. Cutover & validation</h3>
+        <p><span class="tag tag-warn">Always required</span> Regardless of DB, a robust migration needs repeatable schema+data migration, validation, and rollback planning.</p>
+      </section>
+
+      <!-- SECTION 7 -->
+      <section id="decision-matrix" class="section">
+        <div class="section-header">
+          <span class="section-number">7</span>
+          <h2>Decision matrix (evidence-based, not prescriptive)</h2>
+        </div>
+        <p class="muted">This matrix explains "if your priority is X, what follows," without declaring a universal winner.</p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Primary priority</th>
+                <th>Most aligned option</th>
+                <th>Reason (grounded in repo)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Minimize schema/query rewrite</td>
+                <td><strong>Azure Database for PostgreSQL</strong></td>
+                <td>Closest engine compatibility to current Supabase Postgres usage; still must address frontend coupling.</td>
+              </tr>
+              <tr>
+                <td>Microsoft-first enterprise standardization</td>
+                <td><strong>Azure SQL</strong> (conditional)</td>
+                <td>Likely aligns with Microsoft ecosystem, but requires highest rewrite/testing effort from Postgres baseline.</td>
+              </tr>
+              <tr>
+                <td>Fastest path with minimal change</td>
+                <td><strong>Supabase</strong></td>
+                <td>Current architecture relies on supabase-js in frontend and backend; removing it expands scope significantly.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="muted">"Conditional" means you need explicit requirements (security, governance, existing corporate standards) before that selection is rational rather than preference.</p>
+      </section>
+
+      <!-- SECTION 8 -->
+      <section id="next-steps" class="section">
+        <div class="section-header">
+          <span class="section-number">8</span>
+          <h2>Next steps to de-risk (recommended process)</h2>
+        </div>
+        <ol>
+          <li><strong>Inventory Supabase usage</strong> (frontend + backend) and classify by module: auth, rates, quotes, admin, reporting.</li>
+          <li><strong>Pick one vertical slice</strong> (e.g., Rates read + Admin edit + audit log) and implement it via backend-only API against a target DB.</li>
+          <li><strong>Define non-functional requirements</strong> (network isolation, DR, auditing, retention, identity model).</li>
+          <li><strong>Validate behavior parity</strong> with deterministic checks: row counts, key constraints, and application-level scenarios.</li>
+        </ol>
+        <p class="muted">If you want, I can generate a companion "module-by-module impact checklist" by scanning all <code>supabase.from(</code> usage and mapping it to routes/screens.</p>
+      </section>
+
+      <!-- SECTION 9 -->
+      <section id="refs" class="section">
+        <div class="section-header">
+          <span class="section-number">9</span>
+          <h2>Evidence references (files)</h2>
+        </div>
+        <p class="muted">These are the primary files used to avoid speculation.</p>
+
+        <ul class="refs-list">
+          <li><code>backend/config/supabase.js</code> <span>— service-role Supabase client, RLS bypass note</span></li>
+          <li><code>frontend/src/contexts/SupabaseContext.jsx</code> <span>— anon-key Supabase client in frontend</span></li>
+          <li><code>frontend/src/contexts/AuthContext.jsx</code> <span>— JWT auth flow via backend endpoints</span></li>
+          <li><code>backend/routes/auth.js</code> <span>— reads/writes <code>users</code> and audit logs via Supabase</span></li>
+          <li><code>backend/routes/quotes.js</code> <span>— uses <code>supabase.rpc('generate_reference_number')</code></span></li>
+          <li><code>backend/routes/rates.js</code> <span>— rate lifecycle filtering uses Supabase query builder</span></li>
+          <li><code>backend/config/azuresql.js</code> <span>— Azure SQL connection helper present</span></li>
+          <li><code>database/azure-sql/migrations/master_migration.sql</code> <span>— draft Azure SQL migration template</span></li>
+          <li><code>docs/PERMISSION_AND_ENTRA_PLAN.md</code> <span>— future Entra/roles direction</span></li>
+        </ul>
+
+        <div class="divider"></div>
+        <p class="doc-footer">Document generated for Polaris repository context. This report intentionally avoids asserting cost, performance, or compliance outcomes without environment-specific data.</p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

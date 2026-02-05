@@ -9,46 +9,20 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { LOCALSTORAGE_CONSTANTS_KEY } from '../config/constants';
-import { useSupabase } from '../contexts/SupabaseContext';
 
 // Default label aliases - returns the original label by default
 // All label alias configuration is managed in GlobalSettings.jsx
 const DEFAULT_LABEL_ALIASES = {};
 
 export function useResultsLabelAlias(calculatorType = 'btl') {
-  const { supabase } = useSupabase();
   const [labelAliases, setLabelAliases] = useState(DEFAULT_LABEL_ALIASES);
 
   // Load overrides from Supabase and localStorage on mount
   useEffect(() => {
     const loadOverrides = async () => {
       try {
-        // Load from results_configuration table for specific calculator type
-        if (supabase && calculatorType) {
-          const { data, error } = await supabase
-            .from('results_configuration')
-            .select('config')
-            .eq('key', 'label_aliases')
-            .eq('calculator_type', calculatorType)
-            .maybeSingle();
-
-          if (!error && data && data.config) {
-            setLabelAliases(data.config);
-            
-            // Update localStorage for consistency
-            let existingConstants = {};
-            try {
-              const stored = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
-              if (stored) existingConstants = JSON.parse(stored);
-            } catch (e) { /* ignore */ }
-            
-            localStorage.setItem(LOCALSTORAGE_CONSTANTS_KEY, JSON.stringify({
-              ...existingConstants,
-              [`resultsLabelAliases_${calculatorType}`]: data.config
-            }));
-            return;
-          }
-        }
+        // Note: Backend API integration would go here
+        // For now, using localStorage only
         
         // Fallback to localStorage
         const stored = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
@@ -83,7 +57,7 @@ export function useResultsLabelAlias(calculatorType = 'btl') {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('constantsUpdated', handleCustomEvent);
     };
-  }, [supabase, calculatorType]);
+  }, [calculatorType]);
 
   /**
    * Get the display label for a field

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { API_BASE_URL } from '../../config/api';
+import { useAppSettings } from '../../contexts/AppSettingsContext';
 import NotificationModal from '../modals/NotificationModal';
 import WelcomeHeader from '../shared/WelcomeHeader';
 import { LOCALSTORAGE_CONSTANTS_KEY } from '../../config/constants';
@@ -39,8 +41,8 @@ const DEFAULT_LABEL_ALIASES_BTL = {
   'APRC': 'APRC',
   'Admin Fee': 'Admin Fee',
   'Broker Client Fee': 'Broker Client Fee',
-  'Broker Commission (Proc Fee %)': 'Broker Commission (Proc Fee %)',
-  'Broker Commission (Proc Fee £)': 'Broker Commission (Proc Fee £)',
+  'Proc Fee (%)': 'Proc Fee (%)',
+  'Proc Fee (£)': 'Proc Fee (£)',
   'Deferred Interest %': 'Deferred Interest %',
   'Deferred Interest £': 'Deferred Interest £',
   'Direct Debit': 'Direct Debit',
@@ -52,12 +54,12 @@ const DEFAULT_LABEL_ALIASES_BTL = {
   'Initial Term': 'Initial Term',
   'LTV': 'LTV',
   'Monthly Interest Cost': 'Monthly Interest Cost',
-  'NBP': 'NBP',
+  'NPB': 'NPB',
   'Net Loan': 'Net Loan',
   'Net LTV': 'Net LTV',
   'Pay Rate': 'Pay Rate',
-  'Product Fee %': 'Product Fee %',
-  'Product Fee £': 'Product Fee £',
+  'Arrangement Fee %': 'Arrangement Fee %',
+  'Arrangement Fee £': 'Arrangement Fee £',
   'Revert Rate': 'Revert Rate',
   'Revert Rate DD': 'Revert Rate DD',
   'Rolled Months': 'Rolled Months',
@@ -73,14 +75,14 @@ const DEFAULT_LABEL_ALIASES_BRIDGE = {
   'APRC': 'APRC',
   'Admin Fee': 'Admin Fee',
   'Broker Client Fee': 'Broker Client Fee',
-  'Broker Commission (Proc Fee %)': 'Broker Commission (Proc Fee %)',
-  'Broker Commission (Proc Fee £)': 'Broker Commission (Proc Fee £)',
+  'Proc Fee (%)': 'Proc Fee (%)',
+  'Proc Fee (£)': 'Proc Fee (£)',
   'Commitment Fee £': 'Commitment Fee £',
   'Deferred Interest %': 'Deferred Interest %',
   'Deferred Interest £': 'Deferred Interest £',
   'Direct Debit': 'Direct Debit',
-  'ERC 1 £': 'ERC 1 £',
-  'ERC 2 £': 'ERC 2 £',
+  'Early Repayment Charge Yr1': 'Early Repayment Charge Yr1',
+  'Early Repayment Charge Yr2': 'Early Repayment Charge Yr2',
   'Exit Fee': 'Exit Fee',
   'Full Int BBR £': 'Full Int BBR £',
   'Full Int Coupon £': 'Full Int Coupon £',
@@ -90,13 +92,13 @@ const DEFAULT_LABEL_ALIASES_BRIDGE = {
   'Initial Term': 'Initial Term',
   'LTV': 'LTV',
   'Monthly Interest Cost': 'Monthly Interest Cost',
-  'NBP': 'NBP',
-  'NBP LTV': 'NBP LTV',
+  'NPB': 'NPB',
+  'NPB LTV': 'NPB LTV',
   'Net Loan': 'Net Loan',
   'Net LTV': 'Net LTV',
   'Pay Rate': 'Pay Rate',
-  'Product Fee %': 'Product Fee %',
-  'Product Fee £': 'Product Fee £',
+  'Arrangement Fee %': 'Arrangement Fee %',
+  'Arrangement Fee £': 'Arrangement Fee £',
   'Rates': 'Rates',
   'Revert Rate': 'Revert Rate',
   'Revert Rate DD': 'Revert Rate DD',
@@ -113,8 +115,8 @@ const DEFAULT_LABEL_ALIASES_CORE = {
   'APRC': 'APRC',
   'Admin Fee': 'Admin Fee',
   'Broker Client Fee': 'Broker Client Fee',
-  'Broker Commission (Proc Fee %)': 'Broker Commission (Proc Fee %)',
-  'Broker Commission (Proc Fee £)': 'Broker Commission (Proc Fee £)',
+  'Proc Fee (%)': 'Proc Fee (%)',
+  'Proc Fee (£)': 'Proc Fee (£)',
   'Deferred Interest %': 'Deferred Interest %',
   'Deferred Interest £': 'Deferred Interest £',
   'Direct Debit': 'Direct Debit',
@@ -126,13 +128,13 @@ const DEFAULT_LABEL_ALIASES_CORE = {
   'Initial Term': 'Initial Term',
   'LTV': 'LTV',
   'Monthly Interest Cost': 'Monthly Interest Cost',
-  'NBP': 'NBP',
-  'NBP LTV': 'NBP LTV',
+  'NPB': 'NPB',
+  'NPB LTV': 'NPB LTV',
   'Net Loan': 'Net Loan',
   'Net LTV': 'Net LTV',
   'Pay Rate': 'Pay Rate',
-  'Product Fee %': 'Product Fee %',
-  'Product Fee £': 'Product Fee £',
+  'Arrangement Fee %': 'Arrangement Fee %',
+  'Arrangement Fee £': 'Arrangement Fee £',
   'Revert Rate': 'Revert Rate',
   'Revert Rate DD': 'Revert Rate DD',
   'Rolled Months': 'Rolled Months',
@@ -186,7 +188,8 @@ const applyHeaderColorsToCss = (allColors) => {
  * and their display order
  */
 export default function GlobalSettings() {
-  const { supabase } = useSupabase();
+  const { token } = useAuth();
+  const { refreshSettings } = useAppSettings();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
@@ -214,8 +217,8 @@ export default function GlobalSettings() {
     'APRC',
     'Admin Fee',
     'Broker Client Fee',
-    'Broker Commission (Proc Fee %)',
-    'Broker Commission (Proc Fee £)',
+    'Proc Fee (%)',
+    'Proc Fee (£)',
     'Deferred Interest %',
     'Deferred Interest £',
     'Direct Debit',
@@ -227,13 +230,13 @@ export default function GlobalSettings() {
     'Initial Term',
     'LTV',
     'Monthly Interest Cost',
-    'NBP',
-    'NBP LTV',
+    'NPB',
+    'NPB LTV',
     'Net Loan',
     'Net LTV',
     'Pay Rate',
-    'Product Fee %',
-    'Product Fee £',
+    'Arrangement Fee %',
+    'Arrangement Fee £',
     'Revert Rate',
     'Revert Rate DD',
     'Rolled Months',
@@ -249,14 +252,14 @@ export default function GlobalSettings() {
     'APRC',
     'Admin Fee',
     'Broker Client Fee',
-    'Broker Commission (Proc Fee %)',
-    'Broker Commission (Proc Fee £)',
+    'Proc Fee (%)',
+    'Proc Fee (£)',
     'Commitment Fee £',
     'Deferred Interest %',
     'Deferred Interest £',
     'Direct Debit',
-    'ERC 1 £',
-    'ERC 2 £',
+    'Early Repayment Charge Yr1',
+    'Early Repayment Charge Yr2',
     'Exit Fee',
     'Full Int BBR £',
     'Full Int Coupon £',
@@ -266,13 +269,13 @@ export default function GlobalSettings() {
     'Initial Term',
     'LTV',
     'Monthly Interest Cost',
-    'NBP',
-    'NBP LTV',
+    'NPB',
+    'NPB LTV',
     'Net Loan',
     'Net LTV',
     'Pay Rate',
-    'Product Fee %',
-    'Product Fee £',
+    'Arrangement Fee %',
+    'Arrangement Fee £',
     'Revert Rate',
     'Revert Rate DD',
     'Rolled Months',
@@ -288,8 +291,8 @@ export default function GlobalSettings() {
     'APRC',
     'Admin Fee',
     'Broker Client Fee',
-    'Broker Commission (Proc Fee %)',
-    'Broker Commission (Proc Fee £)',
+    'Proc Fee (%)',
+    'Proc Fee (£)',
     'Deferred Interest %',
     'Deferred Interest £',
     'Direct Debit',
@@ -301,13 +304,13 @@ export default function GlobalSettings() {
     'Initial Term',
     'LTV',
     'Monthly Interest Cost',
-    'NBP',
-    'NBP LTV',
+    'NPB',
+    'NPB LTV',
     'Net Loan',
     'Net LTV',
     'Pay Rate',
-    'Product Fee %',
-    'Product Fee £',
+    'Arrangement Fee %',
+    'Arrangement Fee £',
     'Revert Rate',
     'Revert Rate DD',
     'Rolled Months',
@@ -375,25 +378,31 @@ export default function GlobalSettings() {
   };
   const [headerColors, setHeaderColors] = useState({ ...DEFAULT_HEADER_COLORS });
 
-  // Load settings from Supabase
+  // Load settings from API
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [token]);
 
   const loadSettings = async() => {
+    if (!token) return;
+    
     try {
       setLoading(true);
       
-      // Load visibility settings from results_configuration
-      const { data: visibilityData, error: visibilityError } = await supabase
-        .from('results_configuration')
-        .select('*')
-        .eq('key', 'visibility');
-
-      if (visibilityError && visibilityError.code !== 'PGRST116') {
-        throw visibilityError;
+      // Load all results configuration from API
+      const response = await fetch(`${API_BASE_URL}/api/admin/results-configuration`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to load results configuration');
       }
-
+      
+      const { configurations } = await response.json();
+      const data = configurations || [];
+      
+      // Process visibility settings
+      const visibilityData = data.filter(row => row.key === 'visibility');
       if (visibilityData && visibilityData.length > 0) {
         visibilityData.forEach(row => {
           const settings = typeof row.config === 'string' ? JSON.parse(row.config) : row.config;
@@ -411,16 +420,8 @@ export default function GlobalSettings() {
         });
       }
 
-      // Load row order settings from results_configuration
-      const { data: orderData, error: orderError } = await supabase
-        .from('results_configuration')
-        .select('*')
-        .eq('key', 'row_order');
-
-      if (orderError && orderError.code !== 'PGRST116') {
-        throw orderError;
-      }
-
+      // Process row order settings
+      const orderData = data.filter(row => row.key === 'row_order');
       if (orderData && orderData.length > 0) {
         orderData.forEach(row => {
           const settings = typeof row.config === 'string' ? JSON.parse(row.config) : row.config;
@@ -441,16 +442,8 @@ export default function GlobalSettings() {
         });
       }
 
-      // Load label aliases from results_configuration
-      const { data: labelData, error: labelError } = await supabase
-        .from('results_configuration')
-        .select('*')
-        .eq('key', 'label_aliases');
-
-      if (labelError && labelError.code !== 'PGRST116') {
-        throw labelError;
-      }
-
+      // Process label aliases
+      const labelData = data.filter(row => row.key === 'label_aliases');
       let labelAliasesLoaded = false;
       if (labelData && labelData.length > 0) {
         labelData.forEach(row => {
@@ -488,7 +481,7 @@ export default function GlobalSettings() {
         }
       }
 
-      // Fallback: Load label aliases from localStorage if not in Supabase
+      // Fallback: Load label aliases from localStorage if not loaded from API
       if (!labelAliasesLoaded) {
         try {
           const stored = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
@@ -506,16 +499,8 @@ export default function GlobalSettings() {
         }
       }
 
-      // Load header colors from results_configuration
-      const { data: headerColorData, error: headerColorError } = await supabase
-        .from('results_configuration')
-        .select('*')
-        .eq('key', 'header_colors');
-
-      if (headerColorError && headerColorError.code !== 'PGRST116') {
-        throw headerColorError;
-      }
-
+      // Process header colors
+      const headerColorData = data.filter(row => row.key === 'header_colors');
       if (headerColorData && headerColorData.length > 0) {
         const mergedColors = { ...DEFAULT_HEADER_COLORS };
         
@@ -577,125 +562,52 @@ export default function GlobalSettings() {
   };
 
   const handleSave = async () => {
+    if (!token) {
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Not authenticated'
+      });
+      return;
+    }
+    
     try {
       setSaving(true);
       
-      // Save visibility settings (one row per calculator type)
-      const visibilityPromises = [
-        supabase.from('results_configuration').upsert({
-          key: 'visibility',
-          calculator_type: 'btl',
-          config: btlVisibleRows,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'visibility',
-          calculator_type: 'bridge',
-          config: bridgeVisibleRows,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'visibility',
-          calculator_type: 'core',
-          config: coreVisibleRows,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' })
+      // Build all configuration records to save
+      const configurations = [
+        // Visibility settings
+        { key: 'visibility', calculator_type: 'btl', config: btlVisibleRows },
+        { key: 'visibility', calculator_type: 'bridge', config: bridgeVisibleRows },
+        { key: 'visibility', calculator_type: 'core', config: coreVisibleRows },
+        // Row order settings
+        { key: 'row_order', calculator_type: 'btl', config: btlRowOrder },
+        { key: 'row_order', calculator_type: 'bridge', config: bridgeRowOrder },
+        { key: 'row_order', calculator_type: 'core', config: coreRowOrder },
+        // Label aliases
+        { key: 'label_aliases', calculator_type: 'btl', config: Object.fromEntries(Object.entries(btlLabelAliases)) },
+        { key: 'label_aliases', calculator_type: 'bridge', config: Object.fromEntries(Object.entries(bridgeLabelAliases)) },
+        { key: 'label_aliases', calculator_type: 'core', config: Object.fromEntries(Object.entries(coreLabelAliases)) },
+        // Header colors
+        { key: 'header_colors', calculator_type: 'btl', config: headerColors.btl },
+        { key: 'header_colors', calculator_type: 'bridge', config: headerColors.bridge },
+        { key: 'header_colors', calculator_type: 'core', config: headerColors.core },
       ];
       
-      const visibilityResults = await Promise.all(visibilityPromises);
-      const visibilityError = visibilityResults.find(r => r.error)?.error;
-      if (visibilityError) throw visibilityError;
-
-      // Save row order settings (one row per calculator type)
-      const orderPromises = [
-        supabase.from('results_configuration').upsert({
-          key: 'row_order',
-          calculator_type: 'btl',
-          config: btlRowOrder,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'row_order',
-          calculator_type: 'bridge',
-          config: bridgeRowOrder,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'row_order',
-          calculator_type: 'core',
-          config: coreRowOrder,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' })
-      ];
+      const response = await fetch(`${API_BASE_URL}/api/admin/results-configuration`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ configurations })
+      });
       
-      const orderResults = await Promise.all(orderPromises);
-      const orderError = orderResults.find(r => r.error)?.error;
-      if (orderError) throw orderError;
-
-      // Save label aliases - save ALL labels, not just changes from defaults
-      const btlConfig = Object.fromEntries(
-        Object.entries(btlLabelAliases)
-      );
-      const bridgeConfig = Object.fromEntries(
-        Object.entries(bridgeLabelAliases)
-      );
-      const coreConfig = Object.fromEntries(
-        Object.entries(coreLabelAliases)
-      );
-      
-      const labelAliasPromises = [
-        supabase.from('results_configuration').upsert({
-          key: 'label_aliases',
-          calculator_type: 'btl',
-          config: btlConfig,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'label_aliases',
-          calculator_type: 'bridge',
-          config: bridgeConfig,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'label_aliases',
-          calculator_type: 'core',
-          config: coreConfig,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' })
-      ];
-      
-      const labelResults = await Promise.all(labelAliasPromises);
-      const labelError = labelResults.find(r => r.error)?.error;
-      if (labelError) {
-        console.error('Label alias save error:', labelError);
-        throw labelError;
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to save results configuration');
       }
-
-      // Save header colors (one row per calculator type)
-      const headerColorPromises = [
-        supabase.from('results_configuration').upsert({
-          key: 'header_colors',
-          calculator_type: 'btl',
-          config: headerColors.btl,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'header_colors',
-          calculator_type: 'bridge',
-          config: headerColors.bridge,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' }),
-        supabase.from('results_configuration').upsert({
-          key: 'header_colors',
-          calculator_type: 'core',
-          config: headerColors.core,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key,calculator_type' })
-      ];
-      
-      const headerColorResults = await Promise.all(headerColorPromises);
-      const headerColorError = headerColorResults.find(r => r.error)?.error;
-      if (headerColorError) throw headerColorError;
 
       // Save header colors to localStorage for immediate effect
       localStorage.setItem('results_table_header_colors', JSON.stringify(headerColors));
@@ -709,6 +621,11 @@ export default function GlobalSettings() {
         title: 'Success',
         message: 'Results table settings saved successfully!'
       });
+
+      // Refresh the AppSettingsContext so all components get updated data
+      if (refreshSettings) {
+        refreshSettings();
+      }
 
       // Save to localStorage for immediate effect
       const visibilitySettings = { btl: btlVisibleRows, bridge: bridgeVisibleRows, core: coreVisibleRows };
@@ -906,7 +823,7 @@ export default function GlobalSettings() {
   };
 
   // Helper function to render visibility checkboxes
-  const renderVisibilitySection = (rows, visibleRows, toggleHandler, selectAllHandler, deselectAllHandler) => (
+  const renderVisibilitySection = (rows, visibleRows, toggleHandler, selectAllHandler, deselectAllHandler, labelAliases = {}) => (
     <div className="settings-accordion-section">
       <section className="slds-accordion__section">
         <div 
@@ -957,7 +874,7 @@ export default function GlobalSettings() {
                     />
                     <label className="slds-checkbox__label" htmlFor={`${activeTab}-${row}`}>
                       <span className="slds-checkbox_faux"></span>
-                      <span className="slds-form-element__label">{row}</span>
+                      <span className="slds-form-element__label">{labelAliases[row] || row}</span>
                     </label>
                   </div>
                 </div>
@@ -970,7 +887,7 @@ export default function GlobalSettings() {
   );
 <br />
   // Helper function to render row order section
-  const renderRowOrderSection = (rowOrder, visibleRows, type) => (
+  const renderRowOrderSection = (rowOrder, visibleRows, type, labelAliases = {}) => (
     <div className="settings-accordion-section">
       <section className="slds-accordion__section">
         <div 
@@ -1001,7 +918,7 @@ export default function GlobalSettings() {
                     >
                       <span className="row-order-label">
                         <span className="row-order-number">{index + 1}.</span>
-                        {row}
+                        {labelAliases[row] || row}
                         {visibleRows[row] === false && (
                           <span className="row-order-hidden-badge">(Hidden)</span>
                         )}
@@ -1433,8 +1350,8 @@ export default function GlobalSettings() {
       {/* BTL Tab Content */}
       {activeTab === 'btl' && (
         <div className="slds-accordion">
-          {renderVisibilitySection(DEFAULT_BTL_ROWS, btlVisibleRows, handleToggleBtlRow, handleSelectAllBtl, handleDeselectAllBtl)}
-          {renderRowOrderSection(btlRowOrder, btlVisibleRows, 'btl')}
+          {renderVisibilitySection(DEFAULT_BTL_ROWS, btlVisibleRows, handleToggleBtlRow, handleSelectAllBtl, handleDeselectAllBtl, btlLabelAliases)}
+          {renderRowOrderSection(btlRowOrder, btlVisibleRows, 'btl', btlLabelAliases)}
           {renderLabelAliasSection('btl', btlLabelAliases, DEFAULT_LABEL_ALIASES_BTL)}
           {renderHeaderColorsSection('btl')}
         </div>
@@ -1443,8 +1360,8 @@ export default function GlobalSettings() {
       {/* Bridge Tab Content */}
       {activeTab === 'bridge' && (
         <div className="slds-accordion">
-          {renderVisibilitySection(DEFAULT_BRIDGE_ROWS, bridgeVisibleRows, handleToggleBridgeRow, handleSelectAllBridge, handleDeselectAllBridge)}
-          {renderRowOrderSection(bridgeRowOrder, bridgeVisibleRows, 'bridge')}
+          {renderVisibilitySection(DEFAULT_BRIDGE_ROWS, bridgeVisibleRows, handleToggleBridgeRow, handleSelectAllBridge, handleDeselectAllBridge, bridgeLabelAliases)}
+          {renderRowOrderSection(bridgeRowOrder, bridgeVisibleRows, 'bridge', bridgeLabelAliases)}
           {renderLabelAliasSection('bridge', bridgeLabelAliases, DEFAULT_LABEL_ALIASES_BRIDGE)}
           {renderHeaderColorsSection('bridge')}
         </div>
@@ -1453,8 +1370,8 @@ export default function GlobalSettings() {
       {/* Core Tab Content */}
       {activeTab === 'core' && (
         <div className="slds-accordion">
-          {renderVisibilitySection(DEFAULT_CORE_ROWS, coreVisibleRows, handleToggleCoreRow, handleSelectAllCore, handleDeselectAllCore)}
-          {renderRowOrderSection(coreRowOrder, coreVisibleRows, 'core')}
+          {renderVisibilitySection(DEFAULT_CORE_ROWS, coreVisibleRows, handleToggleCoreRow, handleSelectAllCore, handleDeselectAllCore, coreLabelAliases)}
+          {renderRowOrderSection(coreRowOrder, coreVisibleRows, 'core', coreLabelAliases)}
           {renderLabelAliasSection('core', coreLabelAliases, DEFAULT_LABEL_ALIASES_CORE)}
           {renderHeaderColorsSection('core')}
         </div>

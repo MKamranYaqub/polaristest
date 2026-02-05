@@ -1311,8 +1311,6 @@ npm run test:ui           # Open Vitest UI
 
 **Frontend (.env)**:
 ```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_API_URL=https://api.yourapp.com
 ```
 

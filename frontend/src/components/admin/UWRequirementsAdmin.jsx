@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuth } from '../../contexts/AuthContext';
 import NotificationModal from '../modals/NotificationModal';
 import SalesforceIcon from '../shared/SalesforceIcon';
 import {
@@ -12,6 +12,8 @@ import {
 import { downloadUWRequirementsPDF } from '../../utils/generateUWRequirementsPDF';
 import '../../styles/slds.css';
 import '../../styles/UWRequirements.css';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 /**
  * Read UW requirements overrides from localStorage
@@ -43,7 +45,7 @@ function writeOverrides(obj) {
  * Allows admins to configure UW requirements checklist for DIP and Quotes
  */
 export default function UWRequirementsAdmin() {
-  const { supabase } = useSupabase();
+  const { token } = useAuth();
   const [requirements, setRequirements] = useState(DEFAULT_UW_REQUIREMENTS);
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
@@ -198,23 +200,29 @@ export default function UWRequirementsAdmin() {
     });
   }, [newRequirement, requirements]);
 
-  // Save to localStorage and optionally to Supabase
+  // Save to localStorage and optionally to backend API
   const saveRequirements = useCallback(async () => {
     setSaving(true);
     try {
       // Save to localStorage
       writeOverrides(requirements);
 
-      // Optionally save to Supabase app_constants table
-      if (supabase) {
+      // Save to backend API
+      if (token) {
         try {
-          await supabase
-            .from('app_constants')
-            .upsert({
-              key: 'uw_requirements',
-              value: JSON.stringify(requirements),
-              updated_at: new Date().toISOString()
-            }, { onConflict: 'key' });
+          const response = await fetch(`${API_BASE_URL}/api/admin/uw-requirements`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ requirements })
+          });
+
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            console.warn('Failed to save to database:', errData.message || 'Unknown error');
+          }
         } catch (dbError) {
           console.warn('Failed to save to database, using localStorage only:', dbError);
         }
@@ -236,7 +244,7 @@ export default function UWRequirementsAdmin() {
     } finally {
       setSaving(false);
     }
-  }, [requirements, supabase]);
+  }, [requirements, token]);
 
   // Reset to defaults
   const resetToDefaults = useCallback(() => {

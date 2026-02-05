@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { API_BASE_URL } from '../../config/api';
 import RateEditModal from './RateEditModal';
 // Bridge & Fusion rates tab removed - keep BTL rates only
 import NotificationModal from '../modals/NotificationModal';
 import WelcomeHeader from '../shared/WelcomeHeader';
+import { getRateLifecycleStatus } from '../../utils/calculator/rateFiltering';
 import '../../styles/slds.css';
 import '../../styles/admin-tables.css';
 
@@ -24,7 +26,8 @@ function RatesTable() {
     products: new Set(),
     productFees: new Set(),
     initialTerms: new Set(),
-    fullTerms: new Set()
+    fullTerms: new Set(),
+    rateStatuses: new Set(['Active', 'Inactive'])
   });
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [filters, setFilters] = useState({
@@ -36,89 +39,68 @@ function RatesTable() {
     product_fee: '',
     initial_term: '',
     full_term: '',
-    is_retention: ''
+    is_retention: '',
+    rate_status: 'Active' // Default to showing Active rates only
   });
   const [sortField, setSortField] = useState('set_key');
   const [sortDir, setSortDir] = useState('asc'); // 'asc' or 'desc'
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
   
   // Notification state
   const [notification, setNotification] = useState({ show: false, type: '', title: '', message: '' });
 
-  const { supabase } = useSupabase();
+  const { token } = useAuth();
 
   const fetchRates = async () => {
+    if (!token) return;
     setLoading(true);
     setError(null);
     try {
+      // Build query params for filtering
+      const params = new URLSearchParams({ table: 'btl' });
+      if (filters.set_key) params.append('set_key', filters.set_key);
+      if (filters.property) params.append('property', filters.property);
+      if (filters.rate_type) params.append('rate_type', filters.rate_type);
+      if (filters.tier) params.append('tier', filters.tier);
+      if (filters.product) params.append('product', filters.product);
+      if (filters.product_fee) params.append('product_fee', filters.product_fee);
+      if (filters.initial_term) params.append('initial_term', filters.initial_term);
+      if (filters.full_term) params.append('full_term', filters.full_term);
+      if (filters.is_retention !== '' && filters.is_retention !== null && filters.is_retention !== undefined) {
+        params.append('is_retention', filters.is_retention);
+      }
+      if (filters.rate_status && filters.rate_status !== 'all') {
+        params.append('rate_status', filters.rate_status);
+      }
+      params.append('sort', sortField);
+      params.append('order', sortDir);
+      params.append('limit', '2000');
       
-      // First, fetch all data to populate filter options
-      const { data: allData, error: allDataError } = await supabase
-        .from('rates_flat')
-        .select('set_key, property, rate_type, tier, product, product_fee, initial_term, full_term');
+      const response = await fetch(`${API_BASE_URL}/api/rates?${params}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
-      if (allDataError) throw allDataError;
+      if (!response.ok) {
+        throw new Error('Failed to fetch rates');
+      }
+      
+      const { rates: ratesData } = await response.json();
 
       // Update filter options from all data
       setFilterOptions({
-        setKeys: new Set(allData.map(r => r.set_key).filter(Boolean)),
-        properties: new Set(allData.map(r => r.property).filter(Boolean)),
-        rateTypes: new Set(allData.map(r => r.rate_type).filter(Boolean)),
-        tiers: new Set(allData.map(r => r.tier).filter(Boolean)),
-        products: new Set(allData.map(r => r.product).filter(Boolean)),
-        productFees: new Set(allData.map(r => r.product_fee).filter(Boolean)),
-        initialTerms: new Set(allData.map(r => r.initial_term).filter(Boolean)),
-        fullTerms: new Set(allData.map(r => r.full_term).filter(Boolean))
+        setKeys: new Set(ratesData.map(r => r.set_key).filter(Boolean)),
+        properties: new Set(ratesData.map(r => r.property).filter(Boolean)),
+        rateTypes: new Set(ratesData.map(r => r.rate_type).filter(Boolean)),
+        tiers: new Set(ratesData.map(r => r.tier).filter(Boolean)),
+        products: new Set(ratesData.map(r => r.product).filter(Boolean)),
+        productFees: new Set(ratesData.map(r => r.product_fee).filter(Boolean)),
+        initialTerms: new Set(ratesData.map(r => r.initial_term).filter(Boolean)),
+        fullTerms: new Set(ratesData.map(r => r.full_term).filter(Boolean)),
+        rateStatuses: new Set(['Active', 'Inactive'])
       });
 
-      // Then fetch filtered data
-      // Use a generic select('*') so the app stays resilient if the DB is missing
-      // recently-added columns (e.g. migrations haven't been applied yet).
-      let query = supabase
-        .from('rates_flat')
-        .select('*');
-      
-      // Apply filters
-  if (filters.set_key) query = query.eq('set_key', filters.set_key);
-      if (filters.property) query = query.eq('property', filters.property);
-
-      // Retention filter (accepts 'Yes' / 'No' / boolean-like values)
-      if (filters.is_retention !== '' && filters.is_retention !== null && filters.is_retention !== undefined) {
-        const v = String(filters.is_retention).toLowerCase();
-        if (['yes', 'true', '1'].includes(v)) {
-          query = query.eq('is_retention', true);
-        } else if (['no', 'false', '0'].includes(v)) {
-          query = query.eq('is_retention', false);
-        }
-      }
-
-  // rate_type, tier, product_fee and term-like fields may be numeric in DB. Coerce numeric strings when filtering.
-  const numericFields = ['rate_type', 'tier', 'product_fee', 'initial_term', 'full_term'];
-      const applyFilter = (field) => {
-        const val = filters[field];
-        if (val === '' || val === null || val === undefined) return;
-        if (numericFields.includes(field) && !Number.isNaN(Number(val))) {
-          query = query.eq(field, Number(val));
-        } else {
-          query = query.eq(field, val);
-        }
-      };
-
-  applyFilter('rate_type');
-  applyFilter('tier');
-  applyFilter('product_fee');
-  applyFilter('initial_term');
-  applyFilter('full_term');
-      if (filters.product) query = query.eq('product', filters.product);
-      
-      const { data, error } = await query.order('set_key', { ascending: true });
-      
-      if (error) throw error;
-
-      setRates(data);
-      
-      if (error) throw error;
-      setRates(data);
+      setRates(ratesData || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -128,7 +110,7 @@ function RatesTable() {
 
   useEffect(() => {
     fetchRates();
-  }, [filters]);
+  }, [filters, token]);
 
   const handleEdit = (rate) => {
     setEditingRate(rate);
@@ -136,46 +118,141 @@ function RatesTable() {
 
   const handleSave = async (updatedRate) => {
     try {
-      const { error } = await supabase
-        .from('rates_flat')
-        .update({
-          tier: updatedRate.tier || null,
-          property: updatedRate.property || null,
-          product: updatedRate.product || null,
-          rate_type: updatedRate.rate_type || null,
-          rate: updatedRate.rate,
-          product_fee: updatedRate.product_fee,
-          max_ltv: updatedRate.max_ltv ?? null,
-          revert_index: updatedRate.revert_index || null,
-          revert_margin: updatedRate.revert_margin ?? null,
-          min_loan: updatedRate.min_loan ?? null,
-          max_loan: updatedRate.max_loan ?? null,
-          max_rolled_months: updatedRate.max_rolled_months ?? null,
-          max_defer_int: updatedRate.max_defer_int ?? null,
-          min_icr: updatedRate.min_icr ?? null,
-          max_top_slicing: updatedRate.max_top_slicing ?? null,
-          admin_fee: updatedRate.admin_fee ?? null,
-          erc_1: updatedRate.erc_1 ?? null,
-          erc_2: updatedRate.erc_2 ?? null,
-          erc_3: updatedRate.erc_3 ?? null,
-          erc_4: updatedRate.erc_4 ?? null,
-          erc_5: updatedRate.erc_5 ?? null,
-          status: updatedRate.status || null,
-          floor_rate: updatedRate.floor_rate ?? null,
-          proc_fee: updatedRate.proc_fee ?? null,
-          is_tracker: updatedRate.is_tracker,
-          is_retention: updatedRate.is_retention || false,
-          initial_term: updatedRate.initial_term ?? null,
-          full_term: updatedRate.full_term ?? null,
-        })
-        .eq('id', updatedRate.id);
+      // Validate date range if both dates are provided
+      if (updatedRate.start_date && updatedRate.end_date) {
+        if (new Date(updatedRate.start_date) > new Date(updatedRate.end_date)) {
+          setNotification({
+            show: true,
+            type: 'error',
+            title: 'Validation Error',
+            message: 'Start date must be before end date'
+          });
+          return;
+        }
+      }
 
-      if (error) throw error;
+      const response = await fetch(`${API_BASE_URL}/api/rates/${updatedRate.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          rate: {
+            tier: updatedRate.tier || null,
+            property: updatedRate.property || null,
+            product: updatedRate.product || null,
+            rate_type: updatedRate.rate_type || null,
+            rate: updatedRate.rate,
+            product_fee: updatedRate.product_fee,
+            max_ltv: updatedRate.max_ltv ?? null,
+            revert_index: updatedRate.revert_index || null,
+            revert_margin: updatedRate.revert_margin ?? null,
+            min_loan: updatedRate.min_loan ?? null,
+            max_loan: updatedRate.max_loan ?? null,
+            max_rolled_months: updatedRate.max_rolled_months ?? null,
+            max_defer_int: updatedRate.max_defer_int ?? null,
+            min_icr: updatedRate.min_icr ?? null,
+            max_top_slicing: updatedRate.max_top_slicing ?? null,
+            admin_fee: updatedRate.admin_fee ?? null,
+            erc_1: updatedRate.erc_1 ?? null,
+            erc_2: updatedRate.erc_2 ?? null,
+            erc_3: updatedRate.erc_3 ?? null,
+            erc_4: updatedRate.erc_4 ?? null,
+            erc_5: updatedRate.erc_5 ?? null,
+            status: updatedRate.status || null,
+            floor_rate: updatedRate.floor_rate ?? null,
+            proc_fee: updatedRate.proc_fee ?? null,
+            is_tracker: updatedRate.is_tracker,
+            is_retention: updatedRate.is_retention || false,
+            initial_term: updatedRate.initial_term ?? null,
+            full_term: updatedRate.full_term ?? null,
+            rate_status: updatedRate.rate_status || 'Active',
+            start_date: updatedRate.start_date || null,
+            end_date: updatedRate.end_date || null,
+          },
+          tableName: 'rates_flat'
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to update rate');
+      }
       
       setEditingRate(null);
       fetchRates(); // Refresh the table
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Success',
+        message: 'Rate updated successfully'
+      });
     } catch (err) {
       setError(err.message);
+    }
+  };
+
+  // Bulk status update handler
+  const handleBulkStatusUpdate = async (newStatus) => {
+    const selectedIds = Array.from(selectedRows);
+    if (selectedIds.length === 0) {
+      setNotification({
+        show: true,
+        type: 'warning',
+        title: 'Warning',
+        message: 'Please select at least one rate to update'
+      });
+      return;
+    }
+
+    const confirmMessage = `Are you sure you want to set ${selectedIds.length} rate(s) to ${newStatus}?`;
+    if (!window.confirm(confirmMessage)) return;
+
+    setBulkActionLoading(true);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const token = localStorage.getItem('auth_token');
+      
+      const response = await fetch(`${API_BASE}/api/rates/bulk-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ids: selectedIds,
+          status: newStatus,
+          tableName: 'rates_flat'
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update rates');
+      }
+
+      const result = await response.json();
+      
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Success',
+        message: result.message || `${selectedIds.length} rate(s) updated to ${newStatus}`
+      });
+      
+      setSelectedRows(new Set());
+      setSelectAll(false);
+      fetchRates();
+    } catch (err) {
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Error',
+        message: err.message || 'Failed to update rates'
+      });
+    } finally {
+      setBulkActionLoading(false);
     }
   };
 
@@ -209,14 +286,26 @@ function RatesTable() {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this rate?')) {
       try {
-        const { error } = await supabase
-          .from('rates_flat')
-          .delete()
-          .eq('id', id);
+        const response = await fetch(`${API_BASE_URL}/api/rates/${id}?tableName=rates_flat`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
 
-        if (error) throw error;
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to delete rate');
+        }
+
         fetchRates();
         setSelectedRows(new Set());
+        setNotification({
+          show: true,
+          type: 'success',
+          title: 'Success',
+          message: 'Rate deleted successfully'
+        });
       } catch (err) {
         setError(err.message);
       }
@@ -232,15 +321,32 @@ function RatesTable() {
 
     if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected rates?`)) {
       try {
-        const { error } = await supabase
-          .from('rates_flat')
-          .delete()
-          .in('id', selectedIds);
+        const response = await fetch(`${API_BASE_URL}/api/rates/bulk`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            ids: selectedIds,
+            tableName: 'rates_flat'
+          })
+        });
 
-        if (error) throw error;
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || 'Failed to delete rates');
+        }
+
         fetchRates();
         setSelectedRows(new Set());
         setSelectAll(false);
+        setNotification({
+          show: true,
+          type: 'success',
+          title: 'Success',
+          message: `${selectedIds.length} rate(s) deleted successfully`
+        });
       } catch (err) {
         setError(err.message);
       }
@@ -469,12 +575,33 @@ function RatesTable() {
           return;
         }
 
-        // Remove any DB-managed fields (id, timestamps) before upsert
+        // Remove any DB-managed fields (id, timestamps) and invalid columns before insert
         const cleanedRecords = mappedRecords.map(r => {
           const rec = { ...r };
           if ('created_at' in rec) delete rec.created_at;
           if ('updated_at' in rec) delete rec.updated_at;
           if ('id' in rec) delete rec.id;
+          // Remove 'status' column - only 'rate_status' exists in DB
+          if ('status' in rec) delete rec.status;
+
+          // Convert date strings to PostgreSQL format (YYYY-MM-DD)
+          // Handle DD/MM/YYYY, MM/DD/YYYY, or empty values
+          const convertDate = (dateStr) => {
+            if (!dateStr || dateStr === '' || dateStr === undefined) return null;
+            const str = String(dateStr).trim();
+            if (!str) return null;
+            // Already in YYYY-MM-DD format
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+            // DD/MM/YYYY format (UK) - convert to YYYY-MM-DD
+            const ukMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (ukMatch) {
+              const [, day, month, year] = ukMatch;
+              return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            }
+            return null; // Invalid format
+          };
+          rec.start_date = convertDate(rec.start_date);
+          rec.end_date = convertDate(rec.end_date);
 
           // Infer initial_term if missing (2yr -> 24, 3yr -> 36), fallback to term/term_months
           if (rec.initial_term === null || rec.initial_term === undefined || rec.initial_term === '') {
@@ -498,20 +625,36 @@ function RatesTable() {
           return rec;
         });
 
-        // Upsert in chunks with onConflict to avoid duplicates
-        for (let i = 0; i < cleanedRecords.length; i += chunkSize) {
-          const chunk = cleanedRecords.slice(i, i + chunkSize);
-          const { data, error } = await supabase
-            .from('rates_flat')
-            .upsert(chunk, { onConflict: 'set_key,property,tier,product,term' });
+        // Upsert via backend API (handles chunking internally)
+        // Key columns match the idx_rates_flat_unique_version unique constraint
+        const onConflictCols = 'set_key,property,tier,product,product_fee,initial_term,start_date';
+        
+        const response = await fetch(`${API_BASE_URL}/api/rates/import`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            records: cleanedRecords,
+            tableName: 'rates_flat',
+            onConflict: onConflictCols
+          })
+        });
 
-          if (error) {
-            setError(error.message || JSON.stringify(error));
-            return;
-          }
-
-          // Optionally log progress
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          setError(errData.message || 'Failed to import rates');
+          return;
         }
+
+        const result = await response.json();
+        setNotification({
+          show: true,
+          type: 'success',
+          title: 'Import Complete',
+          message: result.message || `Successfully imported ${cleanedRecords.length} rates`
+        });
 
         // Refresh table after import
         fetchRates();
@@ -575,7 +718,8 @@ function RatesTable() {
       'product', 'product_fee', 'initial_term', 'full_term', 'rate', 'max_ltv', 'revert_index',
       'revert_margin', 'min_loan', 'max_loan', 'max_rolled_months',
       'max_defer_int', 'min_icr', 'is_tracker',
-      'max_top_slicing', 'admin_fee', 'erc_1', 'erc_2', 'erc_3', 'erc_4', 'erc_5', 'status', 'floor_rate', 'proc_fee'
+      'max_top_slicing', 'admin_fee', 'erc_1', 'erc_2', 'erc_3', 'erc_4', 'erc_5', 'status', 'floor_rate', 'proc_fee',
+      'rate_status', 'start_date', 'end_date'
     ];
     
     // Format the header row
@@ -631,12 +775,43 @@ function RatesTable() {
               Delete Selected ({selectedRows.size})
             </button>
           )}
+          {selectedRows.size > 0 && (
+            <>
+              <button 
+                className="slds-button slds-button_success" 
+                onClick={() => handleBulkStatusUpdate('Active')}
+                disabled={bulkActionLoading}
+              >
+                {bulkActionLoading ? 'Updating...' : `Activate (${selectedRows.size})`}
+              </button>
+              <button 
+                className="slds-button slds-button_neutral" 
+                onClick={() => handleBulkStatusUpdate('Inactive')}
+                disabled={bulkActionLoading}
+                style={{ backgroundColor: 'var(--token-layer-surface)', borderColor: 'var(--token-border-subtle)' }}
+              >
+                {bulkActionLoading ? 'Updating...' : `Deactivate (${selectedRows.size})`}
+              </button>
+            </>
+          )}
             <span className="total-count">Total: {rates.length}</span>
           </div>
         </div>
       </div>
 
       <div className="filters-section">
+        <div className="filter-field">
+          <label>Status</label>
+          <select
+            value={filters.rate_status}
+            onChange={(e) => handleFilterChange('rate_status', e.target.value)}
+          >
+            <option value="Active">Active Only</option>
+            <option value="Inactive">Inactive Only</option>
+            <option value="all">All Statuses</option>
+          </select>
+        </div>
+
         <div className="filter-field">
           <label>Set Key</label>
             <select
@@ -685,10 +860,10 @@ function RatesTable() {
             >
               {showAdvancedFilters ? 'Hide Filters' : 'More Filters'}
             </button>
-            {(filters.set_key || filters.property || filters.rate_type || filters.is_retention || filters.tier || filters.product || filters.product_fee || filters.initial_term) && (
+            {(filters.set_key || filters.property || filters.rate_type || filters.is_retention || filters.tier || filters.product || filters.product_fee || filters.initial_term || filters.rate_status !== 'Active') && (
               <button 
                 className="slds-button slds-button_text-destructive" 
-                onClick={() => setFilters({ set_key: '', property: '', rate_type: '', tier: '', product: '', product_fee: '', initial_term: '', full_term: '', is_retention: '' })}
+                onClick={() => setFilters({ set_key: '', property: '', rate_type: '', tier: '', product: '', product_fee: '', initial_term: '', full_term: '', is_retention: '', rate_status: 'Active' })}
               >
                 Clear All
               </button>
@@ -738,12 +913,12 @@ function RatesTable() {
           </div>
 
           <div className="filter-field">
-            <label>Product Fee</label>
+            <label>Arrangement Fee</label>
             <select
               value={filters.product_fee}
               onChange={(e) => handleFilterChange('product_fee', e.target.value)}
             >
-              <option value="">All Product Fees</option>
+              <option value="">All Arrangement Fees</option>
               {Array.from(filterOptions.productFees).sort((a, b) => a - b).map(fee => (
                 <option key={fee} value={fee}>{fee}</option>
               ))}
@@ -782,7 +957,7 @@ function RatesTable() {
               <th onClick={() => changeSort('property')} className={`sortable ${sortField === 'property' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Property</th>
               <th onClick={() => changeSort('tier')} className={`sortable ${sortField === 'tier' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Tier</th>
               <th onClick={() => changeSort('product')} className={`sortable ${sortField === 'product' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Product</th>
-              <th>Product Fee</th>
+              <th>Arrangement Fee</th>
               <th onClick={() => changeSort('initial_term')} className={`sortable ${sortField === 'initial_term' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Initial Term</th>
               <th onClick={() => changeSort('full_term')} className={`sortable ${sortField === 'full_term' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Full Term</th>
               <th onClick={() => changeSort('rate')} className={`sortable ${sortField === 'rate' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Rate (%)</th>
@@ -805,6 +980,9 @@ function RatesTable() {
               <th>Status</th>
               <th>Floor Rate</th>
               <th>Proc Fee</th>
+              <th onClick={() => changeSort('rate_status')} className={`sortable ${sortField === 'rate_status' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Rate Status</th>
+              <th onClick={() => changeSort('start_date')} className={`sortable ${sortField === 'start_date' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>Start Date</th>
+              <th onClick={() => changeSort('end_date')} className={`sortable ${sortField === 'end_date' ? (sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc') : ''}`}>End Date</th>
               <th className="sticky-action">Actions</th>
             </tr>
           </thead>
@@ -847,6 +1025,34 @@ function RatesTable() {
                 <td>{rate.status ?? ''}</td>
                 <td>{rate.floor_rate ?? ''}</td>
                 <td>{rate.proc_fee ?? ''}</td>
+                <td>
+                  {(() => {
+                    const lifecycleStatus = getRateLifecycleStatus(rate);
+                    return (
+                      <span 
+                        className={`status-badge status-${lifecycleStatus.status}`}
+                        style={{
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: '500',
+                          backgroundColor: lifecycleStatus.color === 'green' ? 'var(--token-success-background, #defbe6)' :
+                                          lifecycleStatus.color === 'red' ? 'var(--token-error-background, #fff1f1)' :
+                                          lifecycleStatus.color === 'orange' ? 'var(--token-warning-background, #fff8e1)' :
+                                          lifecycleStatus.color === 'blue' ? 'var(--token-info-background, #edf5ff)' : 'var(--token-layer-surface)',
+                          color: lifecycleStatus.color === 'green' ? 'var(--token-success-text, #198038)' :
+                                lifecycleStatus.color === 'red' ? 'var(--token-error-text, #da1e28)' :
+                                lifecycleStatus.color === 'orange' ? 'var(--token-warning-text, #f57c00)' :
+                                lifecycleStatus.color === 'blue' ? 'var(--token-info-text, #0043ce)' : 'var(--token-text-secondary)'
+                        }}
+                      >
+                        {lifecycleStatus.label}
+                      </span>
+                    );
+                  })()}
+                </td>
+                <td>{rate.start_date ?? ''}</td>
+                <td>{rate.end_date ?? ''}</td>
                 <td className="sticky-action">
                   <div className="row-actions">
                     <button className="slds-button slds-button_neutral" onClick={() => handleEdit(rate)}>

@@ -1,9 +1,84 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../config/api';
+import PropTypes from 'prop-types';
+
+// Loading skeleton component for professional loading state
+const SkeletonPulse = ({ width = '48px', height = '24px' }) => (
+  <div 
+    style={{
+      width,
+      height,
+      background: 'linear-gradient(90deg, var(--token-layer-02, #e0e0e0) 25%, var(--token-layer-01, #f0f0f0) 50%, var(--token-layer-02, #e0e0e0) 75%)',
+      backgroundSize: '200% 100%',
+      animation: 'shimmer 1.5s infinite',
+      borderRadius: '4px'
+    }}
+  />
+);
+
+SkeletonPulse.propTypes = {
+  width: PropTypes.string,
+  height: PropTypes.string
+};
 
 const AdminLandingPage = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  
+  // Dynamic stats state
+  const [stats, setStats] = useState({
+    users: 0,
+    btlRates: 0,
+    bridgingRates: 0,
+    quotesToday: 0,
+    supportRequests: 0,
+    criteriaRules: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Fetch dynamic stats on mount
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!token) {
+        console.warn('Auth token not available');
+        setError('Not authenticated');
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        // Fetch stats from the API
+        const response = await fetch(`${API_BASE_URL}/api/admin/stats`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch admin stats');
+        }
+        
+        const data = await response.json();
+        
+        setStats({
+          users: data.users || 0,
+          btlRates: data.btlRates || 0,
+          bridgingRates: data.bridgingRates || 0,
+          quotesToday: data.quotesToday || 0,
+          supportRequests: data.supportRequests || 0,
+          criteriaRules: data.criteriaRules || 0
+        });
+        
+      } catch (err) {
+        console.error('Failed to fetch admin stats:', err);
+        setError('Failed to load statistics');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchStats();
+  }, [token]);
 
   const adminTools = [
     {
@@ -13,7 +88,7 @@ const AdminLandingPage = () => {
       icon: 'settings',
       link: '/admin/constants',
       gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      stats: { label: 'Active', value: '24' }
+      stats: { label: 'Active', value: '24', isStatic: true }
     },
     {
       id: 'criteria',
@@ -22,7 +97,7 @@ const AdminLandingPage = () => {
       icon: 'rules',
       link: '/admin/criteria',
       gradient: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
-      stats: { label: 'Rules', value: '48' }
+      stats: { label: 'Rules', value: stats.criteriaRules }
     },
     {
       id: 'btl-rates',
@@ -31,7 +106,7 @@ const AdminLandingPage = () => {
       icon: 'chart',
       link: '/admin/btl-rates',
       gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-      stats: { label: 'Products', value: '32' }
+      stats: { label: 'Products', value: stats.btlRates }
     },
     {
       id: 'bridging-rates',
@@ -40,17 +115,8 @@ const AdminLandingPage = () => {
       icon: 'graph',
       link: '/admin/bridging-rates',
       gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-      stats: { label: 'Rates', value: '28' }
+      stats: { label: 'Rates', value: stats.bridgingRates }
     },
-    /*{
-      id: 'uw-requirements',
-      title: 'UW Requirements',
-      description: 'Configure underwriting document checklist for DIP and Quote issuance.',
-      icon: 'checklist',
-      link: '/admin/uw-requirements',
-      gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-      stats: { label: 'Items', value: '40+' }
-    },*/
     {
       id: 'global-settings',
       title: 'Global Settings',
@@ -58,17 +124,8 @@ const AdminLandingPage = () => {
       icon: 'world',
       link: '/admin/global-settings',
       gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-      stats: { label: 'Configs', value: '16' }
+      stats: { label: 'Configs', value: '16', isStatic: true }
     },
-    /*{
-      id: 'data-health',
-      title: 'Data Health',
-      description: 'Detect duplicate rates and anomalies across BTL/Bridging sets.',
-      icon: 'warning',
-      link: '/admin/data-health',
-      gradient: 'linear-gradient(135deg, #ffd194 0%, #70e1f5 100%)',
-      stats: { label: 'Checks', value: 'Live' }
-    },*/
     {
       id: 'users',
       title: 'User Management',
@@ -76,7 +133,7 @@ const AdminLandingPage = () => {
       icon: 'people',
       link: '/admin/users',
       gradient: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-      stats: { label: 'Users', value: '7' }
+      stats: { label: 'Users', value: stats.users }
     },
     {
       id: 'support',
@@ -85,14 +142,14 @@ const AdminLandingPage = () => {
       icon: 'question',
       link: '/admin/support-requests',
       gradient: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-      stats: { label: 'Requests', value: 'New' }
+      stats: { label: 'Open', value: stats.supportRequests, highlight: stats.supportRequests > 0 }
     }
   ];
 
   const systemMetrics = [
     { label: 'System Status', value: 'Operational', status: 'success', icon: 'success' },
-    { label: 'Active Users', value: '7', status: 'info', icon: 'people' },
-    { label: 'Quotes Today', value: '23', status: 'warning', icon: 'chart' },
+    { label: 'Active Users', value: stats.users, status: 'info', icon: 'people' },
+    { label: 'Quotes Today', value: stats.quotesToday, status: 'warning', icon: 'chart' },
     { label: 'API Health', value: '99.9%', status: 'success', icon: 'shield' }
   ];
 
@@ -169,131 +226,211 @@ const AdminLandingPage = () => {
 
       {/* System Metrics Cards */}
       <div style={{ padding: '0 2rem', maxWidth: '1400px', margin: '-50px auto 4rem', position: 'relative', zIndex: 10 }}>
+        <style>
+          {`
+            @keyframes shimmer {
+              0% { background-position: -200% 0; }
+              100% { background-position: 200% 0; }
+            }
+            .metric-card {
+              background: var(--token-layer-surface, white);
+              padding: 1.75rem 1.5rem;
+              border-radius: var(--token-radius-md, 12px);
+              box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+              border: 1px solid var(--token-border-subtle, rgba(0,0,0,0.06));
+              transition: all 0.25s ease;
+            }
+            .metric-card:hover {
+              box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+              transform: translateY(-2px);
+            }
+            .dark-mode .metric-card,
+            :root[data-carbon-theme="g100"] .metric-card {
+              background: var(--token-layer-02, #262626);
+              border-color: var(--token-border-subtle, rgba(255,255,255,0.1));
+            }
+          `}
+        </style>
         <div className="slds-grid slds-gutters_large slds-wrap">
           {systemMetrics.map((metric, idx) => (
             <div key={idx} className="slds-col slds-size_1-of-2 slds-medium-size_1-of-4" style={{ padding: '0 0.75rem', marginBottom: '1.5rem' }}>
-              <div 
-                style={{
-                  background: 'white',
-                  padding: '2rem 1.5rem',
-                  borderRadius: 'var(--token-radius-md)',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                  border: '1px solid rgba(0,0,0,0.08)'
-                }}
-              >
-                <div className="slds-grid slds-grid_align-spread" style={{ marginBottom: '1rem' }}>
-                  <span style={{ fontSize: 'var(--token-font-size-sm)', color: 'var(--token-text-secondary)', fontWeight: '500', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{metric.label}</span>
-                  <svg className="slds-icon slds-icon_x-small" aria-hidden="true" style={{ 
-                    fill: metric.status === 'success' ? 'var(--token-success)' : metric.status === 'warning' ? 'var(--token-color-brand-orange)' : 'var(--token-color-brand-navy)',
-                    flexShrink: 0
+              <div className="metric-card">
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <span style={{ 
+                    fontSize: '0.8125rem', 
+                    color: 'var(--token-text-secondary)', 
+                    fontWeight: '500', 
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' 
                   }}>
-                    <use xlinkHref={`/assets/icons/utility-sprite/svg/symbols.svg#${metric.icon}`}></use>
-                  </svg>
+                    {metric.label}
+                  </span>
                 </div>
-                <div style={{ fontSize: '2rem', color: 'var(--token-color-brand-navy)', fontWeight: '700', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{metric.value}</div>
+                <div style={{ minHeight: '40px', display: 'flex', alignItems: 'center' }}>
+                  {loading ? (
+                    <SkeletonPulse width="60px" height="32px" />
+                  ) : (
+                    <span style={{ 
+                      fontSize: '1.875rem', 
+                      color: 'var(--token-text-primary, var(--token-color-brand-navy))', 
+                      fontWeight: '700', 
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                      lineHeight: '1'
+                    }}>
+                      {metric.value}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           ))}
         </div>
+        {error && (
+          <div style={{ 
+            padding: '12px 16px', 
+            background: 'rgba(239, 68, 68, 0.1)', 
+            borderRadius: '8px', 
+            color: '#ef4444',
+            fontSize: '0.875rem',
+            marginTop: '1rem'
+          }}>
+            ⚠️ {error}
+          </div>
+        )}
       </div>
 
       {/* Admin Tools Grid */}
       <div style={{ padding: '0 2rem', maxWidth: '1400px', margin: '0 auto 5rem' }}>
-        <div style={{ marginBottom: '3rem' }}>
-          <h2 style={{ fontSize: '1.75rem', color: 'var(--token-color-brand-navy)', fontWeight: '600', marginBottom: '0.75rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', letterSpacing: '-0.01em' }}>
+        <style>
+          {`
+            .admin-tool-card {
+              background: var(--token-layer-surface, white);
+              border-radius: var(--token-radius-md, 12px);
+              overflow: hidden;
+              box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+              border: 1px solid var(--token-border-subtle, rgba(0,0,0,0.06));
+              transform: translateY(0);
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+              display: flex;
+              flex-direction: column;
+              height: 100%;
+            }
+            .admin-tool-card:hover {
+              transform: translateY(-8px);
+              box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+            }
+            .dark-mode .admin-tool-card,
+            :root[data-carbon-theme="g100"] .admin-tool-card {
+              background: var(--token-layer-02, #262626);
+              border-color: var(--token-border-subtle, rgba(255,255,255,0.1));
+            }
+            .admin-tool-btn {
+              background: linear-gradient(135deg, var(--token-color-brand-navy) 0%, #003d8f 100%);
+              border: none;
+              color: white;
+              font-weight: 600;
+              height: 44px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border-radius: 8px;
+              transition: all 0.2s ease;
+              width: 100%;
+              font-size: 0.875rem;
+              box-shadow: 0 4px 12px rgba(0, 32, 91, 0.25);
+              cursor: pointer;
+            }
+            .admin-tool-btn:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 6px 20px rgba(0, 32, 91, 0.35);
+            }
+          `}
+        </style>
+        <div style={{ marginBottom: '2.5rem' }}>
+          <h2 style={{ 
+            fontSize: '1.5rem', 
+            color: 'var(--token-text-primary, var(--token-color-brand-navy))', 
+            fontWeight: '600', 
+            marginBottom: '0.5rem', 
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', 
+            letterSpacing: '-0.01em' 
+          }}>
             Configuration Tools
           </h2>
-          <p style={{ fontSize: '1.0625rem', color: 'var(--token-text-secondary)', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
+          <p style={{ 
+            fontSize: '0.9375rem', 
+            color: 'var(--token-text-secondary)', 
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' 
+          }}>
             Manage system settings, rates, and configurations
           </p>
         </div>
         
         <div className="slds-grid slds-gutters_large slds-wrap">
           {adminTools.map((tool) => (
-            <div key={tool.id} className="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3" style={{ marginBottom: '2rem', padding: '0 0.75rem' }}>
-              <Link to={tool.link} className="slds-text-link_reset display-block height-100">
-                <article 
-                  className="height-100 transition-all"
-                  style={{
-                    background: 'white',
-                    borderRadius: 'var(--token-radius-md)',
-                    overflow: 'hidden',
-                    boxShadow: '0 6px 25px rgba(0,0,0,0.08)',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    transform: 'translateY(0)',
-                    transition: 'all 0.3s ease',
-                    display: 'flex',
-                    flexDirection: 'column'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-6px)';
-                    e.currentTarget.style.boxShadow = '0 15px 45px rgba(0,0,0,0.12)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 6px 25px rgba(0,0,0,0.08)';
-                  }}
-                >
-                  {/* Gradient accent */}
-                  <div style={{ background: tool.gradient, height: '6px' }} />
+            <div key={tool.id} className="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3" style={{ marginBottom: '1.5rem', padding: '0 0.75rem' }}>
+              <Link to={tool.link} className="slds-text-link_reset" style={{ display: 'block', height: '100%' }}>
+                <article className="admin-tool-card">
+                  {/* Gradient accent bar */}
+                  <div style={{ background: tool.gradient, height: '4px' }} />
                   
-                  <div style={{ padding: '2rem 1.75rem', flex: '1', display: 'flex', flexDirection: 'column' }}>
-                    <div className="slds-grid slds-grid_align-spread" style={{ marginBottom: '1.5rem' }}>
-                      <div 
-                        style={{ 
-                          background: `${tool.gradient}15`,
-                          padding: '12px',
-                          borderRadius: '12px',
-                          display: 'inline-flex'
-                        }}
-                      >
-                        <svg className="slds-icon slds-icon_small" aria-hidden="true" style={{ fill: 'var(--token-color-brand-navy)' }}>
-                          <use xlinkHref={`/assets/icons/utility-sprite/svg/symbols.svg#${tool.icon}`}></use>
-                        </svg>
-                      </div>
+                  <div style={{ padding: '1.5rem', flex: '1', display: 'flex', flexDirection: 'column' }}>
+                    <div className="slds-grid slds-grid_align-end" style={{ marginBottom: '1rem' }}>
                       <div className="slds-text-align_right">
-                        <div style={{ fontSize: 'var(--token-font-size-xs)', color: 'var(--token-text-helper)', fontWeight: '500', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{tool.stats.label}</div>
-                        <div style={{ fontSize: '1.375rem', color: 'var(--token-color-brand-navy)', fontWeight: '700', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>{tool.stats.value}</div>
+                        <div style={{ 
+                          fontSize: '0.6875rem', 
+                          color: 'var(--token-text-helper)', 
+                          fontWeight: '500', 
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          marginBottom: '2px',
+                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' 
+                        }}>
+                          {tool.stats.label}
+                        </div>
+                        <div style={{ minWidth: '40px', minHeight: '28px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                          {loading && !tool.stats.isStatic ? (
+                            <SkeletonPulse width="36px" height="24px" />
+                          ) : (
+                            <span style={{ 
+                              fontSize: '1.25rem', 
+                              color: tool.stats.highlight ? '#ef4444' : 'var(--token-text-primary, var(--token-color-brand-navy))', 
+                              fontWeight: '700', 
+                              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' 
+                            }}>
+                              {tool.stats.value}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     
-                    <h2 style={{ fontSize: 'var(--token-font-size-lg)', color: 'var(--token-color-brand-navy)', fontWeight: '600', marginBottom: '0.75rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
+                    <h3 style={{ 
+                      fontSize: '1.0625rem', 
+                      color: 'var(--token-text-primary, var(--token-color-brand-navy))', 
+                      fontWeight: '600', 
+                      marginBottom: '0.5rem', 
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' 
+                    }}>
                       {tool.title}
-                    </h2>
-                    <p style={{ fontSize: '0.9375rem', color: 'var(--token-text-secondary)', lineHeight: '1.7', marginBottom: '1.5rem', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
+                    </h3>
+                    <p style={{ 
+                      fontSize: '0.8125rem', 
+                      color: 'var(--token-text-secondary)', 
+                      lineHeight: '1.6', 
+                      marginBottom: '1.25rem',
+                      flex: '1',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' 
+                    }}>
                       {tool.description}
                     </p>
-                  </div>
-                  
-                  <div style={{ padding: '0 1.75rem 1.75rem', marginTop: 'auto' }}>
-                    <div 
-                      className="slds-button" 
-                      style={{
-                        background: 'linear-gradient(135deg, var(--token-color-brand-navy) 0%, #003d8f 100%)',
-                        border: 'none',
-                        color: 'white',
-                        fontWeight: '600',
-                        height: '48px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '8px',
-                        transition: 'all 0.2s ease',
-                        width: '100%',
-                        fontSize: '0.9375rem',
-                        boxShadow: '0 4px 12px rgba(0, 32, 91, 0.3)',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 32, 91, 0.4)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 32, 91, 0.3)';
-                      }}
-                    >
-                      Configure →
+                    
+                    <div className="admin-tool-btn">
+                      Configure
+                      <svg style={{ marginLeft: '6px', width: '14px', height: '14px', fill: 'white' }} viewBox="0 0 20 20">
+                        <path d="M7.05 4.05a.75.75 0 011.06 0l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L11.44 10 7.05 5.61a.75.75 0 010-1.06z" />
+                      </svg>
                     </div>
                   </div>
                 </article>

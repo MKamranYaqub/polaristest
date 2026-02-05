@@ -12,7 +12,6 @@
 
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useSupabase } from '../../../contexts/SupabaseContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
 
@@ -47,7 +46,6 @@ import '../../../styles/slds.css';
 import '../../../styles/Calculator.scss';
 
 export default function BTLCalculator({ initialQuote = null }) {
-  const { supabase } = useSupabase();
   const { canEditCalculators, token } = useAuth();
   const { showToast } = useToast();
   const location = useLocation();
@@ -95,7 +93,7 @@ export default function BTLCalculator({ initialQuote = null }) {
    */
   const loadQuote = async (quoteId) => {
     try {
-      const quote = await getQuote(supabase, quoteId);
+      const quote = await getQuote(quoteId);
       if (!quote) {
         showToast('error', 'Quote not found');
         return;
@@ -169,12 +167,12 @@ export default function BTLCalculator({ initialQuote = null }) {
         ...additionalData
       };
 
-      const savedQuote = await upsertQuoteData(
-        supabase,
-        token,
-        currentQuoteId,
-        quoteData
-      );
+      const savedQuote = await upsertQuoteData({
+        quoteId: currentQuoteId,
+        calculatorType: 'BTL',
+        payload: quoteData,
+        token
+      });
 
       setCurrentQuoteId(savedQuote.id);
       setCurrentQuoteRef(savedQuote.reference_number);

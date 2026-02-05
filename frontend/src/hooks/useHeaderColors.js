@@ -5,7 +5,6 @@
  */
 
 import { useEffect } from 'react';
-import { useSupabase } from '../contexts/SupabaseContext';
 
 // Default column colors (these values are applied as CSS custom properties)
 const DEFAULT_COLUMNS = [
@@ -109,8 +108,6 @@ const applyAllHeaderColors = (allColors) => {
 };
 
 export function useHeaderColors() {
-  const { supabase } = useSupabase();
-
   useEffect(() => {
     const loadColors = async () => {
       try {
@@ -129,40 +126,15 @@ export function useHeaderColors() {
           }
         }
 
-        // Then load from Supabase for the latest values
-        if (supabase) {
-          const { data, error } = await supabase
-            .from('app_constants')
-            .select('value')
-            .eq('key', 'results_table_header_colors')
-            .maybeSingle();
-
-          if (!error && data && data.value) {
-            const parsed = typeof data.value === 'string' 
-              ? JSON.parse(data.value) 
-              : data.value;
-            
-            // Check if it's the per-loan-type format
-            if (parsed.btl || parsed.bridge || parsed.core) {
-              const allColors = {
-                btl: migrateToColumnsFormat(parsed.btl, DEFAULT_HEADER_COLORS.btl),
-                bridge: migrateToColumnsFormat(parsed.bridge, DEFAULT_HEADER_COLORS.bridge),
-                core: migrateToColumnsFormat(parsed.core, DEFAULT_HEADER_COLORS.core)
-              };
-              applyAllHeaderColors(allColors);
-              
-              // Update localStorage
-              localStorage.setItem('results_table_header_colors', JSON.stringify(allColors));
-            }
-          }
-        }
+        // Note: Backend API integration for header colors would go here
+        // For now, using localStorage only
       } catch (e) {
         console.warn('Failed to load header colors:', e);
       }
     };
 
     loadColors();
-  }, [supabase]);
+  }, []);
 }
 
 export default useHeaderColors;
