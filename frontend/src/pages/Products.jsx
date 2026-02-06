@@ -236,7 +236,7 @@ const Products = ({ initialTab = 'btl' }) => {
           params.append('is_retention', 'false');
         } else if (subTab === 'specialist') {
           params.append('set_key', 'RATES_SPEC');
-          params.append('property', 'Residential');
+          params.append('property', 'Residential - BTL');
         } else if (subTab === 'commercial') {
           params.append('set_key', 'RATES_SPEC');
           params.append('property', 'Commercial');
