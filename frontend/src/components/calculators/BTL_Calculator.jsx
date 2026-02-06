@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAppSettings } from '../../contexts/AppSettingsContext';
 import { API_BASE_URL } from '../../config/api';
 import { useToast } from '../../contexts/ToastContext';
 import SalesforceIcon from '../shared/SalesforceIcon';
@@ -39,6 +40,42 @@ import {
   BROKER_ROUTES,
   BROKER_COMMISSION_DEFAULTS
 } from '../../config/constants';
+
+/**
+ * Helper function to normalize productScope keys for productLists lookup
+ * Maps "Residential - BTL" → "Residential", "Commercial - BTL" → "Commercial", etc.
+ * @param {string} productScope - The productScope value (e.g., "Residential - BTL")
+ * @param {Object} productLists - The productLists configuration object from settings
+ * @returns {string} The normalized key that exists in productLists
+ */
+function getProductListKey(productScope, productLists) {
+  if (!productScope) return 'Residential';
+  
+  // Try exact match first
+  if (productLists && productLists[productScope]) {
+    return productScope;
+  }
+  
+  // Strip " - BTL" suffix and try again
+  const stripped = productScope.replace(/\s*-\s*BTL$/i, '').trim();
+  if (productLists && productLists[stripped]) {
+    return stripped;
+  }
+  
+  // Try case-insensitive partial match
+  if (productLists) {
+    const lowerStripped = stripped.toLowerCase();
+    const matchingKey = Object.keys(productLists).find(key => 
+      key.toLowerCase() === lowerStripped ||
+      key.toLowerCase().includes(lowerStripped) ||
+      lowerStripped.includes(key.toLowerCase())
+    );
+    if (matchingKey) return matchingKey;
+  }
+  
+  // Default fallback
+  return 'Residential';
+}
 
 /**
  * Parse rate metadata from product name for historical quote accuracy
@@ -80,6 +117,7 @@ export default function BTLcalculator({
 }) {
   const { canEditCalculators, token } = useAuth();
   const { showToast } = useToast();
+  const { productLists } = useAppSettings();
   const location = useLocation();
     const navigate = useNavigate();
   const navQuote = location && location.state ? location.state.loadQuote : null;
@@ -306,21 +344,13 @@ export default function BTLcalculator({
     if (!productScope && btlScopes.length > 0) {
       setProductScope(btlScopes[0]);
     }
-    // apply any constants overrides from localStorage for product lists (use productScope as the key)
-    try {
-      const raw = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.productLists && productScope) {
-          if (parsed.productLists[productScope] && parsed.productLists[productScope].length > 0) {
-            setProductType(parsed.productLists[productScope][0]);
-          }
-        }
-      }
-    } catch (e) {
-      // ignore
+    // Use productLists from AppSettingsContext for product types
+    // Normalize the key to handle "Residential - BTL" → "Residential" mapping
+    const listKey = getProductListKey(productScope, productLists);
+    if (productLists && productScope && productLists[listKey] && productLists[listKey].length > 0) {
+      setProductType(productLists[listKey][0]);
     }
-  }, [allCriteria, productScope, effectiveInitialQuote]);
+  }, [allCriteria, productScope, effectiveInitialQuote, productLists]);
 
   // If an initialQuote is provided, populate fields from the database structure
   useEffect(() => {
@@ -559,22 +589,19 @@ export default function BTLcalculator({
       return;
     }
     
-    try {
-      const raw = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
-      const parsed = raw ? JSON.parse(raw) : null;
-      const list = (parsed && parsed.productLists && parsed.productLists[productScope])
-        || DEFAULT_PRODUCT_TYPES_LIST[productScope]
-        || DEFAULT_PRODUCT_TYPES_LIST['Residential']
-        || [];
-      if (list.length > 0) {
-        // only set if not set or current value not in list
-        if (!productType || !list.includes(productType)) setProductType(list[0]);
-      }
-    } catch (e) {
-      const list = DEFAULT_PRODUCT_TYPES_LIST[productScope] || DEFAULT_PRODUCT_TYPES_LIST['Residential'] || [];
-      if (list.length > 0 && (!productType || !list.includes(productType))) setProductType(list[0]);
+    // Use productLists from AppSettingsContext (reactively updates when Constants change)
+    // Normalize the key to handle "Residential - BTL" → "Residential" mapping
+    const listKey = getProductListKey(productScope, productLists);
+    const list = (productLists && productLists[listKey])
+      || DEFAULT_PRODUCT_TYPES_LIST[listKey]
+      || DEFAULT_PRODUCT_TYPES_LIST['Residential']
+      || [];
+    
+    if (list.length > 0) {
+      // only set if not set or current value not in list
+      if (!productType || !list.includes(productType)) setProductType(list[0]);
     }
-  }, [productScope, currentQuoteData]);
+  }, [productScope, currentQuoteData, productLists, productType]);
 
   // compute tier when answers change
   const currentTier = computeTierFromAnswers(answers);
@@ -815,13 +842,15 @@ export default function BTLcalculator({
         // Client-side fee-column filtering: hide rates whose product_fee is present but not
         // included in the active fee columns for the selected productScope.
         // Build dynamic fee column key based on retention state and range
-        let feeColumnKey = productScope;
+        // Normalize productScope for fee columns lookup (strip " - BTL" suffix)
+        const normalizedScope = getProductListKey(productScope, null);
+        let feeColumnKey = normalizedScope;
         if (retentionChoice === 'Yes') {
           // For retention products, use specialized fee columns
           if (selectedRange === 'core') {
             feeColumnKey = `Core_Retention_${retentionLtv}`;
           } else {
-            feeColumnKey = `Retention${productScope}`;
+            feeColumnKey = `Retention${normalizedScope}`;
           }
         }
         
@@ -838,7 +867,7 @@ export default function BTLcalculator({
           // ignore
         }
         if (!activeFeeCols || activeFeeCols.length === 0) {
-          activeFeeCols = (DEFAULT_FEE_COLUMNS[feeColumnKey] || DEFAULT_FEE_COLUMNS[productScope] || DEFAULT_FEE_COLUMNS['Residential'] || []).map((n) => Number(n));
+          activeFeeCols = (DEFAULT_FEE_COLUMNS[feeColumnKey] || DEFAULT_FEE_COLUMNS[normalizedScope] || DEFAULT_FEE_COLUMNS['Residential'] || []).map((n) => Number(n));
         }
 
         const feeFiltered = deduped.filter((r) => {
@@ -1093,21 +1122,14 @@ export default function BTLcalculator({
   const productSelectControl = (
     <select className="slds-select" value={productType} onChange={(e) => setProductType(e.target.value)}>
       {(() => {
-        // read product lists from localStorage overrides first, fall back to default
-        try {
-          const raw = localStorage.getItem(LOCALSTORAGE_CONSTANTS_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed && parsed.productLists && productScope && parsed.productLists[productScope]) {
-              return parsed.productLists[productScope].map((p) => <option key={p}>{p}</option>);
-            }
-          }
-        } catch (e) {
-          // ignore parse errors
-        }
-        // fall back: try productScope then 'Residential'
-        const key = productScope || 'Residential';
-        return (DEFAULT_PRODUCT_TYPES_LIST[key] || DEFAULT_PRODUCT_TYPES_LIST['Residential'] || []).map((p) => <option key={p}>{p}</option>);
+        // Use productLists from AppSettingsContext (reactively updates when Constants change)
+        // Normalize the key to handle "Residential - BTL" → "Residential" mapping
+        const key = getProductListKey(productScope, productLists);
+        const list = (productLists && productLists[key]) 
+          || DEFAULT_PRODUCT_TYPES_LIST[key] 
+          || DEFAULT_PRODUCT_TYPES_LIST['Residential'] 
+          || [];
+        return list.map((p) => <option key={p}>{p}</option>);
       })()}
     </select>
   );

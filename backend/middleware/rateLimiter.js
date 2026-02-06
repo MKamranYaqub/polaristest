@@ -11,11 +11,12 @@ import rateLimit from 'express-rate-limit';
 
 /**
  * General API rate limiter
- * 100 requests per 15 minutes for all API endpoints
+ * 500 requests per 15 minutes for all API endpoints
+ * (Relaxed for development - adjust in production)
  */
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 500, // Limit each IP to 500 requests per windowMs
   message: {
     error: 'Too many requests from this IP, please try again later.',
     retryAfter: '15 minutes'
@@ -24,8 +25,11 @@ export const apiLimiter = rateLimit({
   legacyHeaders: false, // Disable `X-RateLimit-*` headers
   // Skip rate limiting for certain conditions (optional)
   skip: (req) => {
-    // Skip rate limiting for internal health checks
-    return req.path === '/health' || req.path === '/api/health';
+    // Skip rate limiting for internal health checks and admin settings
+    // Admin settings are called frequently by React components
+    return req.path === '/health' || 
+           req.path === '/api/health' ||
+           req.path.startsWith('/api/admin/settings');
   }
 });
 

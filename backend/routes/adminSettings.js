@@ -33,6 +33,18 @@ router.get('/settings', authenticateToken, asyncHandler(async (req, res) => {
     throw ErrorTypes.database('Failed to fetch app settings');
   }
 
+  // Log retrieved settings for debugging
+  if (data) {
+    data.forEach(row => {
+      if (row.key === 'flat_above_commercial_rule') {
+        log.info(`  Retrieved setting: ${row.key}`, { 
+          key: row.key,
+          value: JSON.stringify(row.value)
+        });
+      }
+    });
+  }
+
   res.json({ settings: data || [] });
 }));
 
@@ -49,6 +61,15 @@ router.put('/settings', authenticateToken, requireAccessLevel(3), asyncHandler(a
   }
 
   log.info('PUT /api/admin/settings', { count: settings.length });
+  
+  // Log each setting being saved for debugging
+  settings.forEach(s => {
+    log.info(`  Saving setting: ${s.key}`, { 
+      key: s.key, 
+      valueType: typeof s.value,
+      value: s.key === 'flat_above_commercial_rule' ? JSON.stringify(s.value) : '(not logged)'
+    });
+  });
 
   const timestamp = new Date().toISOString();
   const rows = settings.map(s => ({

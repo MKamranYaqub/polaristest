@@ -275,7 +275,7 @@ export default function Constants() {
     }
   };
 
-  // Persist to database via API
+  // Persist to database via API - saves ALL settings (use sparingly)
   const saveToSupabase = async (payload) => {
     if (!token) return { error: 'Not authenticated' };
     try {
@@ -293,6 +293,8 @@ export default function Constants() {
         { key: 'ui_preferences', value: payload.uiPreferences || {} },
       ];
       
+      console.log('[Constants] Saving flat_above_commercial_rule to DB - tier2:', payload.flatAboveCommercialRule?.tierLtv?.['2'], 'tier3:', payload.flatAboveCommercialRule?.tierLtv?.['3']);
+      
       const response = await fetch(`${API_BASE_URL}/api/admin/settings`, {
         method: 'PUT',
         headers: {
@@ -305,6 +307,32 @@ export default function Constants() {
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
         return { error: errData.message || 'Failed to save settings' };
+      }
+      
+      return { error: null };
+    } catch (e) {
+      return { error: e.message || e };
+    }
+  };
+
+  // Save a SINGLE setting to database (prevents overwriting other settings)
+  const saveSingleSetting = async (key, value) => {
+    if (!token) return { error: 'Not authenticated' };
+    try {
+      console.log(`[Constants] Saving single setting: ${key}`, value);
+      
+      const response = await fetch(`${API_BASE_URL}/api/admin/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ settings: [{ key, value }] })
+      });
+      
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        return { error: errData.message || 'Failed to save setting' };
       }
       
       return { error: null };
@@ -342,7 +370,9 @@ export default function Constants() {
           return;
         }
         
-        const { data } = await response.json();
+        const { settings: data } = await response.json();
+        
+        console.log('[Constants] Loaded settings from database:', data?.map(r => ({ key: r.key, value: r.key === 'flat_above_commercial_rule' ? r.value : '...' })));
         
         if (data && data.length && mounted) {
           // Convert array of rows into single object
@@ -356,6 +386,7 @@ export default function Constants() {
                 loadedData.feeColumns = row.value || DEFAULT_FEE_COLUMNS;
                 break;
               case 'flat_above_commercial_rule':
+                console.log('[Constants] flat_above_commercial_rule from DB - tier2:', row.value?.tierLtv?.['2'], 'tier3:', row.value?.tierLtv?.['3']);
                 loadedData.flatAboveCommercialRule = row.value || DEFAULT_FLAT_ABOVE_COMMERCIAL_RULE;
                 break;
               case 'market_rates':
@@ -579,9 +610,9 @@ export default function Constants() {
     // Update tempValues to reflect the saved value
     setTempValues(prev => ({ ...prev, [`productLists:${propType}`]: arr.join(', ') }));
     
-    // Create payload with NEW productLists value
+    // Update localStorage for other components
     const payload = { 
-      productLists: newProductLists, // Use the NEW value
+      productLists: newProductLists,
       feeColumns, 
       flatAboveCommercialRule, 
       marketRates, 
@@ -592,12 +623,12 @@ export default function Constants() {
       fundingLinesBridge,
       uiPreferences: DEFAULT_UI_PREFERENCES
     };
-    
     writeOverrides(payload);
     setSaving(true);
 
     try {
-      const { error: saveErr } = await saveToSupabase(payload);
+      // Save ONLY the product_lists setting to database
+      const { error: saveErr } = await saveSingleSetting('product_lists', newProductLists);
       setSaving(false);
       
       if (saveErr) {
@@ -644,10 +675,10 @@ export default function Constants() {
     // Update tempValues to reflect the saved value
     setTempValues(prev => ({ ...prev, [`feeColumns:${feeKey}`]: arr.join(', ') }));
     
-    // Update the payload with current values BEFORE saving
+    // Update localStorage for other components
     const payload = { 
       productLists, 
-      feeColumns: newFeeColumns, // Use the NEW value
+      feeColumns: newFeeColumns,
       flatAboveCommercialRule, 
       marketRates, 
       brokerRoutes, 
@@ -657,12 +688,12 @@ export default function Constants() {
       fundingLinesBridge,
       uiPreferences: DEFAULT_UI_PREFERENCES
     };
-    
     writeOverrides(payload);
     setSaving(true);
 
     try {
-      const { error: saveErr } = await saveToSupabase(payload);
+      // Save ONLY the fee_columns setting to database
+      const { error: saveErr } = await saveSingleSetting('fee_columns', newFeeColumns);
       setSaving(false);
       
       if (saveErr) {
@@ -710,12 +741,12 @@ export default function Constants() {
     // Update tempValues to reflect the saved value
     setTempValues(prev => ({ ...prev, [`marketRates:${rateKey}`]: pctValue }));
     
-    // Update the payload with current values BEFORE saving
+    // Update localStorage for other components
     const payload = { 
       productLists, 
       feeColumns, 
       flatAboveCommercialRule, 
-      marketRates: newMarketRates, // Use the NEW value
+      marketRates: newMarketRates,
       brokerRoutes, 
       brokerCommissionDefaults, 
       brokerCommissionTolerance,
@@ -723,12 +754,12 @@ export default function Constants() {
       fundingLinesBridge,
       uiPreferences: DEFAULT_UI_PREFERENCES
     };
-    
     writeOverrides(payload);
     setSaving(true);
 
     try {
-      const { error: saveErr } = await saveToSupabase(payload);
+      // Save ONLY the market_rates setting to database
+      const { error: saveErr } = await saveSingleSetting('market_rates', newMarketRates);
       setSaving(false);
       
       if (saveErr) {
@@ -768,6 +799,8 @@ export default function Constants() {
   };
 
   const updateFlatAbove = async (field, value) => {
+    console.log('[Constants] updateFlatAbove called:', { field, value, currentRule: flatAboveCommercialRule });
+    
     let updated = { ...flatAboveCommercialRule };
     if (field === 'scopeMatcher') {
       updated.scopeMatcher = value;
@@ -775,16 +808,18 @@ export default function Constants() {
       updated.tierLtv = updated.tierLtv || {};
       updated.tierLtv[field === 'tier2' ? '2' : '3'] = parseInt(value, 10) || 0;
     }
+    
+    console.log('[Constants] New flatAboveCommercialRule:', updated);
     setFlatAboveCommercialRule(updated);
     
     // Update tempValues to reflect the saved value
     setTempValues(prev => ({ ...prev, [`flatAbove:${field}`]: value }));
     
-    // Create payload with NEW flatAboveCommercialRule value
+    // Update localStorage for other components
     const payload = { 
       productLists, 
       feeColumns, 
-      flatAboveCommercialRule: updated, // Use the NEW value
+      flatAboveCommercialRule: updated,
       marketRates, 
       brokerRoutes, 
       brokerCommissionDefaults, 
@@ -793,12 +828,12 @@ export default function Constants() {
       fundingLinesBridge,
       uiPreferences: DEFAULT_UI_PREFERENCES
     };
-    
     writeOverrides(payload);
     setSaving(true);
 
     try {
-      const { error: saveErr } = await saveToSupabase(payload);
+      // Save ONLY the flat_above_commercial_rule setting to database
+      const { error: saveErr } = await saveSingleSetting('flat_above_commercial_rule', updated);
       setSaving(false);
       
       if (saveErr) {
@@ -843,25 +878,25 @@ export default function Constants() {
     // Update tempValues to reflect the saved value
     setTempValues(prev => ({ ...prev, [`brokerRoutes:${routeKey}`]: displayName }));
     
-    // Create payload with NEW brokerRoutes value
+    // Update localStorage for other components
     const payload = { 
       productLists, 
       feeColumns, 
       flatAboveCommercialRule, 
       marketRates, 
-      brokerRoutes: updated, // Use the NEW value
+      brokerRoutes: updated,
       brokerCommissionDefaults, 
       brokerCommissionTolerance,
       fundingLinesBTL,
       fundingLinesBridge,
       uiPreferences: DEFAULT_UI_PREFERENCES
     };
-    
     writeOverrides(payload);
     setSaving(true);
 
     try {
-      const { error: saveErr } = await saveToSupabase(payload);
+      // Save ONLY the broker_routes setting to database
+      const { error: saveErr } = await saveSingleSetting('broker_routes', updated);
       setSaving(false);
       
       if (saveErr) {
@@ -926,25 +961,25 @@ export default function Constants() {
     const tempKey = calcType ? `brokerCommission:${key}:${calcType}` : `brokerCommission:${key}`;
     setTempValues(prev => ({ ...prev, [tempKey]: value }));
     
-    // Create payload with NEW brokerCommissionDefaults value
+    // Update localStorage for other components
     const payload = { 
       productLists, 
       feeColumns, 
       flatAboveCommercialRule, 
       marketRates, 
       brokerRoutes, 
-      brokerCommissionDefaults: updated, // Use the NEW value
+      brokerCommissionDefaults: updated,
       brokerCommissionTolerance,
       fundingLinesBTL,
       fundingLinesBridge,
       uiPreferences: DEFAULT_UI_PREFERENCES
     };
-    
     writeOverrides(payload);
     setSaving(true);
 
     try {
-      const { error: saveErr } = await saveToSupabase(payload);
+      // Save ONLY the broker_commission_defaults setting to database
+      const { error: saveErr } = await saveSingleSetting('broker_commission_defaults', updated);
       setSaving(false);
       
       if (saveErr) {
@@ -990,7 +1025,7 @@ export default function Constants() {
     // Update tempValues to reflect the saved value
     setTempValues(prev => ({ ...prev, ['brokerTolerance']: value }));
     
-    // Create payload with NEW brokerCommissionTolerance value
+    // Update localStorage for other components
     const payload = { 
       productLists, 
       feeColumns, 
@@ -998,17 +1033,17 @@ export default function Constants() {
       marketRates, 
       brokerRoutes, 
       brokerCommissionDefaults, 
-      brokerCommissionTolerance: num, // Use the NEW value
+      brokerCommissionTolerance: num,
       fundingLinesBTL,
       fundingLinesBridge,
       uiPreferences: DEFAULT_UI_PREFERENCES
     };
-    
     writeOverrides(payload);
     setSaving(true);
 
     try {
-      const { error: saveErr } = await saveToSupabase(payload);
+      // Save ONLY the broker_commission_tolerance setting to database
+      const { error: saveErr } = await saveSingleSetting('broker_commission_tolerance', num);
       setSaving(false);
       
       if (saveErr) {
@@ -1060,7 +1095,7 @@ export default function Constants() {
     // Update tempValues to reflect the saved value
     setTempValues(prev => ({ ...prev, [`fundingLines${type === 'btl' ? 'BTL' : 'Bridge'}`]: arr.join(', ') }));
     
-    // Create payload with NEW funding lines values
+    // Update localStorage for other components
     const payload = { 
       productLists, 
       feeColumns, 
@@ -1069,16 +1104,18 @@ export default function Constants() {
       brokerRoutes, 
       brokerCommissionDefaults, 
       brokerCommissionTolerance,
-      fundingLinesBTL: newFundingLinesBTL, // Use the NEW value
-      fundingLinesBridge: newFundingLinesBridge, // Use the NEW value
+      fundingLinesBTL: newFundingLinesBTL,
+      fundingLinesBridge: newFundingLinesBridge,
       uiPreferences: DEFAULT_UI_PREFERENCES
     };
-    
     writeOverrides(payload);
     setSaving(true);
 
     try {
-      const { error: saveErr } = await saveToSupabase(payload);
+      // Save ONLY the specific funding lines setting to database
+      const settingKey = type === 'btl' ? 'funding_lines_btl' : 'funding_lines_bridge';
+      const settingValue = type === 'btl' ? newFundingLinesBTL : newFundingLinesBridge;
+      const { error: saveErr } = await saveSingleSetting(settingKey, settingValue);
       setSaving(false);
       
       if (saveErr) {
@@ -1160,6 +1197,42 @@ export default function Constants() {
     };
     writeOverrides(currentOverrides);
     
+    // Save to database - save both broker_routes and broker_commission_defaults
+    setSaving(true);
+    try {
+      const [routesResult, defaultsResult] = await Promise.all([
+        saveSingleSetting('broker_routes', newRoutes),
+        saveSingleSetting('broker_commission_defaults', newDefaults)
+      ]);
+      setSaving(false);
+      
+      if (routesResult.error || defaultsResult.error) {
+        console.error('Failed to save to database:', routesResult.error || defaultsResult.error);
+        setNotification({ 
+          show: true, 
+          type: 'warning', 
+          title: 'Warning', 
+          message: 'Saved locally but database sync failed' 
+        });
+      } else {
+        setNotification({ 
+          show: true, 
+          type: 'success', 
+          title: 'Success', 
+          message: `Added new broker route: ${formattedKey}` 
+        });
+      }
+    } catch (e) {
+      setSaving(false);
+      console.error('Add broker route error:', e);
+      setNotification({ 
+        show: true, 
+        type: 'error', 
+        title: 'Error', 
+        message: 'Unexpected error: ' + (e.message || 'Unknown error') 
+      });
+    }
+    
     // Reset form and close
     setNewRouteKey('');
     setNewRouteDisplayName('');
@@ -1202,6 +1275,42 @@ export default function Constants() {
       fundingLinesBridge: fundingLinesBridge
     };
     writeOverrides(currentOverrides);
+    
+    // Save to database - save both broker_routes and broker_commission_defaults
+    setSaving(true);
+    try {
+      const [routesResult, defaultsResult] = await Promise.all([
+        saveSingleSetting('broker_routes', newRoutes),
+        saveSingleSetting('broker_commission_defaults', newDefaults)
+      ]);
+      setSaving(false);
+      
+      if (routesResult.error || defaultsResult.error) {
+        console.error('Failed to save to database:', routesResult.error || defaultsResult.error);
+        setNotification({ 
+          show: true, 
+          type: 'warning', 
+          title: 'Warning', 
+          message: 'Deleted locally but database sync failed' 
+        });
+      } else {
+        setNotification({ 
+          show: true, 
+          type: 'success', 
+          title: 'Success', 
+          message: `Deleted broker route: ${routeKey}` 
+        });
+      }
+    } catch (e) {
+      setSaving(false);
+      console.error('Delete broker route error:', e);
+      setNotification({ 
+        show: true, 
+        type: 'error', 
+        title: 'Error', 
+        message: 'Unexpected error: ' + (e.message || 'Unknown error') 
+      });
+    }
     
     setMessage(`Deleted broker route: ${routeKey}`);
     setDeleteConfirmation({ show: false, routeKey: '', displayName: '' });

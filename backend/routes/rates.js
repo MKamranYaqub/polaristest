@@ -200,10 +200,10 @@ router.patch('/:id', authenticateToken, requireAccessLevel(1), asyncHandler(asyn
     userEmail: req.user.email 
   });
 
-  // Update the rate
+  // Update the rate (rates tables don't have updated_at column)
   const { data: updatedRate, error: updateError } = await supabase
     .from(tableName)
-    .update({ [field]: value, updated_at: new Date().toISOString() })
+    .update({ [field]: value })
     .eq('id', id)
     .select()
     .single();
@@ -282,7 +282,7 @@ router.post('/bulk-status', authenticateToken, requireAccessLevel(1), asyncHandl
   // Update all rates in the ids array
   const { data: updatedRates, error: updateError } = await supabase
     .from(tableName)
-    .update({ rate_status: status, updated_at: new Date().toISOString() })
+    .update({ rate_status: status })
     .in('id', ids)
     .select();
 
@@ -394,7 +394,7 @@ router.post('/', authenticateToken, requireAccessLevel(1), asyncHandler(async (r
   // Insert the new rate
   const { data: insertedRate, error: insertError } = await supabase
     .from(tableName)
-    .insert([{ ...rateData, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }])
+    .insert([{ ...rateData }])
     .select()
     .single();
 
@@ -468,7 +468,7 @@ router.put('/:id', authenticateToken, requireAccessLevel(1), asyncHandler(async 
   // Update the rate
   const { data: updatedRate, error: updateError } = await supabase
     .from(tableName)
-    .update({ ...rate, updated_at: new Date().toISOString() })
+    .update({ ...rate })
     .eq('id', id)
     .select()
     .single();

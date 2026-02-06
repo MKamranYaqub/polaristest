@@ -143,7 +143,7 @@ export function AppSettingsProvider({ children }) {
 
       // Process app_settings data
       if (appSettingsRes.ok) {
-        const { data: appSettingsData } = await appSettingsRes.json();
+        const { settings: appSettingsData } = await appSettingsRes.json();
         if (appSettingsData && appSettingsData.length > 0) {
           appSettingsData.forEach(row => {
             if (!row.value) return;
