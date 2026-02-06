@@ -27,8 +27,6 @@ stages:
         npm run build
       displayName: 'npm install and build'
       env:
-        VITE_SUPABASE_URL: $(VITE_SUPABASE_URL) # Maps Azure DevOps variables to the build
-        VITE_SUPABASE_ANON_KEY: $(VITE_SUPABASE_ANON_KEY)
         VITE_API_URL: $(VITE_API_URL)
 
     - task: ArchiveFiles@2
