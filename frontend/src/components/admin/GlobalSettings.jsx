@@ -398,8 +398,8 @@ export default function GlobalSettings() {
         throw new Error('Failed to load results configuration');
       }
       
-      const { configurations } = await response.json();
-      const data = configurations || [];
+      const result = await response.json();
+      const data = result.configurations || result.data || [];
       
       // Process visibility settings
       const visibilityData = data.filter(row => row.key === 'visibility');

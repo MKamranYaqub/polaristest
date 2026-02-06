@@ -127,3 +127,95 @@ export function computeTierFromAnswers(answers) {
   });
   return maxTier;
 }
+
+/**
+ * Filter rates to only include active rates within their effective date range
+ * Checks is_active flag and effective_from/effective_to date boundaries
+ * 
+ * @param {Array} rates - Array of rate objects
+ * @returns {Array} Filtered array of active rates
+ */
+export function filterActiveRates(rates) {
+  if (!rates || !Array.isArray(rates)) return [];
+  
+  const now = new Date();
+  
+  return rates.filter(rate => {
+    // Check is_active flag if present (default to true if not set)
+    const isActive = rate.is_active !== undefined ? rate.is_active : true;
+    if (!isActive) return false;
+    
+    // Check effective_from date if present
+    if (rate.effective_from) {
+      const fromDate = new Date(rate.effective_from);
+      if (!isNaN(fromDate.getTime()) && now < fromDate) return false;
+    }
+    
+    // Check effective_to date if present
+    if (rate.effective_to) {
+      const toDate = new Date(rate.effective_to);
+      if (!isNaN(toDate.getTime()) && now > toDate) return false;
+    }
+    
+    // Check active_from/active_to as alternative field names
+    if (rate.active_from) {
+      const fromDate = new Date(rate.active_from);
+      if (!isNaN(fromDate.getTime()) && now < fromDate) return false;
+    }
+    
+    if (rate.active_to) {
+      const toDate = new Date(rate.active_to);
+      if (!isNaN(toDate.getTime()) && now > toDate) return false;
+    }
+    
+    return true;
+  });
+}
+
+/**
+ * Get the lifecycle status of a rate based on its date fields and active state
+ * Returns status information for display in admin tables
+ * 
+ * @param {Object} rate - Rate object with potential date/active fields
+ * @returns {Object} Status object with status, label, and color properties
+ */
+export function getRateLifecycleStatus(rate) {
+  if (!rate) {
+    return { status: 'unknown', label: 'Unknown', color: 'gray' };
+  }
+
+  const now = new Date();
+  
+  // Check explicit is_active flag
+  if (rate.is_active === false) {
+    return { status: 'inactive', label: 'Inactive', color: 'red' };
+  }
+
+  // Parse date fields (support multiple naming conventions)
+  const effectiveFrom = rate.effective_from || rate.active_from || rate.start_date;
+  const effectiveTo = rate.effective_to || rate.active_to || rate.end_date;
+  
+  const fromDate = effectiveFrom ? new Date(effectiveFrom) : null;
+  const toDate = effectiveTo ? new Date(effectiveTo) : null;
+  
+  // Check if rate is scheduled for future
+  if (fromDate && !isNaN(fromDate.getTime()) && now < fromDate) {
+    return { status: 'scheduled', label: 'Scheduled', color: 'blue' };
+  }
+  
+  // Check if rate has expired
+  if (toDate && !isNaN(toDate.getTime()) && now > toDate) {
+    return { status: 'expired', label: 'Expired', color: 'red' };
+  }
+  
+  // Check if rate is expiring soon (within 7 days)
+  if (toDate && !isNaN(toDate.getTime())) {
+    const daysUntilExpiry = Math.ceil((toDate - now) / (1000 * 60 * 60 * 24));
+    if (daysUntilExpiry <= 7 && daysUntilExpiry > 0) {
+      return { status: 'expiring', label: `Expiring in ${daysUntilExpiry}d`, color: 'orange' };
+    }
+  }
+  
+  // Rate is active
+  return { status: 'active', label: 'Active', color: 'green' };
+}

@@ -184,6 +184,7 @@
    .slds-button .slds-button_outline-brand (secondary actions)
    .slds-button .slds-button_destructive (delete/dangerous actions)
    .slds-button .slds-button_neutral (neutral actions) */
+}
 
 .btn-neutral:disabled {
   opacity: 0.5;

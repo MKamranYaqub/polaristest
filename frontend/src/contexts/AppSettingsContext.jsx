@@ -110,7 +110,7 @@ export function AppSettingsProvider({ children }) {
   // Load ALL settings from backend API (app_settings + results_configuration)
   const loadFromAPI = useCallback(async () => {
     if (!token) {
-      // Token not ready yet - this is normal on initial load
+      console.warn('Auth token not available');
       return null;
     }
 
@@ -219,12 +219,6 @@ export function AppSettingsProvider({ children }) {
 
   // Initialize settings on mount
   useEffect(() => {
-    // Wait for token to be available before initializing
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
     let mounted = true;
 
     const initialize = async () => {
@@ -282,7 +276,7 @@ export function AppSettingsProvider({ children }) {
     return () => {
       mounted = false;
     };
-  }, [token, loadFromAPI]);
+  }, [loadFromAPI]);
 
   // Refresh settings (can be called after admin updates)
   const refreshSettings = useCallback(async () => {

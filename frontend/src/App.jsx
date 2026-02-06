@@ -13,10 +13,8 @@ import {
   QuotesErrorFallback 
 } from './components/ui/ErrorFallbacks';
 import { UserProvider } from './contexts/UserContext';
-import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
-import { ToastProvider } from './contexts/ToastContext';
 import AdminPage from './pages/AdminPage';
 import UsersPage from './pages/UsersPage';
 import SettingsPage from './pages/SettingsPage';
@@ -297,15 +295,11 @@ const AppContent = () => {
 function App() {
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <ToastProvider>
-        <AuthProvider>
-          <ThemeProvider>
-            <AccessibilityProvider>
-              <AppContent />
-            </AccessibilityProvider>
-          </ThemeProvider>
-        </AuthProvider>
-      </ToastProvider>
+      <ThemeProvider>
+        <AccessibilityProvider>
+          <AppContent />
+        </AccessibilityProvider>
+      </ThemeProvider>
     </Router>
   );
 }export default App;

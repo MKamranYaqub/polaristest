@@ -732,17 +732,12 @@ export class BTLCalculationEngine {
       titleInsuranceCost = null; // outside range -> not applicable
     }
 
-    // Total Cost to Borrower - all fees and interest
+    // Total Cost to Borrower - product fee + all interest components
     const totalCostToBorrower = 
       bestLoan.productFeeAmount + 
       bestLoan.rolledInterestAmount + 
       bestLoan.deferredInterestAmount + 
-      servicedInterest +
-      adminFee + 
-      exitFee + 
-      procFeeValue + 
-      brokerFeeValue +
-      titleInsuranceCost;
+      servicedInterest;
 
     return {
       // Product info

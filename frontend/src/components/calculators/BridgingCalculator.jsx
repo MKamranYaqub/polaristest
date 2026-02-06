@@ -14,8 +14,7 @@ import CollapsibleSection from '../calculator/CollapsibleSection';
 import ClientDetailsSection from '../calculator/shared/ClientDetailsSection';
 import BridgingProductSection from '../calculator/bridging/BridgingProductSection';
 import LoanDetailsSection from '../calculator/bridging/LoanDetailsSection';
-import MultiPropertyLoanSection from '../calculator/bridging/MultiPropertyLoanSection';
-import SalesforceDebugBanner from '../salesforce/SalesforceDebugBanner';
+import MultiPropertyDetailsSection from '../calculator/bridging/MultiPropertyDetailsSection';
 import useBrokerSettings from '../../hooks/calculator/useBrokerSettings';
 import { useResultsVisibility } from '../../hooks/useResultsVisibility';
 import { useResultsRowOrder } from '../../hooks/useResultsRowOrder';
@@ -1947,9 +1946,6 @@ export default function BridgingCalculator({ initialQuote = null }) {
 
   return (
     <div className="page-container page-container--full-width">
-      {/* Salesforce Debug Banner */}
-      <SalesforceDebugBanner />
-      
       {/* Product Configuration section */}
       <BridgingProductSection
         productScope={productScope}
