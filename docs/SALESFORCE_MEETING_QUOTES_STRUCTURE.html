@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quotes Database Structure - Salesforce Integration</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.5;
+            color: #1a1a1a;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 24px;
+            background: #fafafa;
+        }
+        h1 { font-size: 26px; font-weight: 600; margin-bottom: 4px; color: #0f172a; }
+        h2 { font-size: 18px; font-weight: 600; margin-top: 36px; margin-bottom: 12px; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
+        h3 { font-size: 15px; font-weight: 600; margin-top: 20px; margin-bottom: 8px; color: #475569; }
+        .subtitle { color: #64748b; font-size: 13px; margin-bottom: 28px; }
+        p { margin: 10px 0; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: 13px; background: #fff; }
+        th, td { text-align: left; padding: 8px 10px; border: 1px solid #e5e7eb; }
+        th { background: #f8fafc; font-weight: 600; color: #374151; }
+        tr:hover { background: #f9fafb; }
+        code { background: #f1f5f9; padding: 2px 5px; border-radius: 3px; font-size: 12px; font-family: 'SF Mono', Consolas, monospace; }
+        .diagram { background: #1e293b; color: #e2e8f0; padding: 16px 20px; border-radius: 6px; font-family: 'SF Mono', Consolas, monospace; font-size: 12px; line-height: 1.6; overflow-x: auto; margin: 16px 0; }
+        .section { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+        .highlight { background: #fef3c7; padding: 12px 16px; border-left: 3px solid #f59e0b; margin: 16px 0; font-size: 13px; }
+        .tag { display: inline-block; background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; margin-right: 6px; }
+        .tag.green { background: #dcfce7; color: #166534; }
+        .tag.purple { background: #f3e8ff; color: #7c3aed; }
+        ul { margin: 8px 0; padding-left: 20px; }
+        li { font-size: 13px; margin: 4px 0; }
+        footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #94a3b8; }
+    </style>
+</head>
+<body>
+
+<h1>Polaris Calculator - Quotes Database Structure</h1>
+<p class="subtitle">Internal Document for Salesforce Integration Meeting &bull; 6th February 2026</p>
+
+<div class="section">
+    <h2 style="margin-top:0;">Overview</h2>
+    <p>Our database uses a <strong>master-detail pattern</strong> for quotes storage. This maps directly to Salesforce's Opportunity + OpportunityLineItem structure.</p>
+    
+    <div class="diagram">
+┌─────────────────────────────────────────┐
+│  quotes (BTL) / bridge_quotes (Bridge)  │  ← Master record (1 per quote)
+│  - Property details                      │
+│  - Client/Broker info                    │
+│  - Calculation inputs                    │
+└─────────────────────────────────────────┘
+                    │
+                    │ 1:Many (quote_id)
+                    ↓
+┌─────────────────────────────────────────┐
+│  quote_results / bridge_quote_results   │  ← Detail records (3-6 per quote)
+│  - One row per fee tier (0-2%, 2-3%,    │
+│    3%+, 4%, 5%, 6%)                     │
+│  - All calculated outputs                │
+└─────────────────────────────────────────┘
+    </div>
+    
+    <p class="highlight"><strong>Why multiple rows?</strong> Each quote scenario produces 3-6 result rows - one per arrangement fee tier. This lets borrowers compare fee/rate trade-offs before selecting their preferred option.</p>
+</div>
+
+<div class="section">
+    <h2 style="margin-top:0;">1. BTL Quotes Table</h2>
+    <p><span class="tag">Master Table</span> <code>quotes</code> / <code>btl_quotes</code></p>
+    
+    <h3>Shared Inputs (Non Fee-Variant)</h3>
+    <p>These fields are stored once per quote:</p>
+    
+    <table>
+        <tr><th>Field</th><th>Column</th><th>Type</th><th>Example</th></tr>
+        <tr><td>Quote ID</td><td><code>id</code></td><td>UUID</td><td>550e8400-e29b-41d4...</td></tr>
+        <tr><td>Reference Number</td><td><code>reference_number</code></td><td>TEXT</td><td>MFS-2024-00123</td></tr>
+        <tr><td>Calculation Type</td><td><code>loan_calculation_requested</code></td><td>TEXT</td><td>Max Gross Loan, Net Loan Required, Specific LTV, Specific Gross Loan</td></tr>
+        <tr><td>Property Value</td><td><code>property_value</code></td><td>DECIMAL</td><td>50000000</td></tr>
+        <tr><td>Monthly Rent</td><td><code>monthly_rent</code></td><td>DECIMAL</td><td>10000</td></tr>
+        <tr><td>Top Slicing</td><td><code>top_slicing</code></td><td>DECIMAL</td><td>0</td></tr>
+        <tr><td>Product Type</td><td><code>product_type</code></td><td>TEXT</td><td>Core, Specialist</td></tr>
+        <tr><td>Product Scope</td><td><code>product_scope</code></td><td>TEXT</td><td>2yr Fix, 5yr Fix</td></tr>
+        <tr><td>Retention Choice</td><td><code>retention_choice</code></td><td>TEXT</td><td>Standard, Retention</td></tr>
+        <tr><td>Tier</td><td><code>tier</code></td><td>INT</td><td>1, 2, 3</td></tr>
+        <tr><td>Calculator Type</td><td><code>calculator_type</code></td><td>TEXT</td><td>BTL</td></tr>
+        <tr><td>Status</td><td><code>status</code></td><td>TEXT</td><td>draft, quote_issued, dip_submitted</td></tr>
+    </table>
+
+    <h3>Calculation-Type Specific Inputs</h3>
+    <table>
+        <tr><th>Field</th><th>Column</th><th>When Used</th></tr>
+        <tr><td>Net Loan Required</td><td><code>specific_net_loan</code></td><td>When calculation type = "Net Loan Required"</td></tr>
+        <tr><td>Target LTV (%)</td><td><code>target_ltv</code></td><td>When calculation type = "Specific LTV Required"</td></tr>
+        <tr><td>Specific Gross Loan</td><td><code>specific_gross_loan</code></td><td>When calculation type = "Specific Gross Loan"</td></tr>
+    </table>
+
+    <h3>Client & Broker Information</h3>
+    <table>
+        <tr><th>Field</th><th>Column</th><th>Type</th></tr>
+        <tr><td>Client First Name</td><td><code>client_first_name</code></td><td>TEXT</td></tr>
+        <tr><td>Client Last Name</td><td><code>client_last_name</code></td><td>TEXT</td></tr>
+        <tr><td>Client Email</td><td><code>client_email</code></td><td>TEXT</td></tr>
+        <tr><td>Client Phone</td><td><code>client_phone</code></td><td>TEXT</td></tr>
+        <tr><td>Borrower Name</td><td><code>borrower_name</code></td><td>TEXT</td></tr>
+        <tr><td>Broker Company</td><td><code>broker_company_name</code></td><td>TEXT</td></tr>
+        <tr><td>Applicant 1-4</td><td><code>applicant1</code> to <code>applicant4</code></td><td>JSON</td></tr>
+    </table>
+
+    <h3>DIP Fields</h3>
+    <table>
+        <tr><th>Field</th><th>Column</th><th>Type</th></tr>
+        <tr><td>Is DIP</td><td><code>is_dip</code></td><td>BOOLEAN</td></tr>
+        <tr><td>DIP Submitted At</td><td><code>dip_submitted_at</code></td><td>TIMESTAMP</td></tr>
+        <tr><td>DIP Status</td><td><code>dip_status</code></td><td>TEXT</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2 style="margin-top:0;">2. Quote Results Table</h2>
+    <p><span class="tag green">Detail Table</span> <code>quote_results</code></p>
+    <p>Contains all calculated outputs. <strong>One row per fee tier per quote.</strong></p>
+
+    <h3>Row Identification</h3>
+    <table>
+        <tr><th>Field</th><th>Column</th><th>Description</th></tr>
+        <tr><td>Result ID</td><td><code>id</code></td><td>Auto-generated UUID</td></tr>
+        <tr><td>Quote ID</td><td><code>quote_id</code></td><td>Foreign key to quotes.id</td></tr>
+        <tr><td>Fee Column</td><td><code>fee_column</code></td><td>0-2%, 2-3%, 3%+, 4%, 5%, 6%</td></tr>
+    </table>
+
+    <h3>Loan Calculations</h3>
+    <table>
+        <tr><th>Field</th><th>Column</th><th>Type</th><th>Example</th></tr>
+        <tr><td>Gross Loan</td><td><code>gross_loan</code></td><td>DECIMAL</td><td>3000000</td></tr>
+        <tr><td>Net Loan</td><td><code>net_loan</code></td><td>DECIMAL</td><td>2658600</td></tr>
+        <tr><td>LTV (%)</td><td><code>ltv_percentage</code></td><td>DECIMAL</td><td>6.00</td></tr>
+        <tr><td>Net LTV (%)</td><td><code>net_ltv</code></td><td>DECIMAL</td><td>5.32</td></tr>
+        <tr><td>NPB</td><td><code>nbp</code></td><td>DECIMAL</td><td>2718600</td></tr>
+        <tr><td>NPB LTV (%)</td><td><code>nbp_ltv</code></td><td>DECIMAL</td><td>5.44</td></tr>
+        <tr><td>ICR (%)</td><td><code>icr</code></td><td>DECIMAL</td><td>125</td></tr>
+    </table>
+
+    <h3>Rates</h3>
+    <table>
+        <tr><th>Field</th><th>Column</th><th>Type</th><th>Example</th></tr>
+        <tr><td>Full Rate (%)</td><td><code>full_rate</code></td><td>DECIMAL</td><td>5.89</td></tr>
+        <tr><td>Pay Rate (%)</td><td><code>pay_rate</code></td><td>DECIMAL</td><td>5.12</td></tr>
+        <tr><td>Initial Rate (%)</td><td><code>initial_rate</code></td><td>DECIMAL</td><td>5.12</td></tr>
+        <tr><td>APRC (%)</td><td><code>aprc</code></td><td>DECIMAL</td><td>10.03</td></tr>
+        <tr><td>Revert Rate</td><td><code>revert_rate</code></td><td>TEXT</td><td>MVR</td></tr>
+        <tr><td>Revert Rate DD</td><td><code>revert_rate_dd</code></td><td>DECIMAL</td><td>21475</td></tr>
+    </table>
+
+    <h3>Fees</h3>
+    <table>
+        <tr><th>Field</th><th>Column</th><th>Type</th><th>Example</th></tr>
+        <tr><td>Arrangement Fee (%)</td><td><code>product_fee_percent</code></td><td>DECIMAL</td><td>6</td></tr>
+        <tr><td>Arrangement Fee (£)</td><td><code>product_fee_pounds</code></td><td>DECIMAL</td><td>180000</td></tr>
+        <tr><td>Admin Fee</td><td><code>admin_fee</code></td><td>DECIMAL</td><td>199</td></tr>
+        <tr><td>Broker Client Fee</td><td><code>broker_client_fee</code></td><td>DECIMAL</td><td>0</td></tr>
+        <tr><td>Proc Fee (%)</td><td><code>broker_commission_proc_fee_percent</code></td><td>DECIMAL</td><td>0.7</td></tr>
+        <tr><td>Proc Fee (£)</td><td><code>broker_commission_proc_fee_pounds</code></td><td>DECIMAL</td><td>21000</td></tr>
+        <tr><td>Exit Fee</td><td><code>exit_fee</code></td><td>DECIMAL</td><td>0</td></tr>
+        <tr><td>Title Insurance</td><td><code>title_insurance_cost</code></td><td>DECIMAL</td><td>4368</td></tr>
+    </table>
+
+    <h3>Interest Calculations</h3>
+    <table>
+        <tr><th>Field</th><th>Column</th><th>Type</th><th>Example</th></tr>
+        <tr><td>Monthly Interest</td><td><code>monthly_interest_cost</code></td><td>DECIMAL</td><td>12800</td></tr>
+        <tr><td>Rolled Months</td><td><code>rolled_months</code></td><td>DECIMAL</td><td>9</td></tr>
+        <tr><td>Rolled Interest</td><td><code>rolled_months_interest</code></td><td>DECIMAL</td><td>115200</td></tr>
+        <tr><td>Deferred Interest (%)</td><td><code>deferred_interest_percent</code></td><td>DECIMAL</td><td>0.77</td></tr>
+        <tr><td>Deferred Interest (£)</td><td><code>deferred_interest_pounds</code></td><td>DECIMAL</td><td>46200</td></tr>
+        <tr><td>Serviced Interest</td><td><code>serviced_interest</code></td><td>DECIMAL</td><td>192000</td></tr>
+    </table>
+
+    <h3>Other Fields</h3>
+    <table>
+        <tr><th>Field</th><th>Column</th><th>Type</th><th>Example</th></tr>
+        <tr><td>Direct Debit</td><td><code>direct_debit</code></td><td>DECIMAL</td><td>12800</td></tr>
+        <tr><td>ERC</td><td><code>erc</code></td><td>TEXT</td><td>Yr1: 4% Yr2: 3%</td></tr>
+        <tr><td>Total Cost to Borrower</td><td><code>total_cost_to_borrower</code></td><td>DECIMAL</td><td>558967</td></tr>
+        <tr><td>Total Loan Term</td><td><code>total_loan_term</code></td><td>DECIMAL</td><td>120</td></tr>
+        <tr><td>Product Name</td><td><code>product_name</code></td><td>TEXT</td><td>BTL Core 2yr Fix</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2 style="margin-top:0;">3. Salesforce Object Mapping</h2>
+    
+    <table>
+        <tr><th>Polaris Table</th><th>Salesforce Object</th><th>Notes</th></tr>
+        <tr><td><code>quotes</code> / <code>btl_quotes</code></td><td><strong>Opportunity</strong></td><td>Or custom Quote__c object</td></tr>
+        <tr><td><code>quote_results</code></td><td><strong>OpportunityLineItem</strong></td><td>Or custom Quote_Result__c</td></tr>
+        <tr><td>Client fields</td><td><strong>Contact</strong></td><td>Standard object</td></tr>
+        <tr><td>Broker fields</td><td><strong>Account</strong> (Partner)</td><td>Partner record type</td></tr>
+    </table>
+
+    <h3>Data Flow</h3>
+    <div class="diagram">
+Calculator UI  →  Backend API  →  Supabase DB  →  Salesforce Sync
+
+quotes (Master)                    →  Opportunity
+├── property_value                 →  Property_Value__c
+├── monthly_rent                   →  Monthly_Rent__c
+├── calculator_type                →  Calculator_Type__c
+├── loan_calculation_requested     →  Calculation_Type__c
+└── status                         →  StageName
+
+quote_results (Detail)             →  OpportunityLineItem
+├── fee_column                     →  Fee_Tier__c
+├── gross_loan                     →  Gross_Loan__c
+├── net_loan                       →  Net_Loan__c
+├── ltv_percentage                 →  LTV__c
+├── full_rate                      →  Full_Rate__c
+└── ...                            →  (all calc fields)
+    </div>
+</div>
+
+<div class="section">
+    <h2 style="margin-top:0;">4. Sample Data - Fee Tier Rows</h2>
+    <p>Example showing how one quote produces multiple result rows:</p>
+    
+    <table>
+        <tr><th>Row</th><th>fee_column</th><th>gross_loan</th><th>arrangement_fee</th><th>full_rate</th></tr>
+        <tr><td>1</td><td>0-2%</td><td>£3,000,000</td><td>2% (£60,000)</td><td>6.89%</td></tr>
+        <tr><td>2</td><td>2-3%</td><td>£3,000,000</td><td>3% (£90,000)</td><td>5.89%</td></tr>
+        <tr><td>3</td><td>3%+</td><td>£3,000,000</td><td>4% (£120,000)</td><td>5.49%</td></tr>
+        <tr><td>4</td><td>4%</td><td>£3,000,000</td><td>4% (£120,000)</td><td>5.29%</td></tr>
+        <tr><td>5</td><td>5%</td><td>£3,000,000</td><td>5% (£150,000)</td><td>5.09%</td></tr>
+        <tr><td>6</td><td>6%</td><td>£3,000,000</td><td>6% (£180,000)</td><td>4.89%</td></tr>
+    </table>
+    
+    <p class="highlight">Higher arrangement fee = lower interest rate. Borrowers choose based on their preference for upfront cost vs ongoing rate.</p>
+</div>
+
+<div class="section">
+    <h2 style="margin-top:0;">5. API Endpoints</h2>
+    <table>
+        <tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+        <tr><td><code>GET /api/quotes</code></td><td>GET</td><td>List quotes with pagination</td></tr>
+        <tr><td><code>GET /api/quotes/:id</code></td><td>GET</td><td>Get single quote + all results</td></tr>
+        <tr><td><code>POST /api/quotes</code></td><td>POST</td><td>Create new quote</td></tr>
+        <tr><td><code>PUT /api/quotes/:id</code></td><td>PUT</td><td>Update existing quote</td></tr>
+    </table>
+</div>
+
+<footer>
+    <p><strong>Technical References</strong></p>
+    <ul>
+        <li>Backend routes: <code>/backend/routes/quotes.js</code></li>
+        <li>Database migrations: <code>/database/migrations/</code></li>
+        <li>Calculation engine: <code>/frontend/src/utils/btlCalculationEngine.js</code></li>
+    </ul>
+    <p style="margin-top:16px;">Document prepared for internal use only.</p>
+</footer>
+
+</body>
+</html>

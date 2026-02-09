@@ -61,7 +61,9 @@ export default function Constants() {
   const [showAddRouteForm, setShowAddRouteForm] = useState(false);
   const [newRouteKey, setNewRouteKey] = useState('');
   const [newRouteDisplayName, setNewRouteDisplayName] = useState('');
-  const [newRouteCommission, setNewRouteCommission] = useState('0.9');
+  const [newRouteBtlFee, setNewRouteBtlFee] = useState('0.9');
+  const [newRouteCoreFee, setNewRouteCoreFee] = useState('0.5');
+  const [newRouteBridgeFee, setNewRouteBridgeFee] = useState('0.9');
   const [deleteConfirmation, setDeleteConfirmation] = useState({ show: false, routeKey: '', displayName: '' });
   
   // Notification state
@@ -1179,8 +1181,10 @@ export default function Constants() {
     setBrokerRoutes(newRoutes);
     
     // Add to commission defaults with separate BTL, Core, and Bridge fees
-    const commission = parseFloat(newRouteCommission) || 0.9;
-    const newDefaults = { ...brokerCommissionDefaults, [newRouteDisplayName.trim()]: { btl: commission, core: 0.5, bridge: commission } };
+    const btlFee = parseFloat(newRouteBtlFee) || 0.9;
+    const coreFee = parseFloat(newRouteCoreFee) || 0.5;
+    const bridgeFee = parseFloat(newRouteBridgeFee) || 0.9;
+    const newDefaults = { ...brokerCommissionDefaults, [newRouteDisplayName.trim()]: { btl: btlFee, core: coreFee, bridge: bridgeFee } };
     setBrokerCommissionDefaults(newDefaults);
     
     // Save to localStorage
@@ -1236,7 +1240,9 @@ export default function Constants() {
     // Reset form and close
     setNewRouteKey('');
     setNewRouteDisplayName('');
-    setNewRouteCommission('0.9');
+    setNewRouteBtlFee('0.9');
+    setNewRouteCoreFee('0.5');
+    setNewRouteBridgeFee('0.9');
     setShowAddRouteForm(false);
     setMessage(`Added new broker route: ${formattedKey} (${newRouteDisplayName.trim()})`);
   };
@@ -1676,7 +1682,7 @@ export default function Constants() {
                       <div className="helper-text">Name shown in dropdown</div>
                     </div>
                     <div className="slds-col min-width-150">
-                      <label className="slds-form-element__label">Default Commission (%)</label>
+                      <label className="slds-form-element__label">BTL Specialist Proc Fee (%)</label>
                       <input
                         className="slds-input"
                         type="number"
@@ -1684,10 +1690,35 @@ export default function Constants() {
                         min="0"
                         max="100"
                         placeholder="0.9"
-                        value={newRouteCommission}
-                        onChange={(e) => setNewRouteCommission(e.target.value)}
+                        value={newRouteBtlFee}
+                        onChange={(e) => setNewRouteBtlFee(e.target.value)}
                       />
-                      <div className="helper-text">Default percentage</div>
+                    </div>
+                    <div className="slds-col min-width-150">
+                      <label className="slds-form-element__label">BTL Core Proc Fee (%)</label>
+                      <input
+                        className="slds-input"
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        placeholder="0.5"
+                        value={newRouteCoreFee}
+                        onChange={(e) => setNewRouteCoreFee(e.target.value)}
+                      />
+                    </div>
+                    <div className="slds-col min-width-150">
+                      <label className="slds-form-element__label">Bridge Proc Fee (%)</label>
+                      <input
+                        className="slds-input"
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        placeholder="0.9"
+                        value={newRouteBridgeFee}
+                        onChange={(e) => setNewRouteBridgeFee(e.target.value)}
+                      />
                     </div>
                   </div>
                   <div className="slds-button-group">
@@ -1698,7 +1729,9 @@ export default function Constants() {
                       setShowAddRouteForm(false);
                       setNewRouteKey('');
                       setNewRouteDisplayName('');
-                      setNewRouteCommission('0.9');
+                      setNewRouteBtlFee('0.9');
+                      setNewRouteCoreFee('0.5');
+                      setNewRouteBridgeFee('0.9');
                     }}>
                       Cancel
                     </button>

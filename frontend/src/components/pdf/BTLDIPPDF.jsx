@@ -536,7 +536,13 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
             that the Loan Term will be extended.
           </Text>
         </View>
-
+          {/* Valuation Fee and Legal Fees Section - continued on same page */}
+        <View style={{ ...btlDipStyles.termsSection, marginTop: 15 }}>
+          <Text style={btlDipStyles.termsSubtitle}>Valuation Fee and Legal Fees</Text>
+          <Text style={btlDipStyles.termsText}>
+            The fees for the valuation of the Property shall be your cost and will be collected in advance upon acceptance of this Decision in Principle. You will be responsible for our Legal Fees in relation to the Loan. These are set out in the Financial Summary. You will be responsible for these fees whether the Loan proceeds to completion or not. Our solicitors will require payment in full or your solicitors' undertaking to make payment before commencing work. With regards to the Valuation report, unless Title Insurance is used, once our Solicitors have conducted their Report on Title it will need to be sent to the valuer for their comments. Any detrimental impact, or adverse comments from the Valuer may result in MFS not being able to proceed with the Loan or varying the terms offered.
+          </Text>
+        </View>
         <PDFFooter />
       </Page>
 
@@ -730,13 +736,7 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           Please see the enclosed Appendix – Schedule 1 for the explanation of each charge outlined within the Fee structure tables.
         </Text>
 
-        {/* Valuation Fee and Legal Fees Section - continued on same page */}
-        <View style={{ ...btlDipStyles.termsSection, marginTop: 15 }}>
-          <Text style={btlDipStyles.termsSubtitle}>Valuation Fee and Legal Fees</Text>
-          <Text style={btlDipStyles.termsText}>
-            The fees for the valuation of the Property shall be your cost and will be collected in advance upon acceptance of this Decision in Principle. You will be responsible for our Legal Fees in relation to the Loan. These are set out in the Financial Summary. You will be responsible for these fees whether the Loan proceeds to completion or not. Our solicitors will require payment in full or your solicitors' undertaking to make payment before commencing work. With regards to the Valuation report, unless Title Insurance is used, once our Solicitors have conducted their Report on Title it will need to be sent to the valuer for their comments. Any detrimental impact, or adverse comments from the Valuer may result in MFS not being able to proceed with the Loan or varying the terms offered.
-          </Text>
-        </View>
+        
 
         <PDFFooter />
       </Page>
