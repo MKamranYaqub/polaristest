@@ -1227,7 +1227,8 @@ export default function BTLcalculator({
   const handleCreatePDF = async (quoteId) => {
     try {
       // Use React PDF generation (client-side) instead of backend PDFKit
-      await downloadDIPPDF(quoteId, 'BTL', quoteData?.reference_number || quoteId);
+      // Use currentQuoteData instead of quoteData for proper reference number
+      await downloadDIPPDF(quoteId, 'BTL', currentQuoteData?.reference_number || quoteId);
       
       // Note: Success toast is shown by IssueDIPModal
     } catch (err) {

@@ -170,6 +170,13 @@ export const getProductFeeAmount = (quote) => {
  * Get product name (Fusion, Fixed Bridge, Variable Bridge)
  */
 export const getProductName = (quote) => {
+  // Primary source: fee_type_selection (saved when DIP is issued)
+  const feeTypeSelection = quote.fee_type_selection || '';
+  if (feeTypeSelection === 'Fusion') return 'Fusion';
+  if (feeTypeSelection === 'Fixed Bridge') return 'Fixed Bridge';
+  if (feeTypeSelection === 'Variable Bridge') return 'Variable Bridge';
+  
+  // Secondary: check product_type and sub_product fields
   const productType = (quote.product_type || '').toLowerCase();
   const subProduct = (quote.sub_product || '').toLowerCase();
   

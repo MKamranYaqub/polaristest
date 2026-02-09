@@ -514,14 +514,11 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
         <View style={btlDipStyles.termsSection}>
           <Text style={btlDipStyles.termsSubtitle}>Interest Rate Applied</Text>
           <Text style={btlDipStyles.termsText}>
-            The rate of interest payable on the Gross Loan Amount will be the Interest Rate in The Summary. 
-            This margin may change once the initial rate period has expired (as stated in The Summary). 
-            Interest is calculated monthly, and payable by Direct Debit from a verified UK bank account.
+            The rate of interest payable on the Gross Loan Amount will be the Interest Rate in The Summary.  This margin may will change once the initial rate period has expired (as stated in The Summary). Interest is calculated monthly, and payable by Direct Debit from a verified UK bank account. Any changes to a variable rate will be implemented on the 1st day of the following month, which may change the direct debit payment.  We will notify you of this change by email before the payment change takes place.  The annual percentage rate of charge (APRC), included in the Summary, is the total cost of the Loan expressed as an annual percentage to allow you to compare different offers. Interest that is not deferred and deducted at source on Drawdown is to be paid to us monthly until the end of the Loan term (or before if you choose to redeem your loan earlier), at which point the contractual balance outstanding together with any outstanding fees, costs, and expenses (including our legal fees for discharge) are repayable in full. Interest payments after any rolled up months period (if any) must be made on or before the due date and is payable monthly in advance. If any monthly interest payment is not paid within 15 days of its due date, interest on the Loan outstanding will accrue at the Default Rate, which is 2% per month. Further details are included in the Loan Agreement issued later in the process if the Loan is proceeding.
           </Text>
           {isTracker && (
             <Text style={btlDipStyles.termsText}>
-              If BBR is 0.5% per annum or less, then, for the purposes of calculating your relevant 
-              tracker rate, we will treat BBR as 0.5% per annum and apply any margin to that.
+              If BBR is 0.5% per annum or less, then, for the purposes of calculating your relevant tracker rate, we will treat BBR as 0.5% per annum and apply any margin to that.
             </Text>
           )}
         </View>
@@ -537,7 +534,7 @@ const BTLDIPPDF = ({ quote, dipData, brokerSettings = {} }) => {
           </Text>
         </View>
           {/* Valuation Fee and Legal Fees Section - continued on same page */}
-        <View style={{ ...btlDipStyles.termsSection, marginTop: 15 }}>
+        <View style={{ ...btlDipStyles.termsSection }}>
           <Text style={btlDipStyles.termsSubtitle}>Valuation Fee and Legal Fees</Text>
           <Text style={btlDipStyles.termsText}>
             The fees for the valuation of the Property shall be your cost and will be collected in advance upon acceptance of this Decision in Principle. You will be responsible for our Legal Fees in relation to the Loan. These are set out in the Financial Summary. You will be responsible for these fees whether the Loan proceeds to completion or not. Our solicitors will require payment in full or your solicitors' undertaking to make payment before commencing work. With regards to the Valuation report, unless Title Insurance is used, once our Solicitors have conducted their Report on Title it will need to be sent to the valuer for their comments. Any detrimental impact, or adverse comments from the Valuer may result in MFS not being able to proceed with the Loan or varying the terms offered.
