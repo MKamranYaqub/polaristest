@@ -6,7 +6,7 @@ variables:
   azureSubscription: '2c5d6c57-fbb2-422b-83dc-5a7f74e3cfd1'
   webAppName: 'wa-mfs-calculators-back-end'
   resourceGroupName: 'rg-mfs-global-calculators'
-  environmentName: 'wa-mfs-calculators-back-end-dev'
+  environmentName: 'wa-mfs-calculators-back-end'
   vmImageName: 'ubuntu-latest'
 
 stages:
