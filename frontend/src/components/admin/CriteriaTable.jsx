@@ -69,13 +69,21 @@ function CriteriaTable() {
       rec[k] = v;
     });
 
-    // Prefer explicit handling for display_order and tier (common integer fields)
+    // Prefer explicit handling for display_order, option_sort_order, and tier (common integer fields)
     if ('display_order' in rec) {
       const dv = rec.display_order;
       if (dv === null || dv === '') rec.display_order = null;
       else {
         const pn = Number(String(dv).replace(/[^0-9-]/g, ''));
         rec.display_order = Number.isFinite(pn) ? pn : null;
+      }
+    }
+    if ('option_sort_order' in rec) {
+      const osv = rec.option_sort_order;
+      if (osv === null || osv === '') rec.option_sort_order = null;
+      else {
+        const pn = Number(String(osv).replace(/[^0-9-]/g, ''));
+        rec.option_sort_order = Number.isFinite(pn) ? pn : null;
       }
     }
     if ('tier' in rec) {
@@ -185,6 +193,7 @@ function CriteriaTable() {
             if (n === 'question_key' || n === 'questionkey') return 'question_key';
             if (n === 'option' || n === 'option_label' || n === 'optionlabel') return 'option_label';
             if (n === 'display_order' || n === 'displayorder') return 'display_order';
+            if (n === 'option_sort_order' || n === 'optionsortorder' || n === 'sort_order' || n === 'sortorder' || n === 'option_order' || n === 'optionorder') return 'option_sort_order';
             // common DB fields keep their normalized form
             return n;
           };
@@ -287,7 +296,7 @@ function CriteriaTable() {
     const allKeys = new Set();
     for (const r of criteria) Object.keys(r).forEach(k => allKeys.add(k));
     // Prefer a sensible order for common fields, then append remaining keys alphabetically
-    const preferred = ['id','display_order','criteria_set','product_scope','question_group','question_key','question_label','option_label','tier','property_type','helper','info_tip'];
+    const preferred = ['id','display_order','criteria_set','product_scope','question_group','question_key','question_label','option_label','option_sort_order','tier','property_type','helper','info_tip'];
     const keys = [
       ...preferred.filter(k => allKeys.has(k)),
       ...Array.from(allKeys).filter(k => !preferred.includes(k)).sort()
@@ -326,6 +335,7 @@ function CriteriaTable() {
   const handleSave = async (updatedCriteria, isNew, original) => {
     try {
       const sanitized = sanitizeRecord(updatedCriteria);
+      console.log('Saving criteria:', { isNew, sanitized, original });
       
       if (isNew) {
         // Create new criteria
@@ -340,12 +350,14 @@ function CriteriaTable() {
 
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.message || 'Failed to create criteria');
+          console.error('Create criteria error response:', errData);
+          throw new Error(errData.error?.message || errData.message || 'Failed to create criteria');
         }
       } else {
         // Update existing criteria
         if (updatedCriteria.id) {
           // Prefer id-based update when available
+          console.log('Updating by ID:', updatedCriteria.id);
           const response = await fetch(`${API_BASE_URL}/api/criteria/${updatedCriteria.id}`, {
             method: 'PUT',
             headers: {
@@ -357,7 +369,8 @@ function CriteriaTable() {
 
           if (!response.ok) {
             const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.message || 'Failed to update criteria');
+            console.error('Update criteria error response:', errData);
+            throw new Error(errData.error?.message || errData.message || 'Failed to update criteria');
           }
         } else {
           // Fallback: update using composite key fields
@@ -373,6 +386,7 @@ function CriteriaTable() {
             option_label: sanitized.option_label
           };
 
+          console.log('Updating by composite key:', matchKey);
           const response = await fetch(`${API_BASE_URL}/api/criteria/by-key`, {
             method: 'PUT',
             headers: {
@@ -384,7 +398,8 @@ function CriteriaTable() {
 
           if (!response.ok) {
             const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.message || 'Failed to update criteria');
+            console.error('Update by key error response:', errData);
+            throw new Error(errData.error?.message || errData.message || 'Failed to update criteria');
           }
         }
       }
@@ -398,7 +413,13 @@ function CriteriaTable() {
         message: isNew ? 'Criteria created successfully' : 'Criteria updated successfully'
       });
     } catch (err) {
-      setError(err.message || String(err));
+      console.error('Error saving criteria:', err);
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Error Saving Criteria',
+        message: err.message || String(err)
+      });
     }
   };
 
@@ -505,7 +526,8 @@ function CriteriaTable() {
       property_type: '',
       helper: '',
       info_tip: '',
-      display_order: ''
+      display_order: '',
+      option_sort_order: ''
     });
   };
 
@@ -550,7 +572,7 @@ function CriteriaTable() {
   // Exclude DB bookkeeping timestamps (created_at/updated_at) from UI and CSV.
   const allKeysSet = new Set();
   for (const r of criteria) Object.keys(r).forEach(k => allKeysSet.add(k));
-  const preferred = ['display_order','criteria_set','product_scope','question_group','question_key','question_label','option_label','tier','property_type','helper','info_tip'];
+  const preferred = ['display_order','criteria_set','product_scope','question_group','question_key','question_label','option_label','option_sort_order','tier','property_type','helper','info_tip'];
   // (excluded is declared earlier) — bookkeeping and unique identifier fields are ignored
   const columns = [
     ...preferred.filter(k => allKeysSet.has(k) && !excluded.has(k)),
@@ -566,6 +588,7 @@ function CriteriaTable() {
     question_key: 'Question Key',
     question_label: 'Question Label',
     option_label: 'Option Label',
+    option_sort_order: 'Sort Order',
     tier: 'Tier',
     property_type: 'Property Type',
     helper: 'Helper',

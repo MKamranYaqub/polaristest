@@ -14,7 +14,8 @@ function CriteriaEditModal({ criteria, onSave, onCancel, isNew }) {
     property_type: criteria.property_type || '',
     helper: criteria.helper || '',
     info_tip: criteria.info_tip || '',
-    display_order: criteria.display_order !== undefined && criteria.display_order !== null ? String(criteria.display_order) : ''
+    display_order: criteria.display_order !== undefined && criteria.display_order !== null ? String(criteria.display_order) : '',
+    option_sort_order: criteria.option_sort_order !== undefined && criteria.option_sort_order !== null ? String(criteria.option_sort_order) : ''
   });
 
   const handleChange = (e) => {
@@ -33,6 +34,9 @@ function CriteriaEditModal({ criteria, onSave, onCancel, isNew }) {
     // normalize display_order to number or null
     if (payload.display_order === '') payload.display_order = null;
     else payload.display_order = Number(payload.display_order);
+    // normalize option_sort_order to number or null
+    if (payload.option_sort_order === '') payload.option_sort_order = null;
+    else payload.option_sort_order = Number(payload.option_sort_order);
     onSave(payload, isNew, criteria);
   };
 
@@ -173,6 +177,21 @@ function CriteriaEditModal({ criteria, onSave, onCancel, isNew }) {
                     onChange={handleChange}
                     placeholder="e.g. 10"
                   />
+                </div>
+              </div>
+
+              <div className="slds-form-element">
+                <label className="slds-form-element__label">Option Sort Order (optional)</label>
+                <div className="slds-form-element__control">
+                  <input
+                    className="slds-input"
+                    type="number"
+                    name="option_sort_order"
+                    value={formData.option_sort_order}
+                    onChange={handleChange}
+                    placeholder="1, 2, 3... (lower numbers appear first)"
+                  />
+                  <div className="slds-form-element__help">Leave blank to use default tier-based sorting. Use 1 for first option (e.g., "No"), 2 for second, etc.</div>
                 </div>
               </div>
 

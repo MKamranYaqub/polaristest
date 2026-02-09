@@ -102,6 +102,40 @@ router.post('/', authenticateToken, requireAccessLevel(3), asyncHandler(async (r
 }));
 
 /**
+ * PUT /api/criteria/by-key
+ * Update criteria by composite key (criteria_set, product_scope, question_key, option_label)
+ * Requires admin role
+ * NOTE: This route MUST be defined BEFORE /:id to avoid Express matching "by-key" as an :id param
+ */
+router.put('/by-key', authenticateToken, requireAccessLevel(3), asyncHandler(async (req, res) => {
+  const { criteria, matchKey } = req.body;
+
+  if (!criteria || !matchKey) {
+    throw ErrorTypes.validation('Criteria data and match key are required');
+  }
+
+  log.info('PUT /api/criteria/by-key - updating criteria by composite key', { matchKey, criteria });
+
+  // Remove id and timestamps
+  const { id, created_at, updated_at, ...cleanCriteria } = criteria;
+
+  log.info('PUT /api/criteria/by-key - clean criteria', cleanCriteria);
+
+  const { data, error } = await supabase
+    .from('criteria_config_flat')
+    .update(cleanCriteria)
+    .match(matchKey)
+    .select();
+
+  if (error) {
+    log.error('❌ Error updating criteria by key', { error, matchKey, cleanCriteria });
+    throw ErrorTypes.database(`Failed to update criteria: ${error.message || JSON.stringify(error)}`);
+  }
+
+  res.json({ criteria: data?.[0] || null, message: 'Criteria updated successfully' });
+}));
+
+/**
  * PUT /api/criteria/:id
  * Update an existing criteria record by ID
  * Requires admin role
@@ -114,10 +148,12 @@ router.put('/:id', authenticateToken, requireAccessLevel(3), asyncHandler(async 
     throw ErrorTypes.validation('Criteria data is required');
   }
 
-  log.info('PUT /api/criteria/:id - updating criteria', { id });
+  log.info('PUT /api/criteria/:id - updating criteria', { id, criteria });
 
   // Remove id and timestamps
   const { id: _, created_at, updated_at, ...cleanCriteria } = criteria;
+
+  log.info('PUT /api/criteria/:id - clean criteria', cleanCriteria);
 
   const { data, error } = await supabase
     .from('criteria_config_flat')
@@ -126,8 +162,8 @@ router.put('/:id', authenticateToken, requireAccessLevel(3), asyncHandler(async 
     .select();
 
   if (error) {
-    log.error('❌ Error updating criteria', error);
-    throw ErrorTypes.database('Failed to update criteria');
+    log.error('❌ Error updating criteria', { error, id, cleanCriteria });
+    throw ErrorTypes.database(`Failed to update criteria: ${error.message || JSON.stringify(error)}`);
   }
 
   if (!data || data.length === 0) {
@@ -138,63 +174,10 @@ router.put('/:id', authenticateToken, requireAccessLevel(3), asyncHandler(async 
 }));
 
 /**
- * PUT /api/criteria/by-key
- * Update criteria by composite key (criteria_set, product_scope, question_key, option_label)
- * Requires admin role
- */
-router.put('/by-key', authenticateToken, requireAccessLevel(3), asyncHandler(async (req, res) => {
-  const { criteria, matchKey } = req.body;
-
-  if (!criteria || !matchKey) {
-    throw ErrorTypes.validation('Criteria data and match key are required');
-  }
-
-  log.info('PUT /api/criteria/by-key - updating criteria by composite key', matchKey);
-
-  // Remove id and timestamps
-  const { id, created_at, updated_at, ...cleanCriteria } = criteria;
-
-  const { data, error } = await supabase
-    .from('criteria_config_flat')
-    .update(cleanCriteria)
-    .match(matchKey)
-    .select();
-
-  if (error) {
-    log.error('❌ Error updating criteria by key', error);
-    throw ErrorTypes.database('Failed to update criteria');
-  }
-
-  res.json({ criteria: data?.[0] || null, message: 'Criteria updated successfully' });
-}));
-
-/**
- * DELETE /api/criteria/:id
- * Delete a criteria record by ID
- * Requires admin role
- */
-router.delete('/:id', authenticateToken, requireAccessLevel(3), asyncHandler(async (req, res) => {
-  const { id } = req.params;
-
-  log.info('DELETE /api/criteria/:id - deleting criteria', { id });
-
-  const { error } = await supabase
-    .from('criteria_config_flat')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    log.error('❌ Error deleting criteria', error);
-    throw ErrorTypes.database('Failed to delete criteria');
-  }
-
-  res.json({ message: 'Criteria deleted successfully' });
-}));
-
-/**
  * DELETE /api/criteria/by-key
  * Delete criteria by composite key
  * Requires admin role
+ * NOTE: This route MUST be defined BEFORE /:id to avoid Express matching "by-key" as an :id param
  */
 router.delete('/by-key', authenticateToken, requireAccessLevel(3), asyncHandler(async (req, res) => {
   const { criteria_set, product_scope, question_key, option_label } = req.body;
@@ -221,6 +204,29 @@ router.delete('/by-key', authenticateToken, requireAccessLevel(3), asyncHandler(
 
   if (error) {
     log.error('❌ Error deleting criteria by key', error);
+    throw ErrorTypes.database('Failed to delete criteria');
+  }
+
+  res.json({ message: 'Criteria deleted successfully' });
+}));
+
+/**
+ * DELETE /api/criteria/:id
+ * Delete a criteria record by ID
+ * Requires admin role
+ */
+router.delete('/:id', authenticateToken, requireAccessLevel(3), asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  log.info('DELETE /api/criteria/:id - deleting criteria', { id });
+
+  const { error } = await supabase
+    .from('criteria_config_flat')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    log.error('❌ Error deleting criteria', error);
     throw ErrorTypes.database('Failed to delete criteria');
   }
 

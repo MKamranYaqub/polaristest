@@ -284,15 +284,24 @@ export default function BTLcalculator({
         id: row.id,
         option_label: row.option_label,
         tier: row.tier,
+        option_sort_order: row.option_sort_order,
         raw: row,
       });
     });
 
-    // Sort options by tier ascending, then by id as tiebreaker for same tier
+    // Sort options using configurable option_sort_order (if set), then by tier, then by id
     Object.keys(map).forEach((k) => {
       map[k].options.sort((a, b) => {
+        // Use option_sort_order if defined (lower numbers first)
+        const orderA = a.option_sort_order !== null && a.option_sort_order !== undefined ? Number(a.option_sort_order) : Number.MAX_SAFE_INTEGER;
+        const orderB = b.option_sort_order !== null && b.option_sort_order !== undefined ? Number(b.option_sort_order) : Number.MAX_SAFE_INTEGER;
+        
+        if (orderA !== orderB) return orderA - orderB;
+        
+        // If both have same option_sort_order (or both null), sort by tier
         const tierDiff = (Number(a.tier) || 0) - (Number(b.tier) || 0);
         if (tierDiff !== 0) return tierDiff;
+        
         // Same tier: sort by id (database row order) to maintain consistent order
         return (Number(a.id) || 0) - (Number(b.id) || 0);
       });

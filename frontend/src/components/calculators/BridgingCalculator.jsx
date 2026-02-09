@@ -452,7 +452,7 @@ export default function BridgingCalculator({ initialQuote = null }) {
       // dedupe options by option_label (case-insensitive) or id
       const optLabel = (row.option_label || '').toString().trim().toLowerCase();
       const exists = map[key].options.some(o => (o.id && o.id === row.id) || ((o.option_label || '').toString().trim().toLowerCase() === optLabel));
-      if (!exists) map[key].options.push({ id: row.id, option_label: row.option_label, raw: row });
+      if (!exists) map[key].options.push({ id: row.id, option_label: row.option_label, option_sort_order: row.option_sort_order, raw: row });
     });
     
     // Always include Charge Type question from any product scope if it exists
@@ -471,23 +471,20 @@ export default function BridgingCalculator({ initialQuote = null }) {
         }
         const optLabel = (row.option_label || '').toString().trim().toLowerCase();
         const exists = map[key].options.some(o => (o.id && o.id === row.id) || ((o.option_label || '').toString().trim().toLowerCase() === optLabel));
-        if (!exists) map[key].options.push({ id: row.id, option_label: row.option_label, raw: row });
+        if (!exists) map[key].options.push({ id: row.id, option_label: row.option_label, option_sort_order: row.option_sort_order, raw: row });
       });
     }
 
+    // Sort options using configurable option_sort_order (if set), then by tier, then alphabetically
     Object.keys(map).forEach(k => {
       map[k].options.sort((a, b) => {
-        const labelA = (a.option_label || '').toString().trim().toLowerCase();
-        const labelB = (b.option_label || '').toString().trim().toLowerCase();
+        // Use option_sort_order if defined (lower numbers first)
+        const orderA = a.option_sort_order !== null && a.option_sort_order !== undefined ? Number(a.option_sort_order) : Number.MAX_SAFE_INTEGER;
+        const orderB = b.option_sort_order !== null && b.option_sort_order !== undefined ? Number(b.option_sort_order) : Number.MAX_SAFE_INTEGER;
         
-        // Keep "please select" or "select..." at the top
-        const isPlaceholderA = labelA === 'please select' || labelA === 'select...' || labelA === 'select';
-        const isPlaceholderB = labelB === 'please select' || labelB === 'select...' || labelB === 'select';
+        if (orderA !== orderB) return orderA - orderB;
         
-        if (isPlaceholderA && !isPlaceholderB) return -1;
-        if (!isPlaceholderA && isPlaceholderB) return 1;
-        
-        // Sort by tier (controls dropdown option order)
+        // If both have same option_sort_order (or both null), sort by tier
         const tierA = a.raw?.tier ?? Number.MAX_SAFE_INTEGER;
         const tierB = b.raw?.tier ?? Number.MAX_SAFE_INTEGER;
         if (tierA !== tierB) return tierA - tierB;
