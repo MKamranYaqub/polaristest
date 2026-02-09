@@ -35,6 +35,7 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
   const allResults = quote.results || [];
   // Filter by selected product range if specified on quote (from Issue Quote modal)
   const selectedProductRange = (quote.quote_product_range || quote.selected_range || '').toString().toLowerCase();
+  const isCore = selectedProductRange === 'core';
   const rangeFilteredResults = selectedProductRange
     ? allResults.filter(r => {
         // Check product_range, rate_type, or type fields (same as calculator filter)
@@ -254,7 +255,8 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
             })}
           </View>
 
-          {/* Deferred */}
+          {/* Deferred - hidden for Core quotes */}
+          {!isCore && (
           <View style={btlQuoteStyles.tableRow}>
             <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Deferred</Text>
             {feeRanges.map((feeRange, index) => {
@@ -266,8 +268,10 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
               );
             })}
           </View>
+          )}
 
-          {/* Rolled */}
+          {/* Rolled - hidden for Core quotes */}
+          {!isCore && (
           <View style={btlQuoteStyles.tableRowAlt}>
             <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Rolled</Text>
             {feeRanges.map((feeRange, index) => {
@@ -279,6 +283,7 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
               );
             })}
           </View>
+          )}
 
           {/* Section: Loan */}
           <View style={btlQuoteStyles.tableRowSectionHeader}>
@@ -361,7 +366,8 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
             ))}
           </View>
 
-          {/* Deferred cost */}
+          {/* Deferred cost - hidden for Core quotes */}
+          {!isCore && (
           <View style={btlQuoteStyles.tableRow}>
             <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Deferred cost</Text>
             {feeRanges.map((feeRange, index) => {
@@ -373,8 +379,10 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
               );
             })}
           </View>
+          )}
 
-          {/* Rolled cost */}
+          {/* Rolled cost - hidden for Core quotes */}
+          {!isCore && (
           <View style={btlQuoteStyles.tableRowAlt}>
             <Text style={[btlQuoteStyles.tableCellLabel, { width: labelWidth }]}>Rolled cost</Text>
             {feeRanges.map((feeRange, index) => {
@@ -386,6 +394,7 @@ const BTLQuotePDF = ({ quote, brokerSettings = {}, clientDetails = {} }) => {
               );
             })}
           </View>
+          )}
 
           {/* Arrangement Fee */}
           <View style={btlQuoteStyles.tableRow}>
