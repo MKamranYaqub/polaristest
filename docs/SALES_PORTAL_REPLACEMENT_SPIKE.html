@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Portal Replacement Spike - Polaris BTL Calculator Integration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #0f62fe;
+            --secondary-color: #393939;
+            --success-color: #24a148;
+            --warning-color: #f1c21b;
+            --danger-color: #da1e28;
+            --bg-color: #ffffff;
+            --surface-color: #f4f4f4;
+            --text-primary: #161616;
+            --text-secondary: #525252;
+            --border-color: #e0e0e0;
+            --code-bg: #f4f4f4;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--bg-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0f62fe 0%, #0043ce 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header .container {
+            padding: 0 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .meta-info {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            font-size: 0.95rem;
+            opacity: 0.95;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .meta-label {
+            font-weight: 600;
+        }
+
+        nav {
+            background: var(--surface-color);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            position: sticky;
+            top: 1rem;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        nav h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        nav ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.5rem;
+        }
+
+        nav a {
+            color: var(--primary-color);
+            text-decoration: none;
+            padding: 0.5rem;
+            display: block;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        nav a:hover {
+            background: rgba(15, 98, 254, 0.1);
+        }
+
+        section {
+            margin-bottom: 3rem;
+            scroll-margin-top: 100px;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 2rem 0 1rem;
+            color: var(--text-primary);
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 1.5rem 0 1rem;
+            color: var(--secondary-color);
+        }
+
+        h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1rem 0 0.75rem;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .summary-box {
+            background: linear-gradient(135deg, #f4f4f4 0%, #e8e8e8 100%);
+            border-left: 4px solid var(--primary-color);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+        }
+
+        .summary-box h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: var(--surface-color);
+            border-radius: 4px;
+        }
+
+        .icon-check {
+            color: var(--success-color);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .icon-cross {
+            color: var(--danger-color);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .icon-warning {
+            color: var(--warning-color);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .option-card {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .option-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .option-card.recommended {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+        }
+
+        .option-card h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-recommended {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .badge-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--warning-color);
+            color: var(--text-primary);
+        }
+
+        .badge-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pros, .cons {
+            padding: 1rem;
+            border-radius: 4px;
+        }
+
+        .pros {
+            background: #f1f9f4;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .cons {
+            background: #fef9f4;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .pros h4, .cons h4 {
+            margin-top: 0;
+            font-size: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        thead {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            font-weight: 600;
+        }
+
+        tbody tr:hover {
+            background: var(--surface-color);
+        }
+
+        pre {
+            background: var(--code-bg);
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        code {
+            font-family: 'IBM Plex Mono', 'Courier New', monospace;
+            font-size: 0.9rem;
+            background: var(--code-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .warning-box {
+            background: #fff8e1;
+            border-left: 4px solid var(--warning-color);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .warning-box h3 {
+            color: #8e6200;
+            margin-top: 0;
+        }
+
+        .danger-box {
+            background: #ffebee;
+            border-left: 4px solid var(--danger-color);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid var(--primary-color);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        ul, ol {
+            margin: 1rem 0 1rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 2rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.5rem;
+            top: 1.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+
+        footer {
+            margin-top: 4rem;
+            padding: 2rem;
+            background: var(--surface-color);
+            border-radius: 8px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .scroll-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--primary-color);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+            text-decoration: none;
+            font-size: 1.5rem;
+        }
+
+        .scroll-top:hover {
+            transform: translateY(-4px);
+        }
+
+        @media print {
+            nav {
+                position: static;
+            }
+            .scroll-top {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Sales Portal Replacement Spike</h1>
+            <p style="font-size: 1.25rem; margin-bottom: 1rem;">Polaris BTL Calculator Integration</p>
+            <div class="meta-info">
+                <div class="meta-item">
+                    <span class="meta-label">Date:</span>
+                    <span>February 11, 2026</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Duration:</span>
+                    <span>2-3 days</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Priority:</span>
+                    <span class="badge badge-danger">HIGH</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Target:</span>
+                    <span>Internal Sales Team (Authenticated)</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav>
+            <h2>Table of Contents</h2>
+            <ul>
+                <li><a href="#executive-summary">Executive Summary</a></li>
+                <li><a href="#current-state">Current State Analysis</a></li>
+                <li><a href="#integration-options">Integration Options</a></li>
+                <li><a href="#why-not-iframe">Why NOT iframe?</a></li>
+                <li><a href="#quote-management">Quote Management</a></li>
+                <li><a href="#data-migration">Data Migration Strategy</a></li>
+                <li><a href="#automated-quotes">Automated Quote Creation</a></li>
+                <li><a href="#calculation-strategy">Calculation Strategy</a></li>
+                <li><a href="#recommendations">Recommendations</a></li>
+                <li><a href="#next-steps">Next Steps</a></li>
+            </ul>
+        </nav>
+
+        <section id="executive-summary">
+            <h2>Executive Summary</h2>
+            
+            <div class="summary-box">
+                <h3>Key Finding</h3>
+                <p><strong>Polaris already has a fully-featured authenticated calculator</strong> that can replace the Sales Portal BTL calculator with minimal effort.</p>
+            </div>
+
+            <h3>Supported Features</h3>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <span class="icon-check">✅</span>
+                    <div>
+                        <strong>Sales Team Access</strong>
+                        <p>Role-based authentication (Access Level 4+)</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-check">✅</span>
+                    <div>
+                        <strong>Quote Management</strong>
+                        <p>Save, edit, load, and duplicate quotes</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-check">✅</span>
+                    <div>
+                        <strong>Fixed Product Scopes</strong>
+                        <p>Lock calculator to specific product types</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-check">✅</span>
+                    <div>
+                        <strong>No DIP Generation</strong>
+                        <p>Hide DIP functionality for sales team</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-check">✅</span>
+                    <div>
+                        <strong>Quote History</strong>
+                        <p>View and search saved quotes</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-check">✅</span>
+                    <div>
+                        <strong>Responsive Design</strong>
+                        <p>Carbon Design System with dark mode</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-check">✅</span>
+                    <div>
+                        <strong>Multi-rate Comparison</strong>
+                        <p>Advanced calculation with 3 fee columns</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-check">✅</span>
+                    <div>
+                        <strong>Regulatory Compliance</strong>
+                        <p>FCA-compliant ICR calculations</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <p><strong>Current Deployment:</strong> https://polaristest-theta.vercel.app</p>
+                <p><strong>Status:</strong> Production-ready with full authentication system</p>
+            </div>
+        </section>
+
+        <section id="current-state">
+            <h2>Current State Analysis</h2>
+            
+            <h3>Sales Portal (https://portal.mfsuk.com/)</h3>
+            <ul>
+                <li><strong>Platform:</strong> WordPress-based login system</li>
+                <li><strong>Access:</strong> Username-based authentication (KamranY)</li>
+                <li><strong>Features:</strong> Basic BTL calculator (details require login access)</li>
+                <li><strong>Limitations:</strong> Cannot access without valid credentials</li>
+            </ul>
+
+            <h3>Polaris BTL Calculator (Current)</h3>
+            <ul>
+                <li><strong>Location:</strong> <code>frontend/src/components/calculators/BTL_Calculator.jsx</code> (2,602 lines)</li>
+                <li><strong>New Structure:</strong> <code>frontend/src/features/btl-calculator/</code> (refactored version)</li>
+                <li><strong>Public Routes:</strong> Already configured in App.jsx</li>
+                <li><strong>Deployment:</strong> https://polaristest-theta.vercel.app</li>
+            </ul>
+        </section>
+
+        <section id="integration-options">
+            <h2>Integration Options</h2>
+
+            <div class="option-card recommended">
+                <h3>
+                    Option 1: Direct Link with Sales Team Accounts
+                    <span class="badge badge-recommended">RECOMMENDED</span>
+                </h3>
+                <p>Replace Sales Portal BTL calculator with direct links to Polaris authenticated calculator. Create sales team user accounts with Access Level 4 (no DIP access).</p>
+                
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Pros</h4>
+                        <ul>
+                            <li>Minimal development effort</li>
+                            <li>Full quote management</li>
+                            <li>Quote history and search</li>
+                            <li>All calculation features available</li>
+                            <li>DIP automatically hidden</li>
+                            <li>Production-ready</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Cons</h4>
+                        <ul>
+                            <li>Different URL domain</li>
+                            <li>Different visual branding</li>
+                            <li>Requires user account creation</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4>Implementation Steps</h4>
+                <ol>
+                    <li>Create Sales Team User Accounts (via Admin panel)</li>
+                    <li>Update Sales Portal Navigation links</li>
+                    <li>Sales team login flow established</li>
+                </ol>
+
+                <div class="info-box">
+                    <p><strong>Timeline:</strong> 2 days</p>
+                    <p><strong>Cost:</strong> $0</p>
+                </div>
+            </div>
+
+            <div class="option-card recommended">
+                <h3>
+                    Option 2: Custom Domain with Direct Link
+                    <span class="badge badge-recommended">BEST CHOICE</span>
+                </h3>
+                <p>Deploy Polaris on custom subdomain (calc.mfsuk.com) with sales team authentication.</p>
+                
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Pros</h4>
+                        <ul>
+                            <li>Professional branded URL</li>
+                            <li>No code changes to Polaris</li>
+                            <li>Full quote management features</li>
+                            <li>Easy to maintain</li>
+                            <li>SSL certificate automatic (Vercel)</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Cons</h4>
+                        <ul>
+                            <li>Requires DNS configuration</li>
+                            <li>Requires IT/DevOps involvement</li>
+                            <li>Still need to create user accounts</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4>DNS Configuration</h4>
+                <pre><code>Type: CNAME
+Name: calc
+Value: cname.vercel-dns.com
+TTL: 3600</code></pre>
+
+                <div class="info-box">
+                    <p><strong>Timeline:</strong> 2-3 days</p>
+                    <p><strong>Cost:</strong> $0 (custom domain free on Vercel)</p>
+                </div>
+            </div>
+
+            <div class="option-card">
+                <h3>Option 3: Single Sign-On (SSO) Integration</h3>
+                <p>Integrate Polaris authentication with Sales Portal WordPress users.</p>
+                
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Pros</h4>
+                        <ul>
+                            <li>Single login for sales team</li>
+                            <li>No separate user account management</li>
+                            <li>Seamless user experience</li>
+                            <li>Full quote management features</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Cons</h4>
+                        <ul>
+                            <li>Significant development effort</li>
+                            <li>Requires WordPress plugin development</li>
+                            <li>Requires Polaris backend modifications</li>
+                            <li>Complex authentication flow</li>
+                            <li>Ongoing maintenance burden</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <p><strong>Recommendation:</strong> Consider for future if Sales Portal becomes primary authentication hub.</p>
+                    <p><strong>Timeline:</strong> 5-7 days</p>
+                    <p><strong>Complexity:</strong> High</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="why-not-iframe">
+            <h2>⚠️ CRITICAL: Why NOT iframe?</h2>
+            
+            <div class="danger-box">
+                <h3>Do NOT Embed Polaris in an iframe</h3>
+                <p><strong>Use a simple direct link instead.</strong></p>
+            </div>
+
+            <h3>Technical Issues with iframe</h3>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <span class="icon-cross">❌</span>
+                    <div><strong>Cross-Origin Authentication:</strong> Cookies/localStorage don't work reliably</div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-cross">❌</span>
+                    <div><strong>Scrolling Nightmares:</strong> Complex layouts break in iframes</div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-cross">❌</span>
+                    <div><strong>Mobile Disasters:</strong> iframes are terrible on mobile devices</div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-cross">❌</span>
+                    <div><strong>Dark Mode Conflicts:</strong> Parent CSS interferes with iframe</div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-cross">❌</span>
+                    <div><strong>Performance:</strong> Double page load (portal + calculator)</div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-cross">❌</span>
+                    <div><strong>Security:</strong> Cross-origin issues with JWT tokens</div>
+                </div>
+            </div>
+
+            <h3>User Experience Issues</h3>
+            <ul>
+                <li>Confusing Navigation: Users don't know if they're in Sales Portal or Calculator</li>
+                <li>Browser Features Break: Back button, bookmarks, new tabs don't work</li>
+                <li>Printing Problems: Print functionality becomes unreliable</li>
+                <li>Accessibility Issues: Screen readers struggle with nested iframes</li>
+            </ul>
+
+            <h3>The Simple Truth: Direct Link is Better</h3>
+            <pre><code>&lt;!-- ✅ CORRECT: Simple direct link --&gt;
+&lt;a href="https://calc.mfsuk.com/calculator/btl" target="_blank"&gt;
+  BTL Calculator
+&lt;/a&gt;
+
+&lt;!-- ❌ WRONG: iframe embed --&gt;
+&lt;iframe src="https://calc.mfsuk.com/calculator/btl" 
+        width="100%" height="1400px"&gt;&lt;/iframe&gt;</code></pre>
+
+            <div class="info-box">
+                <h4>Why Direct Link Wins</h4>
+                <ul>
+                    <li>Works immediately (no development)</li>
+                    <li>Better user experience (full browser window)</li>
+                    <li>Better mobile support</li>
+                    <li>Simpler authentication (standard browser cookies)</li>
+                    <li>Zero maintenance overhead</li>
+                    <li>Future-proof (no technical debt)</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="quote-management">
+            <h2>Quote Management Flow (Sales Team)</h2>
+
+            <h3>Current Authenticated Flow</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>1. Login</h4>
+                    <p>Sales team member logs in with credentials</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>2. Calculator Access</h4>
+                    <p>Navigate to BTL calculator</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>3. Enter Details</h4>
+                    <p>Property value, monthly rent, product selection</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>4. Calculate</h4>
+                    <p>Rates fetched, results displayed</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>5. Review Results</h4>
+                    <p>Multi-rate comparison with 3 fee columns</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>6. Client Details</h4>
+                    <p>Enter borrower name, contact info, notes</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>7. Save Quote</h4>
+                    <p>Quote saved with unique reference number</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>8. Access Later</h4>
+                    <p>View in "Quotes List" page, searchable by reference</p>
+                </div>
+            </div>
+
+            <h3>Quote Management Features</h3>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <span class="icon-check">✅</span>
+                    <div><strong>Save Quote:</strong> Save current calculation with client details</div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-check">✅</span>
+                    <div><strong>Update Quote:</strong> Modify existing quote and save changes</div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-check">✅</span>
+                    <div><strong>Load Quote:</strong> Retrieve saved quote from database</div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-check">✅</span>
+                    <div><strong>Duplicate Quote:</strong> Clone existing quote for variations</div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-check">✅</span>
+                    <div><strong>Quote Reference:</strong> Auto-generated unique reference (e.g., "BTL-20260211-001")</div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-check">✅</span>
+                    <div><strong>Quote History:</strong> View all quotes by date, client name, reference</div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-check">✅</span>
+                    <div><strong>PDF Export:</strong> Download professional quote PDF (client version)</div>
+                </div>
+                <div class="feature-item">
+                    <span class="icon-cross">❌</span>
+                    <div><strong>DIP Generation:</strong> Hidden for Access Level 4 users</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="data-migration">
+            <h2>Data Migration Strategy</h2>
+
+            <p>Migrating existing quote data from Sales Portal to Polaris ensures continuity for sales team and preserves historical records.</p>
+
+            <h3>Migration Options</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Option</th>
+                        <th>Description</th>
+                        <th>Timeline</th>
+                        <th>Best For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Option A</strong></td>
+                        <td>Full Historical Migration - Import all existing quotes</td>
+                        <td>3-4 days</td>
+                        <td>Complete data continuity</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Option B</strong></td>
+                        <td>Selective Migration - Import only recent/active quotes</td>
+                        <td>1-2 days</td>
+                        <td>Focus on relevant data</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Option C</strong></td>
+                        <td>Fresh Start - No migration, start clean</td>
+                        <td>0 days</td>
+                        <td>Minimal data or poor quality</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <h4>Recommended Approach</h4>
+                <p><strong>Start with Option C (Fresh Start)</strong>, then add migration if needed:</p>
+                <ol>
+                    <li><strong>Week 1:</strong> Deploy Polaris with sales team accounts (no migration)</li>
+                    <li><strong>Week 2:</strong> Sales team starts using Polaris for NEW quotes</li>
+                    <li><strong>Week 3-4:</strong> Evaluate need for historical data</li>
+                    <li><strong>Month 2:</strong> If needed, run migration script for important historical quotes</li>
+                </ol>
+            </div>
+        </section>
+
+        <section id="automated-quotes">
+            <h2>Automated Quote Creation</h2>
+
+            <div class="summary-box">
+                <h3>Can quotes be automated?</h3>
+                <p><strong>Yes!</strong> Quote creation can be fully automated using Polaris REST API. This enables programmatic import from Sales Portal without manual data entry.</p>
+            </div>
+
+            <h3>API Endpoint</h3>
+            <pre><code>POST /api/quotes
+Authorization: Bearer {JWT_TOKEN}
+Content-Type: application/json
+
+{
+  "calculator_type": "btl",
+  "client_name": "John Doe",
+  "property_value": 500000,
+  "loan_amount": 375000
+}</code></pre>
+
+            <h3>Automation Scenarios</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Approach</th>
+                        <th>Timeline</th>
+                        <th>Complexity</th>
+                        <th>Best For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Manual Entry</td>
+                        <td>1-2 weeks</td>
+                        <td>Low</td>
+                        <td>&lt; 50 quotes, one-time migration</td>
+                    </tr>
+                    <tr>
+                        <td>One-Time Batch Import</td>
+                        <td>2-3 days</td>
+                        <td>Medium</td>
+                        <td>50-5000 quotes, historical migration</td>
+                    </tr>
+                    <tr>
+                        <td>Real-Time Sync</td>
+                        <td>1 week</td>
+                        <td>High</td>
+                        <td>Parallel systems during transition</td>
+                    </tr>
+                    <tr>
+                        <td>Scheduled Daily Import</td>
+                        <td>3-4 days</td>
+                        <td>Medium</td>
+                        <td>Gradual migration over weeks</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="calculation-strategy">
+            <h2>Calculation Strategy</h2>
+
+            <div class="warning-box">
+                <h3>The Problem</h3>
+                <p>When hitting the backend API directly (bypassing the frontend calculator), calculations are NOT performed. The frontend does all the heavy lifting: rate table lookups, ICR/LTV calculations, product comparisons.</p>
+            </div>
+
+            <h3>Solution Options</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Quote Count</th>
+                        <th>Recommended Option</th>
+                        <th>Timeline</th>
+                        <th>Manual Effort</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>&lt; 50</td>
+                        <td>Option 1: Basic Data + Manual Review</td>
+                        <td>2-3 days</td>
+                        <td>High - sales team recalculates each</td>
+                    </tr>
+                    <tr>
+                        <td>50-200</td>
+                        <td><strong>Option 5: Bot (RECOMMENDED)</strong></td>
+                        <td>1 week</td>
+                        <td>None - fully automated</td>
+                    </tr>
+                    <tr>
+                        <td>200-500</td>
+                        <td><strong>Option 5: Bot</strong> or Option 2</td>
+                        <td>1-2 weeks</td>
+                        <td>None - fully automated</td>
+                    </tr>
+                    <tr>
+                        <td>500+</td>
+                        <td>Option 2: Backend Calculation Service</td>
+                        <td>2 weeks</td>
+                        <td>None - fully automated</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Option 5: Fully Automated Bot (RECOMMENDED for 50-500 quotes)</h3>
+            
+            <div class="option-card recommended">
+                <h3>
+                    Autonomous Quote Bot
+                    <span class="badge badge-recommended">BEST FOR 50-500 QUOTES</span>
+                </h3>
+                
+                <p>A bot that pulls data from Sales Portal, uses Polaris UI to calculate, and saves complete quotes automatically.</p>
+
+                <h4>Features</h4>
+                <ul>
+                    <li>Fetches data from Sales Portal (DB/API/file)</li>
+                    <li>Logs into Polaris automatically</li>
+                    <li>Navigates to calculator for each quote</li>
+                    <li>Fills in all form fields</li>
+                    <li>Clicks Calculate button and waits for results</li>
+                    <li>Extracts calculated results from UI (all 3 fee columns)</li>
+                    <li>Fills in client details</li>
+                    <li>Saves complete quote with full calculations</li>
+                    <li>Handles errors gracefully with screenshots</li>
+                    <li>Full logging and audit trail</li>
+                </ul>
+
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>Pros</h4>
+                        <ul>
+                            <li>100% Automated after setup</li>
+                            <li>Uses real calculator (guaranteed accurate)</li>
+                            <li>Complete quotes with calculations</li>
+                            <li>Latest rate tables always used</li>
+                            <li>No backend changes required</li>
+                            <li>Audit trail for all actions</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>Cons</h4>
+                        <ul>
+                            <li>Slow (5-10 seconds per quote)</li>
+                            <li>Resource intensive (headless browser)</li>
+                            <li>Brittle (breaks if UI changes)</li>
+                            <li>Complex setup and error handling</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4>Example Output</h4>
+                <pre><code>🤖 Initializing Polaris Quote Bot...
+✅ Bot initialized and logged in
+📦 Fetching quotes from Sales Portal...
+📊 Found 247 quotes to process
+
+[1/247] Processing...
+🔄 Processing quote: SP-12345
+  ⚙️  Running calculation...
+  ✅ Calculated 18 product options
+  💾 Saving quote...
+  ✅ Quote saved: BTL-20260211-001
+  ⏳ Waiting 3 seconds before next quote...
+
+[247/247] Processing complete
+
+📊 MIGRATION COMPLETE
+Total Quotes: 247
+✅ Successful: 245
+❌ Failed: 2
+⏱️  Duration: 28 minutes</code></pre>
+
+                <div class="info-box">
+                    <p><strong>Timeline:</strong> 4-6 days (including development)</p>
+                    <p><strong>Execution:</strong> 30-60 minutes for 200 quotes</p>
+                    <p><strong>Cost:</strong> $0 (runs on local machine)</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="recommendations">
+            <h2>Recommendations</h2>
+
+            <div class="option-card recommended">
+                <h3>
+                    Recommended Approach: Option 2 (Custom Domain + Direct Link)
+                    <span class="badge badge-recommended">BEST CHOICE</span>
+                </h3>
+
+                <h4>Why Option 2 is Best</h4>
+                <ol>
+                    <li>✅ Professional Branding: calc.mfsuk.com looks official</li>
+                    <li>✅ Full Feature Set: Quote management, history, PDF export</li>
+                    <li>✅ No DIP Access: Automatically hidden for Access Level 4</li>
+                    <li>✅ Low Development Risk: Minimal code changes</li>
+                    <li>✅ Easy Maintenance: Standard Polaris deployment</li>
+                    <li>✅ Cost Effective: $0 additional infrastructure</li>
+                    <li>✅ Scalable: Easy to add more sales team members</li>
+                    <li>✅ Simple Integration: Just update the link in Sales Portal</li>
+                </ol>
+
+                <div class="info-box">
+                    <p><strong>Timeline:</strong> 2-3 days</p>
+                    <p><strong>Cost:</strong> $0</p>
+                    <p><strong>Risk:</strong> Low</p>
+                </div>
+            </div>
+
+            <h3>Migration Strategy</h3>
+            <div class="info-box">
+                <h4>Quick Decision Tree</h4>
+                <pre>How many quotes need migration?
+
+├─ &lt; 50 quotes
+│  └─ Use Option 1 (Manual Review) - 2-3 days
+│
+├─ 50-200 quotes  
+│  └─ Use Option 5 (Bot) - 1 week, zero manual work
+│
+├─ 200-500 quotes
+│  └─ Use Option 5 (Bot) OR Option 2 (Backend Service)
+│
+└─ 500+ quotes
+   └─ Use Option 2 (Backend Service) - fastest execution</pre>
+            </div>
+        </section>
+
+        <section id="next-steps">
+            <h2>Next Steps</h2>
+
+            <h3>Immediate Actions (This Week)</h3>
+            <ol>
+                <li><strong>Get Sales Portal Access:</strong> Login to portal.mfsuk.com to document current BTL calculator features</li>
+                <li><strong>Feature Gap Analysis:</strong> Compare Sales Portal BTL with Polaris authenticated calculator</li>
+                <li><strong>Stakeholder Approval:</strong> Present spike findings to sales/product team</li>
+                <li><strong>IT Coordination:</strong> Request DNS access for calc.mfsuk.com setup</li>
+                <li><strong>Sales Team Roster:</strong> Get list of sales team members who need accounts</li>
+            </ol>
+
+            <h3>Short-Term (Next Sprint - Week 1)</h3>
+            <ol>
+                <li><strong>DNS Configuration:</strong> Set up calc.mfsuk.com CNAME record (IT team)</li>
+                <li><strong>Custom Domain Setup:</strong> Add domain to Vercel (DevOps)</li>
+                <li><strong>Create User Accounts:</strong> Set up sales team accounts with Access Level 4</li>
+                <li><strong>Internal Testing:</strong> Sales team tests calculator with real scenarios</li>
+                <li><strong>Training Session:</strong> 30-minute walkthrough with sales team</li>
+                <li><strong>Update Sales Portal Link:</strong> Change navigation to point to calc.mfsuk.com (NOT iframe)</li>
+            </ol>
+
+            <h3>Short-Term (Week 2-3)</h3>
+            <ol>
+                <li><strong>Go Live:</strong> Sales team starts using Polaris for all BTL calculations</li>
+                <li><strong>Monitor Usage:</strong> Track quote submissions, login issues, errors</li>
+                <li><strong>Collect Feedback:</strong> Daily check-ins with sales team for first week</li>
+                <li><strong>Address Issues:</strong> Fix any bugs or usability concerns</li>
+                <li><strong>Documentation:</strong> Create internal wiki/guide for sales team</li>
+            </ol>
+
+            <h3>Long-Term (Next Quarter)</h3>
+            <ol>
+                <li><strong>Sunset Sales Portal BTL:</strong> Decommission old WordPress calculator</li>
+                <li><strong>Analytics Review:</strong> Analyze quote volume, calculation patterns</li>
+                <li><strong>Feature Requests:</strong> Prioritize sales team improvement requests</li>
+                <li><strong>Expand Access:</strong> Consider adding other internal teams</li>
+                <li><strong>SSO Consideration:</strong> Evaluate if SSO integration worth investment</li>
+            </ol>
+        </section>
+
+        <footer>
+            <p><strong>Document Generated:</strong> February 11, 2026</p>
+            <p><strong>Methodology:</strong> Bitovi/ai-enablement-prompts instruction-generation chain</p>
+            <p><strong>Version:</strong> 1.0.0</p>
+        </footer>
+    </div>
+
+    <a href="#" class="scroll-top" title="Back to top">↑</a>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Show/hide scroll to top button
+        const scrollTopBtn = document.querySelector('.scroll-top');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                scrollTopBtn.style.display = 'flex';
+            } else {
+                scrollTopBtn.style.display = 'none';
+            }
+        });
+
+        // Print-friendly styles
+        window.addEventListener('beforeprint', () => {
+            document.querySelectorAll('details').forEach(detail => {
+                detail.setAttribute('open', '');
+            });
+        });
+    </script>
+</body>
+</html>

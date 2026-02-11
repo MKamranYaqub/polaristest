@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salesforce Configuration Cache Strategy - Business Proposal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #0070d2;
+            --secondary-color: #032d60;
+            --success-color: #04844b;
+            --warning-color: #fe9339;
+            --danger-color: #c23934;
+            --text-primary: #181818;
+            --text-secondary: #3e3e3c;
+            --bg-light: #f3f3f3;
+            --bg-white: #ffffff;
+            --border-color: #c9c9c9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--bg-light);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg-white);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 300;
+        }
+
+        header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .meta-info {
+            background: var(--bg-light);
+            padding: 1.5rem 2rem;
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .meta-info .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .meta-item {
+            padding: 0.5rem;
+        }
+
+        .meta-item strong {
+            color: var(--secondary-color);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        main {
+            padding: 2rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            color: var(--secondary-color);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        h3 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin: 1.5rem 0 1rem;
+        }
+
+        h4 {
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            margin: 1rem 0 0.5rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .executive-summary {
+            background: #e8f4ff;
+            border-left: 4px solid var(--primary-color);
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .benefit-card {
+            background: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .benefit-card strong {
+            color: var(--success-color);
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background: var(--secondary-color);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-light);
+        }
+
+        tr:hover {
+            background: #e8f4ff;
+        }
+
+        .highlight-row {
+            background: #fff4e5 !important;
+            font-weight: 600;
+        }
+
+        .comparison-table .positive {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .comparison-table .negative {
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+
+        .flow-diagram {
+            background: var(--bg-light);
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+
+        .flow-step {
+            background: white;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .flow-step::after {
+            content: "↓";
+            display: block;
+            text-align: center;
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin: 0.5rem 0;
+        }
+
+        .flow-step:last-child::after {
+            display: none;
+        }
+
+        .flow-step h4 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        .recommendation-box {
+            background: linear-gradient(135deg, #04844b 0%, #078d4a 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+
+        .recommendation-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .warning-box {
+            background: #fff4e5;
+            border: 2px solid var(--warning-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .warning-box strong {
+            color: var(--warning-color);
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 3rem;
+            margin: 2rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 1rem;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--primary-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            padding-left: 2rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 0.5rem;
+            width: 1rem;
+            height: 1rem;
+            background: var(--primary-color);
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px white;
+        }
+
+        .cost-breakdown {
+            background: var(--bg-light);
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .cost-item:last-child {
+            border-bottom: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding-top: 1rem;
+            margin-top: 0.5rem;
+            border-top: 2px solid var(--secondary-color);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .badge-success {
+            background: #c9f0df;
+            color: #04844b;
+        }
+
+        .badge-warning {
+            background: #ffe6cc;
+            color: #fe9339;
+        }
+
+        .badge-danger {
+            background: #fdd6d6;
+            color: #c23934;
+        }
+
+        .badge-info {
+            background: #d8edff;
+            color: #0070d2;
+        }
+
+        .faq-item {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border-left: 3px solid var(--primary-color);
+            background: var(--bg-light);
+        }
+
+        .faq-question {
+            font-weight: 600;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .faq-answer {
+            color: var(--text-secondary);
+        }
+
+        footer {
+            background: var(--secondary-color);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .approval-section {
+            background: #fff4e5;
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+
+        .approval-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .approval-box {
+            background: white;
+            padding: 1rem;
+            border: 2px dashed var(--border-color);
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+            }
+            .flow-step::after {
+                color: black;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+            main {
+                padding: 1rem;
+            }
+            .meta-grid {
+                grid-template-columns: 1fr;
+            }
+            table {
+                font-size: 0.85rem;
+            }
+            th, td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Salesforce Configuration Cache Strategy</h1>
+            <div class="subtitle">Business Proposal</div>
+        </header>
+
+        <div class="meta-info">
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <strong>Date:</strong>
+                    February 10, 2026
+                </div>
+                <div class="meta-item">
+                    <strong>Prepared for:</strong>
+                    Business Leadership & Product Team
+                </div>
+                <div class="meta-item">
+                    <strong>Status:</strong>
+                    <span class="badge badge-warning">Architecture Recommendation</span>
+                </div>
+                <div class="meta-item">
+                    <strong>Decision Required:</strong>
+                    Approach Selection for Product Configuration Storage
+                </div>
+            </div>
+        </div>
+
+        <main>
+            <!-- Executive Summary -->
+            <section>
+                <h2>Executive Summary</h2>
+                <div class="executive-summary">
+                    <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">
+                        We propose a <strong>hybrid architecture</strong> that enables Salesforce as the admin interface 
+                        for product configuration (rates, constants, rules) while maintaining high performance for end users.
+                    </p>
+
+                    <h3>Key Benefits</h3>
+                    <div class="benefits-grid">
+                        <div class="benefit-card">
+                            <strong>✅ Unlimited Concurrent Users</strong>
+                            <p>2,000+ supported vs. 15-25 with direct API</p>
+                        </div>
+                        <div class="benefit-card">
+                            <strong>✅ Ultra-Fast Calculations</strong>
+                            <p>5-15ms vs. 300-500ms with direct Salesforce</p>
+                        </div>
+                        <div class="benefit-card">
+                            <strong>✅ Salesforce as Admin UI</strong>
+                            <p>No custom admin panel needed</p>
+                        </div>
+                        <div class="benefit-card">
+                            <strong>✅ 99% API Cost Reduction</strong>
+                            <p>5-10 calls/day vs. 10,000+</p>
+                        </div>
+                        <div class="benefit-card">
+                            <strong>✅ Business Continuity</strong>
+                            <p>Works even if Salesforce is temporarily down</p>
+                        </div>
+                    </div>
+
+                    <h3>Investment Required</h3>
+                    <ul style="margin-top: 1rem;">
+                        <li><strong>Development Effort:</strong> 2-3 weeks</li>
+                        <li><strong>Technical Complexity:</strong> Medium (manageable for mid-level developers)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- The Problem -->
+            <section>
+                <h2>The Problem We're Solving</h2>
+                
+                <h3>Current State</h3>
+                <p>Product configuration (mortgage rates, calculation constants, business rules) is stored in <strong>Supabase database</strong>:</p>
+                <ul>
+                    <li><span style="color: var(--success-color);">✅</span> Fast performance (20-50ms)</li>
+                    <li><span style="color: var(--success-color);">✅</span> Supports 500-1,000 concurrent users</li>
+                    <li><span style="color: var(--danger-color);">❌</span> Requires custom admin panel for rate updates</li>
+                    <li><span style="color: var(--danger-color);">❌</span> Admins must learn new interface</li>
+                </ul>
+
+                <h3>Desired State</h3>
+                <p>Store configuration in <strong>Salesforce</strong> so admins can:</p>
+                <ul>
+                    <li>Use familiar Salesforce interface</li>
+                    <li>Leverage existing validation rules</li>
+                    <li>Maintain audit trails automatically</li>
+                    <li>Integrate with existing CRM workflows</li>
+                </ul>
+
+                <div class="warning-box">
+                    <h4><strong>⚠️ The Challenge</strong></h4>
+                    <p><strong>Direct Salesforce API integration cannot support our user base:</strong></p>
+                </div>
+
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Direct Salesforce API</th>
+                            <th>Business Requirement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Concurrent Users</td>
+                            <td class="negative">15-25 users</td>
+                            <td class="positive">100-500+ users</td>
+                        </tr>
+                        <tr>
+                            <td>Calculation Speed</td>
+                            <td class="negative">1-2 seconds</td>
+                            <td class="positive">&lt;200ms</td>
+                        </tr>
+                        <tr>
+                            <td>Daily API Limit</td>
+                            <td class="negative">10,000-50,000</td>
+                            <td class="positive">Would exhaust in hours</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p style="font-weight: 600; color: var(--danger-color);">Verdict: Direct integration is not viable at scale.</p>
+            </section>
+
+            <!-- Solution -->
+            <section>
+                <h2>Recommended Solution: JSON File Cache</h2>
+                
+                <h3>How It Works</h3>
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <h4>STEP 1: Admins Update Configuration in Salesforce</h4>
+                        <ul>
+                            <li>Edit rates, constants, rules in Salesforce UI</li>
+                            <li>Happens throughout the day (ad-hoc)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="flow-step">
+                        <h4>STEP 2: Scheduled Sync (Every 3 Hours During Business Hours)</h4>
+                        <ul>
+                            <li>Automated script fetches all active rates from SF</li>
+                            <li>Transforms data to optimized JSON format</li>
+                            <li>Only 5-10 API calls per sync (minimal)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="flow-step">
+                        <h4>STEP 3: Global JSON Storage (Edge Network)</h4>
+                        <ul>
+                            <li>rates_btl.json (BTL rates)</li>
+                            <li>rates_bridging.json (Bridging/Fusion rates)</li>
+                            <li>app_constants.json (calculation rules)</li>
+                            <li>Files updated every 3 hours</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="flow-step">
+                        <h4>STEP 4: Polaris Calculator Reads JSON Files</h4>
+                        <ul>
+                            <li>Lightning fast (5-15ms per calculation)</li>
+                            <li>No Salesforce API calls during calculations</li>
+                            <li>Supports unlimited concurrent users</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Key Features</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Scheduled Sync</strong></td>
+                            <td>Runs every 3 hours during business hours (9 AM - 5 PM) + daily sync at 3 AM</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Configuration Freshness</strong></td>
+                            <td>Max delay: 3 hours during business hours. Manual sync for urgent changes (30 seconds)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Failure Protection</strong></td>
+                            <td>Polaris continues using previous version. Automatic retries with IT alerts</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Admin Experience</strong></td>
+                            <td>Admins use Salesforce exclusively. Polaris updates within 3 hours</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Performance Comparison -->
+            <section>
+                <h2>Performance Comparison</h2>
+                
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Architecture</th>
+                            <th>Max Concurrent Users</th>
+                            <th>Calculation Speed</th>
+                            <th>SF API Calls/Day</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Current (Supabase)</strong></td>
+                            <td>500-1,000</td>
+                            <td>50-100ms</td>
+                            <td>0</td>
+                        </tr>
+                        <tr class="negative">
+                            <td><strong>Direct SF API</strong> ❌</td>
+                            <td class="negative">15-25</td>
+                            <td class="negative">1-2 seconds</td>
+                            <td class="negative">10,000-50,000</td>
+                        </tr>
+                        <tr class="highlight-row" style="background: #c9f0df !important;">
+                            <td><strong>JSON Cache</strong> ⭐</td>
+                            <td class="positive"><strong>2,000+</strong></td>
+                            <td class="positive"><strong>5-15ms</strong></td>
+                            <td class="positive"><strong>5-10</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Heroku Connect</strong></td>
+                            <td>200-400</td>
+                            <td>100-200ms</td>
+                            <td>0 (continuous)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Real-World User Experience</h3>
+                <p><strong>Scenario: 200 active users during peak hours (11 AM)</strong></p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Architecture</th>
+                            <th>Experience</th>
+                            <th>Technical Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="negative">
+                            <td><strong>Direct Salesforce API</strong></td>
+                            <td>❌ <strong>System Down</strong></td>
+                            <td>API limits exhausted by 11:30 AM. Calculator shows errors.</td>
+                        </tr>
+                        <tr class="positive">
+                            <td><strong>JSON Cache</strong></td>
+                            <td>✅ <strong>Flawless</strong></td>
+                            <td>Each calculation takes 0.05 seconds. No noticeable delay.</td>
+                        </tr>
+                        <tr class="positive">
+                            <td><strong>Current (Supabase)</strong></td>
+                            <td>✅ <strong>Excellent</strong></td>
+                            <td>Each calculation takes 0.08 seconds. Smooth experience.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Implementation Roadmap -->
+            <section>
+                <h2>Implementation Roadmap</h2>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <h3>Phase 1: Foundation (Week 1)</h3>
+                        <p><strong>Effort:</strong> 3-4 days</p>
+                        <ul>
+                            <li>Design Salesforce object schema (Rate__c, App_Constant__c)</li>
+                            <li>Create custom fields in Salesforce</li>
+                            <li>Build sync service (fetches from SF, generates JSON)</li>
+                            <li>Set up JSON storage (Azure Blob Storage)</li>
+                        </ul>
+                        <p><strong>Deliverables:</strong> Salesforce objects configured, Sync service operational, JSON files generated</p>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <h3>Phase 2: Automation (Week 2)</h3>
+                        <p><strong>Effort:</strong> 3-4 days</p>
+                        <ul>
+                            <li>Schedule cron jobs (every 3 hours)</li>
+                            <li>Build admin "Sync Now" button</li>
+                            <li>Add sync monitoring and alerts</li>
+                            <li>Implement retry logic for failures</li>
+                        </ul>
+                        <p><strong>Deliverables:</strong> Automated sync, Manual sync button, Email alerts</p>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <h3>Phase 3: Migration & Testing (Week 3)</h3>
+                        <p><strong>Effort:</strong> 4-5 days</p>
+                        <ul>
+                            <li>Migrate existing rates from Supabase to Salesforce</li>
+                            <li>Update Polaris calculator to read from JSON cache</li>
+                            <li>User acceptance testing (UAT) with 50 test quotes</li>
+                            <li>Performance testing (500+ concurrent users)</li>
+                            <li>Admin training on Salesforce rate management</li>
+                        </ul>
+                        <p><strong>Deliverables:</strong> All rates migrated, Polaris reads from JSON, UAT passed</p>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <h3>Phase 4: Go-Live (Week 4)</h3>
+                        <p><strong>Effort:</strong> 1-2 days</p>
+                        <ul>
+                            <li>Deploy to production</li>
+                            <li>Monitor performance for 48 hours</li>
+                            <li>Adjust sync frequency if needed</li>
+                            <li>Document procedures for admins</li>
+                        </ul>
+                        <p><strong>Deliverables:</strong> Production deployment complete, System running smoothly</p>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <p><strong>Total Calendar Time:</strong> 4 weeks (with adequate testing)</p>
+                    <p><strong>Total Developer Time:</strong> 60-80 hours</p>
+                </div>
+            </section>
+
+            <!-- Risk Assessment -->
+            <section>
+                <h2>Risk Assessment</h2>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Risk</th>
+                            <th>Impact</th>
+                            <th>Likelihood</th>
+                            <th>Mitigation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Sync Failure</td>
+                            <td><span class="badge badge-warning">Medium</span></td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td>Automatic retries, backup files, manual sync button</td>
+                        </tr>
+                        <tr>
+                            <td>Stale Configuration</td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td><span class="badge badge-warning">Medium</span></td>
+                            <td>Sync every 3 hours, manual sync for urgent changes</td>
+                        </tr>
+                        <tr>
+                            <td>Salesforce Downtime</td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td><span class="badge badge-success">Very Low</span></td>
+                            <td>Polaris continues with last synced data (no user impact)</td>
+                        </tr>
+                        <tr>
+                            <td>JSON File Corruption</td>
+                            <td><span class="badge badge-danger">High</span></td>
+                            <td><span class="badge badge-success">Very Low</span></td>
+                            <td>Backup files, validation before upload, version control</td>
+                        </tr>
+                        <tr>
+                            <td>User Confusion (3hr delay)</td>
+                            <td><span class="badge badge-warning">Medium</span></td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td>Clear communication, manual sync option, admin training</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="recommendation-box">
+                    <h3>Overall Risk: ✅ LOW</h3>
+                    <p>Well-mitigated with established patterns</p>
+                </div>
+            </section>
+
+            <!-- Recommendation -->
+            <section>
+                <h2>Recommendation Summary</h2>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timeline</th>
+                            <th>Recommendation</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Immediate Term<br>(Next 3 Months)</strong></td>
+                            <td><strong>Continue with current Supabase architecture</strong></td>
+                            <td>
+                                <strong>Reason:</strong> Already working, no urgent scale needs<br>
+                                <strong>Action:</strong> Monitor user growth and performance
+                            </td>
+                        </tr>
+                        <tr class="highlight-row">
+                            <td><strong>Medium Term<br>(3-12 Months)</strong></td>
+                            <td><strong>Implement JSON cache strategy ⭐</strong></td>
+                            <td>
+                                <strong>Reason:</strong> Prepares for scale, provides Salesforce admin UI<br>
+                                <strong>Action:</strong> Execute 3-4 week implementation plan
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Long Term<br>(12+ Months)</strong></td>
+                            <td><strong>Evaluate Heroku Connect if needed</strong></td>
+                            <td>
+                                <strong>Reason:</strong> Business may require &lt;10 min update frequency<br>
+                                <strong>Action:</strong> Re-assess based on user feedback
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Success Metrics -->
+            <section>
+                <h2>Success Metrics</h2>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
+                    <div>
+                        <h3>Performance KPIs</h3>
+                        <ul>
+                            <li><strong>Calculation Speed:</strong> &lt;100ms (Target: &lt;50ms)</li>
+                            <li><strong>Concurrent Users:</strong> 1,000+ (Target: 2,000+)</li>
+                            <li><strong>System Uptime:</strong> &gt;99.9%</li>
+                            <li><strong>Sync Success Rate:</strong> &gt;99%</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3>Business KPIs</h3>
+                        <ul>
+                            <li><strong>Admin Satisfaction:</strong> &gt;4.5/5 (Salesforce UI ease)</li>
+                            <li><strong>Config Update Frequency:</strong> Track rate change frequency</li>
+                            <li><strong>Time to Update:</strong> &lt;30 seconds (manual sync)</li>
+                            <li><strong>User Complaints:</strong> &lt;1% related to stale rates</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3>Technical KPIs</h3>
+                        <ul>
+                            <li><strong>API Response Time:</strong> &lt;50ms average</li>
+                            <li><strong>Data Freshness:</strong> &lt;3 hours max delay</li>
+                            <li><strong>Sync Success Rate:</strong> &gt;99%</li>
+                            <li><strong>System Uptime:</strong> &gt;99.9%</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAQ -->
+            <section>
+                <h2>Frequently Asked Questions</h2>
+                
+                <div class="faq-item">
+                    <div class="faq-question">Q1: What happens if the sync fails?</div>
+                    <div class="faq-answer">
+                        <strong>A:</strong> Polaris continues using the previous version of config files. Admins receive an alert, 
+                        and automatic retries occur every 15 minutes. Manual sync button available for immediate retry.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">Q2: How long does configuration take to update in Polaris?</div>
+                    <div class="faq-answer">
+                        <strong>A:</strong> Maximum 3 hours during business hours (next scheduled sync). For urgent changes, 
+                        admins can use "Sync Now" button (completes in 30 seconds).
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">Q3: Can admins preview changes before they go live in Polaris?</div>
+                    <div class="faq-answer">
+                        <strong>A:</strong> Yes, changes are immediately visible in Salesforce. Admins can validate data there. 
+                        For Polaris preview, we can add a "staging sync" feature (manual trigger to staging environment).
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">Q4: What if we need to rollback a rate change?</div>
+                    <div class="faq-answer">
+                        <strong>A:</strong> Two options:<br>
+                        1. Edit rates in Salesforce and trigger manual sync (30 seconds)<br>
+                        2. IT can restore previous JSON backup file (5 minutes)
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">Q5: How many Salesforce licenses do we need?</div>
+                    <div class="faq-answer">
+                        <strong>A:</strong> Only admin users who update rates need licenses. Typical setup: 3-5 licenses. 
+                        End users accessing Polaris do NOT need Salesforce licenses.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">Q6: What's involved in reverting back to current architecture?</div>
+                    <div class="faq-answer">
+                        <strong>A:</strong> Simple revert:<br>
+                        1. Switch Polaris back to query Supabase (config change)<br>
+                        2. Stop sync service<br>
+                        Total time: &lt;30 minutes<br><br>
+                        Data is not lost during migration (we run both systems in parallel during testing).
+                    </div>
+                </div>
+            </section>
+
+            <!-- Approval Section -->
+            <section>
+                <div class="approval-section">
+                    <h2 style="margin-top: 0; border: none;">Approval Required</h2>
+                    
+                    <div class="approval-grid">
+                        <div class="approval-box">
+                            <strong>Technical Leadership</strong>
+                            <p style="margin-top: 1rem; color: var(--text-secondary);">☐ Approved</p>
+                        </div>
+                        <div class="approval-box">
+                            <strong>Product Management</strong>
+                            <p style="margin-top: 1rem; color: var(--text-secondary);">☐ Approved</p>
+                        </div>
+                        <div class="approval-box">
+                            <strong>Business Operations</strong>
+                            <p style="margin-top: 1rem; color: var(--text-secondary);">☐ Approved</p>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 2rem;">Next Steps</h3>
+                    <ol>
+                        <li>Review this proposal with stakeholders</li>
+                        <li>Confirm Salesforce licensing requirements</li>
+                        <li>Schedule decision meeting</li>
+                        <li>If approved: Kick off Phase 1 implementation</li>
+                        <li>If declined: Explore alternative approaches</li>
+                    </ol>
+                </div>
+            </section>
+        </main>
+
+        
+    </div>
+</body>
+</html>

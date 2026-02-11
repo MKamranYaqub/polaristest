@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salesforce Configuration Cache - Technical Implementation Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #0070d2;
+            --secondary-color: #032d60;
+            --success-color: #04844b;
+            --warning-color: #fe9339;
+            --danger-color: #c23934;
+            --info-color: #0176d3;
+            --text-primary: #181818;
+            --text-secondary: #3e3e3c;
+            --bg-light: #f3f3f3;
+            --bg-white: #ffffff;
+            --border-color: #c9c9c9;
+            --code-bg: #f4f6f9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--bg-light);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--bg-white);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            background: linear-gradient(135deg, #032d60 0%, #0070d2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 300;
+        }
+
+        header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .meta-info {
+            background: var(--bg-light);
+            padding: 1.5rem 2rem;
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .meta-info .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .meta-item strong {
+            color: var(--secondary-color);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        main {
+            padding: 2rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            color: var(--secondary-color);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        h3 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin: 1.5rem 0 1rem;
+        }
+
+        h4 {
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            margin: 1rem 0 0.5rem;
+        }
+
+        p, li {
+            color: var(--text-secondary);
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 1rem 0;
+        }
+
+        .difficulty-low {
+            background: #c9f0df;
+            color: #04844b;
+        }
+
+        .difficulty-medium {
+            background: #ffe6cc;
+            color: #fe9339;
+        }
+
+        .difficulty-high {
+            background: #fdd6d6;
+            color: #c23934;
+        }
+
+        .rating {
+            color: #ffb75d;
+            font-size: 1.3rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background: var(--secondary-color);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-light);
+        }
+
+        tr:hover {
+            background: #e8f4ff;
+        }
+
+        code {
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #c7254e;
+        }
+
+        pre {
+            background: var(--code-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .info-box {
+            background: #e8f4ff;
+            border-left: 4px solid var(--info-color);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .warning-box {
+            background: #fff4e5;
+            border-left: 4px solid var(--warning-color);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .success-box {
+            background: #c9f0df;
+            border-left: 4px solid var(--success-color);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .task-card {
+            background: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .task-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--secondary-color);
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #c9f0df;
+            color: #04844b;
+        }
+
+        .badge-warning {
+            background: #ffe6cc;
+            color: #fe9339;
+        }
+
+        .badge-danger {
+            background: #fdd6d6;
+            color: #c23934;
+        }
+
+        .badge-info {
+            background: #d8edff;
+            color: #0070d2;
+        }
+
+        .file-tree {
+            background: var(--code-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+        }
+
+        .file-tree .folder {
+            color: #0070d2;
+            font-weight: 600;
+        }
+
+        .file-tree .file {
+            color: #078d4a;
+        }
+
+        .file-tree .new {
+            color: #fe9339;
+            font-weight: 600;
+        }
+
+        .checklist {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .checklist li {
+            padding: 0.5rem 0;
+            padding-left: 2rem;
+            position: relative;
+        }
+
+        .checklist li::before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            font-size: 1.3rem;
+            color: var(--primary-color);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .comparison-card {
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+        }
+
+        .comparison-card h4 {
+            margin-top: 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .stat-box {
+            background: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            border-top: 4px solid var(--primary-color);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            display: block;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        footer {
+            background: var(--secondary-color);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        @media print {
+            body { background: white; }
+            .container { box-shadow: none; }
+        }
+
+        @media (max-width: 768px) {
+            header h1 { font-size: 1.8rem; }
+            main { padding: 1rem; }
+            .stats-grid, .comparison-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Salesforce Configuration Cache</h1>
+            <div class="subtitle">Technical Implementation Guide</div>
+        </header>
+
+        <div class="meta-info">
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <strong>Document Type:</strong>
+                    Technical Implementation Guide
+                </div>
+                <div class="meta-item">
+                    <strong>Date:</strong>
+                    February 10, 2026
+                </div>
+                <div class="meta-item">
+                    <strong>Audience:</strong>
+                    Development Team & Technical Leadership
+                </div>
+                <div class="meta-item">
+                    <strong>Prerequisites:</strong>
+                    Node.js 20+, Salesforce Professional License
+                </div>
+            </div>
+        </div>
+
+        <main>
+            <!-- Overall Assessment -->
+            <section>
+                <h2>Overall Difficulty Assessment</h2>
+                
+                <div style="text-align: center; margin: 2rem 0;">
+                    <div class="difficulty-badge difficulty-medium">
+                        MEDIUM DIFFICULTY
+                    </div>
+                    <div class="rating">⭐⭐⭐☆☆</div>
+                </div>
+
+                <div class="info-box">
+                    <h3 style="margin-top: 0;">Summary</h3>
+                    <p>Moderate changes required, but well-isolated. Most complexity is in building the sync service, not modifying existing code.</p>
+                    <ul style="margin-top: 1rem;">
+                        <li><strong>Estimated Effort:</strong> 60-80 developer hours (1.5-2 weeks FTE)</li>
+                        <li><strong>Required Skills:</strong> Node.js, REST APIs, Salesforce basics, JSON</li>
+                        <li><strong>Risk Level:</strong> Low-Medium (well-mitigated)</li>
+                        <li><strong>Complexity Source:</strong> New sync service (not modifying calculators)</li>
+                    </ul>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-value">2</span>
+                        <span class="stat-label">Files Modified</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-value">5</span>
+                        <span class="stat-label">Files Created</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-value">50+</span>
+                        <span class="stat-label">Files Unchanged</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-value">700</span>
+                        <span class="stat-label">New Lines of Code</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-value">98%</span>
+                        <span class="stat-label">Codebase Unchanged</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Detailed Breakdown -->
+            <section>
+                <h2>Component-by-Component Analysis</h2>
+
+                <div class="task-card">
+                    <div class="task-header">
+                        <div class="task-title">1. Backend API Changes</div>
+                        <div class="task-meta">
+                            <span class="badge badge-success">Low Difficulty</span>
+                            <span class="badge badge-info">4-6 hours</span>
+                        </div>
+                    </div>
+                    
+                    <p><strong>Files to Modify:</strong> 1 file</p>
+                    <div class="file-tree">
+backend/routes/rates.js (Lines 15-150)
+                    </div>
+
+                    <h4>Current Implementation:</h4>
+                    <pre><code>// CURRENT: Queries Supabase directly
+router.get('/', asyncHandler(async (req, res) => {
+  let query = supabase.from(tableName).select('*');
+  // ... filters and pagination
+  const { data, error } = await query;
+  res.json({ rates: data || [] });
+}));</code></pre>
+
+                    <h4>Required Changes:</h4>
+                    <pre><code>// NEW: Reads from cached JSON file
+import configCache from '../services/configCache.js';
+
+router.get('/', asyncHandler(async (req, res) => {
+  // Read from in-memory cache (loaded from JSON)
+  const allRates = await configCache.getRates();
+  
+  // Apply existing filter logic (no changes needed)
+  const filtered = applyFilters(allRates, req.query);
+  
+  res.json({ rates: filtered });
+}));</code></pre>
+
+                    <div class="success-box">
+                        <p><strong>✅ Impact:</strong> Minimal - Same API interface, just different data source</p>
+                        <p><strong>✅ Breaking Changes:</strong> None - API contract unchanged</p>
+                        <p><strong>⚠️ Testing Required:</strong> Medium (verify all filter combinations work)</p>
+                    </div>
+                </div>
+
+                <div class="task-card">
+                    <div class="task-header">
+                        <div class="task-title">2. Create Sync Service (NEW CODE)</div>
+                        <div class="task-meta">
+                            <span class="badge badge-warning">Medium-High Difficulty</span>
+                            <span class="badge badge-info">12-16 hours</span>
+                        </div>
+                    </div>
+
+                    <p><strong>Files to Create:</strong> 3 new files</p>
+                    
+                    <h4>A. backend/services/salesforceConfigSync.js (NEW - 400 lines)</h4>
+                    <p><strong>Responsibilities:</strong></p>
+                    <ul>
+                        <li>Fetch rates from Salesforce via API</li>
+                        <li>Transform SF schema to Polaris schema</li>
+                        <li>Generate JSON files (rates_btl.json, rates_bridging.json, app_constants.json)</li>
+                        <li>Handle errors and retries</li>
+                        <li>Maintain backup files</li>
+                    </ul>
+
+                    <p><strong>Complexity Factors:</strong></p>
+                    <table>
+                        <tr>
+                            <td>Salesforce API authentication</td>
+                            <td><span class="badge badge-warning">⚠️ Moderate</span> (already have salesforceService.js)</td>
+                        </tr>
+                        <tr>
+                            <td>Schema transformation</td>
+                            <td><span class="badge badge-warning">⚠️ Moderate</span> (SF fields → Polaris fields mapping)</td>
+                        </tr>
+                        <tr>
+                            <td>Error handling</td>
+                            <td><span class="badge badge-warning">⚠️ Moderate</span> (sync failures, retries)</td>
+                        </tr>
+                        <tr>
+                            <td>File versioning</td>
+                            <td><span class="badge badge-success">✅ Simple</span> (basic file operations)</td>
+                        </tr>
+                        <tr>
+                            <td>Complex algorithms</td>
+                            <td><span class="badge badge-success">✅ None</span> (mostly data mapping)</td>
+                        </tr>
+                    </table>
+
+                    <h4>B. backend/services/configCache.js (NEW - 150 lines)</h4>
+                    <p><strong>Responsibilities:</strong></p>
+                    <ul>
+                        <li>Load JSON files into memory</li>
+                        <li>Provide <code>getRates()</code> and <code>getConstants()</code> methods</li>
+                        <li>Auto-refresh cache every 5 minutes from disk</li>
+                        <li>Handle file read errors</li>
+                    </ul>
+
+                    <div class="success-box">
+                        <p><strong>✅ Simple file I/O operations</strong></p>
+                        <p><strong>✅ Basic in-memory caching</strong></p>
+                        <p><strong>✅ No database queries</strong></p>
+                    </div>
+
+                    <h4>C. backend/scheduledJobs.js (NEW - 100 lines)</h4>
+                    <p><strong>Responsibilities:</strong></p>
+                    <ul>
+                        <li>Set up cron jobs (using <code>node-cron</code> library)</li>
+                        <li>Trigger sync at scheduled times</li>
+                        <li>Send alerts on failures</li>
+                    </ul>
+
+                    <pre><code>import cron from 'node-cron';
+import configSync from './services/salesforceConfigSync.js';
+
+// Run daily at 3 AM
+cron.schedule('0 3 * * *', async () => {
+  await configSync.syncAllConfigs();
+});
+
+// Run every 2 hours during business hours (9 AM - 5 PM)
+cron.schedule('0 9-17/2 * * 1-5', async () => {
+  await configSync.syncAllConfigs();
+});</code></pre>
+
+                    <div class="success-box">
+                        <p><strong>✅ Simple cron setup</strong></p>
+                        <p><strong>✅ Library handles scheduling</strong></p>
+                        <p><strong>✅ Minimal code</strong></p>
+                    </div>
+                </div>
+
+                <div class="task-card">
+                    <div class="task-header">
+                        <div class="task-title">3. Frontend Changes</div>
+                        <div class="task-meta">
+                            <span class="badge badge-success">Very Low Difficulty</span>
+                            <span class="badge badge-info">2-3 hours</span>
+                        </div>
+                    </div>
+
+                    <div class="success-box">
+                        <h4>No Changes Required to:</h4>
+                        <ul>
+                            <li>✅ <code>frontend/src/features/btl-calculator/hooks/useBTLRates.js</code> - Still calls <code>/api/rates</code></li>
+                            <li>✅ <code>frontend/src/utils/btlCalculationEngine.js</code> - Receives same data structure</li>
+                            <li>✅ <code>frontend/src/components/calculators/BridgingCalculator.jsx</code> - No changes</li>
+                            <li>✅ All PDF components - No changes</li>
+                        </ul>
+                    </div>
+
+                    <h4>Optional Enhancement:</h4>
+                    <p><code>frontend/src/components/admin/AdminPanel.jsx</code> - Add "Sync Now" button</p>
+
+                    <h4>Why No Changes?</h4>
+                    <div class="info-box">
+                        <p>The frontend already calls the backend API. The API endpoint remains the same, just the backend data source changes from "Supabase query" to "JSON file read."</p>
+                    </div>
+
+                    <h4>API Contract Comparison:</h4>
+                    <pre><code>// BEFORE: Backend queries Supabase
+GET /api/rates?set_key=RATES_CORE&property=Residential
+Response: { rates: [...] }
+
+// AFTER: Backend reads from JSON cache
+GET /api/rates?set_key=RATES_CORE&property=Residential
+Response: { rates: [...] }  // IDENTICAL STRUCTURE
+
+// Frontend code - NO CHANGE
+const response = await fetch(`${API_BASE}/api/rates?${params}`);
+const { rates } = await response.json();</code></pre>
+                </div>
+
+                <div class="task-card">
+                    <div class="task-header">
+                        <div class="task-title">4. Infrastructure Changes</div>
+                        <div class="task-meta">
+                            <span class="badge badge-success">Low Difficulty</span>
+                            <span class="badge badge-info">2-4 hours</span>
+                        </div>
+                    </div>
+
+                    <h4>Option A: Local File Storage (Simplest)</h4>
+                    <div class="file-tree">
+backend/
+  config/
+    cache/
+      rates_btl.json
+      rates_bridging.json
+      app_constants.json
+                    </div>
+
+                    <table>
+                        <tr>
+                            <td><strong>Pros</strong></td>
+                            <td>
+                                ✅ No new services needed<br>
+                                ✅ Simple implementation
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cons</strong></td>
+                            <td>
+                                ⚠️ Only works with single backend instance<br>
+                                ⚠️ Not suitable if using multiple Azure App Service instances
+                            </td>
+                        </tr>
+                    </table>
+
+                    <h4>Option B: Azure Blob Storage (Recommended)</h4>
+                    <pre><code>// Install: npm install @azure/storage-blob
+import { BlobServiceClient } from '@azure/storage-blob';
+
+const rates = await blobClient.download();</code></pre>
+
+                    <table>
+                        <tr>
+                            <td><strong>Requirements</strong></td>
+                            <td>
+                                • Install <code>@azure/storage-blob</code> package<br>
+                                • Add <code>AZURE_STORAGE_CONNECTION_STRING</code> env var<br>
+                                • Modify sync service to push to Azure Blob Storage
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Effort</strong></td>
+                            <td>+2 hours for Azure Blob Storage setup</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Benefits</strong></td>
+                            <td>
+                                ✅ Globally distributed (low latency worldwide)<br>
+                                ✅ Works with multiple backend instances<br>
+                                ✅ Automatic CDN caching with Azure Front Door
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="task-card">
+                    <div class="task-header">
+                        <div class="task-title">5. Database Migration</div>
+                        <div class="task-meta">
+                            <span class="badge badge-success">Low Difficulty</span>
+                            <span class="badge badge-info">6-8 hours</span>
+                        </div>
+                    </div>
+
+                    <h4>Migration Tasks:</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Effort</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Export existing rates to CSV</td>
+                                <td>1 hour</td>
+                                <td>Query Supabase tables, export for backup</td>
+                            </tr>
+                            <tr>
+                                <td>Set up Salesforce objects</td>
+                                <td>2 hours</td>
+                                <td>Create Rate__c and App_Constant__c custom objects</td>
+                            </tr>
+                            <tr>
+                                <td>Import rates to Salesforce</td>
+                                <td>2 hours</td>
+                                <td>Use Salesforce Data Loader, validate data</td>
+                            </tr>
+                            <tr>
+                                <td>Test sync</td>
+                                <td>2 hours</td>
+                                <td>Run manual sync, verify JSON files, compare data</td>
+                            </tr>
+                            <tr>
+                                <td>Parallel run</td>
+                                <td>1 hour</td>
+                                <td>Keep both systems running for 1 week</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Code Change Summary -->
+            <section>
+                <h2>Code Change Summary</h2>
+
+                <div class="comparison-grid">
+                    <div class="comparison-card" style="border-color: var(--warning-color);">
+                        <h4>Files Modified: 2</h4>
+                        <ol>
+                            <li><code>backend/routes/rates.js</code><br>
+                                <small>Change data source (50 lines modified)</small>
+                            </li>
+                            <li><code>backend/server.js</code><br>
+                                <small>Import and register scheduledJobs (5 lines added)</small>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="comparison-card" style="border-color: var(--success-color);">
+                        <h4>Files Created: 5</h4>
+                        <ol start="3">
+                            <li><code>backend/services/salesforceConfigSync.js</code><br>
+                                <small><strong>400 lines (NEW)</strong></small>
+                            </li>
+                            <li><code>backend/services/configCache.js</code><br>
+                                <small><strong>150 lines (NEW)</strong></small>
+                            </li>
+                            <li><code>backend/scheduledJobs.js</code><br>
+                                <small><strong>100 lines (NEW)</strong></small>
+                            </li>
+                            <li><code>backend/config/cache/</code><br>
+                                <small>Directory for JSON files</small>
+                            </li>
+                            <li><code>backend/routes/syncAdmin.js</code><br>
+                                <small><strong>50 lines (NEW)</strong> - Admin "Sync Now" endpoint</small>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="comparison-card" style="border-color: var(--primary-color);">
+                        <h4>Files Unchanged: 50+</h4>
+                        <ul style="margin-left: 1.5rem;">
+                            <li>✅ All frontend calculators</li>
+                            <li>✅ All PDF components</li>
+                            <li>✅ All calculation engines</li>
+                            <li>✅ All React hooks</li>
+                            <li>✅ All existing routes</li>
+                        </ul>
+                        <p style="margin-top: 1rem;"><strong>98% of codebase unchanged</strong></p>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-value">~700</span>
+                        <span class="stat-label">New Lines of Code</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-value">~55</span>
+                        <span class="stat-label">Modified Lines</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-value">15,000+</span>
+                        <span class="stat-label">Unchanged Lines (98%)</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Risk Assessment -->
+            <section>
+                <h2>Risk Assessment</h2>
+
+                <h3>Technical Risks</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Risk</th>
+                            <th>Severity</th>
+                            <th>Likelihood</th>
+                            <th>Mitigation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Schema mismatch (SF ↔ Polaris)</td>
+                            <td><span class="badge badge-danger">High</span></td>
+                            <td><span class="badge badge-warning">Medium</span></td>
+                            <td>Write comprehensive tests, run parallel for 1 week</td>
+                        </tr>
+                        <tr>
+                            <td>Sync fails silently</td>
+                            <td><span class="badge badge-warning">Medium</span></td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td>Add monitoring, alerts, health checks</td>
+                        </tr>
+                        <tr>
+                            <td>JSON file corruption</td>
+                            <td><span class="badge badge-danger">High</span></td>
+                            <td><span class="badge badge-success">Very Low</span></td>
+                            <td>Backup before overwrite, validate JSON structure</td>
+                        </tr>
+                        <tr>
+                            <td>Performance degradation</td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td><span class="badge badge-success">Very Low</span></td>
+                            <td>JSON read is faster than DB query</td>
+                        </tr>
+                        <tr>
+                            <td>Missing rates during sync</td>
+                            <td><span class="badge badge-warning">Medium</span></td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td>Keep previous version during sync, atomic swap</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Implementation Risks</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Risk</th>
+                            <th>Severity</th>
+                            <th>Likelihood</th>
+                            <th>Mitigation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Development takes longer</td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td><span class="badge badge-warning">Medium</span></td>
+                            <td>Start with Option A (local files), upgrade later</td>
+                        </tr>
+                        <tr>
+                            <td>Salesforce structure changes</td>
+                            <td><span class="badge badge-warning">Medium</span></td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td>Version sync service, flexible schema mapping</td>
+                        </tr>
+                        <tr>
+                            <td>Team unfamiliar with cron</td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td>Use well-documented node-cron library</td>
+                        </tr>
+                        <tr>
+                            <td>Integration testing gaps</td>
+                            <td><span class="badge badge-warning">Medium</span></td>
+                            <td><span class="badge badge-warning">Medium</span></td>
+                            <td>Write comprehensive test suite</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Implementation Timeline -->
+            <section>
+                <h2>Implementation Timeline</h2>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Week</th>
+                            <th>Phase</th>
+                            <th>Tasks</th>
+                            <th>Effort</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td rowspan="5"><strong>Week 1</strong></td>
+                            <td rowspan="5"><strong>Foundation</strong></td>
+                            <td>Create Salesforce objects, import test data</td>
+                            <td>2 days</td>
+                        </tr>
+                        <tr>
+                            <td>Build salesforceConfigSync.js (sync service)</td>
+                            <td>2 days</td>
+                        </tr>
+                        <tr>
+                            <td>Build configCache.js (in-memory cache)</td>
+                            <td>1 day</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="background: var(--bg-light); font-weight: 600;">
+                                Deliverables: Salesforce configured, Sync service operational
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"></td>
+                        </tr>
+
+                        <tr>
+                            <td rowspan="5"><strong>Week 2</strong></td>
+                            <td rowspan="5"><strong>Integration</strong></td>
+                            <td>Modify backend/routes/rates.js to use cache</td>
+                            <td>1 day</td>
+                        </tr>
+                        <tr>
+                            <td>Set up scheduledJobs.js (cron)</td>
+                            <td>1 day</td>
+                        </tr>
+                        <tr>
+                            <td>Add admin "Sync Now" endpoint</td>
+                            <td>1 day</td>
+                        </tr>
+                        <tr>
+                            <td>Testing (unit + integration)</td>
+                            <td>2 days</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="background: var(--bg-light); font-weight: 600;">
+                                Deliverables: Full integration complete, tests passing
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td rowspan="5"><strong>Week 3</strong></td>
+                            <td rowspan="5"><strong>Migration & Testing</strong></td>
+                            <td>Export all rates from Supabase</td>
+                            <td>1 day</td>
+                        </tr>
+                        <tr>
+                            <td>Import to Salesforce, validate</td>
+                            <td>1 day</td>
+                        </tr>
+                        <tr>
+                            <td>Run parallel systems, compare outputs</td>
+                            <td>2 days</td>
+                        </tr>
+                        <tr>
+                            <td>Fix any discrepancies</td>
+                            <td>1 day</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="background: var(--bg-light); font-weight: 600;">
+                                Deliverables: Data migrated, parallel validation complete
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td rowspan="5"><strong>Week 4</strong></td>
+                            <td rowspan="5"><strong>Deployment</strong></td>
+                            <td>Deploy to staging, smoke tests</td>
+                            <td>1 day</td>
+                        </tr>
+                        <tr>
+                            <td>User acceptance testing</td>
+                            <td>1 day</td>
+                        </tr>
+                        <tr>
+                            <td>Deploy to production</td>
+                            <td>1 day</td>
+                        </tr>
+                        <tr>
+                            <td>Monitor, hotfix if needed</td>
+                            <td>2 days</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="background: var(--bg-light); font-weight: 600;">
+                                Deliverables: Production live, monitoring in place
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box">
+                    <p><strong>Total Calendar Time:</strong> 4 weeks</p>
+                    <p><strong>Total Developer Time:</strong> 60-80 hours (1.5-2 weeks FTE)</p>
+                </div>
+            </section>
+
+            <!-- Testing Strategy -->
+            <section>
+                <h2>Testing Strategy</h2>
+
+                <h3>Unit Tests (20 tests, 4 hours)</h3>
+                <pre><code>// backend/services/__tests__/salesforceConfigSync.test.js
+describe('SalesforceConfigSync', () => {
+  it('should fetch rates from Salesforce', async () => {});
+  it('should transform SF schema to Polaris schema', async () => {});
+  it('should generate valid JSON files', async () => {});
+  it('should backup existing files before overwriting', async () => {});
+  it('should handle sync failures gracefully', async () => {});
+});
+
+// backend/services/__tests__/configCache.test.js
+describe('ConfigCache', () => {
+  it('should load JSON files into memory', async () => {});
+  it('should refresh cache periodically', async () => {});
+  it('should return filtered rates', async () => {});
+});</code></pre>
+
+                <h3>Integration Tests (10 tests, 4 hours)</h3>
+                <pre><code>// backend/__tests__/integration/ratesAPI.test.js
+describe('GET /api/rates with JSON cache', () => {
+  it('should return rates for BTL Core', async () => {});
+  it('should filter by property type', async () => {});
+  it('should return active rates only', async () => {});
+  it('should paginate results', async () => {});
+});</code></pre>
+
+                <h3>End-to-End Tests (5 tests, 4 hours)</h3>
+                <pre><code>// e2e/calculator.test.js
+describe('BTL Calculator with JSON cache', () => {
+  it('should calculate max LTV loan correctly', async () => {});
+  it('should apply correct rates', async () => {});
+  it('should generate PDF quote', async () => {});
+});</code></pre>
+            </section>
+
+            <!-- Decision Criteria -->
+            <section>
+                <h2>Complexity Comparison by Task</h2>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Difficulty</th>
+                            <th>Hours</th>
+                            <th>Risk</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Modify backend routes</strong></td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td>4-6</td>
+                            <td><span class="badge badge-success">Low</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Build sync service</strong></td>
+                            <td><span class="badge badge-warning">Medium-High</span></td>
+                            <td>12-16</td>
+                            <td><span class="badge badge-warning">Medium</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Build cache service</strong></td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td>4-6</td>
+                            <td><span class="badge badge-success">Low</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Set up cron jobs</strong></td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td>2-3</td>
+                            <td><span class="badge badge-success">Low</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Migrate data</strong></td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td>6-8</td>
+                            <td><span class="badge badge-success">Low</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Testing</strong></td>
+                            <td><span class="badge badge-warning">Medium</span></td>
+                            <td>12-15</td>
+                            <td><span class="badge badge-warning">Medium</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Deployment</strong></td>
+                            <td><span class="badge badge-success">Low</span></td>
+                            <td>4-6</td>
+                            <td><span class="badge badge-success">Low</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Frontend changes</strong></td>
+                            <td><span class="badge badge-success">Very Low</span></td>
+                            <td>2-3</td>
+                            <td><span class="badge badge-success">Very Low</span></td>
+                        </tr>
+                        <tr class="highlight-row" style="background: #e8f4ff !important; font-weight: 600;">
+                            <td><strong>TOTAL</strong></td>
+                            <td><span class="badge badge-warning">Medium</span></td>
+                            <td><strong>60-80</strong></td>
+                            <td><span class="badge badge-warning">Low-Medium</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Final Recommendation -->
+            <section>
+                <h2>Final Technical Assessment</h2>
+
+                <div class="success-box">
+                    <h3>Difficulty Level: MEDIUM</h3>
+                    <p style="font-size: 1.1rem;">Manageable for any mid-level backend developer with Node.js experience.</p>
+                </div>
+
+                <h3>Key Success Factors</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-card" style="border-color: var(--success-color);">
+                        <h4>✅ Well-Isolated Changes</h4>
+                        <p>Most code unchanged, minimal risk to existing functionality</p>
+                    </div>
+                    <div class="comparison-card" style="border-color: var(--success-color);">
+                        <h4>✅ Clear Data Flow</h4>
+                        <p>Salesforce → Sync → JSON → API → Frontend</p>
+                    </div>
+                    <div class="comparison-card" style="border-color: var(--success-color);">
+                        <h4>✅ Standard Patterns</h4>
+                        <p>File I/O, cron, REST API (no exotic tech)</p>
+                    </div>
+                    <div class="comparison-card" style="border-color: var(--success-color);">
+                        <h4>✅ Reversible</h4>
+                        <p>Can revert to Supabase in 30 minutes if needed</p>
+                    </div>
+                    <div class="comparison-card" style="border-color: var(--success-color);">
+                        <h4>✅ Testable</h4>
+                        <p>Can run both systems in parallel</p>
+                    </div>
+                </div>
+
+                <h3>Biggest Challenges</h3>
+                <ol>
+                    <li><strong>Salesforce schema transformation</strong> - Different field names/structures require careful mapping</li>
+                    <li><strong>Error handling for sync failures</strong> - Need robust retry logic and monitoring</li>
+                    <li><strong>Data consistency during migration</strong> - Parallel running required for validation</li>
+                </ol>
+
+                <h3>Easiest Parts</h3>
+                <ul>
+                    <li>✅ Frontend requires no changes (API contract unchanged)</li>
+                    <li>✅ Calculation engines require no changes (data structure same)</li>
+                    <li>✅ Infrastructure is simple (just JSON files)</li>
+                </ul>
+
+                <div class="info-box">
+                    <h3>Overall Assessment</h3>
+                    <p style="font-size: 1.1rem;">
+                        This is a <strong>straightforward architectural change</strong> with minimal risk. The complexity is in 
+                        the new sync service, not in modifying existing code. A competent backend developer familiar with your 
+                        codebase can complete this in 3-4 weeks.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Next Steps -->
+            <section>
+                <h2>Next Steps</h2>
+
+                <ul class="checklist">
+                    <li>Review business proposal with stakeholders</li>
+                    <li>Confirm Salesforce licensing requirements</li>
+                    <li>Allocate developer resources (1 developer, 3-4 weeks)</li>
+                    <li>Start with Phase 1 (Salesforce setup + sync service)</li>
+                    <li>Set up development environment and dependencies</li>
+                    <li>Create Salesforce sandbox for testing</li>
+                    <li>Schedule kickoff meeting with development team</li>
+                </ul>
+
+                <div class="warning-box">
+                    <h4>Prerequisites Check</h4>
+                    <ul>
+                        <li>✅ Node.js 20+ installed</li>
+                        <li>✅ Salesforce Professional licenses available</li>
+                        <li>✅ Azure subscription for Blob Storage</li>
+                        <li>✅ Developer familiar with Node.js and REST APIs</li>
+                        <li>✅ Supabase access for data export</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+
+        
+    </div>
+</body>
+</html>
