@@ -181,6 +181,7 @@ export class BridgeFusionCalculator {
           deferredInterestRate: 0,
           servicedInterestGBP: 0,
           totalInterest: 0,
+          monthlyInterestCost: 0,
           monthlyPaymentGBP: 0,
           directDebit: 0,
           aprcAnnual: 0,
@@ -556,8 +557,13 @@ export class BridgeFusionCalculator {
     );
 
     // === MONTHLY PAYMENT ===
-    // Monthly payment = serviced interest divided by serviced months
-    // When interest is rolled or deferred, monthly payment should be reduced
+    // Monthly Interest Cost = full monthly interest on the gross loan (including deferred portion)
+    // This represents the total interest accruing each month, before any deferral
+    const monthlyInterestCostGBP = gross * (fullAnnualRate / 12);
+
+    // Direct Debit / Monthly Payment = serviced interest divided by serviced months
+    // For Fusion this excludes deferred interest (what borrower actually pays monthly)
+    // For Bridge products this equals the full monthly interest cost
     const monthlyPaymentGBP = servicedMonths > 0 
       ? servicedInterestGBP / servicedMonths 
       : 0;
@@ -667,10 +673,11 @@ export class BridgeFusionCalculator {
       exitFee: productKind === 'fusion' ? 0 : gross * (exitFeePct / 100),
 
       // ERC (Early Repayment Charges) - Fusion only (pulled from rate record, not hardcoded)
+      // ERC applies to 75% of gross loan, not the full amount
       erc1Percent: productKind === 'fusion' ? (parseNumber(rateRecord.erc_1) || 0) : 0,
       erc2Percent: productKind === 'fusion' ? (parseNumber(rateRecord.erc_2) || 0) : 0,
-  erc1Pounds: productKind === 'fusion' ? gross * ((parseNumber(rateRecord.erc_1) || 0) / 100) : 0,
-  erc2Pounds: productKind === 'fusion' ? gross * ((parseNumber(rateRecord.erc_2) || 0) / 100) : 0,
+  erc1Pounds: productKind === 'fusion' ? (gross * 0.75) * ((parseNumber(rateRecord.erc_1) || 0) / 100) : 0,
+  erc2Pounds: productKind === 'fusion' ? (gross * 0.75) * ((parseNumber(rateRecord.erc_2) || 0) / 100) : 0,
 
       // Interest components
       termMonths: term,
@@ -689,8 +696,9 @@ export class BridgeFusionCalculator {
       totalInterest,
 
       // Payment
+      monthlyInterestCost: monthlyInterestCostGBP, // Full monthly interest (no deferred deduction)
       monthlyPaymentGBP,
-      directDebit: monthlyPaymentGBP,
+      directDebit: monthlyPaymentGBP, // What borrower pays monthly (deferred subtracted for Fusion)
 
       // APR
       aprcAnnual,

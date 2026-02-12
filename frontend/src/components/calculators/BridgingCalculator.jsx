@@ -1445,8 +1445,8 @@ export default function BridgingCalculator({ initialQuote = null }) {
           serviced_interest: calculated.servicedInterestGBP?.toFixed(0) || null,
           total_interest: calculated.totalInterest?.toFixed(0) || null,
           
-          // Payment metrics - Direct Debit keeps 2 decimal places
-          monthly_interest_cost: calculated.monthlyPaymentGBP?.toFixed(0) || null,
+          // Payment metrics - Monthly Interest Cost uses full rate; Direct Debit keeps 2 decimal places
+          monthly_interest_cost: (calculated.monthlyInterestCost ?? calculated.monthlyPaymentGBP)?.toFixed(0) || null,
           direct_debit: calculated.directDebit?.toFixed(2) || null,
           
           // APR metrics

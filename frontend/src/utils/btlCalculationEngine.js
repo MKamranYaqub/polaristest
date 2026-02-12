@@ -419,10 +419,10 @@ export class BTLCalculationEngine {
     // Calculate LTV
     const ltv = propertyValue > 0 ? eligibleGross / propertyValue : null;
     
-    // Calculate ICR (uses actual rate, not floor)
+    // Calculate ICR
     const icr = this.computeICR(eligibleGross, payRateAdj, rolledMonths, remainingMonths, effectiveRent);
     
-    // Calculate direct debit (monthly payment) using actual rate
+    // Calculate direct debit (monthly payment)
     const directDebit = eligibleGross > 0 ? eligibleGross * payRateAdj / 12 : 0;
     
     // Calculate serviced months (initial term - rolled months)
@@ -617,6 +617,11 @@ export class BTLCalculationEngine {
       bestLoan = clean; // retain original evaluated loan shape
     }
 
+    // --- Calculate monthly interest cost using initial rate (not pay rate)
+    // Monthly interest cost should reflect the full initial rate for reporting/comparison purposes
+    const { displayRate: initialRateDecimal } = this.computeRates();
+    const monthlyInterestCost = bestLoan.grossLoan > 0 ? bestLoan.grossLoan * initialRateDecimal / 12 : 0;
+
     // --- Format output rates
     const displayRate = isTracker ? actualRate + standardBBR : actualRate;
     const fullRateText = `${displayRate.toFixed(2)}%${isTracker ? ' + BBR' : ''}`;
@@ -773,7 +778,7 @@ export class BTLCalculationEngine {
       // Payment info
       directDebit: bestLoan.directDebit,
       ddStartMonth: bestLoan.ddStartMonth,
-      monthlyInterestCost: bestLoan.directDebit,
+      monthlyInterestCost: monthlyInterestCost,
       
       // Slider values
       rolledMonths: bestLoan.rolledMonths,
